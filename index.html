@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=17">
+<link rel="manifest" href="manifest.json?v=18">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -144,7 +144,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 17</p></div></div>
+<p style="font-size:.75rem">버전 18</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -220,6 +220,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 
   <section class="card">
    <h2>오늘 할 살림 <small id="choreCount"></small><button class="btn small" data-add="chores">＋</button></h2>
+   <div class="pts" id="chorePts"></div>
    <ul class="list" id="choreList"></ul>
   </section>
 
@@ -236,8 +237,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=17";
-import {SEED_SCHEDULE} from "./seed.js?v=17";
+import {firebaseConfig} from "./config.js?v=18";
+import {SEED_SCHEDULE} from "./seed.js?v=18";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -441,8 +442,8 @@ function ensureTasks(){
 function renderTasks(){
  const t=today(),ws=weekStart();
  const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
- const earned=sum(S.tasks.filter(x=>x.done))+sum(S.choreLog);
- const week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+sum(S.choreLog.filter(x=>x.date>=ws));
+ const earned=sum(S.tasks.filter(x=>x.done));
+ const week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws));
  const used=S.rewards.reduce((a,x)=>a+(Number(x.points)||0),0);
  const todayT=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
@@ -472,12 +473,15 @@ function renderFood(){
 
 function renderChores(){const t=today();const l=S.chores.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));const n=l.filter(x=>x.doneDate===t).length;
  $("choreCount").textContent=l.length?`오늘 ${n}/${l.length}`:"";
+ const ws=weekStart(),tot={},wk={};for(const g of S.choreLog){if(!g.who)continue;tot[g.who]=(tot[g.who]||0)+(Number(g.points)||0);if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+(Number(g.points)||0)}
+ $("chorePts").innerHTML=PEOPLE.map(p=>`<div class="pt ${p===me?"main":""}"><small>${p} 살림 포인트</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
  $("choreList").innerHTML=l.length?l.map(x=>{const on=x.doneDate===t;
-  return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-chore="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("chores",x.id,x.title)}</li>`}).join("")
+  return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-chore="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}${on&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("chores",x.id,x.title)}</li>`}).join("")
   :`<li class="empty">＋ 로 매일 할 살림을 적어 두세요. 아침마다 체크가 새로 풀려요.</li>`}
 function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const t=today(),on=x.doneDate===t,pts=Number(x.points)||1,lid=`${id}_${t}`;
- run(db.collection("chores").doc(id).update({doneDate:on?null:t}),on?null:`고마워! ⭐${pts}`);
- if(on)run(db.collection("choreLog").doc(lid).delete());else run(db.collection("choreLog").doc(lid).set({choreId:id,title:x.title,points:pts,date:t}))}
+ if(!on&&!me){toast("「서로에게 할 말」에서 이 폰 주인(누가)을 먼저 골라 주세요");$("noteFrom").focus();return}
+ run(db.collection("chores").doc(id).update({doneDate:on?null:t,doneBy:on?null:me}),on?null:`${me} ⭐${pts}`);
+ if(on)run(db.collection("choreLog").doc(lid).delete());else run(db.collection("choreLog").doc(lid).set({choreId:id,title:x.title,points:pts,date:t,who:me}))}
 
 function renderHelp(){const t=today();const n=S.helpmom.filter(x=>x.doneDate===t).length;
  $("helpCount").textContent=S.helpmom.length?`오늘 ${n}/${S.helpmom.length}`:"";
@@ -560,7 +564,7 @@ $("sPrev").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,-1);renderSche
 $("sNext").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,1);renderSched()};
 $("sToday").onclick=()=>{dialHalf=null;schedDate=today();renderSched()};
 try{me=localStorage.getItem("me")}catch(e){}
-$("noteFrom").onchange=e=>{me=e.target.value;try{localStorage.setItem("me",me)}catch(_){}};
+$("noteFrom").onchange=e=>{me=e.target.value;try{localStorage.setItem("me",me)}catch(_){}renderChores()};
 $("noteForm").onsubmit=e=>{e.preventDefault();const v=$("noteInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
  const from=$("noteFrom").value;if(!from){toast("누가 보내는지 골라 주세요");$("noteFrom").focus();return}
  $("noteInput").value="";run(db.collection("notes").add({text:v,from,to:$("noteTo").value,createdAt:Date.now()}),"보냈어요")};
@@ -574,7 +578,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=17;
+const VERSION=18;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
