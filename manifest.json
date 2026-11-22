@@ -2,7 +2,7 @@
  "name": "우리집 대시보드",
  "short_name": "우리집",
  "start_url": "./",
- "display": "browser",
+ "display": "standalone",
  "background_color": "#eef1ee",
  "theme_color": "#2f6b4f",
  "lang": "ko",
@@ -18,5 +18,7 @@
    "type": "image/png",
    "purpose": "any maskable"
   }
- ]
+ ],
+ "id": "./",
+ "scope": "./"
 }
