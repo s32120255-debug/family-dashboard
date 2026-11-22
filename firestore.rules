@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // 여기 적힌 구글 계정만 읽고 쓸 수 있어요. (소문자로 적기)
+    // 가족 계정 (소문자로 적기)
     function isFamily() {
       return request.auth != null
         && request.auth.token.email_verified == true
@@ -9,8 +9,21 @@ service cloud.firestore {
           'EMAIL1@gmail.com'
         ];
     }
-    match /{document=**} {
-      allow read, write: if isFamily();
+    // 서윤 전용 계정: 서윤 보드(seoyun)는 이 계정만 열 수 있어요
+    function isSeoyun() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'SEOYUN_EMAIL@gmail.com'
+        ];
+    }
+    // 서윤 보드: 서윤만
+    match /seoyun/{document=**} {
+      allow read, write: if isSeoyun();
+    }
+    // 가족 대시보드: 가족 모두 (seoyun 은 빼고)
+    match /{col}/{document=**} {
+      allow read, write: if isFamily() && col != 'seoyun';
     }
   }
 }
