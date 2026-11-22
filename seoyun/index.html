@@ -134,7 +134,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 5</p>
+ <p style="font-size:.75rem">버전 6</p>
 </div></div>
 
 <div class="wrap">
@@ -205,7 +205,7 @@ const DESTS=[["inbox","일단 적기"],["sihoon","시훈"],["work","서윤 회�
 const parseDest=v=>{const[tab,group,sub]=v.split("/");return tab==="home"?{tab,group,sub:sub||null}:{tab,group:null,sub:null}};
 
 /* ---------- 상태 ---------- */
-let items=[],meals={},pantry=[],weekOff=0,db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
+let items=[],meals={},ate={},pantry=[],weekOff=0,db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
 if(!TABNAME[tab]||tab==="inbox")tab="home";
 
 /* ---------- 그리기 ---------- */
@@ -293,6 +293,7 @@ function moneyPanel(){
 
 /* 식단표: 가족 대시보드의 식단표(meals)와 같은 표예요. 여기서 고치면 가족 화면에도 바로 보여요. */
 const MEALS=[["breakfast","아침"],["lunch","점심"],["dinner","저녁"]];
+const ATE=[...MEALS,["snack","간식"]];
 function weekStart(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+weekOff*7);return d}
 function mealsPanel(){
  const st=weekStart(),t=today();const days=[...Array(7)].map((_,i)=>{const d=new Date(st);d.setDate(st.getDate()+i);return d});
@@ -301,7 +302,15 @@ function mealsPanel(){
  <div class="monthnav"><button class="btn small" data-week="-1" aria-label="지난주">◀</button><b style="font-size:1.2rem;min-width:9em">${st.getMonth()+1}/${st.getDate()} ~ ${en.getMonth()+1}/${en.getDate()}</b><button class="btn small" data-week="1" aria-label="다음 주">▶</button>${weekOff?`<button class="btn small" data-week="0">이번 주</button>`:""}</div>
  <div class="meals"><table><thead><tr><th></th>${MEALS.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>
  ${days.map(d=>{const k=ymd(d),m=meals[k]||{};return`<tr class="${k===t?"today":""}"><th>${d.getMonth()+1}/${d.getDate()} ${"일월화수목금토"[d.getDay()]}</th>${MEALS.map(([f,l])=>`<td data-meal="${k}" data-mf="${f}" tabindex="0" aria-label="${d.getMonth()+1}/${d.getDate()} ${l}">${esc(m[f]||"")}</td>`).join("")}</tr>`}).join("")}
- </tbody></table></div><p class="empty" style="margin:0">칸을 누르면 적을 수 있어요.</p></section>`}
+ </tbody></table></div><p class="empty" style="margin:0">칸을 누르면 적을 수 있어요.</p></section>
+ <section class="card"><h2>먹은 것 기록 <small>실제로 먹은 메뉴 · 가족 화면과 같은 기록</small></h2>
+ <div class="meals"><table><thead><tr><th></th>${ATE.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>
+ ${days.map(d=>{const k=ymd(d),m=ate[k]||{};return`<tr class="${k===t?"today":""}"><th>${d.getMonth()+1}/${d.getDate()} ${"일월화수목금토"[d.getDay()]}</th>${ATE.map(([f,l])=>`<td data-ate="${k}" data-mf="${f}" tabindex="0" aria-label="${d.getMonth()+1}/${d.getDate()} ${l} 먹은 것">${esc(m[f]||"")}</td>`).join("")}</tr>`}).join("")}
+ </tbody></table></div></section>`}
+function editAte(k,f){const lab=ATE.find(x=>x[0]===f)[1];const d=new Date(k+"T00:00");const plan=(meals[k]||{})[f];
+ modal(`<form class="modal" id="mf"><h3>${d.getMonth()+1}/${d.getDate()} ${lab} 먹은 것</h3><label>메뉴<input name="v" value="${esc((ate[k]||{})[f]||"")}" placeholder="실제로 먹은 것"></label>${plan?`<button type="button" class="btn" id="mp">식단표대로: ${esc(plan)}</button>`:""}<div class="row"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">저장</button></div></form>`);
+ $("mc").onclick=closeForm;if(plan)$("mp").onclick=()=>{$("mf").v.value=plan};
+ $("mf").onsubmit=e=>{e.preventDefault();const v=e.target.v.value.trim();closeForm();run(db.setAte(k,{[f]:v||null}),"기록했어요")}}
 function editMeal(k,f){const lab=MEALS.find(x=>x[0]===f)[1];const d=new Date(k+"T00:00");
  modal(`<form class="modal" id="mf"><h3>${d.getMonth()+1}/${d.getDate()} ${lab}</h3><label>메뉴<input name="v" value="${esc((meals[k]||{})[f]||"")}" placeholder="예: 김치찌개, 계란말이"></label><div class="row"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">저장</button></div></form>`);
  $("mc").onclick=closeForm;$("mf").onsubmit=e=>{e.preventDefault();const v=e.target.v.value.trim();closeForm();run(db.setMeal(k,{[f]:v||null}),"저장했어요")}}
@@ -375,8 +384,9 @@ const del=id=>run(db.remove(id),"지웠어요");
 const byId=id=>items.find(x=>x.id===id);
 
 /* ---------- 누르기 ---------- */
-document.addEventListener("click",e=>{const td=e.target.closest("td[data-meal]");if(td&&db)return editMeal(td.dataset.meal,td.dataset.mf)});
-document.addEventListener("keydown",e=>{const td=e.target.closest&&e.target.closest("td[data-meal]");if(td&&db&&(e.key==="Enter"||e.key===" ")){e.preventDefault();editMeal(td.dataset.meal,td.dataset.mf)}});
+document.addEventListener("click",e=>{const td=e.target.closest("td[data-meal]");if(td&&db)return editMeal(td.dataset.meal,td.dataset.mf);const ta=e.target.closest("td[data-ate]");if(ta&&db)return editAte(ta.dataset.ate,ta.dataset.mf)});
+document.addEventListener("keydown",e=>{const td=e.target.closest&&e.target.closest("td[data-meal]");if(td&&db&&(e.key==="Enter"||e.key===" ")){e.preventDefault();editMeal(td.dataset.meal,td.dataset.mf)}
+ const ta=e.target.closest&&e.target.closest("td[data-ate]");if(ta&&db&&(e.key==="Enter"||e.key===" ")){e.preventDefault();editAte(ta.dataset.ate,ta.dataset.mf)}});
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!db)return;const d=b.dataset;
  if(d.open){const x=byId(d.open);if(x)openItem(x);return}
  if(d.done){const x=byId(d.done);if(!x)return;
@@ -416,7 +426,7 @@ document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=5;
+const VERSION=6;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
@@ -427,7 +437,7 @@ function onItems(list){items=list;render()}
 
 if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  let n=0;const mem=new Map();const emit=()=>onItems([...mem.values()]);
- db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async(c,d)=>{if(c==="pantry"){pantry.push({id:"p"+(++n),...d});render()}},famUpd:async(c,id,d)=>{pantry=pantry.map(x=>x.id===id?{...x,...d}:x);render()},famDel:async(c,id)=>{pantry=pantry.filter(x=>x.id!==id);render()},setMeal:async(k,d)=>{meals[k]={...(meals[k]||{}),...d};render()}};
+ db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async(c,d)=>{if(c==="pantry"){pantry.push({id:"p"+(++n),...d});render()}},famUpd:async(c,id,d)=>{pantry=pantry.map(x=>x.id===id?{...x,...d}:x);render()},famDel:async(c,id)=>{pantry=pantry.filter(x=>x.id!==id);render()},setMeal:async(k,d)=>{meals[k]={...(meals[k]||{}),...d};render()},setAte:async(k,d)=>{ate[k]={...(ate[k]||{}),...d};render()}};
  meals[today()]={dinner:"김치찌개"};pantry=[{id:"pa",name:"우유",place:"fridge",qty:"2개",expiry:today()},{id:"pb",name:"두부",place:"fridge",qty:null,expiry:"2026-12-30"}];
  const t=today(),c=Date.now();
  [{tab:"inbox",text:"시훈 겨울방학 특강 알아보기"},{tab:"inbox",text:"세탁세제 거의 없음"},{tab:"sihoon",text:"수학 학원비",amount:280000,flow:"out"},{tab:"work",text:"월요일 보고서 초안"},{tab:"sihoon",text:"코딩 방과후",amount:120000,flow:"think"},{tab:"home",group:"todo",text:"식기세척기",amount:650000,flow:"think"},{tab:"sihoon",text:"겨울 스키캠프",amount:350000,flow:"plan"},
@@ -446,15 +456,16 @@ if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  $("loginBtn").onclick=async()=>{$("gateErr").hidden=true;const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await signInWithPopup(auth,p)}catch(e){$("gateErr").hidden=false;$("gateErr").textContent=(e.code==="auth/popup-blocked"?"로그인 창이 막혔어요. 주소창 오른쪽 팝업 차단 표시에서 '항상 허용'을 눌러 주세요.":"로그인하지 못했어요.")+"\n[오류 코드: "+(e.code||"unknown")+"]"}};
  $("gateOut").onclick=()=>signOut(auth);
- onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};pantry=[];db=null;items=[];render();
+ onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};ate={};pantry=[];db=null;items=[];render();
   if(!user)return gate("서윤 구글 계정으로 들어와요.",true,false);
   gate("불러오는 중…",false,false);
-  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d),famUpd:(c,id,d)=>F.updateDoc(F.doc(fs,c,id),d),famDel:(c,id)=>F.deleteDoc(F.doc(fs,c,id)),setMeal:(k,d)=>F.setDoc(F.doc(fs,"meals",k),d,{merge:true})};
+  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d),famUpd:(c,id,d)=>F.updateDoc(F.doc(fs,c,id),d),famDel:(c,id)=>F.deleteDoc(F.doc(fs,c,id)),setMeal:(k,d)=>F.setDoc(F.doc(fs,"meals",k),d,{merge:true}),setAte:(k,d)=>F.setDoc(F.doc(fs,"ate",k),d,{merge:true})};
   const u2=F.onSnapshot(F.collection(fs,"meals"),snap=>{meals=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()]));render()},()=>{});
   const u1=F.onSnapshot(col(),snap=>{$("gate").hidden=true;onItems(snap.docs.map(d=>({id:d.id,...d.data()})))},
    err=>{db=null;gate(err&&err.code==="permission-denied"?`${user.email} 계정으로는 열 수 없어요. 서윤 계정으로 다시 로그인해 주세요.`:"불러오지 못했어요: "+(err&&err.message||""),false,true)});
   const u3=F.onSnapshot(F.collection(fs,"pantry"),snap=>{pantry=snap.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
-  unsub=()=>{u1();u2();u3()};
+  const u4=F.onSnapshot(F.collection(fs,"ate"),snap=>{ate=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()]));render()},()=>{});
+  unsub=()=>{u1();u2();u3();u4()};
   $("who").innerHTML=`<span>${esc(user.email)}</span><button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>signOut(auth);
  });
 }
