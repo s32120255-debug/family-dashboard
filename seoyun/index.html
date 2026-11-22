@@ -161,7 +161,7 @@ $("topCat").innerHTML=CAT;$("gateCat").innerHTML=CAT.replace("<svg",'<svg width=
 {const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${"일월화수목금토"[d.getDay()]}요일`}
 
 /* ---------- 분류 ---------- */
-const TABS=[["sihoon","시훈 학습"],["work","서윤 회사"],["home","집안일"],["money","돈"]];
+const TABS=[["sihoon","시훈"],["work","서윤 회사"],["home","집안일"],["money","돈"]];
 const TABNAME={inbox:"일단 적기",...Object.fromEntries(TABS)};
 const GROUPS=[
  {k:"food",n:"먹는 것",subs:["식단","냉장고","간식","부식","영양제"]},
@@ -174,7 +174,7 @@ const ASK_ON_DONE={"사야 할 것":{flow:"out",q:"얼마 들었어요?"},"중�
 // 항목 {text, tab, group, sub, done, doneAt, amount, flow(out|in), date, sentHome[], createdAt}
 const destOf=x=>x.tab==="home"?["home",x.group||"todo",x.sub||""].join("/"):x.tab;
 const destLabel=x=>x.tab==="home"?["집안일",GNAME[x.group]||"해야 할 일",x.sub].filter(Boolean).join(" · "):TABNAME[x.tab]||"";
-const DESTS=[["inbox","일단 적기"],["sihoon","시훈 학습"],["work","서윤 회사"],
+const DESTS=[["inbox","일단 적기"],["sihoon","시훈"],["work","서윤 회사"],
  ...GROUPS.flatMap(g=>g.subs.length?g.subs.map(s=>[`home/${g.k}/${s}`,`집안일 · ${g.n} · ${s}`]):[[`home/${g.k}/`,`집안일 · ${g.n}`]]),["money","돈"]];
 const parseDest=v=>{const[tab,group,sub]=v.split("/");return tab==="home"?{tab,group,sub:sub||null}:{tab,group:null,sub:null}};
 
@@ -237,7 +237,7 @@ function moneyPanel(){
 
 function render(){
  renderInbox();renderTabs();
- $("panel").innerHTML=tab==="sihoon"?simplePanel("sihoon","시훈이 공부 관련 적기"):tab==="work"?simplePanel("work","회사 일 적기"):tab==="home"?homePanel():moneyPanel();
+ $("panel").innerHTML=tab==="sihoon"?simplePanel("sihoon","시훈이 관련 적기"):tab==="work"?simplePanel("work","회사 일 적기"):tab==="home"?homePanel():moneyPanel();
 }
 
 /* ---------- 창 ---------- */
