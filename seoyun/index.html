@@ -39,6 +39,14 @@ button,input,select{font:inherit;color:inherit}
 .card{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;display:grid;gap:10px;min-width:0}
 .card h2{font-family:var(--display);font-size:1.5rem;margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card h2 small{font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:400}
+.open{border:2.5px solid var(--fg);box-shadow:4px 4px 0 var(--fg)}
+.open h2{font-size:2rem}
+.open .big{font-family:var(--body);font-size:1rem;font-weight:700;background:var(--warn);color:var(--card);border-radius:999px;padding:2px 12px}
+.ogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;align-items:start}
+.ogrp{display:grid;gap:6px;align-content:start}
+.ogrp h3{margin:0;font-family:var(--display);font-size:1.25rem;display:flex;align-items:center;gap:6px}
+.ogrp h3 small{font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:400}
+.ogrp h3 .go{margin-left:auto}
 .inbox{background:var(--t-inbox);border-style:dashed}
 .addrow{display:flex;gap:6px;min-width:0}
 .addrow input,.addrow select{border:1.5px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--card);min-width:0}
@@ -126,7 +134,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 4</p>
+ <p style="font-size:.75rem">버전 5</p>
 </div></div>
 
 <div class="wrap">
@@ -135,6 +143,8 @@ details .list{margin-top:6px}
   <div><h1>서윤 보드</h1><div class="sub" id="today"></div></div>
   <div class="who" id="who"></div>
  </header>
+
+ <section class="card open" id="openBoard"></section>
 
  <section class="card inbox">
   <h2>일단 적기 <small id="inboxCount"></small></h2>
@@ -296,8 +306,22 @@ function editMeal(k,f){const lab=MEALS.find(x=>x[0]===f)[1];const d=new Date(k+"
  modal(`<form class="modal" id="mf"><h3>${d.getMonth()+1}/${d.getDate()} ${lab}</h3><label>메뉴<input name="v" value="${esc((meals[k]||{})[f]||"")}" placeholder="예: 김치찌개, 계란말이"></label><div class="row"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">저장</button></div></form>`);
  $("mc").onclick=closeForm;$("mf").onsubmit=e=>{e.preventDefault();const v=e.target.v.value.trim();closeForm();run(db.setMeal(k,{[f]:v||null}),"저장했어요")}}
 
+/* 미해결판: 모든 탭에서 아직 안 끝난 것을 한눈에 */
+function renderOpen(){const t=today();
+ const by=k=>items.filter(x=>x.tab===k&&!x.done&&x.flow!=="think"&&x.flow!=="plan").sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ const money=items.filter(x=>x.tab!=="inbox"&&!x.done&&(x.flow==="think"||x.flow==="plan")).sort((a,b)=>(a.flow==="plan"?0:1)-(b.flow==="plan"?0:1)||(a.createdAt||0)-(b.createdAt||0));
+ const dd=x=>Math.round((new Date(x.expiry+"T00:00")-new Date(t+"T00:00"))/864e5);
+ const food=pantry.filter(x=>!x.empty&&x.expiry&&dd(x)<=2).sort((a,b)=>a.expiry.localeCompare(b.expiry));
+ const r=x=>`<li class="item"><button class="check" data-done="${x.id}" aria-label="끝"></button><button class="t" data-open="${x.id}">${esc(x.text)}</button>${x.tab==="home"&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}</li>`;
+ const mr=x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button>${amountPill(x)}</li>`;
+ const fr=x=>{const n=dd(x);return`<li class="item"><button class="check" data-peat="${x.id}" aria-label="먹었어요"></button><button class="t" data-popen="${x.id}">${esc(x.name)}</button><span class="pill out">${n<0?-n+"일 지남":n?"D-"+n:"오늘까지"}</span></li>`};
+ const G=[["sihoon","시훈",by("sihoon"),r],["work","서윤 회사",by("work"),r],["home","집안일",by("home"),r],["money","돈",money,mr],["home","기한 다 된 먹을거리",food,fr]];
+ const total=G.reduce((s,g)=>s+g[2].length,0);
+ $("openBoard").innerHTML=`<h2>미해결 ${total?`<span class="big">${total}</span>`:""}</h2>
+ ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<div class="ogrp"><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3><ul class="list">${l.map(f).join("")}</ul></div>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}`}
+
 function render(){
- renderInbox();renderTabs();
+ renderOpen();renderInbox();renderTabs();
  $("panel").innerHTML=tab==="sihoon"?simplePanel("sihoon","시훈이 관련 적기"):tab==="work"?simplePanel("work","회사 일 적기"):tab==="home"?homePanel():tab==="meals"?mealsPanel():moneyPanel();
 }
 
@@ -375,6 +399,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
   if(d.to==="home")return askGroup(x);
   if(d.to==="money")return askAmount(`${x.text} · 얼마예요?`,"out",(a,f)=>upd(x.id,{tab:"money",amount:a,flow:a?f:null,date:today()},"돈으로 옮겼어요"));
   return upd(x.id,{tab:d.to},`${TABNAME[d.to]}(으)로 옮겼어요`)}
+ if(d.go){tab=d.go;store.set("sy-tab",tab);render();$("tabs").scrollIntoView({behavior:"smooth"});return}
  if(b.classList.contains("tab")){tab=d.k;store.set("sy-tab",tab);render();return}
  if(d.filter!==undefined){homeFilter[d.filter]=d.sub;render();return}
  if(d.week!==undefined){const n=Number(d.week);weekOff=n===0?0:weekOff+n;render();return}
@@ -391,7 +416,7 @@ document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=4;
+const VERSION=5;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
