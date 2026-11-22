@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=10">
+<link rel="manifest" href="manifest.json?v=11">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 10</p></div></div>
+<p style="font-size:.75rem">버전 11</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -161,7 +161,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   <section class="card wide" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색칠 = 일정 · 회색 점선 칸 = 집공부·자유 (엄마가 정해요) · 주황 점선 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
+   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색 띠 = 일정 · 회색 점선 = 집공부·자유 (엄마가 정해요) · 주황 점 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
   </section>
 
   <section class="card" id="c-tasks">
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=10";
-import {SEED_SCHEDULE} from "./seed.js?v=10";
+import {firebaseConfig} from "./config.js?v=11";
+import {SEED_SCHEDULE} from "./seed.js?v=11";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -326,34 +326,36 @@ function schedItems(date){
  return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
 const dur=m=>{const h=Math.floor(m/60),r=m%60;return(h?h+"시간 ":"")+(r?r+"분":"")||"0분"};
-// 실제 아날로그 시계: 테두리, 흰 문자판, 눈금, 안쪽 숫자, 일정은 문자판 안쪽 색 띠, 시침·분침·가운데 캡
+// 모던 시계: 흰 문자판 + 부드러운 그림자, 고딕 숫자, 둥근 끝 일정 띠, 가는 바늘
 function dialA(items,half,nowMin,showNow){
- const C=160,COL=["#7cc29c","#8fb8e8","#f3bf7a","#d59ad6","#ef9a93","#a9d37a","#86d0cf"];
+ const C=160,COL=["#6cc49a","#7fb2f0","#f5b56a","#c99bf0","#f39a9a","#9ad16a","#6fcfd0"];
  const pt=(r,min)=>{const a=(min%720)/720*2*Math.PI-Math.PI/2;return[C+r*Math.cos(a),C+r*Math.sin(a)]};
- const f=n=>n.toFixed(1);
- const lo=half==="am"?0:720,hi=lo+720,RO=104,RI=30;
- let g=`<defs><radialGradient id="face" cx="50%" cy="45%" r="60%"><stop offset="0%" stop-color="#ffffff"/><stop offset="100%" stop-color="#f1f3ef"/></radialGradient>
- <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".25"/></filter></defs>
- <circle cx="${C}" cy="${C}" r="154" fill="#2b3530" filter="url(#sh)"/><circle cx="${C}" cy="${C}" r="146" fill="#5b6a62"/><circle cx="${C}" cy="${C}" r="141" fill="url(#face)"/>`;
- let k=0,labels="";
+ const f=n=>n.toFixed(1);const lo=half==="am"?0:720,hi=lo+720,TR=84,TW=30;
+ const arcP=(r,a,b)=>{const[x1,y1]=pt(r,a),[x2,y2]=pt(r,b);return`M${f(x1)},${f(y1)} A${r},${r} 0 ${b-a>360?1:0} 1 ${f(x2)},${f(y2)}`};
+ let g=`<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#1d2621" flood-opacity=".14"/></filter>
+ <filter id="hs" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-opacity=".25"/></filter></defs>
+ <circle cx="${C}" cy="${C}" r="148" fill="#ffffff" filter="url(#sh)"/><circle cx="${C}" cy="${C}" r="148" fill="none" stroke="#e6ebe7" stroke-width="2"/>
+ <circle cx="${C}" cy="${C}" r="${TR}" fill="none" stroke="#f1f4f1" stroke-width="${TW}"/>`;
+ // 집공부·자유 칸
  {let pe=null;for(const it of items.filter(x=>x.start).sort((a,b)=>mins(a.start)-mins(b.start))){const s0=mins(it.start);
-  if(pe!=null&&s0-pe>=20){const a=Math.max(pe,lo),b=Math.min(s0,hi);if(b-a>=20){const L=b-a>360?1:0;const[x1,y1]=pt(RO,a),[x2,y2]=pt(RO,b),[x3,y3]=pt(RI,b),[x4,y4]=pt(RI,a);
-   g+=`<path d="M${f(x1)},${f(y1)} A${RO},${RO} 0 ${L} 1 ${f(x2)},${f(y2)} L${f(x3)},${f(y3)} A${RI},${RI} 0 ${L} 0 ${f(x4)},${f(y4)}Z" fill="#e9ece7" stroke="#9aa59f" stroke-width="1.2" stroke-dasharray="4 3"/>`;}}
+  if(pe!=null&&s0-pe>=20){const a=Math.max(pe,lo)+3,b=Math.min(s0,hi)-3;if(b-a>=14)g+=`<path d="${arcP(TR,a,b)}" fill="none" stroke="#b9c3bc" stroke-width="5" stroke-dasharray="0.1 9" stroke-linecap="round"/>`}
   pe=Math.max(pe??0,it.end?mins(it.end):s0)}}
+ let k=0,labels="";
  for(const it of items){if(!it.start)continue;const s=mins(it.start);
-  if(it.end){const e=mins(it.end);const a=Math.max(s,lo),b=Math.min(e,hi);const col=COL[k++%COL.length];if(b<=a)continue;
-   const L=b-a>360?1:0;const[x1,y1]=pt(RO,a),[x2,y2]=pt(RO,b),[x3,y3]=pt(RI,b),[x4,y4]=pt(RI,a);
-   g+=`<path d="M${f(x1)},${f(y1)} A${RO},${RO} 0 ${L} 1 ${f(x2)},${f(y2)} L${f(x3)},${f(y3)} A${RI},${RI} 0 ${L} 0 ${f(x4)},${f(y4)}Z" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
-   const[lx,ly]=pt((RO+RI)/2+6,(a+b)/2);labels+=`<text x="${f(lx)}" y="${f(ly)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?10:12}" font-weight="700" fill="#1d2621" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(it.title.slice(0,6))}</text>`}
-  else{if(s<lo||s>=hi)continue;const[x1,y1]=pt(RO,s),[x2,y2]=pt(RI+20,s);const[lx,ly]=pt(RI+8,s);
-   g+=`<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#c4561f" stroke-width="3" stroke-dasharray="4 3"/>`;
-   const[tx,ty]=pt(RO-14,s+(s%60<30?-14:14));labels+=`<text x="${f(tx)}" y="${f(ty)}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#c4561f" font-weight="700" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(it.title.slice(0,5))}</text>`}}
- for(let m=0;m<60;m++){const big=m%5===0;const[x1,y1]=pt(138,m*12),[x2,y2]=pt(big?126:132,m*12);g+=`<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#1d2621" stroke-width="${big?3.5:1.2}" stroke-linecap="round"/>`}
- for(let h=1;h<=12;h++){const[x,y]=pt(115,h*60);g+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="19" font-weight="700" fill="#1d2621" font-family="Georgia,serif">${h}</text>`}
- g+=labels+`<text x="${C}" y="${C-52}" text-anchor="middle" font-size="12" fill="#68736d" font-weight="700" letter-spacing="2">${half==="am"?"오전":"오후"}</text>`;
- const hand=(id,len,w,tail,col)=>`<g id="${id}"><path d="M${C-w},${C+tail} L${C},${C-len} L${C+w},${C+tail}Z" fill="${col}" filter="url(#sh)"/></g>`;
- g+=hand("hHour",78,6,14,"#1d2621")+hand("hMin",118,4,18,"#1d2621")+`<g id="hSec"><line x1="${C}" y1="${C+26}" x2="${C}" y2="${C-128}" stroke="#c4561f" stroke-width="2" stroke-linecap="round"/></g><circle cx="${C}" cy="${C}" r="8" fill="#c4561f"/><circle cx="${C}" cy="${C}" r="3" fill="#fff"/>`;
- return `<svg viewBox="0 0 320 320" role="img" aria-label="시계 모양 일정">${g}</svg>`;
+  if(it.end){const e=mins(it.end);const col=COL[k++%COL.length];const a=Math.max(s,lo),b=Math.min(e,hi);if(b<=a)continue;
+   const pad=Math.min(2,(b-a)/4);g+=`<path d="${arcP(TR,a+pad,b-pad)}" fill="none" stroke="${col}" stroke-width="${TW}"/>`;
+   const[lx,ly]=pt(TR,(a+b)/2);labels+=`<text x="${f(lx)}" y="${f(ly)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?10.5:12.5}" font-weight="700" fill="#ffffff" stroke="${col}" stroke-width="2" paint-order="stroke">${esc(it.title.slice(0,5))}</text>`}
+  else{if(s<lo||s>=hi)continue;const[x,y]=pt(TR+TW/2+12,s);const[lx,ly]=pt(TR-TW/2-14,s);
+   g+=`<circle cx="${f(x)}" cy="${f(y)}" r="5" fill="#f08a3c" stroke="#fff" stroke-width="2"/>`;
+   labels+=`<text x="${f(lx)}" y="${f(ly)}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#d0691f" font-weight="700" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(it.title.slice(0,4))}</text>`}}
+ for(let m=0;m<60;m++){if(m%5)continue;const[x,y]=pt(TR+TW/2+12,m*12);g+=`<circle cx="${f(x)}" cy="${f(y)}" r="${m%15?1.6:2.6}" fill="${m%15?"#c3ccc6":"#1d2621"}"/>`}
+ for(let h=1;h<=12;h++){const[x,y]=pt(132,h*60);const main=h%3===0;g+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="${main?20:14}" font-weight="${main?800:500}" fill="${main?"#1d2621":"#9aa59f"}" font-family="Noto Sans KR,system-ui,sans-serif">${h}</text>`}
+ g+=labels+`<text x="${C}" y="${C-38}" text-anchor="middle" font-size="11" fill="#9aa59f" font-weight="700" letter-spacing="3">${half==="am"?"AM 오전":"PM 오후"}</text>`;
+ g+=`<g filter="url(#hs)"><g id="hHour"><line x1="${C}" y1="${C+10}" x2="${C}" y2="${C-56}" stroke="#1d2621" stroke-width="6" stroke-linecap="round"/></g>
+ <g id="hMin"><line x1="${C}" y1="${C+12}" x2="${C}" y2="${C-92}" stroke="#1d2621" stroke-width="3.5" stroke-linecap="round"/></g>
+ <g id="hSec"><line x1="${C}" y1="${C+20}" x2="${C}" y2="${C-104}" stroke="#f08a3c" stroke-width="1.6" stroke-linecap="round"/><circle cx="${C}" cy="${C-104}" r="3" fill="#f08a3c"/></g></g>
+ <circle cx="${C}" cy="${C}" r="6" fill="#fff" stroke="#f08a3c" stroke-width="3"/>`;
+ return `<svg viewBox="0 0 320 320" role="img" aria-label="시계 모양 일정" style="font-family:Noto Sans KR,system-ui,sans-serif">${g}</svg>`;
 }
 
 let dialHalf=null;
@@ -562,7 +564,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=10;
+const VERSION=11;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
