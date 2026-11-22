@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>우리집 대시보드</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#2f6b4f">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 레이아웃: 위에 날짜·시계 띠, 아래 카드 격자(태블릿 가로 3열 · 세로 2열 · 폰 1열). 관리자 모드에서만 추가·수정·삭제 버튼이 보임 */
+:root{
+ --bg:#eef1ee;--card:#ffffff;--fg:#1d2621;--muted:#68736d;--line:#dbe1dc;--accent:#2f6b4f;--accent-soft:#e1efe7;
+ --warn:#b4541f;--warn-soft:#fbe9dc;--ok:#2f8a5b;--info:#3a6ea5;--info-soft:#e4edf7;--admin:#7a4fb0;--admin-soft:#efe7f8;
+ --display:"Gowun Dodum","Noto Sans KR",sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --bg:#121815;--card:#1b231f;--fg:#e7ece9;--muted:#9aa59f;--line:#2b3530;--accent:#7cc4a0;--accent-soft:#1d3028;
+ --warn:#f0a070;--warn-soft:#3a2518;--ok:#6cc497;--info:#7fa9d8;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}}
+:root[data-theme="dark"]{
+ --bg:#121815;--card:#1b231f;--fg:#e7ece9;--muted:#9aa59f;--line:#2b3530;--accent:#7cc4a0;--accent-soft:#1d3028;
+ --warn:#f0a070;--warn-soft:#3a2518;--ok:#6cc497;--info:#7fa9d8;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:1280px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.date{font-family:var(--display);font-size:1.9rem;line-height:1.1}
+.clock{font-family:var(--display);font-size:3rem;font-variant-numeric:tabular-nums;line-height:1}
+.top .sub{color:var(--muted);margin-top:4px}
+.adminbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 16px;cursor:pointer}
+body.admin .adminbtn{background:var(--admin);border-color:var(--admin);color:var(--card)}
+.adminbar{display:none;background:var(--admin-soft);border:1px solid var(--admin);border-radius:12px;padding:10px 14px;gap:10px;align-items:center;flex-wrap:wrap}
+body.admin .adminbar{display:flex}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+@media (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;display:grid;gap:10px}
+.card.wide{grid-column:span 2}
+@media (max-width:640px){.card.wide{grid-column:auto}}
+.card h2{font-family:var(--display);font-size:1.25rem;margin:0;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.card h2 small{font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:400}
+.list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);min-width:0}
+.item .t{flex:1;min-width:0;overflow-wrap:anywhere}
+.item .meta{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+.item.now{background:var(--accent-soft);outline:2px solid var(--accent)}
+.item.past{opacity:.5}
+.item.done .t{text-decoration:line-through;color:var(--muted)}
+.item.overdue{background:var(--warn-soft)}
+.pill{font-size:.75rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.pill.warn{background:var(--warn);color:var(--card)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.pill.low{background:var(--warn-soft);color:var(--warn)}
+.pill.out{background:var(--warn);color:var(--card)}
+.pill.info{background:var(--info-soft);color:var(--info)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.btn.small{padding:3px 9px;font-size:.85rem}
+.btn:focus-visible,.adminbtn:focus-visible,.cal button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.check{width:26px;height:26px;border-radius:7px;border:2px solid var(--accent);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:var(--card);font-weight:700}
+.check.on{background:var(--accent)}
+.adm{display:none;gap:4px}
+body.admin .adm{display:inline-flex}
+.icon{border:none;background:transparent;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px}
+.icon:hover{background:var(--line)}
+.empty{color:var(--muted);font-size:.9rem;padding:6px 2px}
+.addrow{display:flex;gap:6px}
+.addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tabs button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.cal .dow{font-size:.8rem;color:var(--muted);padding:2px 0}
+.cal button{border:none;background:var(--bg);border-radius:8px;min-height:42px;cursor:pointer;display:grid;align-content:start;justify-items:center;gap:2px;padding:4px 0;font-variant-numeric:tabular-nums}
+.cal button.other{opacity:.35}
+.cal button.today{outline:2px solid var(--accent)}
+.cal button.sel{background:var(--accent);color:var(--card)}
+.cal .dot{width:6px;height:6px;border-radius:50%;background:var(--info)}
+.cal button.sel .dot{background:var(--card)}
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.meals{overflow-x:auto}
+.meals table{border-collapse:collapse;width:100%;min-width:520px;font-size:.9rem}
+.meals th,.meals td{border:1px solid var(--line);padding:6px;text-align:left;vertical-align:top}
+.meals th{white-space:nowrap;font-weight:500;color:var(--muted);background:var(--bg)}
+.meals tr.today td,.meals tr.today th{background:var(--accent-soft)}
+.meals td.edit{cursor:pointer}
+body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
+.search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);width:100%}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:20;padding:16px}
+.modal{background:var(--card);border-radius:14px;padding:18px;width:min(420px,100%);display:grid;gap:12px;max-height:90vh;overflow:auto}
+.modal h3{margin:0;font-family:var(--display)}
+.modal label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
+.modal input,.modal select{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--fg)}
+.modal .row{display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:30}
+.status{color:var(--muted);font-size:.9rem}
+.weekday{font-weight:700;margin-top:6px;font-size:.9rem;color:var(--muted)}
+.gate{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:40;padding:16px}
+.gate .box{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(400px,100%);display:grid;gap:14px;text-align:center}
+.gate h1{font-family:var(--display);margin:0;font-size:1.7rem}
+.gate p{margin:0;color:var(--muted)}
+.gbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:12px 18px;cursor:pointer;font-weight:700;display:inline-flex;gap:10px;align-items:center;justify-content:center}
+.gbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.who{color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.linkbtn{border:none;background:none;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="gate" id="gate"><div class="box">
+ <h1>우리집 대시보드</h1>
+ <p id="gateMsg">가족 구글 계정으로 들어와요.</p>
+ <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
+ <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
+</div></div>
+
+<div class="wrap">
+ <header class="top">
+  <div><div class="date" id="today"></div><div class="sub" id="status">불러오는 중…</div><div class="who" id="who"></div></div>
+  <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="adminBtn">관리자</button></div>
+ </header>
+ <div class="adminbar" id="adminbar">
+  <b>관리자 모드</b><span class="status">각 칸의 ＋ 로 추가, ✎ 로 수정, ✕ 로 삭제해요.</span>
+  <span style="flex:1"></span>
+  <button class="btn small" id="pinBtn">비밀번호 설정</button>
+  <button class="btn small" id="adminOff">관리자 모드 끄기</button>
+ </div>
+
+ <main class="grid">
+  <section class="card" id="c-sched">
+   <h2>시훈이 오늘 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
+   <div class="tabs" id="schedTabs"></div>
+   <ul class="list" id="schedList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>오늘 할 살림 <span class="adm"><button class="btn small" data-add="chores">＋</button></span></h2>
+   <ul class="list" id="choreList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>엄마 도와주기 <small id="helpCount"></small><span class="adm"><button class="btn small" data-add="helpmom">＋</button></span></h2>
+   <ul class="list" id="helpList"></ul>
+  </section>
+
+  <section class="card">
+   <div class="calhead"><h2 style="flex:1">달력 <span class="adm"><button class="btn small" data-add="events">＋</button></span></h2>
+    <button class="icon" id="prevM" aria-label="이전 달">◀</button><b id="monthLabel"></b><button class="icon" id="nextM" aria-label="다음 달">▶</button></div>
+   <div class="cal" id="cal"></div>
+   <ul class="list" id="eventList"></ul>
+  </section>
+
+  <section class="card wide">
+   <h2>이번 주 식단표 <small>관리자 모드에서 칸을 눌러 입력</small></h2>
+   <div class="meals" id="meals"></div>
+  </section>
+
+  <section class="card">
+   <h2>장보기 <button class="btn small" id="clearBought">산 것 지우기</button></h2>
+   <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
+   <ul class="list" id="shopList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>소모품 <small>눌러서 상태 바꾸기</small><span class="adm"><button class="btn small" data-add="supplies">＋</button></span></h2>
+   <ul class="list" id="supplyList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>물건 위치 <span class="adm"><button class="btn small" data-add="locations">＋</button></span></h2>
+   <input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
+   <ul class="list" id="locList"></ul>
+  </section>
+ </main>
+</div>
+<div id="layer"></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {firebaseConfig} from "./config.js";
+import {SEED_SCHEDULE} from "./seed.js";
+
+const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
+const DAYNAME=Object.fromEntries(DAYS);
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const diffDays=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const dayKey=d=>DAYS[(d.getDay()+6)%7][0];
+const mins=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
+const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"오전":"오후";h=h%12||12;return`${ap} ${h}:${pad(m)}`};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+
+const COLS=["schedule","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const S=Object.fromEntries(COLS.map(c=>[c,[]]));
+let db=null,admin=false,schedDay=dayKey(new Date()),calMonth=new Date(),selDate=ymd(new Date());
+calMonth.setDate(1);
+
+const FIELDS={
+ schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
+ events:{title:"달력 일정",f:[["date","날짜","date"],["time","시각 (선택)","time"],["title","내용","text"]]},
+ locations:{title:"물건 위치",f:[["name","물건","text"],["place","있는 곳","text"]]},
+ supplies:{title:"소모품",f:[["name","이름","text"],["status","상태","select",[["ok","넉넉"],["low","조금 남음"],["out","다 떨어짐"]]],["note","메모 (예: 사는 곳)","text"]]},
+ chores:{title:"살림",f:[["title","할 일","text"],["due","할 날짜","date"],["repeat","반복","select",[["0","한 번만"],["1","매일"],["2","2일마다"],["3","3일마다"],["7","매주"],["14","2주마다"],["30","매달(30일)"]]]]},
+ helpmom:{title:"엄마 도와주기",f:[["title","도와줄 일","text"]]},
+ meals:{title:"식단",f:[["breakfast","아침","text"],["lunch","점심","text"],["dinner","저녁","text"]]},
+};
+
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+async function run(p,okMsg){try{await p;if(okMsg)toast(okMsg)}catch(e){toast("저장하지 못했어요: "+(e&&e.message||"연결을 확인해 주세요"))}}
+const today=()=>ymd(new Date());
+
+/* ---------- modal form ---------- */
+function openForm(col,doc,preset){
+ const def=FIELDS[col];const v={...(preset||{}),...(doc||{})};
+ const fields=def.f.map(([k,label,type,opts])=>{
+  const val=v[k]??"";const id=`f-${col}-${k}`;
+  if(type==="select")return`<label for="${id}">${label}<select id="${id}" name="${k}">${opts.map(([o,l])=>`<option value="${o}"${String(val)===o?" selected":""}>${l}</option>`).join("")}</select></label>`;
+  return`<label for="${id}">${label}<input id="${id}" name="${k}" type="${type}" value="${esc(val)}"></label>`}).join("");
+ $("layer").innerHTML=`<div class="overlay"><form class="modal" id="mform"><h3>${def.title} ${doc&&doc.id?"수정":"추가"}${v._label?" · "+esc(v._label):""}</h3>${fields}<div class="row"><button type="button" class="btn" id="mcancel">취소</button><button class="btn primary">저장</button></div></form></div>`;
+ $("mcancel").onclick=closeForm;
+ $("mform").onsubmit=e=>{e.preventDefault();const data={};
+  for(const[k,,type]of def.f){let x=e.target.elements[k].value.trim();data[k]=x===""?null:x}
+  if(col==="chores"){data.repeat=Number(data.repeat||0);if(!data.due)data.due=today()}
+  if(col==="schedule"&&!data.title){toast("일정 이름을 적어 주세요");return}
+  if((col==="events"&&(!data.date||!data.title))||(col==="locations"&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
+  closeForm();
+  if(col==="meals")return run(db.collection("meals").doc(v._date).set(data),"저장했어요");
+  if(doc&&doc.id)return run(db.collection(col).doc(doc.id).update(data),"저장했어요");
+  data.createdAt=Date.now();return run(db.collection(col).add(data),"추가했어요")};
+ const first=$("layer").querySelector("input,select");if(first)first.focus();
+}
+function closeForm(){$("layer").innerHTML=""}
+function confirmDel(col,id,name){
+ $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>지울까요?</h3><p style="margin:0">「${esc(name)}」을(를) 지워요. 되돌릴 수 없어요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div></div>`;
+ $("dn").onclick=closeForm;$("dy").onclick=()=>{closeForm();run(db.collection(col).doc(id).delete(),"지웠어요")}}
+const admBtns=(col,id,name)=>`<span class="adm"><button class="icon" data-edit="${col}" data-id="${id}" aria-label="수정">✎</button><button class="icon" data-del="${col}" data-id="${id}" data-name="${esc(name)}" aria-label="삭제">✕</button></span>`;
+
+/* ---------- admin ---------- */
+function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);$("adminBtn").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
+$("adminBtn").onclick=()=>{if(admin)return setAdmin(false);const pin=(S.settings.find(d=>d.id==="main")||{}).pin;
+ if(!pin)return setAdmin(true);
+ $("layer").innerHTML=`<div class="overlay"><form class="modal" id="pf"><h3>관리자 비밀번호</h3><label for="pinIn">비밀번호<input id="pinIn" type="password" inputmode="numeric" autocomplete="off"></label><div class="row"><button type="button" class="btn" id="pc">취소</button><button class="btn primary">열기</button></div></form></div>`;
+ $("pinIn").focus();$("pc").onclick=closeForm;
+ $("pf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===pin){closeForm();setAdmin(true)}else{toast("비밀번호가 달라요")}}};
+$("adminOff").onclick=()=>setAdmin(false);
+$("pinBtn").onclick=()=>{
+ $("layer").innerHTML=`<div class="overlay"><form class="modal" id="pf"><h3>관리자 비밀번호 설정</h3><p class="status" style="margin:0">아이가 실수로 고치지 않게 막는 용도예요. 비워 두면 비밀번호 없이 열려요.</p><label for="pinNew">새 비밀번호<input id="pinNew" type="password" inputmode="numeric" autocomplete="off"></label><div class="row"><button type="button" class="btn" id="pc">취소</button><button class="btn primary">저장</button></div></form></div>`;
+ $("pc").onclick=closeForm;$("pf").onsubmit=e=>{e.preventDefault();const p=$("pinNew").value.trim();closeForm();run(db.collection("settings").doc("main").set({pin:p||null}),p?"비밀번호를 정했어요":"비밀번호를 없앴어요")}};
+
+/* ---------- render ---------- */
+function renderTop(){const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYNAME[dayKey(d)]}요일`;$("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`}
+
+function renderSched(){
+ const tk=dayKey(new Date());
+ $("schedTabs").innerHTML=DAYS.map(([k,l])=>`<button data-sday="${k}" aria-pressed="${k===schedDay}">${l}${k===tk?"·":""}</button>`).join("");
+ const items=S.schedule.filter(x=>x.day===schedDay).sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes(),isToday=schedDay===tk;
+ let nextMarked=false;
+ $("schedList").innerHTML=items.length?items.map(it=>{
+  let cls="";if(isToday&&it.start){const s=mins(it.start),e=it.end?mins(it.end):s;
+   if(nm>=s&&nm<e)cls="now";else if(nm>=e&&nm>s)cls="past";else if(nm<s&&!nextMarked){nextMarked=true;cls="next"}}
+  const time=it.start?fmtT(it.start)+(it.end?" ~ "+fmtT(it.end).replace(/^오[전후] /,""):""):"시간 미정";
+  return`<li class="item ${cls}"><span class="meta" style="min-width:5.5em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}${admBtns("schedule",it.id,it.title)}</li>`}).join("")
+  :`<li class="empty">${DAYNAME[schedDay]}요일 일정이 없어요.${admin?"":" 관리자 모드에서 추가할 수 있어요."}</li>`;
+}
+
+function renderChores(){
+ const t=today();
+ const list=S.chores.filter(c=>!c.done&&c.due&&c.due<=t).sort((a,b)=>a.due.localeCompare(b.due));
+ const doneToday=S.chores.filter(c=>c.lastDone===t);
+ const upcoming=S.chores.filter(c=>!c.done&&c.due>t).sort((a,b)=>a.due.localeCompare(b.due)).slice(0,3);
+ let h=list.map(c=>{const late=diffDays(t,c.due);
+  return`<li class="item ${late>0?"overdue":""}"><button class="check" data-chore="${c.id}" aria-label="완료"></button><span class="t">${esc(c.title)}</span>${late>0?`<span class="pill warn">${late}일 밀림</span>`:'<span class="pill ok">오늘</span>'}${admBtns("chores",c.id,c.title)}</li>`}).join("");
+ h+=doneToday.filter(c=>!list.includes(c)).map(c=>`<li class="item done"><span class="check on">✓</span><span class="t">${esc(c.title)}</span><span class="meta">오늘 함</span>${admBtns("chores",c.id,c.title)}</li>`).join("");
+ if(!list.length&&!doneToday.length)h=`<li class="empty">오늘 할 살림이 없어요.</li>`;
+ if(upcoming.length)h+=`<li class="weekday">다가오는 일</li>`+upcoming.map(c=>`<li class="item"><span class="t">${esc(c.title)}</span><span class="meta">${parse(c.due).getMonth()+1}/${parse(c.due).getDate()}</span>${admBtns("chores",c.id,c.title)}</li>`).join("");
+ $("choreList").innerHTML=h;
+}
+function doneChore(id){const c=S.chores.find(x=>x.id===id);if(!c)return;const t=today();
+ const upd=c.repeat>0?{due:addDays(t,c.repeat),lastDone:t}:{done:true,lastDone:t};
+ run(db.collection("chores").doc(id).update(upd),c.repeat>0?`다음은 ${parse(upd.due).getMonth()+1}/${parse(upd.due).getDate()}`:"했어요")}
+
+function renderHelp(){const t=today();const n=S.helpmom.filter(x=>x.doneDate===t).length;
+ $("helpCount").textContent=S.helpmom.length?`오늘 ${n}/${S.helpmom.length}`:"";
+ $("helpList").innerHTML=S.helpmom.length?S.helpmom.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(x=>{const on=x.doneDate===t;
+  return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-help="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}</span>${admBtns("helpmom",x.id,x.title)}</li>`}).join("")
+  :`<li class="empty">도와줄 일이 아직 없어요.</li>`}
+
+function renderCal(){
+ const y=calMonth.getFullYear(),m=calMonth.getMonth();$("monthLabel").textContent=`${y}년 ${m+1}월`;
+ const start=new Date(y,m,1);start.setDate(1-((start.getDay()+6)%7));
+ const has=new Set(S.events.map(e=>e.date));const t=today();
+ let h=DAYS.map(([,l])=>`<div class="dow">${l}</div>`).join("");
+ for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=ymd(d);
+  if(i>=35&&d.getMonth()!==m)break;
+  h+=`<button data-date="${s}" class="${d.getMonth()!==m?"other":""} ${s===t?"today":""} ${s===selDate?"sel":""}" aria-label="${d.getMonth()+1}월 ${d.getDate()}일">${d.getDate()}${has.has(s)?'<span class="dot"></span>':""}</button>`}
+ $("cal").innerHTML=h;
+ const ev=S.events.filter(e=>e.date===selDate).sort((a,b)=>(a.time||"").localeCompare(b.time||""));const sd=parse(selDate);
+ $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(ev.length?ev.map(e=>`<li class="item"><span class="meta">${e.time?fmtT(e.time):"하루 종일"}</span><span class="t">${esc(e.title)}</span>${admBtns("events",e.id,e.title)}</li>`).join(""):`<li class="empty">일정 없음</li>`);
+}
+
+function renderMeals(){const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));const t=today();
+ const by=Object.fromEntries(S.meals.map(x=>[x.id,x]));
+ let h=`<table><thead><tr><th style="width:4.5em"></th><th>아침</th><th>점심</th><th>저녁</th></tr></thead><tbody>`;
+ for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const s=ymd(d);const r=by[s]||{};
+  h+=`<tr class="${s===t?"today":""}"><th>${DAYS[i][1]} ${d.getMonth()+1}/${d.getDate()}</th>${["breakfast","lunch","dinner"].map(k=>`<td class="edit" data-meal="${s}">${esc(r[k]||"")}</td>`).join("")}</tr>`}
+ $("meals").innerHTML=h+`</tbody></table>`}
+
+function renderShop(){const l=S.shopping.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.createdAt||0)-(b.createdAt||0));
+ $("shopList").innerHTML=l.length?l.map(x=>`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-shop="${x.id}" aria-label="${x.done?"안 샀어요":"샀어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.name)}</span>${x.from?`<span class="pill low">${esc(x.from)}</span>`:""}<span class="adm"><button class="icon" data-del="shopping" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">살 것이 없어요.</li>`;
+ $("clearBought").hidden=!S.shopping.some(x=>x.done)}
+
+const ST={ok:["넉넉","ok"],low:["조금 남음","low"],out:["다 떨어짐","out"]};
+function renderSupplies(){const order={out:0,low:1,ok:2};const l=S.supplies.slice().sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||String(a.name).localeCompare(b.name));
+ $("supplyList").innerHTML=l.length?l.map(x=>{const st=ST[x.status]||ST.ok;const inShop=S.shopping.some(s=>!s.done&&s.name===x.name);
+  return`<li class="item"><span class="t">${esc(x.name)}${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span>${x.status!=="ok"&&!inShop?`<button class="btn small" data-toshop="${x.id}">장보기에</button>`:""}<button class="pill ${st[1]}" style="border:none;cursor:pointer" data-sup="${x.id}">${st[0]}</button>${admBtns("supplies",x.id,x.name)}</li>`}).join(""):`<li class="empty">관리할 소모품이 아직 없어요.</li>`}
+
+function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.filter(x=>!q||(x.name+" "+x.place).includes(q)).sort((a,b)=>String(a.name).localeCompare(b.name));
+ $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
+
+function renderAll(){renderTop();renderSched();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
+
+/* ---------- events ---------- */
+document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
+ if(d.sday){schedDay=d.sday;renderSched();return}
+ if(d.date){selDate=d.date;renderCal();return}
+ if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal)toast("저장소에 연결되지 않았어요");return}
+ if(d.add){const preset=d.add==="schedule"?{day:schedDay}:d.add==="events"?{date:selDate}:d.add==="chores"?{due:today(),repeat:"0"}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
+ if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
+ if(d.del){confirmDel(d.del,d.id,d.name);return}
+ if(d.chore){doneChore(d.chore);return}
+ if(d.help){const x=S.helpmom.find(y=>y.id===d.help);const on=x&&x.doneDate===today();run(db.collection("helpmom").doc(d.help).update({doneDate:on?null:today()}),on?null:"고마워!");return}
+ if(d.shop){const x=S.shopping.find(y=>y.id===d.shop);run(db.collection("shopping").doc(d.shop).update({done:!x.done}));return}
+ if(d.sup){const x=S.supplies.find(y=>y.id===d.sup);const nx={ok:"low",low:"out",out:"ok"}[x.status]||"low";run(db.collection("supplies").doc(d.sup).update({status:nx}));return}
+ if(d.toshop){const x=S.supplies.find(y=>y.id===d.toshop);run(db.collection("shopping").add({name:x.name,done:false,from:"소모품",createdAt:Date.now()}),"장보기에 넣었어요");return}
+ if(d.meal&&admin){const doc=S.meals.find(x=>x.id===d.meal);const pd=parse(d.meal);openForm("meals",doc?{...doc,id:undefined}:null,{_date:d.meal,_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`});return}
+});
+$("prevM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
+$("nextM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
+$("locSearch").oninput=renderLoc;
+$("shopForm").onsubmit=e=>{e.preventDefault();const v=$("shopInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");$("shopInput").value="";run(db.collection("shopping").add({name:v,done:false,createdAt:Date.now()}))};
+$("clearBought").onclick=()=>{if(!db)return;for(const x of S.shopping.filter(y=>y.done))run(db.collection("shopping").doc(x.id).delete());toast("산 것을 지웠어요")};
+
+let lastDay=today();
+setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDay=dayKey(new Date());selDate=lastDay;renderAll()}else renderSched()},30000);
+renderAll();
+
+/* ---------- data (Firebase) ---------- */
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+let fs;try{fs=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){fs=initializeFirestore(app,{})}
+const wrapDb=()=>({collection:c=>({
+ onSnapshot:(cb,err)=>onSnapshot(collection(fs,c),cb,err),
+ add:data=>addDoc(collection(fs,c),data),
+ doc:id=>({set:d=>setDoc(doc(fs,c,id),d),update:d=>updateDoc(doc(fs,c,id),d),delete:()=>deleteDoc(doc(fs,c,id))})})});
+let unsubs=[];
+const gate=(msg,showLogin,showOut)=>{$("gate").hidden=false;$("gateMsg").textContent=msg;$("loginBtn").hidden=!showLogin;$("gateOut").hidden=!showOut};
+const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent);
+$("loginBtn").onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
+ try{await signInWithPopup(auth,p)}catch(e){
+  if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"))return signInWithRedirect(auth,p);
+  if(e&&e.code==="auth/popup-closed-by-user")return;
+  toast("로그인하지 못했어요: "+(e&&e.code||""))}};
+const doOut=()=>signOut(auth);
+$("gateOut").onclick=doOut;
+
+async function seedIfNeeded(){
+ const ref=doc(fs,"settings","main");const snap=await getDoc(ref);
+ if(snap.exists()&&snap.data().seeded)return;
+ const b=writeBatch(fs);
+ for(const it of SEED_SCHEDULE)b.set(doc(fs,"schedule",it.id),{day:it.day,start:it.start,end:it.end,title:it.title,note:it.note||null,createdAt:Date.now()});
+ b.set(ref,{seeded:true},{merge:true});await b.commit();
+}
+
+function startData(user){
+ db=wrapDb();
+ const timer=setTimeout(()=>{$("status").textContent="연결이 늦어요. 인터넷을 확인해 주세요."},10000);
+ let loaded=0,denied=false;
+ for(const c of COLS){let first=true;
+  unsubs.push(db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>({id:d.id,...d.data()}));
+   if(first){first=false;if(++loaded===COLS.length){clearTimeout(timer);$("status").textContent="우리 가족만 보는 화면"}}
+   renderAll()},err=>{clearTimeout(timer);
+   if(err&&err.code==="permission-denied"){if(!denied){denied=true;stopData();gate(`${user.email} 계정은 아직 허용되지 않았어요. 가족 계정으로 다시 로그인해 주세요.`,false,true)}return}
+   $("status").textContent="불러오지 못했어요: "+(err&&err.message||"")}))}
+ seedIfNeeded().catch(()=>{});
+}
+function stopData(){unsubs.forEach(u=>u());unsubs=[];db=null;for(const c of COLS)S[c]=[];if(admin)setAdmin(false);renderAll()}
+
+onAuthStateChanged(auth,user=>{
+ stopData();
+ if(!user){$("who").innerHTML="";gate(inApp?"카카오톡 같은 앱 안에서는 구글 로그인이 막혀요. 오른쪽 위 메뉴에서 「다른 브라우저로 열기」(Chrome)를 눌러 주세요.":"가족 구글 계정으로 들어와요.",!inApp,false);return}
+ $("gate").hidden=true;
+ $("who").innerHTML=`<span>${esc(user.displayName||user.email)}</span><button class="linkbtn" id="outBtn">로그아웃</button>`;
+ $("outBtn").onclick=doOut;
+ startData(user);
+});
+</script>
+</body>
+</html>
