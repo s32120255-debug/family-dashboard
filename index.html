@@ -181,7 +181,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signInWithRedirect,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {firebaseConfig} from "./config.js";
 import {SEED_SCHEDULE} from "./seed.js";
@@ -367,8 +367,8 @@ const gate=(msg,showLogin,showOut)=>{$("gate").hidden=false;$("gateMsg").textCon
 const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAgent);
 $("loginBtn").onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
  try{await signInWithPopup(auth,p)}catch(e){
-  if(e&&(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"))return signInWithRedirect(auth,p);
-  if(e&&e.code==="auth/popup-closed-by-user")return;
+  if(e&&(e.code==="auth/popup-closed-by-user"||e.code==="auth/cancelled-popup-request"))return;
+  if(e&&e.code==="auth/popup-blocked")return toast("팝업이 막혔어요. 버튼을 한 번 더 눌러 주세요.");
   toast("로그인하지 못했어요: "+(e&&e.code||""))}};
 const doOut=()=>signOut(auth);
 $("gateOut").onclick=doOut;
