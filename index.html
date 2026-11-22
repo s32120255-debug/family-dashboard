@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=12">
+<link rel="manifest" href="manifest.json?v=13">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -89,7 +89,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .meals th{white-space:nowrap;font-weight:500;color:var(--muted);background:var(--bg)}
 .meals tr.today td,.meals tr.today th{background:var(--accent-soft)}
 .meals td.edit{cursor:pointer}
-body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
+.meals td.edit:hover{outline:2px solid var(--admin)}
 .search{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg);width:100%}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:20;padding:16px}
 .modal{background:var(--card);border-radius:14px;padding:18px;width:min(420px,100%);display:grid;gap:12px;max-height:90vh;overflow:auto}
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 12</p></div></div>
+<p style="font-size:.75rem">버전 13</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -151,7 +151,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
-  <b>관리자 모드</b><span class="status">각 칸의 ＋ 로 추가, ✎ 로 수정, ✕ 로 삭제해요.</span>
+  <b>관리자 모드</b><span class="status">시훈이 일정과 과제를 고칠 수 있어요. 나머지 칸은 누구나 고칠 수 있어요.</span>
   <span style="flex:1"></span>
   <button class="btn small" id="pinBtn">비밀번호 설정</button>
   <button class="btn small" id="adminOff">관리자 모드 끄기</button>
@@ -195,7 +195,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   </section>
 
   <section class="card wide">
-   <h2>이번 주 식단표 <small>관리자 모드에서 칸을 눌러 입력</small></h2>
+   <h2>이번 주 식단표 <small>칸을 눌러 입력</small></h2>
    <div class="meals" id="meals"></div>
   </section>
 
@@ -206,23 +206,23 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   </section>
 
   <section class="card">
-   <h2>소모품 <small>눌러서 상태 바꾸기</small><span class="adm"><button class="btn small" data-add="supplies">＋</button></span></h2>
+   <h2>소모품 <small>눌러서 상태 바꾸기</small><button class="btn small" data-add="supplies">＋</button></h2>
    <ul class="list" id="supplyList"></ul>
   </section>
 
   <section class="card">
-   <h2>물건 위치 <span class="adm"><button class="btn small" data-add="locations">＋</button></span></h2>
+   <h2>물건 위치 <button class="btn small" data-add="locations">＋</button></h2>
    <input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
    <ul class="list" id="locList"></ul>
   </section>
 
   <section class="card">
-   <h2>오늘 할 살림 <span class="adm"><button class="btn small" data-add="chores">＋</button></span></h2>
+   <h2>오늘 할 살림 <button class="btn small" data-add="chores">＋</button></h2>
    <ul class="list" id="choreList"></ul>
   </section>
 
   <section class="card">
-   <h2>엄마 도와주기 <small id="helpCount"></small><span class="adm"><button class="btn small" data-add="helpmom">＋</button></span></h2>
+   <h2>엄마 도와주기 <small id="helpCount"></small><button class="btn small" data-add="helpmom">＋</button></h2>
    <ul class="list" id="helpList"></ul>
   </section>
  </main>
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=12";
-import {SEED_SCHEDULE} from "./seed.js?v=12";
+import {firebaseConfig} from "./config.js?v=13";
+import {SEED_SCHEDULE} from "./seed.js?v=13";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -301,7 +301,8 @@ function closeForm(){$("layer").innerHTML=""}
 function confirmDel(col,id,name){
  $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>지울까요?</h3><p style="margin:0">「${esc(name)}」을(를) 지워요. 되돌릴 수 없어요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div></div>`;
  $("dn").onclick=closeForm;$("dy").onclick=()=>{closeForm();run(db.collection(col).doc(id).delete(),"지웠어요")}}
-const admBtns=(col,id,name)=>`<span class="adm"><button class="icon" data-edit="${col}" data-id="${id}" aria-label="수정">✎</button><button class="icon" data-del="${col}" data-id="${id}" data-name="${esc(name)}" aria-label="삭제">✕</button></span>`;
+const ADMIN_ONLY=new Set(["schedule","tasks","taskTpls","rewards"]);
+const admBtns=(col,id,name)=>`<span class="${ADMIN_ONLY.has(col)?"adm":"own"}" style="${ADMIN_ONLY.has(col)?"":"display:inline-flex;gap:4px"}"><button class="icon" data-edit="${col}" data-id="${id}" aria-label="수정">✎</button><button class="icon" data-del="${col}" data-id="${id}" data-name="${esc(name)}" aria-label="삭제">✕</button></span>`;
 
 /* ---------- admin ---------- */
 function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);$("adminBtn").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
@@ -505,7 +506,7 @@ function renderMeals(){const now=new Date();const mon=new Date(now);mon.setDate(
  $("meals").innerHTML=h+`</tbody></table>`}
 
 function renderShop(){const l=S.shopping.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.createdAt||0)-(b.createdAt||0));
- $("shopList").innerHTML=l.length?l.map(x=>`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-shop="${x.id}" aria-label="${x.done?"안 샀어요":"샀어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.name)}</span>${x.from?`<span class="pill low">${esc(x.from)}</span>`:""}<span class="adm"><button class="icon" data-del="shopping" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">살 것이 없어요.</li>`;
+ $("shopList").innerHTML=l.length?l.map(x=>`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-shop="${x.id}" aria-label="${x.done?"안 샀어요":"샀어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.name)}</span>${x.from?`<span class="pill low">${esc(x.from)}</span>`:""}<span style="display:inline-flex"><button class="icon" data-del="shopping" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">살 것이 없어요.</li>`;
  $("clearBought").hidden=!S.shopping.some(x=>x.done)}
 
 const ST={ok:["넉넉","ok"],low:["조금 남음","low"],out:["다 떨어짐","out"]};
@@ -546,7 +547,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.shop){const x=S.shopping.find(y=>y.id===d.shop);run(db.collection("shopping").doc(d.shop).update({done:!x.done}));return}
  if(d.sup){const x=S.supplies.find(y=>y.id===d.sup);const nx={ok:"low",low:"out",out:"ok"}[x.status]||"low";run(db.collection("supplies").doc(d.sup).update({status:nx}));return}
  if(d.toshop){const x=S.supplies.find(y=>y.id===d.toshop);run(db.collection("shopping").add({name:x.name,done:false,from:"소모품",createdAt:Date.now()}),"장보기에 넣었어요");return}
- if(d.meal&&admin){const doc=S.meals.find(x=>x.id===d.meal);const pd=parse(d.meal);openForm("meals",doc?{...doc,id:undefined}:null,{_date:d.meal,_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`});return}
+ if(d.meal){const doc=S.meals.find(x=>x.id===d.meal);const pd=parse(d.meal);openForm("meals",doc?{...doc,id:undefined}:null,{_date:d.meal,_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`});return}
 });
 $("prevM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("nextM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
@@ -569,7 +570,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=12;
+const VERSION=13;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
