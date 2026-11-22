@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=6">
+<link rel="manifest" href="manifest.json?v=7">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -112,7 +112,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 .datenav b{min-width:8.5em;text-align:center}
 .schedbody{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:640px){.schedbody{grid-template-columns:minmax(0,1fr)}}
-#dial svg{width:100%;height:auto;max-width:300px;display:block;margin:0 auto}
+#dial svg{width:100%;height:auto;max-width:340px;display:block;margin:0 auto}
 .dlegend{display:flex;gap:12px;justify-content:center;color:var(--muted);font-size:.8rem;margin-top:4px;flex-wrap:wrap}
 .dlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 6</p></div></div>
+<p style="font-size:.75rem">버전 7</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -161,7 +161,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   <section class="card wide" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span><i style="background:var(--info)"></i>오전</span><span><i style="background:var(--accent)"></i>오후</span><span><i style="background:var(--line)"></i>빈 시간</span></div></div><ul class="list" id="schedList"></ul></div>
+   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색칠 = 일정 · 하얀 곳 = 빈 시간 · 주황 선 = 시작만 정해진 일정</span></div></div><ul class="list" id="schedList"></ul></div>
   </section>
 
   <section class="card" id="c-tasks">
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=6";
-import {SEED_SCHEDULE} from "./seed.js?v=6";
+import {firebaseConfig} from "./config.js?v=7";
+import {SEED_SCHEDULE} from "./seed.js?v=7";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -326,25 +326,34 @@ function schedItems(date){
  return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
 const dur=m=>{const h=Math.floor(m/60),r=m%60;return(h?h+"시간 ":"")+(r?r+"분":"")||"0분"};
-function renderDial(items,isToday){
- const C=150,ring=[[118,98,"pm"],[86,66,"am"]];
+// Option A: 실제 시계처럼 12시간 한 판 + 일정 조각에 이름 + 시침·분침
+function dialA(items,half,nowMin,showNow){
+ const C=160,R=128,COL=["#8fc5a6","#9cc0e6","#f2c48d","#d9a7d6","#f1a7a1","#b8d98a","#a8d8d8"];
  const pt=(r,min)=>{const a=(min%720)/720*2*Math.PI-Math.PI/2;return[C+r*Math.cos(a),C+r*Math.sin(a)]};
- const arc=(ro,ri,a,b)=>{if(b-a>=720)b=a+719.9;const[x1,y1]=pt(ro,a),[x2,y2]=pt(ro,b),[x3,y3]=pt(ri,b),[x4,y4]=pt(ri,a);const L=b-a>360?1:0;
-  return`M${x1.toFixed(1)},${y1.toFixed(1)} A${ro},${ro} 0 ${L} 1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${ri},${ri} 0 ${L} 0 ${x4.toFixed(1)},${y4.toFixed(1)}Z`};
- let g=`<circle cx="${C}" cy="${C}" r="108" fill="none" stroke="var(--line)" stroke-width="20"/><circle cx="${C}" cy="${C}" r="76" fill="none" stroke="var(--line)" stroke-width="20"/>`;
- for(let h=0;h<12;h++){const[x,y]=pt(136,h*60);g+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="13" fill="var(--muted)">${h||12}</text>`;
-  const[a1,b1]=pt(122,h*60),[a2,b2]=pt(127,h*60);g+=`<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" stroke="var(--muted)"/>`}
+ const lo=half==="am"?0:720,hi=lo+720;
+ let g=`<circle cx="${C}" cy="${C}" r="${R}" fill="var(--card)" stroke="var(--fg)" stroke-width="3"/>`;
+ let k=0,labels="";
+ for(const it of items){if(!it.start)continue;const s=mins(it.start);
+  if(it.end){const e=mins(it.end);const a=Math.max(s,lo),b=Math.min(e,hi);if(b<=a){k++;continue}
+   const[x1,y1]=pt(R-4,a),[x2,y2]=pt(R-4,b);const col=COL[k++%COL.length];
+   g+=`<path d="M${C},${C} L${x1.toFixed(1)},${y1.toFixed(1)} A${R-4},${R-4} 0 ${b-a>360?1:0} 1 ${x2.toFixed(1)},${y2.toFixed(1)}Z" fill="${col}"/>`;
+   const[lx,ly]=pt(R*0.66,(a+b)/2);labels+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?11:13}" font-weight="700" fill="#1d2621">${esc(it.title.slice(0,6))}</text>`}
+  else{if(s<lo||s>=hi)continue;const[x1,y1]=pt(R-2,s),[x2,y2]=pt(R-22,s);const[lx,ly]=pt(R-34,s);
+   g+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#b4541f" stroke-width="4" stroke-linecap="round"/>`;
+   labels+=`<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#b4541f" font-weight="700">${esc(it.title.slice(0,5))}</text>`}}
+ for(let m=0;m<60;m++){const big=m%5===0;const[x1,y1]=pt(R,m*12),[x2,y2]=pt(R-(big?10:5),m*12);g+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--fg)" stroke-width="${big?2.5:1}"/>`}
+ for(let h=1;h<=12;h++){const[x,y]=pt(R+16,h*60);g+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="17" font-weight="700" fill="var(--fg)">${h}</text>`}
+ g+=labels;
+ if(showNow){const hm=nowMin%720;const[hx,hy]=pt(R*0.5,hm);const mm=(nowMin%60)*12;const[mx,my]=pt(R*0.82,mm);
+  g+=`<line x1="${C}" y1="${C}" x2="${hx}" y2="${hy}" stroke="var(--fg)" stroke-width="7" stroke-linecap="round"/><line x1="${C}" y1="${C}" x2="${mx}" y2="${my}" stroke="var(--fg)" stroke-width="4" stroke-linecap="round"/><circle cx="${C}" cy="${C}" r="6" fill="#b4541f"/>`}
+ return `<svg viewBox="0 0 320 320" role="img" aria-label="시계 모양 일정">${g}</svg>`;
+}
+
+let dialHalf=null;
+function renderDial(items,isToday){
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
- for(const it of items){if(it.skipped||!it.start)continue;const s0=mins(it.start);const e0=it.end?mins(it.end):s0+10;
-  const cur=isToday&&nm>=s0&&nm<e0;
-  for(const[lo,hi,[ro,ri,k]]of[[0,720,ring[1]],[720,1440,ring[0]]]){const a=Math.max(s0,lo),b=Math.min(e0,hi);if(b<=a)continue;
-   g+=`<path d="${arc(ro,ri,a,b)}" fill="${k==="am"?"var(--info)":"var(--accent)"}" opacity="${it.end?1:.55}" ${cur?'stroke="var(--fg)" stroke-width="2"':""}><title>${esc(it.title)}</title></path>`}}
- let center=`<text x="${C}" y="${C-8}" text-anchor="middle" font-size="15" fill="var(--muted)">${isToday?"지금":""}</text>`;
- if(isToday){const[hx,hy]=pt(nm>=720?92:60,nm);g+=`<line x1="${C}" y1="${C}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="var(--warn)" stroke-width="4" stroke-linecap="round"/><circle cx="${C}" cy="${C}" r="5" fill="var(--warn)"/>`;
-  const live=items.filter(x=>!x.skipped&&x.start);const curIt=live.find(x=>{const a=mins(x.start),b=x.end?mins(x.end):a;return nm>=a&&nm<b});const nx=live.find(x=>mins(x.start)>nm);
-  center=curIt?`<text x="${C}" y="${C+24}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--fg)">${esc(curIt.title.slice(0,9))} 중</text>`
-   :nx?`<text x="${C}" y="${C+22}" text-anchor="middle" font-size="12" fill="var(--muted)">다음까지</text><text x="${C}" y="${C+40}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--fg)">${dur(mins(nx.start)-nm)}</text>`:`<text x="${C}" y="${C+26}" text-anchor="middle" font-size="13" fill="var(--muted)">남은 일정 없음</text>`}
- $("dial").innerHTML=`<svg viewBox="0 0 300 300" role="img" aria-label="시계 모양 일정: 바깥 고리 오후, 안쪽 고리 오전">${g}<text x="${C}" y="${C-34}" text-anchor="middle" font-size="10" fill="var(--muted)">안 오전 · 밖 오후</text>${isToday?"":""}${center}</svg>`;
+ const half=dialHalf||(isToday?(nm<720?"am":"pm"):(items.some(x=>x.start&&mins(x.start)>=720)?"pm":"am"));
+ $("dial").innerHTML=`<div class="tabs" style="justify-content:center;margin-bottom:6px"><button data-half="am" aria-pressed="${half==="am"}">오전</button><button data-half="pm" aria-pressed="${half==="pm"}">오후</button></div>`+dialA(items,half,nm,isToday&&(nm<720?"am":"pm")===half);
 }
 function renderSched(){
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
@@ -493,7 +502,9 @@ function renderAll(){renderTop();renderSched();renderTasks();renderNotes();rende
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
  if(d.date){selDate=d.date;renderCal();return}
+ if(d.half){dialHalf=d.half;renderSched();return}
  if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal||d.task||d.sedit||d.sdel)toast("저장소에 연결되지 않았어요");return}
+ if(d.half){dialHalf=d.half;renderSched();return}
  if(d.add==="schedule"){openSched(null);return}
  if(d.sedit){const it=schedItems(schedDate).find(x=>x.id===d.sedit&&x.src===d.src);if(it)openSched(it,d.src);return}
  if(d.sdel){const it=schedItems(schedDate).find(x=>x.id===d.sdel&&x.src===d.src);if(it)delSched(it,d.src);return}
@@ -521,9 +532,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
 $("prevM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("nextM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
 $("locSearch").oninput=renderLoc;
-$("sPrev").onclick=()=>{schedDate=addDays(schedDate,-1);renderSched()};
-$("sNext").onclick=()=>{schedDate=addDays(schedDate,1);renderSched()};
-$("sToday").onclick=()=>{schedDate=today();renderSched()};
+$("sPrev").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,-1);renderSched()};
+$("sNext").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,1);renderSched()};
+$("sToday").onclick=()=>{dialHalf=null;schedDate=today();renderSched()};
 try{me=localStorage.getItem("me")}catch(e){}
 $("noteFrom").onchange=e=>{me=e.target.value;try{localStorage.setItem("me",me)}catch(_){}};
 $("noteForm").onsubmit=e=>{e.preventDefault();const v=$("noteInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
@@ -539,7 +550,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=6;
+const VERSION=7;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
