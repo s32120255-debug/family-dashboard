@@ -126,7 +126,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 2</p>
+ <p style="font-size:.75rem">버전 3</p>
 </div></div>
 
 <div class="wrap">
@@ -308,11 +308,12 @@ function sendHome(x){
  <label>보낼 내용<input name="t" value="${esc(x.text)}"></label>
  <div class="seg" style="flex-wrap:wrap"><label><input type="radio" name="w" value="shopping" checked>장보기</label><label><input type="radio" name="w" value="events">달력</label><label><input type="radio" name="w" value="helpmom">엄마 도와주기</label></div>
  <label id="hdl">달력 날짜<input name="d" type="date" value="${today()}"></label>
+ <label id="hpl">포인트<input name="p" type="number" min="1" inputmode="numeric" value="1"></label>
  <div class="row"><button type="button" class="btn" id="hc">취소</button><button class="btn primary">보내기</button></div></form>`);
- const f=$("hf");const sync=()=>{$("hdl").hidden=f.w.value!=="events"};sync();f.querySelectorAll('input[name="w"]').forEach(r=>r.onchange=sync);
+ const f=$("hf");const sync=()=>{$("hdl").hidden=f.w.value!=="events";$("hpl").hidden=f.w.value!=="helpmom"};sync();f.querySelectorAll('input[name="w"]').forEach(r=>r.onchange=sync);
  $("hc").onclick=closeForm;
  f.onsubmit=async e=>{e.preventDefault();const t=f.t.value.trim();if(!t)return toast("내용을 적어 주세요");const w=f.w.value,d=f.d.value||today();closeForm();
-  const data=w==="shopping"?{name:t,done:false,from:"엄마",createdAt:Date.now()}:w==="events"?{date:d,time:null,title:t,createdAt:Date.now()}:{title:t,createdAt:Date.now()};
+  const data=w==="shopping"?{name:t,done:false,from:"엄마",createdAt:Date.now()}:w==="events"?{date:d,time:null,title:t,createdAt:Date.now()}:{title:t,points:Math.max(1,toNum(f.p.value)||1),createdAt:Date.now()};
   const label={shopping:"장보기",events:"달력",helpmom:"도와주기"}[w];
   try{await db.family(w,data);await db.update(x.id,{sentHome:[...new Set([...(x.sentHome||[]),label])]});toast(`우리집 ${label}에 보냈어요`)}catch(err){toast("보내지 못했어요: "+(err&&err.message||""))}}}
 
@@ -356,7 +357,7 @@ document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=2;
+const VERSION=3;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
