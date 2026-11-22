@@ -65,6 +65,7 @@ body.admin .adminbar{display:flex}
 .check.on{background:var(--accent)}
 .adm{display:none;gap:4px}
 body.admin .adm{display:inline-flex}
+body.admin #tplBox{display:grid!important;gap:6px}
 .icon{border:none;background:transparent;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px}
 .icon:hover{background:var(--line)}
 .empty{color:var(--muted);font-size:.9rem;padding:6px 2px}
@@ -107,6 +108,31 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 .gbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .who{color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .linkbtn{border:none;background:none;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+.datenav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.datenav b{min-width:8.5em;text-align:center}
+.schedbody{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:640px){.schedbody{grid-template-columns:minmax(0,1fr)}}
+#dial svg{width:100%;height:auto;max-width:300px;display:block;margin:0 auto}
+.dlegend{display:flex;gap:12px;justify-content:center;color:var(--muted);font-size:.8rem;margin-top:4px;flex-wrap:wrap}
+.dlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
+.item.skipped{opacity:.45}
+.item.skipped .t{text-decoration:line-through}
+.pts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pt{background:var(--bg);border-radius:10px;padding:6px 10px;display:grid;line-height:1.2}
+.pt b{font-size:1.3rem;font-variant-numeric:tabular-nums}
+.pt small{color:var(--muted);font-size:.75rem}
+.pt.main{background:var(--accent-soft)}
+.pt.main b{color:var(--accent)}
+.sub2{font-weight:700;font-size:.9rem;color:var(--muted);margin:4px 0 0}
+.msg{display:grid;gap:2px;padding:8px 10px;border-radius:10px;background:var(--bg)}
+.msg .h{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.8rem}
+.msg .h span:first-child{flex:1}
+.msg .b{overflow-wrap:anywhere;white-space:pre-wrap}
+.fromto{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.9rem;color:var(--muted)}
+.fromto select{border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--bg)}
+.daysbox{display:flex;gap:4px;flex-wrap:wrap}
+.daysbox label{display:inline-flex;gap:3px;align-items:center;color:var(--fg);font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -117,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 4</p></div></div>
+<p style="font-size:.75rem">버전 5</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -132,27 +158,40 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  </div>
 
  <main class="grid">
-  <section class="card" id="c-sched">
-   <h2>시훈이 오늘 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
-   <div class="tabs" id="schedTabs"></div>
-   <ul class="list" id="schedList"></ul>
+  <section class="card wide" id="c-sched">
+   <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
+   <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
+   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span><i style="background:var(--info)"></i>오전</span><span><i style="background:var(--accent)"></i>오후</span><span><i style="background:var(--line)"></i>빈 시간</span></div></div><ul class="list" id="schedList"></ul></div>
+  </section>
+
+  <section class="card" id="c-tasks">
+   <h2>오늘의 과제 <span class="adm"><button class="btn small" data-add="tasks">＋</button></span></h2>
+   <div class="pts" id="points"></div>
+   <ul class="list" id="taskList"></ul>
+   <div id="lateBox"></div>
+   <div class="adm" style="display:none" id="tplBox"></div>
   </section>
 
   <section class="card">
-   <h2>오늘 할 살림 <span class="adm"><button class="btn small" data-add="chores">＋</button></span></h2>
-   <ul class="list" id="choreList"></ul>
-  </section>
-
-  <section class="card">
-   <h2>엄마 도와주기 <small id="helpCount"></small><span class="adm"><button class="btn small" data-add="helpmom">＋</button></span></h2>
-   <ul class="list" id="helpList"></ul>
-  </section>
-
-  <section class="card">
-   <div class="calhead"><h2 style="flex:1">달력 <span class="adm"><button class="btn small" data-add="events">＋</button></span></h2>
+   <div class="calhead"><h2 style="flex:1">달력 <button class="btn small" data-add="events">＋</button></h2>
     <button class="icon" id="prevM" aria-label="이전 달">◀</button><b id="monthLabel"></b><button class="icon" id="nextM" aria-label="다음 달">▶</button></div>
    <div class="cal" id="cal"></div>
    <ul class="list" id="eventList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>서로에게 할 말</h2>
+   <form id="noteForm" style="display:grid;gap:6px">
+    <div class="fromto"><select id="noteFrom" aria-label="보내는 사람"></select> 이(가) <select id="noteTo" aria-label="받는 사람"></select> 에게</div>
+    <div class="addrow"><input id="noteInput" placeholder="하고 싶은 말" aria-label="하고 싶은 말" maxlength="200"><button class="btn primary">보내기</button></div>
+   </form>
+   <ul class="list" id="noteList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>먹고 싶은 음식</h2>
+   <form class="addrow" id="foodForm"><input id="foodInput" placeholder="먹고 싶은 것" aria-label="먹고 싶은 음식"><button class="btn primary">추가</button></form>
+   <ul class="list" id="foodList"></ul>
   </section>
 
   <section class="card wide">
@@ -176,6 +215,16 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
    <input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
    <ul class="list" id="locList"></ul>
   </section>
+
+  <section class="card">
+   <h2>오늘 할 살림 <span class="adm"><button class="btn small" data-add="chores">＋</button></span></h2>
+   <ul class="list" id="choreList"></ul>
+  </section>
+
+  <section class="card">
+   <h2>엄마 도와주기 <small id="helpCount"></small><span class="adm"><button class="btn small" data-add="helpmom">＋</button></span></h2>
+   <ul class="list" id="helpList"></ul>
+  </section>
  </main>
 </div>
 <div id="layer"></div>
@@ -184,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=4";
-import {SEED_SCHEDULE} from "./seed.js?v=4";
+import {firebaseConfig} from "./config.js?v=5";
+import {SEED_SCHEDULE} from "./seed.js?v=5";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -200,12 +249,16 @@ const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"�
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 
-const COLS=["schedule","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const COLS=["schedule","schedOverrides","tasks","taskTpls","rewards","wishfood","notes","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
 const S=Object.fromEntries(COLS.map(c=>[c,[]]));
-let db=null,admin=false,schedDay=dayKey(new Date()),calMonth=new Date(),selDate=ymd(new Date());
+let db=null,admin=false,schedDate=ymd(new Date()),loadedCols=new Set(),me=null,calMonth=new Date(),selDate=ymd(new Date());
 calMonth.setDate(1);
 
+const PEOPLE=["엄마","아빠","시훈"];
 const FIELDS={
+ tasks:{title:"과제",f:[["title","과제","text"],["points","포인트","number"],["date","할 날짜","date"]]},
+ taskTpls:{title:"반복 과제",f:[["title","과제","text"],["points","포인트","number"],["days","할 요일","days"]]},
+ rewards:{title:"보상으로 포인트 쓰기",f:[["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},
  schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
  events:{title:"달력 일정",f:[["date","날짜","date"],["time","시각 (선택)","time"],["title","내용","text"]]},
  locations:{title:"물건 위치",f:[["name","물건","text"],["place","있는 곳","text"]]},
@@ -220,16 +273,21 @@ async function run(p,okMsg){try{await p;if(okMsg)toast(okMsg)}catch(e){toast("�
 const today=()=>ymd(new Date());
 
 /* ---------- modal form ---------- */
-function openForm(col,doc,preset){
- const def=FIELDS[col];const v={...(preset||{}),...(doc||{})};
+function openForm(col,doc,preset,defOv,onSave){
+ const def=defOv||FIELDS[col];const v={...(preset||{}),...(doc||{})};
  const fields=def.f.map(([k,label,type,opts])=>{
   const val=v[k]??"";const id=`f-${col}-${k}`;
+  if(type==="days"){const on=new Set(Array.isArray(val)?val:[]);return`<div><div style="font-size:.9rem;color:var(--muted);margin-bottom:4px">${label}</div><div class="daysbox">${DAYS.map(([dk,dl])=>`<label><input type="checkbox" name="${k}" value="${dk}"${on.has(dk)?" checked":""}>${dl}</label>`).join("")}</div></div>`}
+  if(type==="note")return`<p class="status" style="margin:0">${label}</p>`;
   if(type==="select")return`<label for="${id}">${label}<select id="${id}" name="${k}">${opts.map(([o,l])=>`<option value="${o}"${String(val)===o?" selected":""}>${l}</option>`).join("")}</select></label>`;
   return`<label for="${id}">${label}<input id="${id}" name="${k}" type="${type}" value="${esc(val)}"></label>`}).join("");
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="mform"><h3>${def.title} ${doc&&doc.id?"수정":"추가"}${v._label?" · "+esc(v._label):""}</h3>${fields}<div class="row"><button type="button" class="btn" id="mcancel">취소</button><button class="btn primary">저장</button></div></form></div>`;
  $("mcancel").onclick=closeForm;
  $("mform").onsubmit=e=>{e.preventDefault();const data={};
-  for(const[k,,type]of def.f){let x=e.target.elements[k].value.trim();data[k]=x===""?null:x}
+  for(const[k,,type]of def.f){if(type==="note")continue;
+   if(type==="days"){data[k]=[...e.target.querySelectorAll(`input[name="${k}"]:checked`)].map(x=>x.value);continue}
+   let x=e.target.elements[k].value.trim();data[k]=x===""?null:x;if(type==="number")data[k]=x===""?null:Number(x)}
+  if(onSave){if(onSave(data)!==false)closeForm();return}
   if(col==="chores"){data.repeat=Number(data.repeat||0);if(!data.due)data.due=today()}
   if(col==="schedule"&&!data.title){toast("일정 이름을 적어 주세요");return}
   if((col==="events"&&(!data.date||!data.title))||(col==="locations"&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
@@ -260,18 +318,120 @@ $("pinBtn").onclick=()=>{
 /* ---------- render ---------- */
 function renderTop(){const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYNAME[dayKey(d)]}요일`;$("clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}`}
 
+function schedItems(date){
+ const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.date===date);
+ const hidden=new Set(ov.filter(o=>o.baseId).map(o=>o.baseId));
+ const base=S.schedule.filter(x=>x.day===dk).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
+ const extra=ov.filter(o=>!o.skip).map(o=>({...o,src:"date"}));
+ return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
+}
+const dur=m=>{const h=Math.floor(m/60),r=m%60;return(h?h+"시간 ":"")+(r?r+"분":"")||"0분"};
+function renderDial(items,isToday){
+ const C=150,ring=[[118,98,"pm"],[86,66,"am"]];
+ const pt=(r,min)=>{const a=(min%720)/720*2*Math.PI-Math.PI/2;return[C+r*Math.cos(a),C+r*Math.sin(a)]};
+ const arc=(ro,ri,a,b)=>{if(b-a>=720)b=a+719.9;const[x1,y1]=pt(ro,a),[x2,y2]=pt(ro,b),[x3,y3]=pt(ri,b),[x4,y4]=pt(ri,a);const L=b-a>360?1:0;
+  return`M${x1.toFixed(1)},${y1.toFixed(1)} A${ro},${ro} 0 ${L} 1 ${x2.toFixed(1)},${y2.toFixed(1)} L${x3.toFixed(1)},${y3.toFixed(1)} A${ri},${ri} 0 ${L} 0 ${x4.toFixed(1)},${y4.toFixed(1)}Z`};
+ let g=`<circle cx="${C}" cy="${C}" r="108" fill="none" stroke="var(--line)" stroke-width="20"/><circle cx="${C}" cy="${C}" r="76" fill="none" stroke="var(--line)" stroke-width="20"/>`;
+ for(let h=0;h<12;h++){const[x,y]=pt(136,h*60);g+=`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" dominant-baseline="central" font-size="13" fill="var(--muted)">${h||12}</text>`;
+  const[a1,b1]=pt(122,h*60),[a2,b2]=pt(127,h*60);g+=`<line x1="${a1}" y1="${b1}" x2="${a2}" y2="${b2}" stroke="var(--muted)"/>`}
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ for(const it of items){if(it.skipped||!it.start)continue;const s0=mins(it.start);const e0=it.end?mins(it.end):s0+10;
+  const cur=isToday&&nm>=s0&&nm<e0;
+  for(const[lo,hi,[ro,ri,k]]of[[0,720,ring[1]],[720,1440,ring[0]]]){const a=Math.max(s0,lo),b=Math.min(e0,hi);if(b<=a)continue;
+   g+=`<path d="${arc(ro,ri,a,b)}" fill="${k==="am"?"var(--info)":"var(--accent)"}" opacity="${it.end?1:.55}" ${cur?'stroke="var(--fg)" stroke-width="2"':""}><title>${esc(it.title)}</title></path>`}}
+ let center=`<text x="${C}" y="${C-8}" text-anchor="middle" font-size="15" fill="var(--muted)">${isToday?"지금":""}</text>`;
+ if(isToday){const[hx,hy]=pt(nm>=720?92:60,nm);g+=`<line x1="${C}" y1="${C}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="var(--warn)" stroke-width="4" stroke-linecap="round"/><circle cx="${C}" cy="${C}" r="5" fill="var(--warn)"/>`;
+  const live=items.filter(x=>!x.skipped&&x.start);const curIt=live.find(x=>{const a=mins(x.start),b=x.end?mins(x.end):a;return nm>=a&&nm<b});const nx=live.find(x=>mins(x.start)>nm);
+  center=curIt?`<text x="${C}" y="${C+24}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--fg)">${esc(curIt.title.slice(0,9))} 중</text>`
+   :nx?`<text x="${C}" y="${C+22}" text-anchor="middle" font-size="12" fill="var(--muted)">다음까지</text><text x="${C}" y="${C+40}" text-anchor="middle" font-size="15" font-weight="700" fill="var(--fg)">${dur(mins(nx.start)-nm)}</text>`:`<text x="${C}" y="${C+26}" text-anchor="middle" font-size="13" fill="var(--muted)">남은 일정 없음</text>`}
+ $("dial").innerHTML=`<svg viewBox="0 0 300 300" role="img" aria-label="시계 모양 일정: 바깥 고리 오후, 안쪽 고리 오전">${g}<text x="${C}" y="${C-34}" text-anchor="middle" font-size="10" fill="var(--muted)">안 오전 · 밖 오후</text>${isToday?"":""}${center}</svg>`;
+}
 function renderSched(){
- const tk=dayKey(new Date());
- $("schedTabs").innerHTML=DAYS.map(([k,l])=>`<button data-sday="${k}" aria-pressed="${k===schedDay}">${l}${k===tk?"·":""}</button>`).join("");
- const items=S.schedule.filter(x=>x.day===schedDay).sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
- const now=new Date(),nm=now.getHours()*60+now.getMinutes(),isToday=schedDay===tk;
- let nextMarked=false;
- $("schedList").innerHTML=items.length?items.map(it=>{
-  let cls="";if(isToday&&it.start){const s=mins(it.start),e=it.end?mins(it.end):s;
-   if(nm>=s&&nm<e)cls="now";else if(nm>=e&&nm>s)cls="past";else if(nm<s&&!nextMarked){nextMarked=true;cls="next"}}
+ const t=today(),isToday=schedDate===t,pd=parse(schedDate);
+ $("sLabel").textContent=`${pd.getMonth()+1}월 ${pd.getDate()}일 ${DAYNAME[dayKey(pd)]}요일${isToday?" (오늘)":""}`;
+ $("sToday").hidden=isToday;
+ const all=schedItems(schedDate);const items=all.filter(x=>!x.skipped);
+ renderDial(items,isToday);
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ let nextMarked=false,h="",prevEnd=null;
+ const shown=admin?all:items;
+ for(const it of shown){
+  if(!it.skipped&&it.start){const s0=mins(it.start);if(prevEnd!=null&&s0-prevEnd>=20)h+=`<li class="item free"><span class="meta" style="min-width:5.5em"></span><span class="t">빈 시간 ${dur(s0-prevEnd)}</span></li>`;
+   prevEnd=Math.max(prevEnd??0,it.end?mins(it.end):s0)}
+  let cls=it.skipped?"skipped":"";
+  if(!it.skipped&&isToday&&it.start){const s0=mins(it.start),e=it.end?mins(it.end):s0;
+   if(nm>=s0&&nm<e)cls="now";else if(nm>=e&&nm>s0)cls="past";else if(nm<s0&&!nextMarked){nextMarked=true;cls="next"}}
   const time=it.start?fmtT(it.start)+(it.end?" ~ "+fmtT(it.end).replace(/^오[전후] /,""):""):"시간 미정";
-  return`<li class="item ${cls}"><span class="meta" style="min-width:5.5em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}${admBtns("schedule",it.id,it.title)}</li>`}).join("")
-  :`<li class="empty">${DAYNAME[schedDay]}요일 일정이 없어요.${admin?"":" 관리자 모드에서 추가할 수 있어요."}</li>`;
+  const tag=it.skipped?'<span class="pill low">이 날 빠짐</span>':it.src==="date"?'<span class="pill info">이 날만</span>':"";
+  const ab=it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
+   :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
+  h+=`<li class="item ${cls}"><span class="meta" style="min-width:5.5em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${tag}${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}${ab}</li>`}
+ $("schedList").innerHTML=h||`<li class="empty">이 날 일정이 없어요.</li>`;
+}
+function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["note","메모","text"],...(scopeOpts?[["scope","어떻게 바꿀까요","select",scopeOpts]]:[]),]}}
+function openSched(item,src){
+ const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
+ const pick=d=>({title:d.title,start:d.start,end:d.end,note:d.note});
+ if(!item){openForm("schedule",null,{scope:"date"},schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`]]),data=>{
+   if(!data.title){toast("일정 이름을 적어 주세요");return false}const {scope,...f}=data;
+   if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요`);
+   else run(db.collection("schedOverrides").add({...f,date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
+ if(src==="date"){openForm("schedule",{...pick(item),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}
+   run(db.collection("schedOverrides").doc(item.id).update(data),"저장했어요")});return}
+ openForm("schedule",{...pick(item),id:item.id,scope:"date"},null,schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일 모두`]]),data=>{
+  if(!data.title){toast("일정 이름을 적어 주세요");return false}const {scope,...f}=data;
+  if(scope==="week")run(db.collection("schedule").doc(item.id).update(f),"매주 일정을 바꿨어요");
+  else run(db.collection("schedOverrides").add({...f,date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
+}
+function delSched(item,src){
+ const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
+ if(src==="date"&&!item.baseId)return confirmDel("schedOverrides",item.id,item.title);
+ const baseId=src==="date"?item.baseId:item.id;
+ $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>「${esc(item.title)}」 지우기</h3><div class="row" style="flex-wrap:wrap"><button class="btn" id="dn">취소</button><button class="btn" id="dDay">${dl}만 빼기</button><button class="btn primary" id="dWeek">매주 ${dn}요일에서 지우기</button></div></div></div>`;
+ $("dn").onclick=closeForm;
+ $("dDay").onclick=()=>{closeForm();if(src==="date")run(db.collection("schedOverrides").doc(item.id).set({date:schedDate,baseId,skip:true}),`${dl}만 뺐어요`);else run(db.collection("schedOverrides").add({date:schedDate,baseId,skip:true,createdAt:Date.now()}),`${dl}만 뺐어요`)};
+ $("dWeek").onclick=()=>{closeForm();run(db.collection("schedule").doc(baseId).delete(),"매주 일정에서 지웠어요");
+  for(const o of S.schedOverrides.filter(o=>o.baseId===baseId))run(db.collection("schedOverrides").doc(o.id).delete())};
+}
+
+/* ---------- tasks & points ---------- */
+const weekStart=()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return ymd(d)};
+function ensureTasks(){
+ if(!db||!["tasks","taskTpls"].every(c=>loadedCols.has(c)))return;
+ const t=today(),ws=weekStart(),have=new Set(S.tasks.map(x=>x.id));
+ for(const tp of S.taskTpls){const from=tp.from&&tp.from>ws?tp.from:ws;
+  for(let d=from;d<=t;d=addDays(d,1)){if(!(tp.days||[]).includes(dayKey(parse(d))))continue;const id=`${tp.id}_${d}`;
+   if(!have.has(id)){have.add(id);run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,date:d,tplId:tp.id,done:false,createdAt:Date.now()}))}}}
+}
+function renderTasks(){
+ const t=today(),ws=weekStart();
+ const earned=S.tasks.filter(x=>x.done).reduce((a,x)=>a+(Number(x.points)||0),0);
+ const week=S.tasks.filter(x=>x.done&&x.doneDate>=ws).reduce((a,x)=>a+(Number(x.points)||0),0);
+ const used=S.rewards.reduce((a,x)=>a+(Number(x.points)||0),0);
+ const todayT=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
+ $("points").innerHTML=`<div class="pt main"><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>밀린 과제</small><b style="${late.length?"color:var(--warn)":""}">${late.length}</b></div><span class="adm"><button class="btn small" data-add="rewards">보상으로 쓰기</button></span>`;
+ const row=(x,isLate)=>{const lateBy=isLate?diffDays(t,x.date):0;
+  return`<li class="item ${x.done?"done":""} ${isLate?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${isLate?`<span class="pill warn">${lateBy}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${admBtns("tasks",x.id,x.title)}</li>`};
+ $("taskList").innerHTML=todayT.length?todayT.map(x=>row(x,false)).join(""):`<li class="empty">오늘 과제가 없어요.${admin?"":" 관리자 모드에서 넣을 수 있어요."}</li>`;
+ const lw=late.filter(x=>x.date>=ws),lo=late.filter(x=>x.date<ws);
+ $("lateBox").innerHTML=(lw.length?`<p class="sub2">이번 주 밀린 과제</p><ul class="list">${lw.map(x=>row(x,true)).join("")}</ul>`:"")+(lo.length?`<p class="sub2">지난주 전에 밀린 과제</p><ul class="list">${lo.map(x=>row(x,true)).join("")}</ul>`:"");
+ const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
+ $("tplBox").innerHTML=`<p class="sub2" style="display:flex;justify-content:space-between;align-items:center">반복 과제 (요일마다 자동으로 생겨요)<button class="btn small" data-add="taskTpls">＋</button></p><ul class="list">${S.taskTpls.length?S.taskTpls.map(tp=>`<li class="item"><span class="t">${esc(tp.title)} <span class="meta">${(tp.days||[]).map(d=>DAYNAME[d]).join("")} · ⭐${tp.points||1}</span></span>${admBtns("taskTpls",tp.id,tp.title)}</li>`).join(""):`<li class="empty">없어요</li>`}</ul>`+(rw.length?`<p class="sub2">최근 쓴 포인트</p><ul class="list">${rw.map(r=>`<li class="item"><span class="t">${esc(r.title)}</span><span class="meta">-${r.points}</span>${admBtns("rewards",r.id,r.title)}</li>`).join("")}</ul>`:"");
+}
+
+/* ---------- notes & food ---------- */
+const ago=ms=>{const m=Math.round((Date.now()-ms)/60000);if(m<1)return"방금";if(m<60)return m+"분 전";const h=Math.round(m/60);if(h<24)return h+"시간 전";const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()}`};
+function renderNotes(){
+ const f=$("noteFrom"),to=$("noteTo");
+ if(!f.options.length){f.innerHTML=`<option value="">누가</option>`+PEOPLE.map(p=>`<option>${p}</option>`).join("");to.innerHTML=["모두",...PEOPLE].map(p=>`<option>${p}</option>`).join("")}
+ if(me&&!f.value)f.value=me;
+ const l=S.notes.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,30);
+ $("noteList").innerHTML=l.length?l.map(n=>`<li class="msg"><div class="h"><span><b>${esc(n.from)}</b> → ${esc(n.to||"모두")}</span><span>${ago(n.createdAt||0)}</span><button class="icon" data-del="notes" data-id="${n.id}" data-name="${esc((n.text||"").slice(0,20))}" aria-label="삭제">✕</button></div><div class="b">${esc(n.text)}</div></li>`).join(""):`<li class="empty">아직 남긴 말이 없어요.</li>`;
+}
+function renderFood(){
+ const l=S.wishfood.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ $("foodList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t">${esc(x.name)}</span>${x.by?`<span class="meta">${esc(x.by)}</span>`:""}<button class="icon" data-del="wishfood" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></li>`).join(""):`<li class="empty">먹고 싶은 걸 적어 보세요.</li>`;
 }
 
 function renderChores(){
@@ -306,7 +466,7 @@ function renderCal(){
   h+=`<button data-date="${s}" class="${d.getMonth()!==m?"other":""} ${s===t?"today":""} ${s===selDate?"sel":""}" aria-label="${d.getMonth()+1}월 ${d.getDate()}일">${d.getDate()}${has.has(s)?'<span class="dot"></span>':""}</button>`}
  $("cal").innerHTML=h;
  const ev=S.events.filter(e=>e.date===selDate).sort((a,b)=>(a.time||"").localeCompare(b.time||""));const sd=parse(selDate);
- $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(ev.length?ev.map(e=>`<li class="item"><span class="meta">${e.time?fmtT(e.time):"하루 종일"}</span><span class="t">${esc(e.title)}</span>${admBtns("events",e.id,e.title)}</li>`).join(""):`<li class="empty">일정 없음</li>`);
+ $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(ev.length?ev.map(e=>`<li class="item"><span class="meta">${e.time?fmtT(e.time):"하루 종일"}</span><span class="t">${esc(e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${e.id}" data-name="${esc(e.title)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">일정 없음</li>`);
 }
 
 function renderMeals(){const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));const t=today();
@@ -328,14 +488,27 @@ function renderSupplies(){const order={out:0,low:1,ok:2};const l=S.supplies.slic
 function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.filter(x=>!q||(x.name+" "+x.place).includes(q)).sort((a,b)=>String(a.name).localeCompare(b.name));
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
-function renderAll(){renderTop();renderSched();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
+function renderAll(){renderTop();renderSched();renderTasks();renderNotes();renderFood();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
- if(d.sday){schedDay=d.sday;renderSched();return}
  if(d.date){selDate=d.date;renderCal();return}
- if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal)toast("저장소에 연결되지 않았어요");return}
- if(d.add){const preset=d.add==="schedule"?{day:schedDay}:d.add==="events"?{date:selDate}:d.add==="chores"?{due:today(),repeat:"0"}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
+ if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal||d.task||d.sedit||d.sdel)toast("저장소에 연결되지 않았어요");return}
+ if(d.add==="schedule"){openSched(null);return}
+ if(d.sedit){const it=schedItems(schedDate).find(x=>x.id===d.sedit&&x.src===d.src);if(it)openSched(it,d.src);return}
+ if(d.sdel){const it=schedItems(schedDate).find(x=>x.id===d.sdel&&x.src===d.src);if(it)delSched(it,d.src);return}
+ if(d.sundo){const o=S.schedOverrides.find(o=>o.date===schedDate&&o.baseId===d.sundo);if(o)run(db.collection("schedOverrides").doc(o.id).delete(),"원래 일정으로 돌렸어요");return}
+ if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x)return;run(db.collection("tasks").doc(x.id).update(x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}),x.done?null:`잘했어! ⭐${Number(x.points)||0}`);return}
+ if(d.add==="taskTpls"){openForm("taskTpls",null,{points:1,days:[dayKey(new Date())]},null,data=>{if(!data.title||!data.days.length){toast("과제와 요일을 골라 주세요");return false}run(db.collection("taskTpls").add({...data,points:data.points||1,from:today(),createdAt:Date.now()}),"반복 과제를 만들었어요");setTimeout(ensureTasks,800)});return}
+ if(d.edit==="taskTpls"){const tp=S.taskTpls.find(x=>x.id===d.id);if(tp)openForm("taskTpls",tp,null,null,data=>{if(!data.title||!data.days.length){toast("과제와 요일을 골라 주세요");return false}
+   run(db.collection("taskTpls").doc(tp.id).update(data),"저장했어요");const t=today();const inst=S.tasks.find(x=>x.id===`${tp.id}_${t}`);if(inst&&!inst.done)run(db.collection("tasks").doc(inst.id).update({title:data.title,points:data.points||1}))});return}
+ if(d.del==="taskTpls"){const tp=S.taskTpls.find(x=>x.id===d.id);$("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>반복 과제 지우기</h3><p style="margin:0">「${esc(tp.title)}」이(가) 더는 안 생겨요. 이미 생긴 과제는 남아요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div></div>`;
+   $("dn").onclick=closeForm;$("dy").onclick=()=>{closeForm();run(db.collection("taskTpls").doc(tp.id).delete(),"지웠어요");const inst=S.tasks.find(x=>x.id===`${tp.id}_${today()}`);if(inst&&!inst.done)run(db.collection("tasks").doc(inst.id).delete())};return}
+ if(d.add==="tasks"||d.add==="rewards"){openForm(d.add,null,d.add==="tasks"?{points:1,date:today()}:{},null,data=>{if(!data.title){toast("빈 칸을 채워 주세요");return false}
+   if(d.add==="tasks")run(db.collection("tasks").add({...data,points:data.points||1,date:data.date||today(),done:false,createdAt:Date.now()}),"과제를 넣었어요");
+   else{if(!data.points){toast("쓴 포인트를 적어 주세요");return false}run(db.collection("rewards").add({...data,date:today(),createdAt:Date.now()}),"포인트를 썼어요")}});return}
+ if(d.edit==="tasks"||d.edit==="rewards"){const x=S[d.edit].find(y=>y.id===d.id);if(x)openForm(d.edit,x,null,null,data=>{if(!data.title){toast("빈 칸을 채워 주세요");return false}run(db.collection(d.edit).doc(x.id).update(data),"저장했어요")});return}
+ if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="chores"?{due:today(),repeat:"0"}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
  if(d.del){confirmDel(d.del,d.id,d.name);return}
  if(d.chore){doneChore(d.chore);return}
@@ -348,11 +521,21 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
 $("prevM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("nextM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
 $("locSearch").oninput=renderLoc;
+$("sPrev").onclick=()=>{schedDate=addDays(schedDate,-1);renderSched()};
+$("sNext").onclick=()=>{schedDate=addDays(schedDate,1);renderSched()};
+$("sToday").onclick=()=>{schedDate=today();renderSched()};
+try{me=localStorage.getItem("me")}catch(e){}
+$("noteFrom").onchange=e=>{me=e.target.value;try{localStorage.setItem("me",me)}catch(_){}};
+$("noteForm").onsubmit=e=>{e.preventDefault();const v=$("noteInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
+ const from=$("noteFrom").value;if(!from){toast("누가 보내는지 골라 주세요");$("noteFrom").focus();return}
+ $("noteInput").value="";run(db.collection("notes").add({text:v,from,to:$("noteTo").value,createdAt:Date.now()}),"보냈어요")};
+$("foodForm").onsubmit=e=>{e.preventDefault();const v=$("foodInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
+ $("foodInput").value="";run(db.collection("wishfood").add({name:v,by:me||"",createdAt:Date.now()}),"적었어요")};
 $("shopForm").onsubmit=e=>{e.preventDefault();const v=$("shopInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");$("shopInput").value="";run(db.collection("shopping").add({name:v,done:false,createdAt:Date.now()}))};
 $("clearBought").onclick=()=>{if(!db)return;for(const x of S.shopping.filter(y=>y.done))run(db.collection("shopping").doc(x.id).delete());toast("산 것을 지웠어요")};
 
 let lastDay=today();
-setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDay=dayKey(new Date());selDate=lastDay;renderAll()}else renderSched()},30000);
+setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=lastDay;selDate=lastDay;ensureTasks();renderAll()}else renderSched()},30000);
 renderAll();
 
 /* ---------- data (Firebase) ---------- */
@@ -393,15 +576,15 @@ function startData(user){
  let loaded=0,denied=false;
  for(const c of COLS){let first=true;
   unsubs.push(db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>({id:d.id,...d.data()}));
-   if(first){first=false;if(++loaded===COLS.length){clearTimeout(timer);$("status").textContent="우리 가족만 보는 화면"}}
+   if(first){first=false;loadedCols.add(c);if(c==="tasks"||c==="taskTpls")ensureTasks();if(++loaded===COLS.length){clearTimeout(timer);$("status").textContent="우리 가족만 보는 화면"}}
    renderAll()},err=>{clearTimeout(timer);
    if(err&&err.code==="permission-denied"){if(!denied){denied=true;stopData();gate(`${user.email} 계정은 아직 허용되지 않았어요. 가족 계정으로 다시 로그인해 주세요.`,false,true)}return}
    $("status").textContent="불러오지 못했어요: "+(err&&err.message||"")}))}
  seedIfNeeded().catch(()=>{});
 }
-function stopData(){unsubs.forEach(u=>u());unsubs=[];db=null;for(const c of COLS)S[c]=[];if(admin)setAdmin(false);renderAll()}
+function stopData(){unsubs.forEach(u=>u());unsubs=[];db=null;loadedCols.clear();for(const c of COLS)S[c]=[];if(admin)setAdmin(false);renderAll()}
 
-onAuthStateChanged(auth,user=>{if(user)$("gateMsg").textContent="로그인됨: "+user.email;
+onAuthStateChanged(auth,user=>{if(user){$("gateMsg").textContent="로그인됨: "+user.email;if(!me&&/^kwonsi0104@/i.test(user.email))me="시훈"}
  stopData();
  if(!user){$("who").innerHTML="";gate(inApp?"카카오톡 같은 앱 안에서는 구글 로그인이 막혀요. 오른쪽 위 메뉴에서 「다른 브라우저로 열기」(Chrome)를 눌러 주세요.":"가족 구글 계정으로 들어와요.",!inApp,false);return}
  $("gate").hidden=true;
