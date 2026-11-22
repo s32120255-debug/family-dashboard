@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=8">
+<link rel="manifest" href="manifest.json?v=9">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 8</p></div></div>
+<p style="font-size:.75rem">버전 9</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=8";
-import {SEED_SCHEDULE} from "./seed.js?v=8";
+import {firebaseConfig} from "./config.js?v=9";
+import {SEED_SCHEDULE} from "./seed.js?v=9";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -347,17 +347,21 @@ function dialA(items,half,nowMin,showNow){
  for(let m=0;m<60;m++){const big=m%5===0;const[x1,y1]=pt(138,m*12),[x2,y2]=pt(big?126:132,m*12);g+=`<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#1d2621" stroke-width="${big?3.5:1.2}" stroke-linecap="round"/>`}
  for(let h=1;h<=12;h++){const[x,y]=pt(115,h*60);g+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="19" font-weight="700" fill="#1d2621" font-family="Georgia,serif">${h}</text>`}
  g+=labels+`<text x="${C}" y="${C-52}" text-anchor="middle" font-size="12" fill="#68736d" font-weight="700" letter-spacing="2">${half==="am"?"오전":"오후"}</text>`;
- if(showNow){const hand=(len,w,ang,tail,col)=>{const a=ang/720*2*Math.PI-Math.PI/2,c=Math.cos(a),s=Math.sin(a),px=-s,py=c;
-   return`<path d="M${f(C-c*tail+px*w)},${f(C-s*tail+py*w)} L${f(C+c*len)},${f(C+s*len)} L${f(C-c*tail-px*w)},${f(C-s*tail-py*w)}Z" fill="${col}" filter="url(#sh)"/>`};
-  g+=hand(78,6,nowMin%720,14,"#1d2621")+hand(118,4,(nowMin%60)*12,18,"#1d2621")+`<circle cx="${C}" cy="${C}" r="8" fill="#c4561f"/><circle cx="${C}" cy="${C}" r="3" fill="#fff"/>`}
+ const hand=(id,len,w,tail,col)=>`<g id="${id}"><path d="M${C-w},${C+tail} L${C},${C-len} L${C+w},${C+tail}Z" fill="${col}" filter="url(#sh)"/></g>`;
+ g+=hand("hHour",78,6,14,"#1d2621")+hand("hMin",118,4,18,"#1d2621")+`<g id="hSec"><line x1="${C}" y1="${C+26}" x2="${C}" y2="${C-128}" stroke="#c4561f" stroke-width="2" stroke-linecap="round"/></g><circle cx="${C}" cy="${C}" r="8" fill="#c4561f"/><circle cx="${C}" cy="${C}" r="3" fill="#fff"/>`;
  return `<svg viewBox="0 0 320 320" role="img" aria-label="시계 모양 일정">${g}</svg>`;
 }
 
 let dialHalf=null;
+function tickHands(){const d=new Date(),sec=d.getSeconds(),m=d.getMinutes()+sec/60,h=(d.getHours()%12)+m/60;
+ const set=(id,deg)=>{const el=document.getElementById(id);if(el)el.setAttribute("transform",`rotate(${deg.toFixed(2)} 160 160)`)};
+ set("hHour",h*30);set("hMin",m*6);set("hSec",sec*6)}
+setInterval(tickHands,1000);
 function renderDial(items,isToday){
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
  const half=dialHalf||"pm";
- $("dial").innerHTML=`<div class="tabs" style="justify-content:center;margin-bottom:6px"><button data-half="am" aria-pressed="${half==="am"}">오전</button><button data-half="pm" aria-pressed="${half==="pm"}">오후</button></div>`+dialA(items,half,nm,isToday&&(nm<720?"am":"pm")===half);
+ $("dial").innerHTML=`<div class="tabs" style="justify-content:center;margin-bottom:6px"><button data-half="am" aria-pressed="${half==="am"}">오전</button><button data-half="pm" aria-pressed="${half==="pm"}">오후</button></div>`+dialA(items,half,nm,true);
+ tickHands();
 }
 function renderSched(){
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
@@ -554,7 +558,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=8;
+const VERSION=9;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
