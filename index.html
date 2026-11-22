@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=18">
+<link rel="manifest" href="manifest.json?v=19">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -144,7 +144,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 18</p></div></div>
+<p style="font-size:.75rem">버전 19</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -196,6 +196,13 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="foodList"></ul>
   </section>
 
+  <section class="card">
+   <h2>냉장고·간식·부식창고</h2>
+   <div class="tabs" id="pantryTabs"></div>
+   <form class="addrow" id="pantryForm"><input id="pantryInput" placeholder="넣은 것 적기 (예: 우유 2개)" aria-label="먹을거리"><button class="btn primary">추가</button></form>
+   <ul class="list" id="pantryList"></ul>
+  </section>
+
   <section class="card wide">
    <h2>이번 주 식단표 <small>칸을 눌러 입력</small></h2>
    <div class="meals" id="meals"></div>
@@ -237,8 +244,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=18";
-import {SEED_SCHEDULE} from "./seed.js?v=18";
+import {firebaseConfig} from "./config.js?v=19";
+import {SEED_SCHEDULE} from "./seed.js?v=19";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -253,7 +260,7 @@ const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"�
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 
-const COLS=["schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","wishfood","notes","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const COLS=["schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","wishfood","notes","pantry","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
 const S=Object.fromEntries(COLS.map(c=>[c,[]]));
 let db=null,admin=false,schedDate=ymd(new Date()),loadedCols=new Set(),me=null,calMonth=new Date(),selDate=ymd(new Date());
 calMonth.setDate(1);
@@ -262,6 +269,7 @@ const PEOPLE=["엄마","아빠","시훈"];
 const FIELDS={
  tasks:{title:"과제",f:[["title","과제","text"],["points","포인트","number"],["date","할 날짜","date"]]},
  taskTpls:{title:"반복 과제",f:[["title","과제","text"],["points","포인트","number"],["days","할 요일","days"]]},
+ pantry:{title:"우리집 먹을거리",f:[["name","이름","text"],["place","어디","select",[["fridge","냉장고"],["snack","간식"],["storage","부식창고"]]],["qty","양 (예: 2개, 반 통)","text"],["expiry","유통기한 (선택)","date"]]},
  rewards:{title:"보상으로 포인트 쓰기",f:[["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},
  schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
  events:{title:"달력 일정",f:[["date","날짜","date"],["time","시각 (선택)","time"],["title","내용","text"]]},
@@ -294,7 +302,7 @@ function openForm(col,doc,preset,defOv,onSave){
   if(onSave){if(onSave(data)!==false)closeForm();return}
   
   if(col==="schedule"&&!data.title){toast("일정 이름을 적어 주세요");return}
-  if((col==="events"&&(!data.date||!data.title))||(col==="locations"&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
+  if((col==="events"&&(!data.date||!data.title))||((col==="locations"||col==="pantry")&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
   closeForm();
   if(col==="meals")return run(db.collection("meals").doc(v._date).set(data),"저장했어요");
   if(doc&&doc.id)return run(db.collection(col).doc(doc.id).update(data),"저장했어요");
@@ -466,6 +474,14 @@ function renderNotes(){pushStateText();
  const l=S.notes.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,30);
  $("noteList").innerHTML=l.length?l.map(n=>`<li class="msg"><div class="h"><span><b>${esc(n.from)}</b> → ${esc(n.to||"모두")}</span><span>${ago(n.createdAt||0)}</span><button class="icon" data-del="notes" data-id="${n.id}" data-name="${esc((n.text||"").slice(0,20))}" aria-label="삭제">✕</button></div><div class="b">${esc(n.text)}</div></li>`).join(""):`<li class="empty">아직 남긴 말이 없어요.</li>`;
 }
+const PLACES=[["fridge","냉장고"],["snack","간식"],["storage","부식창고"]];let pantryPlace="fridge";
+function renderPantry(){const t=today();
+ $("pantryTabs").innerHTML=PLACES.map(([k,l])=>`<button type="button" data-pplace="${k}" aria-pressed="${k===pantryPlace}">${l} ${S.pantry.filter(x=>x.place===k).length}</button>`).join("");
+ const l=S.pantry.filter(x=>x.place===pantryPlace).sort((a,b)=>(a.expiry||"9999").localeCompare(b.expiry||"9999")||String(a.name).localeCompare(b.name));
+ $("pantryList").innerHTML=l.length?l.map(x=>{let ex="";if(x.expiry){const dd=diffDays(x.expiry,t);ex=dd<0?`<span class="pill warn">${-dd}일 지남</span>`:dd<=2?`<span class="pill low">${dd?"D-"+dd:"오늘까지"}</span>`:`<span class="meta">~${parse(x.expiry).getMonth()+1}/${parse(x.expiry).getDate()}</span>`}
+  const inShop=S.shopping.some(s=>!s.done&&s.name===x.name);
+  return`<li class="item"><span class="t">${esc(x.name)}${x.qty?` <span class="meta">${esc(x.qty)}</span>`:""}</span>${ex}${inShop?"":`<button class="btn small" data-ptoshop="${x.id}">장보기에</button>`}${admBtns("pantry",x.id,x.name)}</li>`}).join("")
+  :`<li class="empty">${PLACES.find(p=>p[0]===pantryPlace)[1]}에 적어 둔 게 없어요.</li>`}
 function renderFood(){
  const l=S.wishfood.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  $("foodList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t">${esc(x.name)}</span>${x.by?`<span class="meta">${esc(x.by)}</span>`:""}<button class="icon" data-del="wishfood" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></li>`).join(""):`<li class="empty">먹고 싶은 걸 적어 보세요.</li>`;
@@ -521,11 +537,12 @@ function renderSupplies(){const order={out:0,low:1,ok:2};const l=S.supplies.slic
 function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.filter(x=>!q||(x.name+" "+x.place).includes(q)).sort((a,b)=>String(a.name).localeCompare(b.name));
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
-function renderAll(){renderTop();renderSched();renderTasks();renderNotes();renderFood();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
+function renderAll(){renderTop();renderSched();renderTasks();renderNotes();renderFood();renderPantry();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
  if(d.date){selDate=d.date;renderCal();return}
+ if(d.pplace){pantryPlace=d.pplace;renderPantry();return}
  if(d.half){dialHalf=d.half;renderSched();return}
  if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal||d.task||d.sedit||d.sdel)toast("저장소에 연결되지 않았어요");return}
  if(d.half){dialHalf=d.half;renderSched();return}
@@ -547,6 +564,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   const def={title:"살림",f:[["title","할 일","text"],...(admin?[["points","포인트 (관리자만 바꿔요)","number"]]:[])]};
   openForm("chores",doc,{points:1},def,data=>{if(!data.title){toast("할 일을 적어 주세요");return false}if(!admin)delete data.points;else data.points=data.points||1;
    if(doc)run(db.collection("chores").doc(doc.id).update(data),"저장했어요");else run(db.collection("chores").add({points:1,...data,createdAt:Date.now()}),"추가했어요")});return}
+ if(d.ptoshop){const x=S.pantry.find(y=>y.id===d.ptoshop);if(x)run(db.collection("shopping").add({name:x.name,done:false,from:PLACES.find(p=>p[0]===x.place)[1],createdAt:Date.now()}),"장보기에 넣었어요");return}
  if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
  if(d.del){confirmDel(d.del,d.id,d.name);return}
@@ -568,6 +586,9 @@ $("noteFrom").onchange=e=>{me=e.target.value;try{localStorage.setItem("me",me)}c
 $("noteForm").onsubmit=e=>{e.preventDefault();const v=$("noteInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
  const from=$("noteFrom").value;if(!from){toast("누가 보내는지 골라 주세요");$("noteFrom").focus();return}
  $("noteInput").value="";run(db.collection("notes").add({text:v,from,to:$("noteTo").value,createdAt:Date.now()}),"보냈어요")};
+$("pantryForm").onsubmit=e=>{e.preventDefault();const v=$("pantryInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
+ const m=v.match(/^(.*?)\s+(\d+\s*\S*|반\s*\S*)$/);const name=(m?m[1]:v).trim(),qty=m?m[2]:null;
+ $("pantryInput").value="";run(db.collection("pantry").add({name,place:pantryPlace,qty,expiry:null,createdAt:Date.now()}),`${PLACES.find(p=>p[0]===pantryPlace)[1]}에 넣었어요`)};
 $("foodForm").onsubmit=e=>{e.preventDefault();const v=$("foodInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");
  $("foodInput").value="";run(db.collection("wishfood").add({name:v,by:me||"",createdAt:Date.now()}),"적었어요")};
 $("shopForm").onsubmit=e=>{e.preventDefault();const v=$("shopInput").value.trim();if(!v)return;if(!db)return toast("저장소에 연결되지 않았어요");$("shopInput").value="";run(db.collection("shopping").add({name:v,done:false,createdAt:Date.now()}))};
@@ -578,7 +599,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=18;
+const VERSION=19;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
