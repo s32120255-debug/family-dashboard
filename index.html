@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=14">
+<link rel="manifest" href="manifest.json?v=15">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -144,7 +144,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 14</p></div></div>
+<p style="font-size:.75rem">버전 15</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -186,6 +186,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
     <div class="fromto"><select id="noteFrom" aria-label="보내는 사람"></select> 이(가) <select id="noteTo" aria-label="받는 사람"></select> 에게</div>
     <div class="addrow"><input id="noteInput" placeholder="하고 싶은 말" aria-label="하고 싶은 말" maxlength="200"><button class="btn primary">보내기</button></div>
    </form>
+   <div class="fromto"><button class="btn small" id="pushBtn" type="button">이 폰에서 알림 받기</button><span id="pushState"></span></div>
    <ul class="list" id="noteList"></ul>
   </section>
 
@@ -234,8 +235,9 @@ body.admin #tplBox{display:grid!important;gap:6px}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=14";
-import {SEED_SCHEDULE} from "./seed.js?v=14";
+import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
+import {firebaseConfig} from "./config.js?v=15";
+import {SEED_SCHEDULE} from "./seed.js?v=15";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -455,7 +457,7 @@ function renderTasks(){
 
 /* ---------- notes & food ---------- */
 const ago=ms=>{const m=Math.round((Date.now()-ms)/60000);if(m<1)return"방금";if(m<60)return m+"분 전";const h=Math.round(m/60);if(h<24)return h+"시간 전";const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()}`};
-function renderNotes(){
+function renderNotes(){pushStateText();
  const f=$("noteFrom"),to=$("noteTo");
  if(!f.options.length){f.innerHTML=`<option value="">누가</option>`+PEOPLE.map(p=>`<option>${p}</option>`).join("");to.innerHTML=["모두",...PEOPLE].map(p=>`<option>${p}</option>`).join("")}
  if(me&&!f.value)f.value=me;
@@ -574,7 +576,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=14;
+const VERSION=15;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -586,6 +588,26 @@ let installEvt=null;
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installEvt=e;$("installBtn").hidden=false});
 window.addEventListener("appinstalled",()=>{$("installBtn").hidden=true;toast("설치했어요. 홈 화면의 「우리집」을 눌러 열어요.")});
 $("installBtn").onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$("installBtn").hidden=true};
+
+/* ---------- 알림 받기 ---------- */
+function pushStateText(){let who=null;try{who=localStorage.getItem("pushWho")}catch(e){}
+ const on=("Notification" in window)&&Notification.permission==="granted"&&who;
+ $("pushState").textContent=on?`알림 켜짐 (${who})`:(("Notification" in window)&&Notification.permission==="denied"?"알림이 막혀 있어요. Chrome 설정에서 이 사이트 알림을 허용해 주세요.":"");
+ $("pushBtn").textContent=on?"알림 다시 연결":"이 폰에서 알림 받기"}
+$("pushBtn").onclick=async()=>{
+ if(!db)return toast("로그인 후에 눌러 주세요");
+ const who=$("noteFrom").value;if(!who){toast("위에서 이 폰 주인(누가)을 먼저 골라 주세요");$("noteFrom").focus();return}
+ try{
+  if(!("serviceWorker" in navigator)||!("Notification" in window)||!(await isSupported()))return toast("이 브라우저는 알림을 못 받아요. Chrome으로 열어 주세요.");
+  const perm=await Notification.requestPermission();if(perm!=="granted"){pushStateText();return toast("알림을 허용해야 받을 수 있어요")}
+  const reg=await navigator.serviceWorker.register("firebase-messaging-sw.js");await navigator.serviceWorker.ready;
+  const token=await getToken(getMessaging(app),{serviceWorkerRegistration:reg});
+  if(!token)return toast("알림 연결에 실패했어요");
+  await setDoc(doc(fs,"pushTokens",token),{who,email:auth.currentUser&&auth.currentUser.email||"",createdAt:Date.now()});
+  try{localStorage.setItem("pushWho",who)}catch(e){}
+  pushStateText();toast(`${who}에게 오는 말을 이 폰에서 알림으로 받아요`);
+ }catch(e){toast("알림 연결 실패: "+(e&&(e.code||e.message)||""))}};
+isSupported().then(ok=>{if(ok)onMessage(getMessaging(app),m=>{const n=m.notification||{};toast(`${n.title||"새 메시지"}: ${n.body||""}`)})}).catch(()=>{});
 
 /* ---------- data (Firebase) ---------- */
 const app=initializeApp(firebaseConfig);
