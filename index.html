@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=11">
+<link rel="manifest" href="manifest.json?v=12">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 레이아웃: 위에 날짜·시계 띠, 아래 카드 격자(태블릿 가로 3열 · 세로 2열 · 폰 1열). 관리자 모드에서만 추가·수정·삭제 버튼이 보임 */
 :root{
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 11</p></div></div>
+<p style="font-size:.75rem">버전 12</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -161,7 +161,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   <section class="card wide" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색 띠 = 일정 · 회색 점선 = 집공부·자유 (엄마가 정해요) · 주황 점 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
+   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>줄무늬 칸 = 일정 · 점선 칸 = 집공부·자유 (엄마가 정해요) · 빨간 점선 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
   </section>
 
   <section class="card" id="c-tasks">
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=11";
-import {SEED_SCHEDULE} from "./seed.js?v=11";
+import {firebaseConfig} from "./config.js?v=12";
+import {SEED_SCHEDULE} from "./seed.js?v=12";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -326,41 +326,46 @@ function schedItems(date){
  return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
 const dur=m=>{const h=Math.floor(m/60),r=m%60;return(h?h+"시간 ":"")+(r?r+"분":"")||"0분"};
-// 모던 시계: 흰 문자판 + 부드러운 그림자, 고딕 숫자, 둥근 끝 일정 띠, 가는 바늘
+// 다꾸 레트로 고양이 시계: 모눈 노트 문자판 + 테이프 줄무늬 일정 + 손글씨 숫자 + 고양이 귀·얼굴
+function catFace(cx,cy,r,fur,inner,line){return`<g><path d="M${cx-r*0.95},${cy-r*0.35} L${cx-r*0.75},${cy-r*1.25} L${cx-r*0.2},${cy-r*0.85}Z" fill="${fur}" stroke="${line}" stroke-width="2.5" stroke-linejoin="round"/><path d="M${cx+r*0.95},${cy-r*0.35} L${cx+r*0.75},${cy-r*1.25} L${cx+r*0.2},${cy-r*0.85}Z" fill="${fur}" stroke="${line}" stroke-width="2.5" stroke-linejoin="round"/>
+<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*0.86}" fill="${fur}" stroke="${line}" stroke-width="2.5"/>
+<path d="M${cx-r*0.48},${cy-r*0.05} q${r*0.12},-${r*0.16} ${r*0.24},0" fill="none" stroke="${line}" stroke-width="2.2" stroke-linecap="round"/><path d="M${cx+r*0.24},${cy-r*0.05} q${r*0.12},-${r*0.16} ${r*0.24},0" fill="none" stroke="${line}" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M${cx-r*0.08},${cy+r*0.18} L${cx+r*0.08},${cy+r*0.18} L${cx},${cy+r*0.28}Z" fill="${inner}"/>
+<path d="M${cx},${cy+r*0.28} q-${r*0.1},${r*0.16} -${r*0.2},${r*0.06} M${cx},${cy+r*0.28} q${r*0.1},${r*0.16} ${r*0.2},${r*0.06}" fill="none" stroke="${line}" stroke-width="1.8" stroke-linecap="round"/>
+<ellipse cx="${cx-r*0.55}" cy="${cy+r*0.25}" rx="${r*0.14}" ry="${r*0.08}" fill="${inner}" opacity=".8"/><ellipse cx="${cx+r*0.55}" cy="${cy+r*0.25}" rx="${r*0.14}" ry="${r*0.08}" fill="${inner}" opacity=".8"/></g>`}
 function dialA(items,half,nowMin,showNow){
- const C=160,COL=["#6cc49a","#7fb2f0","#f5b56a","#c99bf0","#f39a9a","#9ad16a","#6fcfd0"];
+ const C=170,f=n=>n.toFixed(1),lo=half==="am"?0:720,hi=lo+720,RO=116,RI=56;
  const pt=(r,min)=>{const a=(min%720)/720*2*Math.PI-Math.PI/2;return[C+r*Math.cos(a),C+r*Math.sin(a)]};
- const f=n=>n.toFixed(1);const lo=half==="am"?0:720,hi=lo+720,TR=84,TW=30;
- const arcP=(r,a,b)=>{const[x1,y1]=pt(r,a),[x2,y2]=pt(r,b);return`M${f(x1)},${f(y1)} A${r},${r} 0 ${b-a>360?1:0} 1 ${f(x2)},${f(y2)}`};
- let g=`<defs><filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="6" stdDeviation="9" flood-color="#1d2621" flood-opacity=".14"/></filter>
- <filter id="hs" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.5" flood-opacity=".25"/></filter></defs>
- <circle cx="${C}" cy="${C}" r="148" fill="#ffffff" filter="url(#sh)"/><circle cx="${C}" cy="${C}" r="148" fill="none" stroke="#e6ebe7" stroke-width="2"/>
- <circle cx="${C}" cy="${C}" r="${TR}" fill="none" stroke="#f1f4f1" stroke-width="${TW}"/>`;
- // 집공부·자유 칸
+ const ann=(ro,ri,a,b)=>{const L=b-a>360?1:0;const[x1,y1]=pt(ro,a),[x2,y2]=pt(ro,b),[x3,y3]=pt(ri,b),[x4,y4]=pt(ri,a);return`M${f(x1)},${f(y1)} A${ro},${ro} 0 ${L} 1 ${f(x2)},${f(y2)} L${f(x3)},${f(y3)} A${ri},${ri} 0 ${L} 0 ${f(x4)},${f(y4)}Z`};
+ const PAL=["#9ed9c4","#f7c873","#f49b8b","#a8c3f0","#d6b4e8","#c8dd8a"],INK="#3f5b4f";
+ const ear=sx=>`<path d="M${C+sx*122},${C-86} L${C+sx*112},${C-178} L${C+sx*44},${C-146}Z" fill="${INK}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M${C+sx*106},${C-104} L${C+sx*103},${C-158} L${C+sx*66},${C-142}Z" fill="#f49b8b"/>`;
+ let g=`<defs>${PAL.map((c,i)=>`<pattern id="tp${i}" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="10" height="10" fill="${c}"/><rect width="4" height="10" fill="#fff" opacity=".35"/></pattern>`).join("")}
+ <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M12 0H0V12" fill="none" stroke="#efe6d2" stroke-width="1"/></pattern>
+ <filter id="hs" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-opacity=".25"/></filter></defs>
+ ${ear(-1)}${ear(1)}<circle cx="${C}" cy="${C}" r="156" fill="${INK}"/><circle cx="${C}" cy="${C}" r="146" fill="#fbf5e8"/><circle cx="${C}" cy="${C}" r="146" fill="url(#grid)"/>
+ <circle cx="${C}" cy="${C}" r="138" fill="none" stroke="${INK}" stroke-width="1.5" stroke-dasharray="3 5"/>`;
  {let pe=null;for(const it of items.filter(x=>x.start).sort((a,b)=>mins(a.start)-mins(b.start))){const s0=mins(it.start);
-  if(pe!=null&&s0-pe>=20){const a=Math.max(pe,lo)+3,b=Math.min(s0,hi)-3;if(b-a>=14)g+=`<path d="${arcP(TR,a,b)}" fill="none" stroke="#b9c3bc" stroke-width="5" stroke-dasharray="0.1 9" stroke-linecap="round"/>`}
+  if(pe!=null&&s0-pe>=20){const a=Math.max(pe,lo)+2,b=Math.min(s0,hi)-2;if(b-a>=10)g+=`<path d="${ann(RO,RI,a,b)}" fill="#f3ecdc" stroke="#c9bfa8" stroke-width="1.5" stroke-dasharray="4 4"/>`}
   pe=Math.max(pe??0,it.end?mins(it.end):s0)}}
- let k=0,labels="";
- for(const it of items){if(!it.start)continue;const s=mins(it.start);
-  if(it.end){const e=mins(it.end);const col=COL[k++%COL.length];const a=Math.max(s,lo),b=Math.min(e,hi);if(b<=a)continue;
-   const pad=Math.min(2,(b-a)/4);g+=`<path d="${arcP(TR,a+pad,b-pad)}" fill="none" stroke="${col}" stroke-width="${TW}"/>`;
-   const[lx,ly]=pt(TR,(a+b)/2);labels+=`<text x="${f(lx)}" y="${f(ly)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?10.5:12.5}" font-weight="700" fill="#ffffff" stroke="${col}" stroke-width="2" paint-order="stroke">${esc(it.title.slice(0,5))}</text>`}
-  else{if(s<lo||s>=hi)continue;const[x,y]=pt(TR+TW/2+12,s);const[lx,ly]=pt(TR-TW/2-14,s);
-   g+=`<circle cx="${f(x)}" cy="${f(y)}" r="5" fill="#f08a3c" stroke="#fff" stroke-width="2"/>`;
-   labels+=`<text x="${f(lx)}" y="${f(ly)}" text-anchor="middle" dominant-baseline="central" font-size="10" fill="#d0691f" font-weight="700" stroke="#fff" stroke-width="3" paint-order="stroke">${esc(it.title.slice(0,4))}</text>`}}
- for(let m=0;m<60;m++){if(m%5)continue;const[x,y]=pt(TR+TW/2+12,m*12);g+=`<circle cx="${f(x)}" cy="${f(y)}" r="${m%15?1.6:2.6}" fill="${m%15?"#c3ccc6":"#1d2621"}"/>`}
- for(let h=1;h<=12;h++){const[x,y]=pt(132,h*60);const main=h%3===0;g+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="${main?20:14}" font-weight="${main?800:500}" fill="${main?"#1d2621":"#9aa59f"}" font-family="Noto Sans KR,system-ui,sans-serif">${h}</text>`}
- g+=labels+`<text x="${C}" y="${C-38}" text-anchor="middle" font-size="11" fill="#9aa59f" font-weight="700" letter-spacing="3">${half==="am"?"AM 오전":"PM 오후"}</text>`;
- g+=`<g filter="url(#hs)"><g id="hHour"><line x1="${C}" y1="${C+10}" x2="${C}" y2="${C-56}" stroke="#1d2621" stroke-width="6" stroke-linecap="round"/></g>
- <g id="hMin"><line x1="${C}" y1="${C+12}" x2="${C}" y2="${C-92}" stroke="#1d2621" stroke-width="3.5" stroke-linecap="round"/></g>
- <g id="hSec"><line x1="${C}" y1="${C+20}" x2="${C}" y2="${C-104}" stroke="#f08a3c" stroke-width="1.6" stroke-linecap="round"/><circle cx="${C}" cy="${C-104}" r="3" fill="#f08a3c"/></g></g>
- <circle cx="${C}" cy="${C}" r="6" fill="#fff" stroke="#f08a3c" stroke-width="3"/>`;
- return `<svg viewBox="0 0 320 320" role="img" aria-label="시계 모양 일정" style="font-family:Noto Sans KR,system-ui,sans-serif">${g}</svg>`;
+ let lb="",k=0;
+ for(const it of items){if(!it.start)continue;const s=mins(it.start);const name=it.title.replace(/\s/g,"");
+  if(it.end){const e=mins(it.end);const i=k++;const a=Math.max(s,lo),b=Math.min(e,hi);if(b<=a)continue;
+   g+=`<path d="${ann(RO,RI,a+1.5,b-1.5)}" fill="url(#tp${i%PAL.length})" stroke="${INK}" stroke-width="1.6"/>`;const[x,y]=pt((RO+RI)/2,(a+b)/2);
+   lb+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?13:16}" font-family="Gaegu,cursive" font-weight="700" fill="#2e3f38" stroke="#fbf5e8" stroke-width="3.5" paint-order="stroke">${esc(name.slice(0,b-a<45?3:4))}</text>`}
+  else{if(s<lo||s>=hi)continue;const[x,y]=pt(RO,s),[x2,y2]=pt(RI,s);const[tx,ty]=pt(RI-12,s);
+   lb+=`<line x1="${f(x)}" y1="${f(y)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#e07a68" stroke-width="2.5" stroke-dasharray="5 4"/><text x="${f(tx)}" y="${f(ty)}" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Gaegu,cursive" font-weight="700" fill="#c4563f" stroke="#fbf5e8" stroke-width="3" paint-order="stroke">${esc(name.slice(0,2))}</text>`}}
+ for(let h=1;h<=12;h++){const[x,y]=pt(130,h*60);g+=h%3?`<circle cx="${f(x)}" cy="${f(y)}" r="2.2" fill="${INK}"/>`:`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="22" font-family="Gaegu,cursive" font-weight="700" fill="${INK}">${h}</text>`}
+ g+=lb+`<text x="${C}" y="${C-34}" text-anchor="middle" font-size="14" font-family="Gaegu,cursive" font-weight="700" fill="#9a8f78">${half==="am"?"오전":"오후"}</text>`;
+ g+=`<g filter="url(#hs)"><g id="hHour"><path d="M${C-6},${C+8} L${C},${C-58} L${C+6},${C+8}Z" fill="${INK}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/></g>
+ <g id="hMin"><path d="M${C-4},${C+10} L${C},${C-98} L${C+4},${C+10}Z" fill="${INK}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/></g>
+ <g id="hSec"><line x1="${C}" y1="${C+22}" x2="${C}" y2="${C-112}" stroke="#e07a68" stroke-width="1.8" stroke-linecap="round"/><circle cx="${C}" cy="${C-112}" r="3.2" fill="#e07a68"/></g></g>
+ ${catFace(C,C+2,15,"#f7c873","#f49b8b",INK)}`;
+ return `<svg viewBox="0 -32 340 372" role="img" aria-label="고양이 시계 모양 일정">${g}</svg>`;
 }
 
 let dialHalf=null;
 function tickHands(){const d=new Date(),sec=d.getSeconds(),m=d.getMinutes()+sec/60,h=(d.getHours()%12)+m/60;
- const set=(id,deg)=>{const el=document.getElementById(id);if(el)el.setAttribute("transform",`rotate(${deg.toFixed(2)} 160 160)`)};
+ const set=(id,deg)=>{const el=document.getElementById(id);if(el)el.setAttribute("transform",`rotate(${deg.toFixed(2)} 170 170)`)};
  set("hHour",h*30);set("hMin",m*6);set("hSec",sec*6)}
 setInterval(tickHands,1000);
 function renderDial(items,isToday){
@@ -564,7 +569,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=11;
+const VERSION=12;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
