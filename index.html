@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=16">
+<link rel="manifest" href="manifest.json?v=17">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -144,7 +144,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 16</p></div></div>
+<p style="font-size:.75rem">버전 17</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -236,8 +236,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=16";
-import {SEED_SCHEDULE} from "./seed.js?v=16";
+import {firebaseConfig} from "./config.js?v=17";
+import {SEED_SCHEDULE} from "./seed.js?v=17";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -252,7 +252,7 @@ const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"�
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 
-const COLS=["schedule","schedOverrides","tasks","taskTpls","rewards","wishfood","notes","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const COLS=["schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","wishfood","notes","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
 const S=Object.fromEntries(COLS.map(c=>[c,[]]));
 let db=null,admin=false,schedDate=ymd(new Date()),loadedCols=new Set(),me=null,calMonth=new Date(),selDate=ymd(new Date());
 calMonth.setDate(1);
@@ -440,8 +440,9 @@ function ensureTasks(){
 }
 function renderTasks(){
  const t=today(),ws=weekStart();
- const earned=S.tasks.filter(x=>x.done).reduce((a,x)=>a+(Number(x.points)||0),0);
- const week=S.tasks.filter(x=>x.done&&x.doneDate>=ws).reduce((a,x)=>a+(Number(x.points)||0),0);
+ const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
+ const earned=sum(S.tasks.filter(x=>x.done))+sum(S.choreLog);
+ const week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+sum(S.choreLog.filter(x=>x.date>=ws));
  const used=S.rewards.reduce((a,x)=>a+(Number(x.points)||0),0);
  const todayT=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
@@ -472,9 +473,11 @@ function renderFood(){
 function renderChores(){const t=today();const l=S.chores.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));const n=l.filter(x=>x.doneDate===t).length;
  $("choreCount").textContent=l.length?`오늘 ${n}/${l.length}`:"";
  $("choreList").innerHTML=l.length?l.map(x=>{const on=x.doneDate===t;
-  return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-chore="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}</span>${admBtns("chores",x.id,x.title)}</li>`}).join("")
+  return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-chore="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("chores",x.id,x.title)}</li>`}).join("")
   :`<li class="empty">＋ 로 매일 할 살림을 적어 두세요. 아침마다 체크가 새로 풀려요.</li>`}
-function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const on=x.doneDate===today();run(db.collection("chores").doc(id).update({doneDate:on?null:today()}),on?null:"했어요")}
+function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const t=today(),on=x.doneDate===t,pts=Number(x.points)||1,lid=`${id}_${t}`;
+ run(db.collection("chores").doc(id).update({doneDate:on?null:t}),on?null:`고마워! ⭐${pts}`);
+ if(on)run(db.collection("choreLog").doc(lid).delete());else run(db.collection("choreLog").doc(lid).set({choreId:id,title:x.title,points:pts,date:t}))}
 
 function renderHelp(){const t=today();const n=S.helpmom.filter(x=>x.doneDate===t).length;
  $("helpCount").textContent=S.helpmom.length?`오늘 ${n}/${S.helpmom.length}`:"";
@@ -536,6 +539,10 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
    if(d.add==="tasks")run(db.collection("tasks").add({...data,points:data.points||1,date:data.date||today(),done:false,createdAt:Date.now()}),"과제를 넣었어요");
    else{if(!data.points){toast("쓴 포인트를 적어 주세요");return false}run(db.collection("rewards").add({...data,date:today(),createdAt:Date.now()}),"포인트를 썼어요")}});return}
  if(d.edit==="tasks"||d.edit==="rewards"){const x=S[d.edit].find(y=>y.id===d.id);if(x)openForm(d.edit,x,null,null,data=>{if(!data.title){toast("빈 칸을 채워 주세요");return false}run(db.collection(d.edit).doc(x.id).update(data),"저장했어요")});return}
+ if(d.add==="chores"||d.edit==="chores"){const doc=d.edit?S.chores.find(x=>x.id===d.id):null;
+  const def={title:"살림",f:[["title","할 일","text"],...(admin?[["points","포인트 (관리자만 바꿔요)","number"]]:[])]};
+  openForm("chores",doc,{points:1},def,data=>{if(!data.title){toast("할 일을 적어 주세요");return false}if(!admin)delete data.points;else data.points=data.points||1;
+   if(doc)run(db.collection("chores").doc(doc.id).update(data),"저장했어요");else run(db.collection("chores").add({points:1,...data,createdAt:Date.now()}),"추가했어요")});return}
  if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
  if(d.del){confirmDel(d.del,d.id,d.name);return}
@@ -567,7 +574,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=16;
+const VERSION=17;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
