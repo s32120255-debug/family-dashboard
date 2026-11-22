@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=21">
+<link rel="manifest" href="manifest.json?v=22">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -144,7 +144,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 21</p></div></div>
+<p style="font-size:.75rem">버전 22</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -214,15 +214,14 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="shopList"></ul>
   </section>
 
-  <section class="card">
-   <h2>소모품 <small>눌러서 상태 바꾸기</small><button class="btn small" data-add="supplies">＋</button></h2>
-   <ul class="list" id="supplyList"></ul>
-  </section>
 
   <section class="card">
-   <h2>물건 위치 <button class="btn small" data-add="locations">＋</button></h2>
-   <input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
-   <ul class="list" id="locList"></ul>
+   <h2>물건 위치 <button class="btn small" id="locAdd" data-add="locations">＋</button></h2>
+   <div class="tabs"><button type="button" data-ltab="loc" aria-pressed="true">물건 위치</button><button type="button" data-ltab="sup" aria-pressed="false">소모품 <span id="supBadge"></span></button></div>
+   <div id="locPane"><input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
+   <ul class="list" id="locList"></ul></div>
+   <div id="supPane" hidden><p class="status" style="margin:0">상태 글자를 누르면 넉넉 → 조금 남음 → 다 떨어짐으로 바뀌어요.</p>
+   <ul class="list" id="supplyList"></ul></div>
   </section>
 
   <section class="card" hidden><!-- 살림은 서윤 보드로 옮김(데이터는 그대로 둠) -->
@@ -244,8 +243,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=21";
-import {SEED_SCHEDULE} from "./seed.js?v=21";
+import {firebaseConfig} from "./config.js?v=22";
+import {SEED_SCHEDULE} from "./seed.js?v=22";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -531,7 +530,7 @@ function renderShop(){const l=S.shopping.slice().sort((a,b)=>(a.done?1:0)-(b.don
  $("clearBought").hidden=!S.shopping.some(x=>x.done)}
 
 const ST={ok:["넉넉","ok"],low:["조금 남음","low"],out:["다 떨어짐","out"]};
-function renderSupplies(){const order={out:0,low:1,ok:2};const l=S.supplies.slice().sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||String(a.name).localeCompare(b.name));
+function renderSupplies(){const need=S.supplies.filter(x=>x.status&&x.status!=="ok").length;$("supBadge").textContent=need?`(${need})`:"";const order={out:0,low:1,ok:2};const l=S.supplies.slice().sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||String(a.name).localeCompare(b.name));
  $("supplyList").innerHTML=l.length?l.map(x=>{const st=ST[x.status]||ST.ok;const inShop=S.shopping.some(s=>!s.done&&s.name===x.name);
   return`<li class="item"><span class="t">${esc(x.name)}${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span>${x.status!=="ok"&&!inShop?`<button class="btn small" data-toshop="${x.id}">장보기에</button>`:""}<button class="pill ${st[1]}" style="border:none;cursor:pointer" data-sup="${x.id}">${st[0]}</button>${admBtns("supplies",x.id,x.name)}</li>`}).join(""):`<li class="empty">관리할 소모품이 아직 없어요.</li>`}
 
@@ -543,6 +542,8 @@ function renderAll(){renderTop();renderSched();renderTasks();renderNotes();rende
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
  if(d.date){selDate=d.date;renderCal();return}
+ if(d.ltab){const sup=d.ltab==="sup";$("locPane").hidden=sup;$("supPane").hidden=!sup;$("locAdd").dataset.add=sup?"supplies":"locations";
+  document.querySelectorAll("[data-ltab]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.ltab===d.ltab)));return}
  if(d.pplace){pantryPlace=d.pplace;renderPantry();return}
  if(d.half){dialHalf=d.half;renderSched();return}
  if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal||d.task||d.sedit||d.sdel)toast("저장소에 연결되지 않았어요");return}
@@ -604,7 +605,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=21;
+const VERSION=22;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
