@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=25">
+<link rel="manifest" href="manifest.json?v=26">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -59,6 +59,7 @@ body.admin .adminbar{display:flex}
 .pill.info{background:var(--info-soft);color:var(--info)}
 .btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--card)}
+a.btn{text-decoration:none;display:inline-block}
 .btn.small{padding:3px 9px;font-size:.85rem}
 .btn:focus-visible,.adminbtn:focus-visible,.cal button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .check{width:26px;height:26px;border-radius:7px;border:2px solid var(--accent);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:var(--card);font-weight:700}
@@ -144,7 +145,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 25</p></div></div>
+<p style="font-size:.75rem">버전 26</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -246,8 +247,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=25";
-import {SEED_SCHEDULE} from "./seed.js?v=25";
+import {firebaseConfig} from "./config.js?v=26";
+import {SEED_SCHEDULE} from "./seed.js?v=26";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -448,21 +449,22 @@ function ensureTasks(){
  const t=today(),ws=weekStart(),have=new Set(S.tasks.map(x=>x.id));
  for(const tp of S.taskTpls){const from=tp.from&&tp.from>ws?tp.from:ws;
   for(let d=from;d<=t;d=addDays(d,1)){if(!(tp.days||[]).includes(dayKey(parse(d))))continue;const id=`${tp.id}_${d}`;
-   if(!have.has(id)){have.add(id);run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,date:d,tplId:tp.id,done:false,createdAt:Date.now()}))}}}
+   if(!have.has(id)){have.add(id);run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,link:tp.link||null,date:d,tplId:tp.id,done:false,createdAt:Date.now()}))}}}
 }
 const ALLDAYS=["mon","tue","wed","thu","fri","sat","sun"];
 const tplKind=tp=>tp.kind||((tp.days||[]).length===7?"daily":"weekly");
+function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=(tp&&tp.link)||x.link||"";return /^(https?:|intent:|market:)/i.test(u)?u:""}
 function taskKindLabel(x){if(!x.tplId)return"하루만";const tp=S.taskTpls.find(y=>y.id===x.tplId);return tp&&tplKind(tp)==="weekly"?"매주":tp?"매일":"반복"}
 function openTaskForm(tp){
  const kinds=tp?[["daily","매일"],["weekly","매주 (요일 고르기)"]]:[["daily","매일"],["once","하루만"],["weekly","매주 (요일 고르기)"]];
- const def={title:tp?"반복 과제":"과제",f:[["title","과제","text"],["points","포인트","number"],["kind","언제 하나요","select",kinds],["date","할 날짜","date"],["days","할 요일","days"]]};
+ const def={title:tp?"반복 과제":"과제",f:[["title","과제","text"],["points","포인트","number"],["link","바로가기 주소 (앱·사이트, 선택)","url"],["kind","언제 하나요","select",kinds],["date","할 날짜","date"],["days","할 요일","days"]]};
  const pre=tp?{...tp,kind:tplKind(tp)}:{points:1,kind:"daily",date:today(),days:[dayKey(new Date())]};
  openForm("tasks",tp?{...pre,id:tp.id}:null,tp?null:pre,def,data=>{
   if(!data.title){toast("과제를 적어 주세요");return false}const pts=data.points||1;
   if(data.kind==="weekly"&&!data.days.length){toast("요일을 골라 주세요");return false}
-  if(data.kind==="once"){run(db.collection("tasks").add({title:data.title,points:pts,date:data.date||today(),done:false,createdAt:Date.now()}),"하루만 과제를 넣었어요");return}
-  const body={title:data.title,points:pts,kind:data.kind,days:data.kind==="daily"?ALLDAYS:data.days};
-  if(tp){run(db.collection("taskTpls").doc(tp.id).update(body),"저장했어요");const inst=S.tasks.find(x=>x.id===`${tp.id}_${today()}`);if(inst&&!inst.done)run(db.collection("tasks").doc(inst.id).update({title:body.title,points:pts}))}
+  if(data.kind==="once"){run(db.collection("tasks").add({title:data.title,points:pts,link:data.link||null,date:data.date||today(),done:false,createdAt:Date.now()}),"하루만 과제를 넣었어요");return}
+  const body={title:data.title,points:pts,link:data.link||null,kind:data.kind,days:data.kind==="daily"?ALLDAYS:data.days};
+  if(tp){run(db.collection("taskTpls").doc(tp.id).update(body),"저장했어요");const inst=S.tasks.find(x=>x.id===`${tp.id}_${today()}`);if(inst&&!inst.done)run(db.collection("tasks").doc(inst.id).update({title:body.title,points:pts,link:body.link}))}
   else run(db.collection("taskTpls").add({...body,from:today(),createdAt:Date.now()}),data.kind==="daily"?"매일 과제를 만들었어요":"매주 과제를 만들었어요");
   setTimeout(ensureTasks,800)});
  const sel=$("f-tasks-kind"),dateL=$("f-tasks-date").closest("label"),daysB=$("mform").querySelector('input[name="days"]').closest(".daysbox").parentElement;
@@ -478,7 +480,7 @@ function renderTasks(){
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
  $("points").innerHTML=`<div class="pt main"><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>밀린 과제</small><b style="${late.length?"color:var(--warn)":""}">${late.length}</b></div><span class="adm"><button class="btn small" data-add="rewards">보상으로 쓰기</button></span>`;
  const row=(x,isLate)=>{const lateBy=isLate?diffDays(t,x.date):0;const kl=taskKindLabel(x);
-  return`<li class="item ${x.done?"done":""} ${isLate?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)} <span class="meta">${kl}</span></span>${isLate?`<span class="pill warn">${lateBy}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${admBtns("tasks",x.id,x.title)}</li>`};
+  return`<li class="item ${x.done?"done":""} ${isLate?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)} <span class="meta">${kl}</span></span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${isLate?`<span class="pill warn">${lateBy}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${admBtns("tasks",x.id,x.title)}</li>`};
  $("taskList").innerHTML=todayT.length?todayT.map(x=>row(x,false)).join(""):`<li class="empty">오늘 과제가 없어요.${admin?"":" 관리자 모드에서 넣을 수 있어요."}</li>`;
  const lw=late.filter(x=>x.date>=ws),lo=late.filter(x=>x.date<ws);
  $("lateBox").innerHTML=(lw.length?`<p class="sub2">이번 주 밀린 과제</p><ul class="list">${lw.map(x=>row(x,true)).join("")}</ul>`:"")+(lo.length?`<p class="sub2">지난주 전에 밀린 과제</p><ul class="list">${lo.map(x=>row(x,true)).join("")}</ul>`:"");
@@ -651,7 +653,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=25;
+const VERSION=26;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
