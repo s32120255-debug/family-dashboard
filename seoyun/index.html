@@ -126,7 +126,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 3</p>
+ <p style="font-size:.75rem">버전 4</p>
 </div></div>
 
 <div class="wrap">
@@ -178,6 +178,8 @@ const GROUPS=[
  {k:"tidy",n:"정리",subs:["옷정리","불필요 물건","중고거래"]},
  {k:"todo",n:"해야 할 일",subs:[]}];
 const GNAME=Object.fromEntries(GROUPS.map(g=>[g.k,g.n]));
+// 냉장고·간식·부식은 가족 대시보드의 먹을거리(pantry)와 같은 목록이에요. 영양제만 서윤 보드에 따로 있어요.
+const PANTRY={"냉장고":"fridge","간식":"snack","부식":"storage"};
 // 체크할 때 금액을 물어보는 칸: 사야 할 것 = 쓴 돈, 중고거래 = 들어온 돈
 const ASK_ON_DONE={"사야 할 것":{flow:"out",q:"얼마 들었어요?"},"중고거래":{flow:"in",q:"얼마에 팔았어요?"}};
 // 항목 {text, tab, group, sub, done, doneAt, amount, flow(out|plan|think|in), decided(no), date, sentHome[], createdAt}
@@ -189,11 +191,11 @@ const segHtml=cur=>`<div class="seg">${FLOWS.map(([v,l])=>`<label><input type="r
 const destOf=x=>x.tab==="home"?["home",x.group||"todo",x.sub||""].join("/"):x.tab;
 const destLabel=x=>x.tab==="home"?["집안일",GNAME[x.group]||"해야 할 일",x.sub].filter(Boolean).join(" · "):TABNAME[x.tab]||"";
 const DESTS=[["inbox","일단 적기"],["sihoon","시훈"],["work","서윤 회사"],
- ...GROUPS.flatMap(g=>g.subs.length?g.subs.map(s=>[`home/${g.k}/${s}`,`집안일 · ${g.n} · ${s}`]):[[`home/${g.k}/`,`집안일 · ${g.n}`]]),["money","돈"]];
+ ...GROUPS.flatMap(g=>g.subs.length?g.subs.filter(s=>!PANTRY[s]).map(s=>[`home/${g.k}/${s}`,`집안일 · ${g.n} · ${s}`]):[[`home/${g.k}/`,`집안일 · ${g.n}`]]),["money","돈"]];
 const parseDest=v=>{const[tab,group,sub]=v.split("/");return tab==="home"?{tab,group,sub:sub||null}:{tab,group:null,sub:null}};
 
 /* ---------- 상태 ---------- */
-let items=[],meals={},weekOff=0,db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
+let items=[],meals={},pantry=[],weekOff=0,db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
 if(!TABNAME[tab]||tab==="inbox")tab="home";
 
 /* ---------- 그리기 ---------- */
@@ -222,8 +224,30 @@ function simplePanel(k,ph){
  <form class="addrow" data-add="${k}"><input name="t" placeholder="${ph}" aria-label="${TABNAME[k]}에 추가" autocomplete="off"><button class="btn primary">추가</button></form>
  ${listWithDone(items.filter(x=>x.tab===k))}
  <p class="empty" style="margin:0">항목을 누르면 금액(${k==="sihoon"?"학원비·교재비":"경비"})을 적을 수 있어요. 적은 금액은 「돈」 탭에 모여요.</p></section>`}
+function pantryRow(x){const t=today();let ex="";
+ if(x.expiry){const dd=Math.round((new Date(x.expiry+"T00:00")-new Date(t+"T00:00"))/864e5);const[,mm,dd2]=x.expiry.split("-").map(Number);
+  ex=dd<0?`<span class="pill out">${-dd}일 지남</span>`:dd<=2?`<span class="pill out">${dd?"D-"+dd:"오늘까지"}</span>`:`<span class="pill">~${mm}/${dd2}</span>`}
+ if(x.empty)return`<li class="item done"><span class="check on">✓</span><button class="t" data-popen="${x.id}">${esc(x.name)} · 다 먹음</button><button class="btn small" data-ptoshop="${x.id}">장보기에</button><button class="btn small" data-prefill="${x.id}">채움</button></li>`;
+ return`<li class="item"><button class="check" data-peat="${x.id}" aria-label="먹었어요(하나 줄이기)"></button><button class="t" data-popen="${x.id}">${esc(x.name)}${x.qty?` <span class="pill">${esc(x.qty)}</span>`:""}</button>${ex}</li>`}
+function foodCard(g){const f=PANTRY[homeFilter.food]||homeFilter.food==="영양제"?homeFilter.food:"냉장고";
+ const chips=`<div class="chips">${g.subs.map(s=>`<button data-filter="food" data-sub="${esc(s)}" aria-pressed="${f===s}">${s}${PANTRY[s]?` ${pantry.filter(x=>x.place===PANTRY[s]&&!x.empty).length}`:""}</button>`).join("")}</div>`;
+ if(!PANTRY[f])return`<section class="card"><h2>${g.n}</h2>${chips}
+  <form class="addrow" data-add="home" data-group="food"><input type="hidden" name="s" value="${esc(f)}"><input name="t" placeholder="${esc(f)} 적기" aria-label="${esc(f)}에 추가" autocomplete="off"><button class="btn primary">추가</button></form>
+  ${listWithDone(items.filter(x=>x.tab==="home"&&x.group==="food"&&x.sub===f))}</section>`;
+ const l=pantry.filter(x=>x.place===PANTRY[f]).sort((a,b)=>(a.empty?1:0)-(b.empty?1:0)||(a.expiry||"9999").localeCompare(b.expiry||"9999")||String(a.name).localeCompare(b.name));
+ return`<section class="card"><h2>${g.n} <small>가족 화면과 같은 목록</small></h2>${chips}
+ <form class="addrow" id="pantryForm" data-place="${PANTRY[f]}" style="flex-wrap:wrap"><input name="n" placeholder="이름 (예: 우유)" aria-label="이름" autocomplete="off" style="flex:2 1 8em"><input name="q" placeholder="양 (예: 2개)" aria-label="양" style="flex:1 1 5em"><label style="display:flex;align-items:center;gap:4px;font-size:.85rem;color:var(--muted);flex:1 1 10em">기한<input name="e" type="date" aria-label="소비기한" style="flex:1;min-width:0"></label><button class="btn primary">넣기</button></form>
+ <ul class="list">${l.map(pantryRow).join("")||`<li class="empty">${esc(f)}에 적어 둔 게 없어요</li>`}</ul>
+ <p class="empty" style="margin:0">네모를 누르면 하나 먹은 걸로 줄어요. 이름을 누르면 고칠 수 있어요.</p></section>`}
+function editPantry(x){const places=[["fridge","냉장고"],["snack","간식"],["storage","부식"]];
+ modal(`<form class="modal" id="pf"><h3>${esc(x.name)}</h3><label>이름<input name="n" value="${esc(x.name)}"></label><label>어디<select name="p">${places.map(([v,l])=>`<option value="${v}"${x.place===v?" selected":""}>${l}</option>`).join("")}</select></label>
+ <label>양<input name="q" value="${esc(x.qty||"")}" placeholder="예: 2개, 반 통"></label><label>소비기한<input name="e" type="date" value="${esc(x.expiry||"")}"></label>
+ <div class="row"><span class="left"><button type="button" class="btn" id="pd">지우기</button></span><button type="button" class="btn" id="pc">취소</button><button class="btn primary">저장</button></div></form>`);
+ $("pc").onclick=closeForm;$("pd").onclick=()=>{closeForm();run(db.famDel("pantry",x.id),"지웠어요")};
+ $("pf").onsubmit=e=>{e.preventDefault();const f=e.target,n=f.n.value.trim();if(!n)return toast("이름을 적어 주세요");closeForm();
+  run(db.famUpd("pantry",x.id,{name:n,place:f.p.value,qty:f.q.value.trim()||null,expiry:f.e.value||null,...(x.empty&&f.q.value.trim()?{empty:false}:{})}),"저장했어요")}}
 function homePanel(){
- return`<div class="grid2">${GROUPS.map(g=>{const f=homeFilter[g.k]||"";
+ return`<div class="grid2">${GROUPS.map(g=>{if(g.k==="food")return foodCard(g);const f=homeFilter[g.k]||"";
   const arr=items.filter(x=>x.tab==="home"&&(x.group||"todo")===g.k&&(!f||x.sub===f));
   const sel=g.subs.length?`<select name="s" aria-label="어느 칸">${g.subs.map(s=>`<option${s===(f||"")?" selected":""}>${esc(s)}</option>`).join("")}</select>`:"";
   return`<section class="card"><h2>${g.n}</h2>
@@ -288,7 +312,9 @@ function askAmount(title,flow,cb){
 function askGroup(x){
  modal(`<div class="modal"><h3>집안일 어디에?</h3><p class="hint">「${esc(x.text)}」</p>${GROUPS.map(g=>`<div><div class="hint" style="margin-bottom:4px">${g.n}</div><div class="chips">${(g.subs.length?g.subs:[""]).map(s=>`<button class="btn small" data-pick="${g.k}/${esc(s)}">${s||g.n}</button>`).join("")}</div></div>`).join("")}<div class="row"><button class="btn" id="gc">취소</button></div></div>`);
  $("gc").onclick=closeForm;
- $("layer").querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{const[g,s]=b.dataset.pick.split("/");closeForm();upd(x.id,{tab:"home",group:g,sub:s||null},`집안일 · ${s||GNAME[g]}(으)로 옮겼어요`)})}
+ $("layer").querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{const[g,s]=b.dataset.pick.split("/");closeForm();
+  if(PANTRY[s])return run(db.family("pantry",{name:x.text,place:PANTRY[s],qty:null,expiry:null,createdAt:Date.now()}).then(()=>db.remove(x.id)),`${s}에 넣었어요 (가족 화면에도 보여요)`);
+  upd(x.id,{tab:"home",group:g,sub:s||null},`집안일 · ${s||GNAME[g]}(으)로 옮겼어요`)})}
 function openItem(x){
  modal(`<form class="modal" id="ef"><h3>고치기</h3>
  <label>내용<input name="text" value="${esc(x.text)}"></label>
@@ -334,6 +360,12 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
   const ask=ASK_ON_DONE[x.sub];
   if(ask&&!x.amount)return askAmount(`${x.text} · ${ask.q}`,ask.flow,(a,f)=>upd(x.id,{done:true,doneAt:Date.now(),amount:a,flow:a?f:null,date:today()},a?`${FLOWNAME[f]} ${won(a)} 적었어요`:null));
   return upd(x.id,{done:true,doneAt:Date.now()})}
+ if(d.popen){const x=pantry.find(y=>y.id===d.popen);if(x)editPantry(x);return}
+ if(d.peat){const x=pantry.find(y=>y.id===d.peat);if(!x)return;const m=String(x.qty||"").match(/^(\d+)(.*)$/);
+  if(m&&Number(m[1])>1){const q=(Number(m[1])-1)+m[2];return run(db.famUpd("pantry",x.id,{qty:q}),`${x.name} ${q} 남았어요`)}
+  return run(db.famUpd("pantry",x.id,{empty:true,qty:m?"0"+m[2]:x.qty||null}),`${x.name} 다 먹었어요`)}
+ if(d.prefill){const x=pantry.find(y=>y.id===d.prefill);if(x)editPantry({...x,qty:""});return}
+ if(d.ptoshop){const x=pantry.find(y=>y.id===d.ptoshop);if(x)run(db.family("shopping",{name:x.name,done:false,from:"엄마",createdAt:Date.now()}),"우리집 장보기에 넣었어요");return}
  if(d.decide){const x=byId(d.decide);if(!x)return;
   if(d.to==="plan")return upd(x.id,{flow:"plan"},"나갈 돈으로 옮겼어요");
   if(d.to==="no")return upd(x.id,{done:true,doneAt:Date.now(),decided:"no"},"안 하기로 했어요");
@@ -350,6 +382,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
  if(f.id==="inboxForm"){e.preventDefault();const t=$("inboxInput").value.trim();if(!t)return;$("inboxInput").value="";add({tab:"inbox",text:t});return}
+ if(f.id==="pantryForm"){e.preventDefault();const n=f.n.value.trim();if(!n)return toast("이름을 적어 주세요");
+  run(db.family("pantry",{name:n,place:f.dataset.place,qty:f.q.value.trim()||null,expiry:f.e.value||null,createdAt:Date.now()}),"넣었어요");return}
  if(f.id==="moneyForm"){e.preventDefault();const t=f.t.value.trim(),a=toNum(f.a.value);if(!t||!a)return toast("무엇과 금액을 적어 주세요");add({tab:f.w.value,group:f.w.value==="home"?"todo":null,text:t,amount:a,flow:f.f.value},"적었어요");return}
  if(f.dataset.add){e.preventDefault();const t=f.t.value.trim();if(!t)return;
   const d={tab:f.dataset.add,text:t};if(f.dataset.group){d.group=f.dataset.group;d.sub=f.s?f.s.value:null}
@@ -357,7 +391,7 @@ document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=3;
+const VERSION=4;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
@@ -368,8 +402,8 @@ function onItems(list){items=list;render()}
 
 if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  let n=0;const mem=new Map();const emit=()=>onItems([...mem.values()]);
- db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async()=>{},setMeal:async(k,d)=>{meals[k]={...(meals[k]||{}),...d};render()}};
- meals[today()]={dinner:"김치찌개"};
+ db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async(c,d)=>{if(c==="pantry"){pantry.push({id:"p"+(++n),...d});render()}},famUpd:async(c,id,d)=>{pantry=pantry.map(x=>x.id===id?{...x,...d}:x);render()},famDel:async(c,id)=>{pantry=pantry.filter(x=>x.id!==id);render()},setMeal:async(k,d)=>{meals[k]={...(meals[k]||{}),...d};render()}};
+ meals[today()]={dinner:"김치찌개"};pantry=[{id:"pa",name:"우유",place:"fridge",qty:"2개",expiry:today()},{id:"pb",name:"두부",place:"fridge",qty:null,expiry:"2026-12-30"}];
  const t=today(),c=Date.now();
  [{tab:"inbox",text:"시훈 겨울방학 특강 알아보기"},{tab:"inbox",text:"세탁세제 거의 없음"},{tab:"sihoon",text:"수학 학원비",amount:280000,flow:"out"},{tab:"work",text:"월요일 보고서 초안"},{tab:"sihoon",text:"코딩 방과후",amount:120000,flow:"think"},{tab:"home",group:"todo",text:"식기세척기",amount:650000,flow:"think"},{tab:"sihoon",text:"겨울 스키캠프",amount:350000,flow:"plan"},
   {tab:"home",group:"stuff",sub:"사야 할 것",text:"겨울 이불"},{tab:"home",group:"food",sub:"영양제",text:"오메가3",amount:32000,flow:"out",done:true},{tab:"home",group:"tidy",sub:"중고거래",text:"자전거",amount:50000,flow:"in",done:true},{tab:"home",group:"todo",text:"보일러 점검 전화"}]
@@ -387,14 +421,15 @@ if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  $("loginBtn").onclick=async()=>{$("gateErr").hidden=true;const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await signInWithPopup(auth,p)}catch(e){$("gateErr").hidden=false;$("gateErr").textContent=(e.code==="auth/popup-blocked"?"로그인 창이 막혔어요. 주소창 오른쪽 팝업 차단 표시에서 '항상 허용'을 눌러 주세요.":"로그인하지 못했어요.")+"\n[오류 코드: "+(e.code||"unknown")+"]"}};
  $("gateOut").onclick=()=>signOut(auth);
- onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};db=null;items=[];render();
+ onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};pantry=[];db=null;items=[];render();
   if(!user)return gate("서윤 구글 계정으로 들어와요.",true,false);
   gate("불러오는 중…",false,false);
-  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d),setMeal:(k,d)=>F.setDoc(F.doc(fs,"meals",k),d,{merge:true})};
+  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d),famUpd:(c,id,d)=>F.updateDoc(F.doc(fs,c,id),d),famDel:(c,id)=>F.deleteDoc(F.doc(fs,c,id)),setMeal:(k,d)=>F.setDoc(F.doc(fs,"meals",k),d,{merge:true})};
   const u2=F.onSnapshot(F.collection(fs,"meals"),snap=>{meals=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()]));render()},()=>{});
   const u1=F.onSnapshot(col(),snap=>{$("gate").hidden=true;onItems(snap.docs.map(d=>({id:d.id,...d.data()})))},
    err=>{db=null;gate(err&&err.code==="permission-denied"?`${user.email} 계정으로는 열 수 없어요. 서윤 계정으로 다시 로그인해 주세요.`:"불러오지 못했어요: "+(err&&err.message||""),false,true)});
-  unsub=()=>{u1();u2()};
+  const u3=F.onSnapshot(F.collection(fs,"pantry"),snap=>{pantry=snap.docs.map(d=>({id:d.id,...d.data()}));render()},()=>{});
+  unsub=()=>{u1();u2();u3()};
   $("who").innerHTML=`<span>${esc(user.email)}</span><button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>signOut(auth);
  });
 }
