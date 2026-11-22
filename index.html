@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=9">
+<link rel="manifest" href="manifest.json?v=10">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#2f6b4f">
@@ -143,7 +143,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 9</p></div></div>
+<p style="font-size:.75rem">버전 10</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -161,7 +161,7 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
   <section class="card wide" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색칠 = 일정 · 하얀 곳 = 빈 시간 · 주황 점선 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
+   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>색칠 = 일정 · 회색 점선 칸 = 집공부·자유 (엄마가 정해요) · 주황 점선 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
   </section>
 
   <section class="card" id="c-tasks">
@@ -233,8 +233,8 @@ body.admin .meals td.edit:hover{outline:2px solid var(--admin)}
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
-import {firebaseConfig} from "./config.js?v=9";
-import {SEED_SCHEDULE} from "./seed.js?v=9";
+import {firebaseConfig} from "./config.js?v=10";
+import {SEED_SCHEDULE} from "./seed.js?v=10";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -336,6 +336,10 @@ function dialA(items,half,nowMin,showNow){
  <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".25"/></filter></defs>
  <circle cx="${C}" cy="${C}" r="154" fill="#2b3530" filter="url(#sh)"/><circle cx="${C}" cy="${C}" r="146" fill="#5b6a62"/><circle cx="${C}" cy="${C}" r="141" fill="url(#face)"/>`;
  let k=0,labels="";
+ {let pe=null;for(const it of items.filter(x=>x.start).sort((a,b)=>mins(a.start)-mins(b.start))){const s0=mins(it.start);
+  if(pe!=null&&s0-pe>=20){const a=Math.max(pe,lo),b=Math.min(s0,hi);if(b-a>=20){const L=b-a>360?1:0;const[x1,y1]=pt(RO,a),[x2,y2]=pt(RO,b),[x3,y3]=pt(RI,b),[x4,y4]=pt(RI,a);
+   g+=`<path d="M${f(x1)},${f(y1)} A${RO},${RO} 0 ${L} 1 ${f(x2)},${f(y2)} L${f(x3)},${f(y3)} A${RI},${RI} 0 ${L} 0 ${f(x4)},${f(y4)}Z" fill="#e9ece7" stroke="#9aa59f" stroke-width="1.2" stroke-dasharray="4 3"/>`;}}
+  pe=Math.max(pe??0,it.end?mins(it.end):s0)}}
  for(const it of items){if(!it.start)continue;const s=mins(it.start);
   if(it.end){const e=mins(it.end);const a=Math.max(s,lo),b=Math.min(e,hi);const col=COL[k++%COL.length];if(b<=a)continue;
    const L=b-a>360?1:0;const[x1,y1]=pt(RO,a),[x2,y2]=pt(RO,b),[x3,y3]=pt(RI,b),[x4,y4]=pt(RI,a);
@@ -373,7 +377,7 @@ function renderSched(){
  let nextMarked=false,h="",prevEnd=null;
  const shown=admin?all:items;
  for(const it of shown){
-  if(!it.skipped&&it.start){const s0=mins(it.start);if(prevEnd!=null&&s0-prevEnd>=20)h+=`<li class="item free"><span class="meta" style="min-width:5.5em"></span><span class="t">빈 시간 ${dur(s0-prevEnd)}</span></li>`;
+  if(!it.skipped&&it.start){const s0=mins(it.start);if(prevEnd!=null&&s0-prevEnd>=20)h+=`<li class="item free"><span class="meta" style="min-width:5.5em"></span><span class="t">집공부·자유 ${dur(s0-prevEnd)} <span class="meta">엄마가 정해요</span></span></li>`;
    prevEnd=Math.max(prevEnd??0,it.end?mins(it.end):s0)}
   let cls=it.skipped?"skipped":"";
   if(!it.skipped&&isToday&&it.start){const s0=mins(it.start),e=it.end?mins(it.end):s0;
@@ -558,7 +562,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=9;
+const VERSION=10;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
