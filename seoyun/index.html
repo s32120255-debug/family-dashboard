@@ -61,6 +61,8 @@ button,input,select{font:inherit;color:inherit}
 .pill{font-size:.75rem;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--card);color:var(--muted);border:1px solid var(--line)}
 .pill.out{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-variant-numeric:tabular-nums}
 .pill.in{background:var(--in-soft);color:var(--in);border-color:transparent;font-variant-numeric:tabular-nums}
+.pill.plan{background:var(--t-work);color:var(--fg);border-color:transparent;font-variant-numeric:tabular-nums}
+.pill.think{background:var(--t-inbox);color:var(--fg);border-color:transparent;font-variant-numeric:tabular-nums}
 .pill.home{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .empty{color:var(--muted);font-size:.9rem;padding:4px 2px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:5;padding:6px 0;background:linear-gradient(var(--bg) 80%,transparent)}
@@ -90,6 +92,13 @@ details .list{margin-top:6px}
 .bar .track{height:12px;border-radius:6px;background:var(--bg);overflow:hidden}
 .bar .fill{height:100%;border-radius:6px;background:var(--warn)}
 .bar .v{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.meals{overflow-x:auto}
+.meals table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+.meals th,.meals td{border:1.5px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+.meals th{white-space:nowrap;font-weight:500;color:var(--muted);background:var(--bg)}
+.meals tr.today td,.meals tr.today th{background:var(--accent-soft)}
+.meals td{cursor:pointer;min-width:6em;overflow-wrap:anywhere}
+.meals td:hover{outline:2px solid var(--accent)}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:20;padding:16px}
 .modal{background:var(--card);border-radius:16px;padding:18px;width:min(440px,100%);display:grid;gap:12px;max-height:90vh;overflow:auto}
 .modal h3{margin:0;font-family:var(--display);font-size:1.5rem}
@@ -98,7 +107,7 @@ details .list{margin-top:6px}
 .modal .row{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 .modal .row .left{margin-right:auto;display:flex;gap:8px;flex-wrap:wrap}
 .modal .hint{margin:0;color:var(--muted);font-size:.85rem}
-.seg{display:flex;gap:6px}.seg label{flex:1;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid var(--line);border-radius:10px;padding:8px;color:var(--fg);cursor:pointer}
+.seg{display:flex;gap:6px;flex-wrap:wrap}.seg label{flex:1 1 40%;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid var(--line);border-radius:10px;padding:8px;color:var(--fg);cursor:pointer}
 .seg label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:30;max-width:calc(100% - 32px)}
 .gate{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:40;padding:16px}
@@ -117,7 +126,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 1</p>
+ <p style="font-size:.75rem">버전 2</p>
 </div></div>
 
 <div class="wrap">
@@ -161,17 +170,22 @@ $("topCat").innerHTML=CAT;$("gateCat").innerHTML=CAT.replace("<svg",'<svg width=
 {const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${"일월화수목금토"[d.getDay()]}요일`}
 
 /* ---------- 분류 ---------- */
-const TABS=[["sihoon","시훈"],["work","서윤 회사"],["home","집안일"],["money","돈"]];
+const TABS=[["sihoon","시훈"],["work","서윤 회사"],["home","집안일"],["meals","식단표"],["money","돈"]];
 const TABNAME={inbox:"일단 적기",...Object.fromEntries(TABS)};
 const GROUPS=[
- {k:"food",n:"먹는 것",subs:["식단","냉장고","간식","부식","영양제"]},
+ {k:"food",n:"먹는 것",subs:["냉장고","간식","부식","영양제"]},
  {k:"stuff",n:"물건",subs:["소모품","사야 할 것","물건 장소"]},
  {k:"tidy",n:"정리",subs:["옷정리","불필요 물건","중고거래"]},
  {k:"todo",n:"해야 할 일",subs:[]}];
 const GNAME=Object.fromEntries(GROUPS.map(g=>[g.k,g.n]));
 // 체크할 때 금액을 물어보는 칸: 사야 할 것 = 쓴 돈, 중고거래 = 들어온 돈
 const ASK_ON_DONE={"사야 할 것":{flow:"out",q:"얼마 들었어요?"},"중고거래":{flow:"in",q:"얼마에 팔았어요?"}};
-// 항목 {text, tab, group, sub, done, doneAt, amount, flow(out|in), date, sentHome[], createdAt}
+// 항목 {text, tab, group, sub, done, doneAt, amount, flow(out|plan|think|in), decided(no), date, sentHome[], createdAt}
+// out=쓴 돈, plan=나갈 돈(정했지만 아직 안 냄), think=고민 중(아직 안 정함), in=들어온 돈
+const FLOWS=[["out","쓴 돈"],["plan","나갈 돈"],["think","고민 중"],["in","들어온 돈"]];
+const FLOWNAME=Object.fromEntries(FLOWS);
+const flowOf=x=>x.flow||"out";
+const segHtml=cur=>`<div class="seg">${FLOWS.map(([v,l])=>`<label><input type="radio" name="f" value="${v}"${(cur||"out")===v?" checked":""}>${l}</label>`).join("")}</div>`;
 const destOf=x=>x.tab==="home"?["home",x.group||"todo",x.sub||""].join("/"):x.tab;
 const destLabel=x=>x.tab==="home"?["집안일",GNAME[x.group]||"해야 할 일",x.sub].filter(Boolean).join(" · "):TABNAME[x.tab]||"";
 const DESTS=[["inbox","일단 적기"],["sihoon","시훈"],["work","서윤 회사"],
@@ -179,11 +193,11 @@ const DESTS=[["inbox","일단 적기"],["sihoon","시훈"],["work","서윤 회�
 const parseDest=v=>{const[tab,group,sub]=v.split("/");return tab==="home"?{tab,group,sub:sub||null}:{tab,group:null,sub:null}};
 
 /* ---------- 상태 ---------- */
-let items=[],db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
+let items=[],meals={},weekOff=0,db=null,tab=store.get("sy-tab")||"home",homeFilter={},month=today().slice(0,7);
 if(!TABNAME[tab]||tab==="inbox")tab="home";
 
 /* ---------- 그리기 ---------- */
-const amountPill=x=>x.amount?`<span class="pill ${x.flow==="in"?"in":"out"}">${x.flow==="in"?"+":""}${won(x.amount)}</span>`:"";
+const amountPill=x=>x.amount?`<span class="pill ${flowOf(x)}">${{in:"+",plan:"나갈 ",think:"고민 ",out:""}[flowOf(x)]}${won(x.amount)}</span>`:"";
 const homePill=x=>(x.sentHome&&x.sentHome.length)?`<span class="pill home">우리집 ${esc(x.sentHome.join("·"))}</span>`:"";
 function row(x,{sub=false}={}){
  return`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-done="${x.id}" aria-label="${x.done?"안 한 걸로":"끝"}">${x.done?"✓":""}</button>
@@ -201,7 +215,7 @@ function renderInbox(){
   <span class="sort"><button class="btn small b-sihoon" data-move="${x.id}" data-to="sihoon">시훈</button><button class="btn small b-work" data-move="${x.id}" data-to="work">회사</button><button class="btn small b-home" data-move="${x.id}" data-to="home">집안일</button><button class="btn small b-money" data-move="${x.id}" data-to="money">돈</button></span></li>`).join("");
 }
 function renderTabs(){
- $("tabs").innerHTML=TABS.map(([k,n])=>{const c=k==="money"?"":items.filter(x=>x.tab===k&&!x.done).length;
+ $("tabs").innerHTML=TABS.map(([k,n])=>{const c=k==="money"||k==="meals"?"":items.filter(x=>x.tab===k&&!x.done).length;
   return`<button class="tab" role="tab" data-k="${k}" aria-selected="${tab===k}">${n}${c?`<b>${c}</b>`:""}</button>`}).join("")}
 function simplePanel(k,ph){
  return`<section class="card"><h2>${TABNAME[k]}</h2>
@@ -220,8 +234,11 @@ function homePanel(){
 const SRC=x=>x.tab==="home"?(x.sub||GNAME[x.group]||"집안일"):x.tab==="money"?"돈 (직접)":TABNAME[x.tab];
 const monthOf=x=>(x.date||ymd(new Date(x.createdAt||Date.now()))).slice(0,7);
 function moneyPanel(){
- const m=items.filter(x=>x.amount&&x.tab!=="inbox"&&monthOf(x)===month);
- const out=m.filter(x=>x.flow!=="in"),inn=m.filter(x=>x.flow==="in");
+ const m=items.filter(x=>x.amount&&x.tab!=="inbox"&&monthOf(x)===month&&(flowOf(x)==="out"||flowOf(x)==="in"));
+ const out=m.filter(x=>flowOf(x)==="out"),inn=m.filter(x=>flowOf(x)==="in");
+ const think=items.filter(x=>x.tab!=="inbox"&&x.flow==="think"&&!x.done).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ const no=items.filter(x=>x.flow==="think"&&x.done&&x.decided==="no").sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
+ const plan=items.filter(x=>x.tab!=="inbox"&&x.flow==="plan"&&!x.done).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const sum=a=>a.reduce((s,x)=>s+Number(x.amount||0),0);
  const by={};for(const x of out){const k=SRC(x);by[k]=(by[k]||0)+Number(x.amount)}
  const rows=Object.entries(by).sort((a,b)=>b[1]-a[1]);const max=rows.length?rows[0][1]:1;
@@ -229,15 +246,35 @@ function moneyPanel(){
  const list=m.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||"")||(b.createdAt||0)-(a.createdAt||0));
  return`<section class="card"><div class="monthnav"><button class="btn small" data-month="-1" aria-label="이전 달">◀</button><b>${y}년 ${mo}월</b><button class="btn small" data-month="1" aria-label="다음 달">▶</button>${month!==today().slice(0,7)?`<button class="btn small" data-month="0">이번 달</button>`:""}</div>
  <div class="tiles"><div class="tile out"><small>쓴 돈</small><b>${won(sum(out))}</b></div><div class="tile in"><small>들어온 돈</small><b>${won(sum(inn))}</b></div><div class="tile"><small>들어온 돈 − 쓴 돈</small><b>${sum(inn)-sum(out)<0?"−":""}${won(Math.abs(sum(inn)-sum(out)))}</b></div></div></section>
+ <div class="grid2"><section class="card"><h2>고민 중인 돈 <small>${think.length?"합치면 "+won(sum(think)):""}</small></h2>
+ <ul class="list">${think.map(x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(SRC(x))}</span>${amountPill(x)}<span class="sort"><button class="btn small" data-decide="${x.id}" data-to="plan">하기로</button><button class="btn small" data-decide="${x.id}" data-to="no">안 하기</button></span></li>`).join("")||`<li class="empty">아직 안 정한 돈이 여기 모여요</li>`}</ul>
+ ${no.length?`<details><summary>안 하기로 한 것 ${no.length}개 · ${won(sum(no))}</summary><ul class="list">${no.map(x=>`<li class="item done"><button class="t" data-open="${x.id}">${esc(x.text)}</button>${amountPill(x)}<button class="btn small" data-decide="${x.id}" data-to="think">다시 고민</button></li>`).join("")}</ul></details>`:""}</section>
+ <section class="card"><h2>나갈 돈 <small>${plan.length?"합치면 "+won(sum(plan)):""}</small></h2>
+ <ul class="list">${plan.map(x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(SRC(x))}</span>${amountPill(x)}<button class="btn small" data-decide="${x.id}" data-to="out">냈어요</button></li>`).join("")||`<li class="empty">하기로 정했지만 아직 안 낸 돈</li>`}</ul></section></div>
  <section class="card"><h2>어디에 썼나 <small>${y}년 ${mo}월</small></h2>
  ${rows.length?`<div class="bars">${rows.map(([k,v])=>`<div class="bar"><span>${esc(k)}</span><span class="track"><span class="fill" style="display:block;width:${Math.max(3,v/max*100)}%"></span></span><span class="v">${won(v)}</span></div>`).join("")}</div>`:`<p class="empty" style="margin:0">이 달에 적은 쓴 돈이 없어요.</p>`}</section>
  <section class="card"><h2>돈 적기</h2>
- <form class="addrow" id="moneyForm" style="flex-wrap:wrap"><input name="t" placeholder="무엇 (예: 병원비)" aria-label="무엇" autocomplete="off" style="flex:2 1 10em"><input name="a" inputmode="numeric" placeholder="금액" aria-label="금액" style="flex:1 1 6em"><select name="f" aria-label="쓴 돈 또는 들어온 돈"><option value="out">쓴 돈</option><option value="in">들어온 돈</option></select><button class="btn primary">적기</button></form>
+ <form class="addrow" id="moneyForm" style="flex-wrap:wrap"><input name="t" placeholder="무엇 (예: 병원비)" aria-label="무엇" autocomplete="off" style="flex:2 1 10em"><input name="a" inputmode="numeric" placeholder="금액" aria-label="금액" style="flex:1 1 6em"><select name="f" aria-label="어떤 돈">${FLOWS.map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select><select name="w" aria-label="어디 일">${[["money","돈"],["sihoon","시훈"],["work","회사"],["home","집안일"]].map(([v,l])=>`<option value="${v}">${l}</option>`).join("")}</select><button class="btn primary">적기</button></form>
  <ul class="list">${list.map(x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(SRC(x))}</span><span class="pill">${esc((x.date||"").slice(5).replace("-","/"))}</span>${amountPill(x)}</li>`).join("")||`<li class="empty">이 달 기록이 없어요</li>`}</ul></section>`}
+
+/* 식단표: 가족 대시보드의 식단표(meals)와 같은 표예요. 여기서 고치면 가족 화면에도 바로 보여요. */
+const MEALS=[["breakfast","아침"],["lunch","점심"],["dinner","저녁"]];
+function weekStart(){const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)+weekOff*7);return d}
+function mealsPanel(){
+ const st=weekStart(),t=today();const days=[...Array(7)].map((_,i)=>{const d=new Date(st);d.setDate(st.getDate()+i);return d});
+ const en=days[6];
+ return`<section class="card"><h2>식단표 <small>가족 화면 식단표와 같은 표예요</small></h2>
+ <div class="monthnav"><button class="btn small" data-week="-1" aria-label="지난주">◀</button><b style="font-size:1.2rem;min-width:9em">${st.getMonth()+1}/${st.getDate()} ~ ${en.getMonth()+1}/${en.getDate()}</b><button class="btn small" data-week="1" aria-label="다음 주">▶</button>${weekOff?`<button class="btn small" data-week="0">이번 주</button>`:""}</div>
+ <div class="meals"><table><thead><tr><th></th>${MEALS.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>
+ ${days.map(d=>{const k=ymd(d),m=meals[k]||{};return`<tr class="${k===t?"today":""}"><th>${d.getMonth()+1}/${d.getDate()} ${"일월화수목금토"[d.getDay()]}</th>${MEALS.map(([f,l])=>`<td data-meal="${k}" data-mf="${f}" tabindex="0" aria-label="${d.getMonth()+1}/${d.getDate()} ${l}">${esc(m[f]||"")}</td>`).join("")}</tr>`}).join("")}
+ </tbody></table></div><p class="empty" style="margin:0">칸을 누르면 적을 수 있어요.</p></section>`}
+function editMeal(k,f){const lab=MEALS.find(x=>x[0]===f)[1];const d=new Date(k+"T00:00");
+ modal(`<form class="modal" id="mf"><h3>${d.getMonth()+1}/${d.getDate()} ${lab}</h3><label>메뉴<input name="v" value="${esc((meals[k]||{})[f]||"")}" placeholder="예: 김치찌개, 계란말이"></label><div class="row"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">저장</button></div></form>`);
+ $("mc").onclick=closeForm;$("mf").onsubmit=e=>{e.preventDefault();const v=e.target.v.value.trim();closeForm();run(db.setMeal(k,{[f]:v||null}),"저장했어요")}}
 
 function render(){
  renderInbox();renderTabs();
- $("panel").innerHTML=tab==="sihoon"?simplePanel("sihoon","시훈이 관련 적기"):tab==="work"?simplePanel("work","회사 일 적기"):tab==="home"?homePanel():moneyPanel();
+ $("panel").innerHTML=tab==="sihoon"?simplePanel("sihoon","시훈이 관련 적기"):tab==="work"?simplePanel("work","회사 일 적기"):tab==="home"?homePanel():tab==="meals"?mealsPanel():moneyPanel();
 }
 
 /* ---------- 창 ---------- */
@@ -245,7 +282,7 @@ function closeForm(){$("layer").innerHTML=""}
 function modal(html){$("layer").innerHTML=`<div class="overlay" id="ov">${html}</div>`;$("ov").onclick=e=>{if(e.target.id==="ov")closeForm()};const f=$("layer").querySelector("input,select");if(f)f.focus()}
 function askAmount(title,flow,cb){
  modal(`<form class="modal" id="af"><h3>${esc(title)}</h3><label>금액 (원)<input name="a" inputmode="numeric" placeholder="모르면 비워도 돼요"></label>
- <div class="seg"><label><input type="radio" name="f" value="out"${flow!=="in"?" checked":""}>쓴 돈</label><label><input type="radio" name="f" value="in"${flow==="in"?" checked":""}>들어온 돈</label></div>
+ ${segHtml(flow)}
  <div class="row"><button type="button" class="btn" id="ac">취소</button><button class="btn primary">확인</button></div></form>`);
  $("ac").onclick=closeForm;$("af").onsubmit=e=>{e.preventDefault();const a=toNum(e.target.a.value);closeForm();cb(a,e.target.f.value)}}
 function askGroup(x){
@@ -257,7 +294,7 @@ function openItem(x){
  <label>내용<input name="text" value="${esc(x.text)}"></label>
  <label>어디<select name="dest">${DESTS.map(([v,l])=>`<option value="${esc(v)}"${destOf(x)===v||(x.tab==="home"&&!x.sub&&v===`home/${x.group}/`)?" selected":""}>${l}</option>`).join("")}</select></label>
  <label>금액 (원, 선택)<input name="a" inputmode="numeric" value="${x.amount?Number(x.amount).toLocaleString("ko-KR"):""}" placeholder="예: 12,000"></label>
- <div class="seg"><label><input type="radio" name="f" value="out"${x.flow!=="in"?" checked":""}>쓴 돈</label><label><input type="radio" name="f" value="in"${x.flow==="in"?" checked":""}>들어온 돈</label></div>
+ ${segHtml(x.flow)}
  <label>날짜 (돈 탭에서 몇 월로 셀지)<input name="d" type="date" value="${esc(x.date||ymd(new Date(x.createdAt||Date.now())))}"></label>
  <div class="row"><span class="left"><button type="button" class="btn" id="eh">우리집으로 보내기</button><button type="button" class="btn" id="ed">지우기</button></span><button type="button" class="btn" id="ec">취소</button><button class="btn primary">저장</button></div></form>`);
  $("ec").onclick=closeForm;$("eh").onclick=()=>sendHome(x);
@@ -287,31 +324,39 @@ const del=id=>run(db.remove(id),"지웠어요");
 const byId=id=>items.find(x=>x.id===id);
 
 /* ---------- 누르기 ---------- */
+document.addEventListener("click",e=>{const td=e.target.closest("td[data-meal]");if(td&&db)return editMeal(td.dataset.meal,td.dataset.mf)});
+document.addEventListener("keydown",e=>{const td=e.target.closest&&e.target.closest("td[data-meal]");if(td&&db&&(e.key==="Enter"||e.key===" ")){e.preventDefault();editMeal(td.dataset.meal,td.dataset.mf)}});
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!db)return;const d=b.dataset;
  if(d.open){const x=byId(d.open);if(x)openItem(x);return}
  if(d.done){const x=byId(d.done);if(!x)return;
-  if(x.done)return upd(x.id,{done:false,doneAt:null});
+  if(x.done)return upd(x.id,{done:false,doneAt:null,decided:null});
   const ask=ASK_ON_DONE[x.sub];
-  if(ask&&!x.amount)return askAmount(`${x.text} · ${ask.q}`,ask.flow,(a,f)=>upd(x.id,{done:true,doneAt:Date.now(),amount:a,flow:a?f:null,date:today()},a?`${f==="in"?"들어온":"쓴"} 돈 ${won(a)} 적었어요`:null));
+  if(ask&&!x.amount)return askAmount(`${x.text} · ${ask.q}`,ask.flow,(a,f)=>upd(x.id,{done:true,doneAt:Date.now(),amount:a,flow:a?f:null,date:today()},a?`${FLOWNAME[f]} ${won(a)} 적었어요`:null));
   return upd(x.id,{done:true,doneAt:Date.now()})}
+ if(d.decide){const x=byId(d.decide);if(!x)return;
+  if(d.to==="plan")return upd(x.id,{flow:"plan"},"나갈 돈으로 옮겼어요");
+  if(d.to==="no")return upd(x.id,{done:true,doneAt:Date.now(),decided:"no"},"안 하기로 했어요");
+  if(d.to==="think")return upd(x.id,{done:false,doneAt:null,decided:null});
+  if(d.to==="out")return upd(x.id,{flow:"out",date:today()},"쓴 돈으로 적었어요")}
  if(d.move){const x=byId(d.move);if(!x)return;
   if(d.to==="home")return askGroup(x);
   if(d.to==="money")return askAmount(`${x.text} · 얼마예요?`,"out",(a,f)=>upd(x.id,{tab:"money",amount:a,flow:a?f:null,date:today()},"돈으로 옮겼어요"));
   return upd(x.id,{tab:d.to},`${TABNAME[d.to]}(으)로 옮겼어요`)}
  if(b.classList.contains("tab")){tab=d.k;store.set("sy-tab",tab);render();return}
  if(d.filter!==undefined){homeFilter[d.filter]=d.sub;render();return}
+ if(d.week!==undefined){const n=Number(d.week);weekOff=n===0?0:weekOff+n;render();return}
  if(d.month){const n=Number(d.month);if(n===0)month=today().slice(0,7);else{const[y,m]=month.split("-").map(Number);const t=new Date(y,m-1+n,1);month=`${t.getFullYear()}-${pad(t.getMonth()+1)}`}render();return}
 });
 document.addEventListener("submit",e=>{const f=e.target;if(!db)return;
  if(f.id==="inboxForm"){e.preventDefault();const t=$("inboxInput").value.trim();if(!t)return;$("inboxInput").value="";add({tab:"inbox",text:t});return}
- if(f.id==="moneyForm"){e.preventDefault();const t=f.t.value.trim(),a=toNum(f.a.value);if(!t||!a)return toast("무엇과 금액을 적어 주세요");add({tab:"money",text:t,amount:a,flow:f.f.value},"적었어요");return}
+ if(f.id==="moneyForm"){e.preventDefault();const t=f.t.value.trim(),a=toNum(f.a.value);if(!t||!a)return toast("무엇과 금액을 적어 주세요");add({tab:f.w.value,group:f.w.value==="home"?"todo":null,text:t,amount:a,flow:f.f.value},"적었어요");return}
  if(f.dataset.add){e.preventDefault();const t=f.t.value.trim();if(!t)return;
   const d={tab:f.dataset.add,text:t};if(f.dataset.group){d.group=f.dataset.group;d.sub=f.s?f.s.value:null}
   add(d);f.t.value="";setTimeout(()=>{const n=document.querySelector(`form[data-add="${f.dataset.add}"]${f.dataset.group?`[data-group="${f.dataset.group}"]`:""} input[name="t"]`);if(n)n.focus()},0)}
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=1;
+const VERSION=2;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
@@ -322,9 +367,10 @@ function onItems(list){items=list;render()}
 
 if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  let n=0;const mem=new Map();const emit=()=>onItems([...mem.values()]);
- db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async()=>{}};
+ db={add:async d=>{const id="d"+(++n);mem.set(id,{id,...d});emit()},update:async(id,d)=>{mem.set(id,{...mem.get(id),...d});emit()},remove:async id=>{mem.delete(id);emit()},family:async()=>{},setMeal:async(k,d)=>{meals[k]={...(meals[k]||{}),...d};render()}};
+ meals[today()]={dinner:"김치찌개"};
  const t=today(),c=Date.now();
- [{tab:"inbox",text:"시훈 겨울방학 특강 알아보기"},{tab:"inbox",text:"세탁세제 거의 없음"},{tab:"sihoon",text:"수학 학원비",amount:280000,flow:"out"},{tab:"work",text:"월요일 보고서 초안"},
+ [{tab:"inbox",text:"시훈 겨울방학 특강 알아보기"},{tab:"inbox",text:"세탁세제 거의 없음"},{tab:"sihoon",text:"수학 학원비",amount:280000,flow:"out"},{tab:"work",text:"월요일 보고서 초안"},{tab:"sihoon",text:"코딩 방과후",amount:120000,flow:"think"},{tab:"home",group:"todo",text:"식기세척기",amount:650000,flow:"think"},{tab:"sihoon",text:"겨울 스키캠프",amount:350000,flow:"plan"},
   {tab:"home",group:"stuff",sub:"사야 할 것",text:"겨울 이불"},{tab:"home",group:"food",sub:"영양제",text:"오메가3",amount:32000,flow:"out",done:true},{tab:"home",group:"tidy",sub:"중고거래",text:"자전거",amount:50000,flow:"in",done:true},{tab:"home",group:"todo",text:"보일러 점검 전화"}]
   .forEach((d,i)=>mem.set("s"+i,{id:"s"+i,done:false,date:t,createdAt:c+i,...d}));
  $("gate").hidden=true;$("who").textContent="미리 보기 (저장 안 됨)";emit();
@@ -340,12 +386,14 @@ if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
  $("loginBtn").onclick=async()=>{$("gateErr").hidden=true;const p=new GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});
   try{await signInWithPopup(auth,p)}catch(e){$("gateErr").hidden=false;$("gateErr").textContent=(e.code==="auth/popup-blocked"?"로그인 창이 막혔어요. 주소창 오른쪽 팝업 차단 표시에서 '항상 허용'을 눌러 주세요.":"로그인하지 못했어요.")+"\n[오류 코드: "+(e.code||"unknown")+"]"}};
  $("gateOut").onclick=()=>signOut(auth);
- onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}db=null;items=[];render();
+ onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};db=null;items=[];render();
   if(!user)return gate("서윤 구글 계정으로 들어와요.",true,false);
   gate("불러오는 중…",false,false);
-  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d)};
-  unsub=F.onSnapshot(col(),snap=>{$("gate").hidden=true;onItems(snap.docs.map(d=>({id:d.id,...d.data()})))},
+  db={add:d=>F.addDoc(col(),d),update:(id,d)=>F.updateDoc(F.doc(col(),id),d),remove:id=>F.deleteDoc(F.doc(col(),id)),family:(c,d)=>F.addDoc(F.collection(fs,c),d),setMeal:(k,d)=>F.setDoc(F.doc(fs,"meals",k),d,{merge:true})};
+  const u2=F.onSnapshot(F.collection(fs,"meals"),snap=>{meals=Object.fromEntries(snap.docs.map(d=>[d.id,d.data()]));render()},()=>{});
+  const u1=F.onSnapshot(col(),snap=>{$("gate").hidden=true;onItems(snap.docs.map(d=>({id:d.id,...d.data()})))},
    err=>{db=null;gate(err&&err.code==="permission-denied"?`${user.email} 계정으로는 열 수 없어요. 서윤 계정으로 다시 로그인해 주세요.`:"불러오지 못했어요: "+(err&&err.message||""),false,true)});
+  unsub=()=>{u1();u2()};
   $("who").innerHTML=`<span>${esc(user.email)}</span><button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>signOut(auth);
  });
 }
