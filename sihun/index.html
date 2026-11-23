@@ -3327,7 +3327,7 @@ function penSummaryHTML(A){ const S=A.filter(x=>x.mode==='solve'&&x.res!=='s'); 
   const med=a=>a.length?median(a):'–'; const W=P.filter(x=>x.res==='x'), O=P.filter(x=>x.res!=='x');
   return `<div class="sec">✍️ 손풀이 (11/23부터)</div><div class="tw"><table class="ptab"><tr><th></th><th>손풀이 남긴 문제</th><th>첫 획까지 (중간값)</th><th>가장 오래 멈춤 (중간값)</th></tr>
    <tr><td>맞힌 문제</td><td>${O.length}</td><td>${med(O.map(x=>x.pen.first))}초</td><td>${med(O.map(x=>x.pen.idle))}초</td></tr><tr><td>틀린 문제</td><td>${W.length}</td><td>${med(W.map(x=>x.pen.first))}초</td><td>${med(W.map(x=>x.pen.idle))}초</td></tr></table></div>
-   <p class="note">아래 최근 문제에서 ✍️를 누르면 손풀이를 보고 쓴 순서대로 다시 볼 수 있어요. AI 분석은 준비되면 여기에 붙여요.</p>`; }
+   <p class="note">아래 최근 문제에서 ✍️를 누르면 손풀이를 보고 쓴 순서대로 다시 볼 수 있어요. 맞힌 문제는 패드에 쓴 게 있을 때만, 틀린 문제는 정답 보기 전에 써 달라고 해서 저장해요. AI 분석은 준비되면 여기에 붙여요.</p>`; }
 function mountProblem(box,p,opts){
   const st={tries:0,hints:0,wrong:[],tags:[],t0:Date.now(),done:false};
   const solve=opts.mode==='solve';
@@ -3340,15 +3340,19 @@ function mountProblem(box,p,opts){
   box.querySelector('#hb').onclick=()=>{ if(st.done) return; if(st.hints>=p.hints.length){ toast('힌트를 다 봤어요. 패드에 써 보면서 풀어 봐요!'); return; } show('h',`💡 ${p.hints[st.hints]}`); st.hints++; };
   box.querySelector('#okb').onclick=()=>{ if(st.done) return; const inp=readInput(p,ist); const r=check(p,inp);
     if(r.empty){ show('h',r.msg); return; } if(r.normalize){ show('h',r.msg); return; }
-    if(solve&&PAD&&PAD.snap&&!PAD.snap(st.t0).n){ show('h','✍️ 오른쪽 패드에 풀이를 먼저 써요. 쓰고 나서 확인을 눌러요.'); return; }
     st.tries++; if(r.ok){ finish(st.tries===1&&st.hints===0?'o':'h', r.note); return; }
     st.wrong.push(inputKey(p,inp)); if(r.bug&&r.bug.tag) st.tags.push(r.bug.tag);
-    if(solve||st.tries>=2){ finish('x', r.bug?r.bug.msg:r.msg); return; }
+    if(solve){ askPen(); return; } if(st.tries>=2){ finish('x', r.bug?r.bug.msg:r.msg); return; }
     show('x',`🤔 ${r.bug?r.bug.msg:(r.msg?r.msg+' ':'')+'다시 생각해 볼까?'}${!r.bug&&st.hints<p.hints.length?' 힌트를 봐도 좋아요.':''}<div class="tagline">한 번 더 할 수 있어요</div>`);
     if(p.type==='choice'||p.type==='cmp'){ box.querySelectorAll('.chs button.on').forEach(b=>{b.classList.remove('on');b.classList.add('wrong');}); ist.val=null; } };
-  function finish(res,note){ st.done=true; ist.locked=true; st.res=res; const sec=Math.round((Date.now()-st.t0)/1000);
+  // 엄마 11/23: 맞히면 그냥 넘어감(패드에 쓴 게 있으면 조용히 저장). 틀리면 정답 보여 주기 전에 머릿속 식을 패드에 써 달라고 함.
+  function askPen(){ st.secAns=Math.round((Date.now()-st.t0)/1000); ist.locked=true; box.querySelector('.acts').style.display='none';
+    show('h',`🤔 어떻게 생각했는지 궁금해요.<br>머릿속으로 한 식이나 풀이를 <b>오른쪽 패드</b>에 써 줄래요? 다 쓰면 정답을 보여 줄게요.<div class="acts"><button class="ok" id="pw1">✍️ 다 썼어요</button><button class="hint" id="pw2" style="flex:0 0 auto">생각이 안 나요</button></div>`);
+    box.querySelector('#pw1').onclick=()=>{ if(PAD&&PAD.snap&&!PAD.snap(st.t0).n){ toast('패드에 아직 아무것도 없어요. 생각이 안 나면 「생각이 안 나요」를 눌러요.'); return; } st.penAsk='wrote'; finish('x'); };
+    box.querySelector('#pw2').onclick=()=>{ st.penAsk='blank'; finish('x'); }; }
+  function finish(res,note){ st.done=true; ist.locked=true; st.res=res; const sec=st.secAns!=null?st.secAns:Math.round((Date.now()-st.t0)/1000);
     box.querySelector('.acts').style.display='none';
-    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),solSeen:false}:{})};
+    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),penAsk:st.penAsk||null,solSeen:false}:{})};
     const solHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
     if(res==='x'&&solve){ show('x',`정답은 <b>${answerText(p)}</b> 이에요. 괜찮아요, 다음 문제로 가요.<div class="tagline">풀이가 궁금하면 📖 풀이 보기</div>`);
       box.querySelector('#sol').innerHTML=`<button class="solbtn" id="sv">📖 풀이 보기</button>`;
@@ -3505,7 +3509,7 @@ function parent(tab='rec'){ CUR='parent'; const A=allAtt();
     const days={}; A.forEach(x=>{ (days[x.d]=days[x.d]||[]).push(x); });
     const drows=Object.keys(days).sort().reverse().slice(0,14).map(d=>{ const a=days[d].filter(x=>x.mode==='solve'&&x.res!=='s'); const o=a.filter(x=>x.res==='o').length; const sec=days[d].reduce((s,x)=>s+(x.sec||0),0); const w=PROG.whys.filter(x=>x.d===d).flatMap(x=>x.why).map(k=>WHYL[k]||k);
       return `<tr><td>${d}</td><td>${a.length}</td><td>${a.length?Math.round(o/a.length*100)+'%':'–'}</td><td>${Math.round(sec/60)}분</td><td class="sm">${uniq(w).join(', ')||'–'}</td></tr>`; }).join('');
-    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||x.sk} · ${LVM[x.lv]}${x.mode!=='solve'?` (${x.mode==='check'?'확인':'수업'})`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}<br>`:''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
+    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||x.sk} · ${LVM[x.lv]}${x.mode!=='solve'?` (${x.mode==='check'?'확인':'수업'})`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}${x.penAsk==='wrote'?' · 틀린 뒤 씀':''}<br>`:x.penAsk==='blank'?'✍️ 「생각이 안 나요」<br>':''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
     body=`<div class="sec">기능별</div><div class="tw"><table class="ptab"><tr><th>기능</th><th>개념/확인</th><th>지금 단계</th><th>푼 문제</th><th>한 번에 정답</th><th>시간(중간값)</th><th>많이 나온 틀린 이유</th></tr>${rows}</table></div>
      ${penSummaryHTML(A)}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
      <div class="sec">최근 30문제</div><div class="tw"><table class="ptab"><tr><th>시각</th><th>기능</th><th></th><th>문제</th><th>정답 / 쓴 답</th><th>손풀이 · 틀린 이유</th><th>시간</th></tr>${recent||'<tr><td colspan="7">아직 기록이 없어요</td></tr>'}</table></div>
