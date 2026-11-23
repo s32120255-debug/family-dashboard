@@ -4,7 +4,7 @@
  "start_url": "./",
  "id": "./",
  "scope": "./",
- "display": "standalone",
+ "display": "browser",
  "background_color": "#fbf5e8",
  "theme_color": "#c9b8f0",
  "lang": "ko",
