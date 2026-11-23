@@ -148,3 +148,98 @@ exports.playClaude = onDocumentCreated(
     }
   }
 );
+
+// 시훈 공부방 수학 3-2 「AI 과외」(엄마 11/23): 틀린 문제에서 시훈이가 패드에 쓴 식을 읽고,
+// 과외 선생님처럼 시훈이 식에서 출발해 짧게 묻고(답은 안 줌), 다시 풀게 해요. 식으로 정답이 나오면 더 간단한 방법이 있는지 알려 줘요.
+// 앱이 sihun/data/m32tutor/{id} 에 요청을 쓰면(웹앱은 {_j: JSON 문자열} 모양으로 저장) 여기서 답을 같은 문서에 써 줘요.
+const TUTOR_MODEL = "claude-opus-5-5";
+const TUTOR_LIMIT = 80; // 하루 AI 호출 상한
+const TUTOR_SYSTEM = `너는 초등학교 3학년 시훈이의 수학 과외 선생님이야. 시훈이 옆에 앉아서 시훈이가 쓴 풀이를 같이 보는 사람처럼 말해.
+시훈이에 대해: 어려운 개념도 빨리 이해하지만, 아는 걸 바로 꺼내는 속도가 느리고 처음에 조건을 놓칠 때가 있어. 완벽주의라 틀렸다는 말에 예민해.
+말하는 법:
+- 한국어, 친근한 해요체("~했어요?", "~볼까요?"). 1~2문장. 한 번에 질문은 하나만.
+- 반드시 시훈이가 실제로 쓴 식·숫자·말에서 출발해. (예: "12를 3으로 나눈 건 무엇을 구하려고 한 거예요?")
+- 거창한 용어, 일반론, 과한 칭찬, 이모지는 쓰지 마. "틀렸어요"라고 하지 말고 그 식을 왜 그렇게 했는지 물어봐.
+- 정답이나, 정답으로 바로 이어지는 계산을 직접 말하지 마. 시훈이가 스스로 찾게 해.
+- 손글씨를 잘못 읽었을 수 있어. 숫자나 기호가 확실하지 않으면 먼저 "여기 ○○라고 쓴 거 맞아요?"라고 짧게 확인해.
+state 고르기:
+- "ask": 질문을 하고 시훈이 대답을 기다려.
+- "retry": 시훈이가 방법을 찾은 것 같으면 "그럼 다시 풀어 볼까요?"처럼 말하고 답 칸에 다시 쓰게 해. 대화가 4번을 넘기면 retry로 가.
+- "end": 시훈이가 정답을 맞힌 뒤 마무리할 때만 써.
+- 시훈이가 쓴 식이 끝까지 가면 정답이 나오는데 답 칸에만 다르게 썼다면, 그 점을 짧게 알려 주고 retry.
+- 정답을 맞혔다는 요청이 오면: 시훈이 방법보다 더 간단한 방법이 있으면 shorter에 한두 문장으로 쉽게 적고 say에서 "이렇게도 할 수 있어요"처럼 짧게 소개해. 시훈이 방법이 이미 간단하면 shorter는 빈 문자열, say는 짧게 마무리. state는 end.
+read: 시훈이가 패드에 쓴 것을 글자 그대로 옮겨 적어(못 읽으면 "?" 표시).
+mom: 엄마에게 남기는 메모. 시훈이가 어디서 어떻게 생각했는지, 다음에 어떻게 설명하면 좋을지 한 문장으로 구체적으로. 일반론 금지.`;
+const TUTOR_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["read", "state", "say", "shorter", "mom"],
+  properties: {
+    read: { type: "string" },
+    state: { type: "string", enum: ["ask", "retry", "end"] },
+    say: { type: "string" },
+    shorter: { type: "string" },
+    mom: { type: "string" },
+  },
+};
+const unpackDoc = (v) => (v && typeof v._j === "string" ? JSON.parse(v._j) : v || {});
+const packDoc = (d) => ({ _j: JSON.stringify(d), at: d.at != null ? d.at : null, _t: Date.now() });
+const imgBlock = (dataUrl) => {
+  const m = /^data:(image\/(?:png|jpeg));base64,(.+)$/.exec(String(dataUrl || ""));
+  return m ? { type: "image", source: { type: "base64", media_type: m[1], data: m[2] } } : null;
+};
+
+exports.m32Tutor = onDocumentCreated(
+  { document: "sihun/data/m32tutor/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.problem || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    const db = getFirestore();
+    const used = (await db.collection("sihun/data/m32tutor").where("at", "==", req.at || "").get()).size;
+    if (used > TUTOR_LIMIT) return done({ state: "limit", say: "", read: "", shorter: "", mom: "하루 AI 상한을 넘었어요" });
+    const p = req.problem;
+    const lines = [
+      `문제: ${p.q}`,
+      `정답: ${p.ans}`,
+      `앱에 있는 풀이 단계(시훈이에게 그대로 말하지 마): ${(p.sol || []).join(" / ")}`,
+      `시훈이가 답 칸에 쓴 답: ${(req.answers || []).join(", ") || "없음"}`,
+    ];
+    if (req.turns && req.turns.length) {
+      lines.push("지금까지 대화:");
+      req.turns.forEach((t) => lines.push(`${t.who === "ai" ? "선생님" : "시훈"}: ${t.text}`));
+    }
+    if (req.kind === "solved") lines.push("시훈이가 방금 다시 풀어서 정답을 맞혔어요. 더 간단한 방법이 있는지 확인하고 마무리해 주세요.");
+    else lines.push("시훈이가 쓴 풀이 그림을 보고, 다음에 할 말을 정해 주세요.");
+    const content = [];
+    const first = imgBlock(req.img1), last = imgBlock(req.img2);
+    if (first) content.push({ type: "text", text: "처음에 시훈이가 패드에 쓴 풀이:" }, first);
+    if (last) content.push({ type: "text", text: "지금 패드에 있는 풀이:" }, last);
+    content.push({ type: "text", text: lines.join("\n") });
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+    const base = {
+      model: TUTOR_MODEL, max_tokens: 4000,
+      output_config: { effort: "medium", format: { type: "json_schema", schema: TUTOR_SCHEMA } },
+      system: TUTOR_SYSTEM,
+      messages: [{ role: "user", content }],
+    };
+    try {
+      let res;
+      try {
+        res = await client.beta.messages.create({ ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" });
+      } catch (e1) {
+        if (!(e1 && e1.status === 400)) throw e1;
+        console.warn("m32Tutor fallback params rejected, retrying plain", e1.message);
+        res = await client.messages.create(base);
+      }
+      if (res.stop_reason === "refusal") return done({ state: "error", err: "refusal", say: "", read: "", shorter: "", mom: "" });
+      const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+      const out = JSON.parse(text);
+      return done({ ...out, model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } });
+    } catch (e) {
+      console.error("m32Tutor", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", read: "", shorter: "", mom: "" });
+    }
+  }
+);
