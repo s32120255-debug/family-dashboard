@@ -162,6 +162,10 @@ const TUTOR_SYSTEM = `너는 초등학교 3학년 시훈이의 수학 과외 선
 - 거창한 용어, 일반론, 과한 칭찬, 이모지는 쓰지 마. "틀렸어요"라고 하지 말고 그 식을 왜 그렇게 했는지 물어봐.
 - 정답이나, 정답으로 바로 이어지는 계산을 직접 말하지 마. 시훈이가 스스로 찾게 해.
 - 손글씨를 잘못 읽었을 수 있어. 숫자나 기호가 확실하지 않으면 먼저 "여기 ○○라고 쓴 거 맞아요?"라고 짧게 확인해.
+생각하는 순서(속으로만):
+- 먼저 시훈이 식에서 맞게 한 부분과, 처음 어긋난 한 지점을 찾아. 계산 실수인지, 문제 조건을 놓쳤는지, 개념(예: 분수의 전체가 무엇인지)을 다르게 알고 있는지 구분해.
+- 질문은 그 첫 지점을 시훈이가 스스로 보게 하는 것 하나만. 맞게 한 부분이 있으면 그걸 짚고 시작해도 좋아(칭찬이 아니라 사실로).
+- 앞에서 한 질문을 반복하지 말고, 시훈이 대답에 맞춰 한 걸음씩 좁혀 가.
 state 고르기:
 - "ask": 질문을 하고 시훈이 대답을 기다려.
 - "retry": 시훈이가 방법을 찾은 것 같으면 "그럼 다시 풀어 볼까요?"처럼 말하고 답 칸에 다시 쓰게 해. 대화가 4번을 넘기면 retry로 가.
@@ -169,16 +173,43 @@ state 고르기:
 - 시훈이가 쓴 식이 끝까지 가면 정답이 나오는데 답 칸에만 다르게 썼다면, 그 점을 짧게 알려 주고 retry.
 - 정답을 맞혔다는 요청이 오면: 시훈이 방법보다 더 간단한 방법이 있으면 shorter에 한두 문장으로 쉽게 적고 say에서 "이렇게도 할 수 있어요"처럼 짧게 소개해. 시훈이 방법이 이미 간단하면 shorter는 빈 문자열, say는 짧게 마무리. state는 end.
 read: 시훈이가 패드에 쓴 것을 글자 그대로 옮겨 적어(못 읽으면 "?" 표시).
-mom: 엄마에게 남기는 메모. 시훈이가 어디서 어떻게 생각했는지, 다음에 어떻게 설명하면 좋을지 한 문장으로 구체적으로. 일반론 금지.`;
+- 시훈이가 패드에 쓰다가 스스로 답을 고쳤다는 요청이 오면: 처음 답이 왜 나왔는지 패드를 보고 mom에 적고, say는 시훈이가 패드에서 실제로 한 것을 짚어 한 문장으로 마무리해(과한 칭찬 금지). 더 간단한 방법은 위와 똑같이 shorter에. state는 end.
+read: 시훈이가 패드에 쓴 것을 글자 그대로 옮겨 적어(못 읽으면 "?" 표시).
+mom: 엄마에게 남기는 메모. 시훈이가 어디서 어떻게 생각했는지, 다음에 어떻게 설명하면 좋을지 한 문장으로 구체적으로. 일반론 금지.
+pic: 더 간단한 방법을 그림으로 보여 줄 때만 채워. shorter가 빈 문자열이면 kind는 "none". 그림은 앱이 그려 주니 숫자만 정확히 정해. 안 쓰는 칸은 빈 배열이나 0으로 둬.
+- "bar": 분수 막대. bars에 막대마다 전체 칸 수(parts), 색칠할 칸 수(shade), 이름(label). 최대 4개. 예: 12의 1/3 → parts 3, shade 1 막대.
+- "groups": 묶음. groups에 묶음마다 점 개수(size)와 이름(label). 예: 12를 3묶음 → size 4짜리 3개.
+- "line": 수직선. line.min, line.max, line.div(1칸을 몇으로 나눌지), marks(점 찍을 곳 at과 이름), jumps(from→to 뛰기와 이름).
+- "table": 표. table은 줄마다 칸 글자 배열, 첫 줄이 제목.
+caption: 그림 아래 한 줄 설명(시훈이 식과 비교해서). 그림이 시훈이 방법이 아니라 더 간단한 방법을 보여 줘야 해.`;
 const TUTOR_SCHEMA = {
   type: "object", additionalProperties: false,
-  required: ["read", "state", "say", "shorter", "mom"],
+  required: ["read", "state", "say", "shorter", "mom", "pic"],
   properties: {
     read: { type: "string" },
     state: { type: "string", enum: ["ask", "retry", "end"] },
     say: { type: "string" },
     shorter: { type: "string" },
     mom: { type: "string" },
+    pic: {
+      type: "object", additionalProperties: false,
+      required: ["kind", "caption", "bars", "groups", "line", "table"],
+      properties: {
+        kind: { type: "string", enum: ["none", "bar", "groups", "line", "table"] },
+        caption: { type: "string" },
+        bars: { type: "array", items: { type: "object", additionalProperties: false, required: ["parts", "shade", "label"], properties: { parts: { type: "integer" }, shade: { type: "integer" }, label: { type: "string" } } } },
+        groups: { type: "array", items: { type: "object", additionalProperties: false, required: ["size", "label"], properties: { size: { type: "integer" }, label: { type: "string" } } } },
+        line: {
+          type: "object", additionalProperties: false, required: ["min", "max", "div", "marks", "jumps"],
+          properties: {
+            min: { type: "number" }, max: { type: "number" }, div: { type: "integer" },
+            marks: { type: "array", items: { type: "object", additionalProperties: false, required: ["at", "label"], properties: { at: { type: "number" }, label: { type: "string" } } } },
+            jumps: { type: "array", items: { type: "object", additionalProperties: false, required: ["from", "to", "label"], properties: { from: { type: "number" }, to: { type: "number" }, label: { type: "string" } } } },
+          },
+        },
+        table: { type: "array", items: { type: "array", items: { type: "string" } } },
+      },
+    },
   },
 };
 const unpackDoc = (v) => (v && typeof v._j === "string" ? JSON.parse(v._j) : v || {});
@@ -209,7 +240,8 @@ exports.m32Tutor = onDocumentCreated(
       lines.push("지금까지 대화:");
       req.turns.forEach((t) => lines.push(`${t.who === "ai" ? "선생님" : "시훈"}: ${t.text}`));
     }
-    if (req.kind === "solved") lines.push("시훈이가 방금 다시 풀어서 정답을 맞혔어요. 더 간단한 방법이 있는지 확인하고 마무리해 주세요.");
+    if (req.kind === "fixed") lines.push("시훈이가 처음 답을 틀린 뒤, 패드에 식을 쓰다가 스스로 고쳐서 정답을 맞혔어요. 처음 답이 왜 나왔는지 보고, 더 간단한 방법이 있는지 확인하고 마무리해 주세요.");
+    else if (req.kind === "solved") lines.push("시훈이가 방금 다시 풀어서 정답을 맞혔어요. 더 간단한 방법이 있는지 확인하고 마무리해 주세요.");
     else lines.push("시훈이가 쓴 풀이 그림을 보고, 다음에 할 말을 정해 주세요.");
     const content = [];
     const first = imgBlock(req.img1), last = imgBlock(req.img2);
@@ -240,6 +272,85 @@ exports.m32Tutor = onDocumentCreated(
     } catch (e) {
       console.error("m32Tutor", e && e.status, e && e.message);
       return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", read: "", shorter: "", mom: "" });
+    }
+  }
+);
+
+// 시훈 공부방 수학 3-2 「AI 분석」(엄마 11/23): 엄마 리포트에서 버튼을 누르면 그날(또는 최근 7일, 또는 한 문제)의
+// 기록·손풀이 그림·AI 과외 대화를 읽고, 시훈이가 어떻게 생각했는지와 시훈이에게 맞는 가르치는 방법을 엄마에게 알려 줘요.
+// 리포트가 sihun/data/m32ana/{id} 에 요청을 쓰면 여기서 같은 문서에 res를 채워요. 손풀이 그림은 서버가 m32pen에서 직접 읽어요.
+const ANA_LIMIT = 30; // 하루 분석 상한
+const ANA_MAX_IMG = 10;
+const ANA_SYSTEM = `너는 초등학교 3학년 시훈이를 가르치는 수학 과외 선생님이고, 지금은 엄마에게 오늘 수업을 보고하는 중이야.
+시훈이에 대해(엄마가 알려 준 것): 어려운 개념도 빨리 이해하지만 아는 걸 바로 꺼내는 속도가 느리고, 처음에 조건을 놓칠 때가 있어. 완벽주의라 틀렸다는 말과 힌트에 예민해서 울기도 해. 풀이 방식이 자유분방해서 형식을 잡아 줄 필요가 있어. 종이에 쓰는 걸 매우 어려워해.
+기록 읽는 법: res o=한 번에 정답, h=도움(힌트·고치기·AI 대화) 받고 정답, x=틀림, s=건너뜀. sec=답까지 걸린 초. pen=손풀이(n 획 수, first 첫 획까지 초, erase 지우개, idle 가장 오래 멈춘 초). penAsk wrote=틀린 뒤 식을 씀, blank="생각이 안 나요". fixed=패드에 쓰다가 스스로 답을 고침. tutor=AI 과외 대화. learn=더 쉬운 방법을 보고 시훈이가 고른 것(nw new 처음 알았음/knew 알던 것, use will 써 보겠다/mine 내 방법이 편하다).
+보고하는 법:
+- 한국어, 엄마에게 말하듯 담백한 해요체. 거창한 용어, 일반론, 과한 칭찬 금지. 짧고 구체적으로.
+- 반드시 기록과 손풀이 그림에서 본 것(쓴 숫자, 식, 순서, 시간)을 근거로 말해. 근거가 약하면 "(추측)"이라고 붙여.
+- 손글씨를 잘못 읽었을 수 있어. 확실하지 않은 숫자는 그렇게 말해.
+- 검사 결과나 나이를 들어 단서를 달지 마.
+- teach는 내일 바로 해 볼 수 있는 가르치는 방법이야. 시훈이 실제 풀이에서 출발하고, 예민한 성격을 생각해서 어떻게 말할지까지 적어. 2~3개.
+- 문제가 한두 개뿐이면 pattern은 "아직 문제가 적어서 반복되는 모습은 더 봐야 해요"처럼 솔직하게.
+problems에는 틀렸거나 도움을 받았거나 손풀이가 있는 문제만, 주어진 key를 그대로 써.`;
+const ANA_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["summary", "problems", "pattern", "teach"],
+  properties: {
+    summary: { type: "string" },
+    problems: { type: "array", items: { type: "object", additionalProperties: false, required: ["key", "saw", "why", "next"], properties: { key: { type: "string" }, saw: { type: "string" }, why: { type: "string" }, next: { type: "string" } } } },
+    pattern: { type: "string" },
+    teach: { type: "array", items: { type: "string" } },
+  },
+};
+
+exports.m32Analyze = onDocumentCreated(
+  { document: "sihun/data/m32ana/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 300, maxInstances: 2 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !Array.isArray(req.items) || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    const db = getFirestore();
+    const used = (await db.collection("sihun/data/m32ana").where("at", "==", req.at || "").get()).size;
+    if (used > ANA_LIMIT) return done({ state: "limit" });
+    const items = req.items.slice(0, 80);
+    // 그림은 틀림·도움 받은 문제 먼저, 최대 ANA_MAX_IMG장
+    const withPen = items.filter((x) => x.pen && x.pen.id).sort((a, b) => (a.res === "o") - (b.res === "o")).slice(0, ANA_MAX_IMG);
+    const content = [];
+    for (const x of withPen) {
+      try {
+        const ps = await db.doc("sihun/data/m32pen/" + x.pen.id).get();
+        const img = ps.exists ? imgBlock(unpackDoc(ps.data()).img) : null;
+        if (img) content.push({ type: "text", text: `손풀이 그림 (key ${x.key}):` }, img);
+      } catch (e) { console.warn("m32Analyze pen", x.pen.id, e.message); }
+    }
+    const scope = req.kind === "one" ? "이 한 문제" : req.kind === "week" ? `최근 7일(${req.from}~${req.at})` : `${req.at} 하루`;
+    content.push({ type: "text", text: `${scope}의 수학 3-2 기록이에요. JSON 한 줄이 한 문제예요.\n` + items.map((x) => JSON.stringify(x)).join("\n") + `\n\n엄마에게 보고해 주세요.` });
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+    const base = {
+      model: TUTOR_MODEL, max_tokens: 16000,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "high", format: { type: "json_schema", schema: ANA_SCHEMA } },
+      system: ANA_SYSTEM,
+      messages: [{ role: "user", content }],
+    };
+    try {
+      let res;
+      try {
+        res = await client.beta.messages.stream({ ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }).finalMessage();
+      } catch (e1) {
+        if (!(e1 && e1.status === 400)) throw e1;
+        console.warn("m32Analyze fallback params rejected, retrying plain", e1.message);
+        res = await client.messages.stream(base).finalMessage();
+      }
+      if (res.stop_reason === "refusal") return done({ state: "error", err: "refusal" });
+      const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+      const out = JSON.parse(text);
+      return done({ state: "ok", ...out, imgs: withPen.length, model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } });
+    } catch (e) {
+      console.error("m32Analyze", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error") });
     }
   }
 );
