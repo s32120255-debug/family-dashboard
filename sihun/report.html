@@ -103,7 +103,7 @@ async function render(){
 }
 onAuthStateChanged(auth,u=>{
   if(!u){M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p><button class="btn" id="li">구글로 로그인</button></p></div>`;document.getElementById('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p)}catch(e){alert('로그인이 안 됐어요: '+(e.code||e.message))}};return}
-  gate();
+  start();
 });
 </script>
 </body>
