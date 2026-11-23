@@ -37,10 +37,10 @@ service cloud.firestore {
           'SIHUN_EMAIL@gmail.com'
         ]);
     }
-    // 시훈이 대시보드: 시훈·엄마만. 기록(log)은 고치거나 지울 수 없고, 지우기는 엄마만
+    // 시훈이 대시보드: 시훈·엄마 계정만. 관리(설정·지우기)는 화면에서 관리자 비밀번호로 잠금.
+    // 기록(log)은 고칠 수 없어요.
     match /sihunBoard/main {
-      allow read: if isSihunBoard();
-      allow write: if isMom();
+      allow read, write: if isSihunBoard();
     }
     match /sihunBoard/mom {
       allow read, write: if isMom();
@@ -48,7 +48,7 @@ service cloud.firestore {
     match /sihunBoard/main/{col}/{id} {
       allow read, create: if isSihunBoard();
       allow update: if isSihunBoard() && col != 'log';
-      allow delete: if isMom();
+      allow delete: if isSihunBoard();
     }
     // 가족 대시보드: 가족 모두 (seoyun, sihunBoard 는 빼고)
     match /{col}/{document=**} {
