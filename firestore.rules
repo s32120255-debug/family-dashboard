@@ -29,15 +29,11 @@ service cloud.firestore {
           'MOM_EMAIL@gmail.com'
         ];
     }
-    // 시훈이 대시보드를 쓰는 계정: 시훈 + 엄마
+    // 시훈이 대시보드를 쓰는 계정: 가족 모두
     function isSihunBoard() {
-      return isMom() || (request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in [
-          'SIHUN_EMAIL@gmail.com'
-        ]);
+      return isFamily();
     }
-    // 시훈이 대시보드: 시훈·엄마 계정만. 관리(설정·지우기)는 화면에서 관리자 비밀번호로 잠금.
+    // 시훈이 대시보드: 가족 모두. 관리(설정·지우기)는 화면에서 관리자 비밀번호로 잠금.
     // 기록(log)은 고칠 수 없어요.
     match /sihunBoard/main {
       allow read, write: if isSihunBoard();
