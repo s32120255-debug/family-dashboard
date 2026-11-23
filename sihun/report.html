@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>시훈 하루 리포트</title>
+<link rel="icon" href="icons/icon-192.png">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--bg:#f7f3ea;--card:#fffdf8;--ink:#1f2a44;--sub:#6b7280;--line:#e6e0d2;--ok:#2a9d5c;--bad:#c8553d;--chip:#f1ede3;--acc:#2f6b4f}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151a26;--card:#1f2636;--ink:#eef1f7;--sub:#a3abbd;--line:#323b50;--chip:#2a3245}}
+  :root[data-theme="dark"]{--bg:#151a26;--card:#1f2636;--ink:#eef1f7;--sub:#a3abbd;--line:#323b50;--chip:#2a3245}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;line-height:1.55}
+  main{max-width:760px;margin:0 auto;padding:16px 16px 60px}
+  h1{font-size:24px;margin:4px 0 12px}
+  .nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .nav button,.btn{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}
+  .nav .d{flex:1;text-align:center;font-weight:700;font-size:18px}
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+  .card h2{font-size:19px;margin:0 0 8px}
+  .row{display:flex;flex-wrap:wrap;gap:8px}
+  .st{background:var(--chip);border-radius:12px;padding:8px 12px;min-width:110px}
+  .st b{display:block;font-size:20px}
+  .st span{font-size:13px;color:var(--sub)}
+  .muted{color:var(--sub);font-size:14px}
+  ul{margin:6px 0;padding-left:20px} li{margin:3px 0}
+  .ok{color:var(--ok);font-weight:700}.bad{color:var(--bad);font-weight:700}
+  .gate{max-width:360px;margin:60px auto;text-align:center}
+  .gate input{font-size:22px;padding:10px;border-radius:12px;border:2px solid var(--line);width:180px;text-align:center;background:var(--card);color:var(--ink)}
+  a{color:inherit}
+</style>
+</head>
+<body>
+<main id="m"><div class="muted">불러오는 중…</div></main>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,collection,getDocs,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {firebaseConfig} from "../config.js";
+const app=initializeApp(firebaseConfig), auth=getAuth(app), fs=getFirestore(app);
+const M=document.getElementById('m');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const unpack=v=>(v&&typeof v._j==='string')?JSON.parse(v._j):v;
+const P=['sihun','data'];
+const getD=async p=>{const s=await getDoc(doc(fs,...P,...p.split('/')));return s.exists()?unpack(s.data()):null};
+const getC=async (c,...cons)=>(await getDocs(query(collection(fs,...P,c),...cons))).docs.map(d=>({id:d.id,...unpack(d.data())}));
+const pad=n=>String(n).padStart(2,'0');
+const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const WHY={understand:'📘 규칙을 잘 몰랐어',attention:'🎯 처음엔 놓쳤는데 힌트 보고 알았어',retrieval:'🗣️ 아는데 바로 안 나왔어',fatigue:'🔋 뒤로 갈수록 집중이 안 됐어',condition:'🌊 오늘 좀 피곤했어',none:'✨ 별로 안 막혔어'};
+const CLS={ok:'바로 완성',access:'힌트 보고 고쳐서 완성',unknown:'두 번 틀려 정답 보고 익힘',speak:'말하기 막힘'};
+const KOT={daily:'복습 카드',test:'누적 테스트',wrong:'오답',hw:'숙제',write:'독서 워크지',lit:'문학 개념',fill:'핵심 빈칸',note:'개념 정리'};
+let day=new Date(); let CACHE=null;
+
+function gate(){
+  let ok=false;try{ok=sessionStorage.getItem('hub:mom')==='1'}catch(e){}
+  if(ok) return start();
+  M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p class="muted">엄마 비밀번호</p><input id="pw" type="password" inputmode="numeric" autocomplete="off"><p><button class="btn" id="go">열기</button></p><p id="e" class="bad"></p></div>`;
+  const go=()=>{if(document.getElementById('pw').value==='503553'){try{sessionStorage.setItem('hub:mom','1')}catch(e){}start()}else document.getElementById('e').textContent='비밀번호가 달라요'};
+  document.getElementById('go').onclick=go;document.getElementById('pw').onkeydown=e=>{if(e.key==='Enter')go()};
+}
+async function start(){
+  M.innerHTML='<div class="muted">기록 불러오는 중…</div>';
+  try{
+    const [routine,vcheck,changes,results,m32]=await Promise.all([getD('log/routine'),getD('vocab/check'),getD('meta/changes'),getC('results',orderBy('at','desc'),limit(800)),getC('m32att')]);
+    CACHE={routine,vcheck,changes,results,m32};render();
+  }catch(e){M.innerHTML=`<div class="card bad">기록을 못 불러왔어요 (${esc(e.code||e.message)})</div>`}
+}
+const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
+async function render(){
+  const k=dkey(day);const C=CACHE;
+  const D=await getD('daily/'+k).catch(()=>null)||{subjects:{}};const S=D.subjects||{};
+  let h=`<h1>📋 시훈 하루 리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
+  // 영어
+  const en=(S.en&&S.en.actual)||{};const R=(C.routine&&C.routine.days&&C.routine.days[k])||{};const V=(C.vcheck&&C.vcheck.days&&C.vcheck.days[k])||{};
+  const vn=(en.vocab&&en.vocab.n)||V.n||0, vk=(en.vocab&&en.vocab.known)||V.known||0;
+  const pred=en.predMin??R.predMin, act=en.actualMin??R.actualMin;
+  const cls=R.cls||{};const clsL=Object.entries(cls).filter(([,n])=>n>0).map(([c,n])=>`<li>${CLS[c]||c}: ${n}문장</li>`).join('');
+  h+=`<div class="card"><h2>🇺🇸 영어</h2><div class="row">${stat(vn+'개',`단어 체크 (알아요 ${vk})`)}${stat((en.main||R.n||0)+'문장',`문장 (맞음 ${en.ok||0}${en.skipped?`, 건너뜀 ${en.skipped}`:''})`)}${stat(pred!=null?pred+'분':'–','예측 시간')}${stat(act!=null?act+'분':'–','실제 시간')}</div>
+    ${pred!=null&&act!=null?`<p>예측 ${pred}분 → 실제 ${act}분 · <b>${Math.abs(act-pred)<=Math.max(2,pred*.2)?'<span class="ok">예측이 정확했어요</span>':act>pred?'예상보다 오래 걸렸어요':'예상보다 빨리 끝났어요'}</b></p>`:''}
+    ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
+  // 국어
+  const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k);
+  const kol=KR.map(r=>{const arr=r.items||r.cards||[];const n=arr.length||r.qn||(r.ok!=null?1:0);const ok=arr.length?arr.filter(x=>x.ok).length:(r.qok!=null?r.qok:(r.ok?1:0));
+    return `<li>${KOT[r.type]||esc(r.type||'기록')}${r.area?' · '+esc(r.area):''}${r.title?' · '+esc(r.title):''}${r.src?' · '+esc(r.src):''} — ${n?`<span class="${ok===n?'ok':''}">${ok}/${n}</span>`:''}${r.score!=null?` · ${r.score}점`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}</li>`}).join('');
+  const ko=(S.ko&&S.ko.actual)||{};
+  h+=`<div class="card"><h2>📖 국어</h2>${ko.score!=null?`<div class="row">${stat(ko.score+'점','테스트 점수')}</div>`:''}${kol?`<ul>${kol}</ul>`:'<p class="muted">이날 국어 기록이 없어요.</p>'}</div>`;
+  // 수학
+  const MI=C.m32.filter(d=>d.date===k).flatMap(d=>d.items||[]);const mo=MI.filter(x=>x.res==='o').length,mx=MI.filter(x=>x.res==='x').length,ms=MI.filter(x=>x.res==='s').length;
+  const mt=MI.reduce((a,x)=>a+(+x.t||0),0);const ma=(S.math&&S.math.actual)||{};
+  h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','문제 푼 시간'):''}</div>`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
+  // 막힌 이유
+  const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
+  h+=`<div class="card"><h2>🧭 시훈이가 고른 막힌 이유</h2>${ws?`<ul>${ws}</ul>`:'<p class="muted">이날은 고른 게 없어요.</p>'}<p class="muted">판단은 5일 이상 기록이 쌓인 뒤에 해요.</p></div>`;
+  // 바뀐 것
+  const ch=((C.changes&&C.changes.items)||[]).filter(x=>x.date===k);
+  h+=`<div class="card"><h2>🔧 이날 앱에서 바뀐 것</h2>${ch.length?`<ul>${ch.map(x=>`<li>${esc(x.what)}</li>`).join('')}</ul>`:'<p class="muted">바뀐 것 없음</p>'}</div>`;
+  h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
+  M.innerHTML=h;
+  document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
+  document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
+  document.getElementById('td').onclick=()=>{day=new Date();render()};
+}
+onAuthStateChanged(auth,u=>{
+  if(!u){M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p><button class="btn" id="li">구글로 로그인</button></p></div>`;document.getElementById('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p)}catch(e){alert('로그인이 안 됐어요: '+(e.code||e.message))}};return}
+  gate();
+});
+</script>
+</body>
+</html>
