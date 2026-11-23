@@ -1,0 +1,15 @@
+{
+ "name": "시훈이 대시보드",
+ "short_name": "시훈이",
+ "start_url": "./",
+ "id": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#fbf5e8",
+ "theme_color": "#3f5b4f",
+ "lang": "ko",
+ "icons": [
+  {"src": "../icon-192.png", "sizes": "192x192", "type": "image/png"},
+  {"src": "../icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+ ]
+}
