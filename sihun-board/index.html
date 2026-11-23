@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>시훈이 대시보드</title>
-<link rel="manifest" href="manifest.json?v=1">
-<link rel="icon" href="../icon-192.png">
-<link rel="apple-touch-icon" href="../icon-192.png">
+<link rel="manifest" href="manifest.json?v=2">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#3f5b4f">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -273,7 +273,11 @@ function ensureTasks(){
   for(let d=from;d<=t;d=addDays(d,1)){if(!(tp.days||[]).includes(dayKey(parse(d))))continue;const id=`${tp.id}_${d}`;
    if(!have.has(id)){have.add(id);F.setDoc(F.doc(fs,"tasks",id),{title:tp.title,points:tp.points||1,link:tp.link||null,date:d,tplId:tp.id,done:false,createdAt:Date.now()}).catch(()=>{})}}}
 }
-function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=(tp&&tp.link)||x.link||"";return /^(https?:|intent:|market:)/i.test(u)?u:""}
+// 「오늘의 공부」는 이 화면에서만 새 공부방(sihun/)으로 보냄. 우리집 대시보드의 주소는 그대로.
+const STUDY_URL="https://s32120255-debug.github.io/family-dashboard/sihun/";
+function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=(tp&&tp.link)||x.link||"";
+ if(x.tplId==="study-daily"||/1MTzG655j9K3nseEUp1kvB/.test(u))return STUDY_URL;
+ return /^(https?:|intent:|market:)/i.test(u)?u:""}
 function renderTasks(){
  const t=today();const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  $("ptText").textContent=`쓸 수 있는 포인트 ⭐${sum(S.tasks.filter(x=>x.done))-sum(S.rewards)}`;
@@ -413,7 +417,7 @@ $("askForm").onsubmit=async e=>{e.preventDefault();const v=$("askInput").value.t
  if(await write("ask",null,{q:v,a:null,date:t},"추가",v.slice(0,60))){$("askInput").value="";toast("질문을 저장했어요")}};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=1;
+const VERSION=2;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
