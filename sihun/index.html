@@ -3286,7 +3286,7 @@ function skillPage(i){ CUR='skill'; const s=SKILLS[i], r=PROG.sk[s.id]; let sel=
    <div class="learn">${s.learn}</div>
    <div class="row3"><button class="big rev" id="ls"><div><div class="t">📘 개념 수업</div><div class="s">${r.lesson>=2?'다시 보기':'처음이면 여기부터'}</div></div></button>
    <button class="big rev" id="ck"><div><div class="t">✅ 개념 확인</div><div class="s">5문제 · ${r.check?'통과했어요':'4개 맞히면 통과'}</div></div></button></div>
-   <div class="sec">단계 고르기</div><div class="lvpick">${LV.map((n,l)=>`<button data-l="${l}" class="${l===sel?'on':''}">${n}<small>${r.lv>l?'통과':''} ${'★'.repeat(r.st[l])}${'☆'.repeat(5-r.st[l])}</small></button>`).join('')}</div>
+   <div class="sec">단계 고르기</div><div class="lvpick">${LV.map((n,l)=>`<button data-l="${l}" class="${l===sel?'on':''}" ${l>r.lv?'disabled':''}>${l>r.lv?'🔒 ':''}${n}<small>${r.lv>l?'통과':''} ${'★'.repeat(r.st[l])}${'☆'.repeat(5-r.st[l])}</small></button>`).join('')}</div>
    <button class="big" id="sv" style="margin-top:14px"><div><div class="t">✏️ 문제 풀기</div><div class="s" id="svs">${LV[sel]} · 되는 만큼</div></div><span class="go">▶</span></button></div>`;
   document.querySelectorAll('.lvpick button').forEach(b=>b.onclick=()=>{ sel=+b.dataset.l; document.querySelectorAll('.lvpick button').forEach(x=>x.classList.toggle('on',x===b)); $('#svs').textContent=`${LV[sel]} · 되는 만큼`; });
   $('#ls').onclick=()=>startLesson(i); $('#ck').onclick=()=>startCheck(i); $('#sv').onclick=()=>startSolve(i,sel); bindCommon(); }
@@ -3500,11 +3500,12 @@ function startSolve(si,lv){ CUR='solve'; C={si,lv,list:[],idx:-1,t0:Date.now()};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right')); newProblem(); }
 function solveBar(){ const s=SKILLS[C.si], r=PROG.sk[s.id], n=r.st[C.lv]||0; const done=C.list.filter(x=>x.rec).length;
   return `<div class="sbar"><button class="homebtn" data-act="home">⏮ 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span><div class="cnt">이번에 ${done}문제</div></div><span class="stars"><b>${'★'.repeat(n)}</b>${'☆'.repeat(Math.max(0,5-n))}</span>${saveBtnHTML()}</div>`; }
-function navRow(){ return `<div class="navrow"><button id="pv" ${C.idx<=0?'disabled':''}>◀ 이전</button><button id="nxp">다음 ▶</button><button id="lvdn" ${C.lv<=0?'disabled':''}>단계 ▼</button><button id="lvup" ${C.lv>=4?'disabled':''}>단계 ▲</button></div>`; }
+function navRow(){ return `<div class="navrow"><button id="pv" ${C.idx<=0?'disabled':''}>◀ 이전</button><button id="nxp">다음 ▶</button><button id="lvdn" ${C.lv<=0?'disabled':''}>단계 ▼</button><button id="lvup" ${C.lv>=Math.min(4,PROG.sk[SKILLS[C.si].id].lv)?'disabled':''}>단계 ▲</button></div>`; }
 function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } };
-  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),pen:cur.st?penSnap(cur.st):null}); cur.rec={res:'s'}; }
+  // 엄마 11/23: 그냥 넘어가기 없앰 — 풀어야(맞히거나, 틀린 뒤 정답까지 보고) 다음 문제로
+  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec){ toast('이 문제를 먼저 풀어요. 막히면 💡 힌트를 봐도 돼요.'); return; } if(false){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),pen:cur.st?penSnap(cur.st):null}); cur.rec={res:'s'}; }
     if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
-  $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<4){ C.lv++; newProblem(true); } }; bindCommon(); }
+  $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<Math.min(4,PROG.sk[SKILLS[C.si].id].lv)){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
   C.list.push({p:makeProblem(C.si,C.lv),rec:null}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
