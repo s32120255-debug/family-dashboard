@@ -535,6 +535,8 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .ptools button{height:42px;min-width:42px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:15px;padding:0 10px}.ptools button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
 .dot{width:20px;height:20px;border-radius:50%;display:inline-block;vertical-align:middle}.ptools .sp{flex:1}
 .padwrap{flex:1;position:relative;min-height:0}
+.phs{display:flex;gap:8px;padding:6px 12px;border-bottom:1.5px solid var(--line);background:#fffdf8;overflow-x:auto}.phs .ph{position:relative;border:1.5px solid var(--line);border-radius:10px;padding:0;background:#fff;height:64px;flex:0 0 auto}.phs .ph img{height:60px;border-radius:9px;display:block}.phs .ph b{position:absolute;top:-6px;right:-6px;background:#e4572e;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:20px}
+.phv img{max-width:100%;margin-top:6px;border-radius:10px;border:1.5px solid var(--line)}
 canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:34px 34px}
 /* 수업 */
 .lesson{max-width:900px}
@@ -3337,17 +3339,20 @@ function problemCard(p){ return `<div class="pcard">${p.text}${p.svg?`<div class
 // ===== 손풀이 저장 (엄마 11/23: S펜 풀이를 남겨서 나중에 AI로 분석) =====
 // 문제마다 패드 그림(PNG)과 획 순서·시간을 m32pen/<id>에 저장. 기록(rec.pen)엔 요약만.
 let PENQ=[]; const PENC={}; // 저장 대기 / 이번에 본 것 캐시
-function penSnap(st){ if(!PAD||!PAD.snap) return null; const s=PAD.snap(st.t0); if(!s||!s.n) return null;
-  const id=`${today()}-${SID}-${Date.now().toString(36)}`; const doc={id,d:today(),t0:new Date(st.t0).toISOString(),w:s.w,h:s.h,img:s.img,strokes:s.strokes};
-  PENQ.push(doc); PENC[id]=doc; return {id,n:s.n,first:s.first,erase:s.erase,clear:s.clear,idle:s.idle}; }
+function penSnap(st){ if(!PAD||!PAD.snap) return null; const s=PAD.snap(st.t0); const ph=(s&&s.photos)||[]; if(!s||(!s.n&&!ph.length)) return null;
+  const id=`${today()}-${SID}-${Date.now().toString(36)}`; const phIds=ph.map((x,k)=>`${id}-ph${k+1}`);
+  const doc={id,d:today(),t0:new Date(st.t0).toISOString(),w:s.w||0,h:s.h||0,img:s.img||'',strokes:s.strokes||[],ph:phIds};
+  ph.forEach((img,k)=>{ const pd={id:phIds[k],d:today(),photo:1,img}; PENQ.push(pd); PENC[pd.id]=pd; });
+  PENQ.push(doc); PENC[id]=doc; return {id,n:s.n||0,first:s.first||0,erase:s.erase||0,clear:s.clear||0,idle:s.idle||0,ph:ph.length}; }
 async function penLoad(id){ if(PENC[id]) return PENC[id]; if(!DBH) return null; try{ const sn=await DBH.doc('m32pen/'+id).get(); if(sn.exists){ PENC[id]=sn.data(); return PENC[id]; } }catch(e){} return null; }
 function penModal(id,title){ const m=modal(`<h2>✍️ 손풀이</h2><p class="sm">${title||''}</p><div id="pv" class="penview">불러오는 중…</div><div class="acts"><button class="ok" id="pr">▶ 쓴 순서대로 보기</button><button class="hint" id="pc" style="flex:1">닫기</button></div>`);
   m.querySelector('#pc').onclick=()=>m.remove();
   penLoad(id).then(doc=>{ const v=m.querySelector('#pv'); if(!doc){ v.textContent='손풀이를 못 불러왔어요.'; return; }
-    v.innerHTML=`<img src="${doc.img}" alt="손풀이">`;
+    v.innerHTML=(doc.img?`<img src="${doc.img}" alt="손풀이">`:'')+((doc.ph||[]).length?`<div class="sm">📷 종이 풀이 사진</div><div class="phv"></div>`:'');
+    (doc.ph||[]).forEach(async pid=>{ const pd=await penLoad(pid); const w=v.querySelector('.phv'); if(pd&&pd.img&&w) w.insertAdjacentHTML('beforeend',`<img src="${pd.img}" alt="사진">`); });
     m.querySelector('#pr').onclick=()=>{ const W=Math.min(760,doc.w), sc=W/doc.w; v.innerHTML=`<canvas width="${W}" height="${Math.round(doc.h*sc)}"></canvas>`; const ctx=v.querySelector('canvas').getContext('2d');
       const S=doc.strokes||[]; let k=0; const step=()=>{ if(k>=S.length) return; const s=S[k++]; ctx.strokeStyle=s.c||'#1f2a44'; ctx.lineWidth=(s.er?24:3)*sc; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalCompositeOperation=s.er?'destination-out':'source-over'; ctx.beginPath(); s.p.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc)); ctx.stroke(); ctx.globalCompositeOperation='source-over'; const nx=S[k]; setTimeout(step,nx?Math.min(900,Math.max(40,(nx.t-s.t)/4)):0); }; step(); }; }); }
-const penInfo=x=>x.pen?`✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.clear?` · 전체 지움 ${x.pen.clear}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}`:'';
+const penInfo=x=>x.pen?`${x.pen.ph?`📷 사진 ${x.pen.ph} · `:''}✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.clear?` · 전체 지움 ${x.pen.clear}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}`:'';
 function penSummaryHTML(A){ const S=A.filter(x=>x.mode==='solve'&&x.res!=='s'); const P=S.filter(x=>x.pen); if(!S.length) return '';
   const med=a=>a.length?median(a):'–'; const W=P.filter(x=>x.res==='x'), O=P.filter(x=>x.res!=='x');
   return `<div class="sec">✍️ 손풀이 (11/23부터)</div><div class="tw"><table class="ptab"><tr><th></th><th>손풀이 남긴 문제</th><th>첫 획까지 (중간값)</th><th>가장 오래 멈춤 (중간값)</th></tr>
@@ -3377,7 +3382,7 @@ function renderPic(pic){ if(!pic||!pic.kind||pic.kind==='none') return ''; const
 let TUT_SEQ=0; const TUT_MAX=6; // 한 문제에서 AI 차례 최대
 const tutorOK=()=>!!DBH&&DB_STATE==='ok';
 async function tutorAsk(T,kind){ const id=`${today()}-${SID}-t${String(++TUT_SEQ).padStart(3,'0')}`; const snap=PAD&&PAD.snap?PAD.snap(T.t0):{};
-  const req={at:today(),date:today(),ts:new Date().toISOString(),kind,problem:T.prob,answers:T.answers.slice(),turns:T.turns.map(t=>({who:t.who,text:t.text})),img1:T.img1||'',img2:snap.img&&snap.img!==T.img1?snap.img:''};
+  const req={at:today(),date:today(),ts:new Date().toISOString(),kind,problem:T.prob,answers:T.answers.slice(),turns:T.turns.map(t=>({who:t.who,text:t.text})),img1:T.img1||'',img2:snap.img&&snap.img!==T.img1?snap.img:''}; { let room=900000-req.img1.length-req.img2.length; req.photos=(snap.photos||[]).slice().reverse().filter(x=>(room-=x.length)>=0).reverse(); }
   await DBH.doc('m32tutor/'+id).set(req); T.calls++;
   for(let i=0;i<75;i++){ await new Promise(r=>setTimeout(r,i<5?1500:1000)); try{ const sn=await DBH.doc('m32tutor/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) return d.res; }catch(e){} }
   return {state:'error',err:'timeout'}; }
@@ -3440,8 +3445,8 @@ function mountProblem(box,p,opts){
   // 엄마 11/23: 맞히면 그냥 넘어감(패드에 쓴 게 있으면 조용히 저장). 틀리면 정답 보여 주기 전에 머릿속 식을 패드에 써 달라고 함.
   function askPen(){ if(st.secAns==null) st.secAns=Math.round((Date.now()-st.t0)/1000); ist.locked=true; box.querySelector('#macts').style.display='none';
     const canFix=!st.fixTried;
-    show('h',`${st.lastMsg?st.lastMsg+'<br>':''}🤔 어떻게 생각했는지 궁금해요.<br>머릿속으로 한 식이나 풀이를 <b>오른쪽 패드</b>에 써 줄래요? 다 쓰면 선생님이 같이 볼게요.${canFix?'<br><small>쓰다가 답이 보이면 「답 고칠래요」를 눌러요.</small>':''}<div class="acts"><button class="ok" id="pw1">✍️ 다 썼어요</button>${canFix?'<button class="hint" id="pw3" style="flex:0 0 auto">✏️ 답 고칠래요</button>':''}<button class="hint" id="pw2" style="flex:0 0 auto">생각이 안 나요</button></div>`);
-    box.querySelector('#pw1').onclick=()=>{ if(PAD&&PAD.snap&&!PAD.snap(st.t0).n){ toast('패드에 아직 아무것도 없어요. 생각이 안 나면 「생각이 안 나요」를 눌러요.'); return; } st.penAsk='wrote'; if(tutorOK()) mountTutor(box,p,st,ist,show,finish); else { toast('AI 선생님 연결이 안 돼요. 정답을 보여 줄게요.'); finish('x'); } };
+    show('h',`${st.lastMsg?st.lastMsg+'<br>':''}🤔 어떻게 생각했는지 궁금해요.<br>머릿속으로 한 식이나 풀이를 <b>오른쪽 패드</b>에 써 줄래요? 다 쓰면 선생님이 같이 볼게요.<br><small>풀이가 길면 종이에 풀고 📷 사진으로 올려도 돼요.</small>${canFix?'<br><small>쓰다가 답이 보이면 「답 고칠래요」를 눌러요.</small>':''}<div class="acts"><button class="ok" id="pw1">✍️ 다 썼어요</button>${canFix?'<button class="hint" id="pw3" style="flex:0 0 auto">✏️ 답 고칠래요</button>':''}<button class="hint" id="pw2" style="flex:0 0 auto">생각이 안 나요</button></div>`);
+    box.querySelector('#pw1').onclick=()=>{ if(PAD&&PAD.snap){ const _s=PAD.snap(st.t0); if(!_s.n&&!(_s.photos||[]).length){ toast('패드에 아직 아무것도 없어요. 풀이가 길면 📷 사진으로 올려도 돼요. 생각이 안 나면 「생각이 안 나요」를 눌러요.'); return; } } st.penAsk='wrote'; if(tutorOK()) mountTutor(box,p,st,ist,show,finish); else { toast('AI 선생님 연결이 안 돼요. 정답을 보여 줄게요.'); finish('x'); } };
     box.querySelector('#pw2').onclick=()=>{ st.penAsk='blank'; finish('x'); };
     if(canFix) box.querySelector('#pw3').onclick=fixAns; }
   // 엄마 11/23: 패드에 쓰다가 스스로 찾으면 바로 답을 고쳐 넣는 칸(한 번)
@@ -3485,8 +3490,8 @@ function mountProblem(box,p,opts){
 const stripTags=h=>String(h).replace(/<span class="mxw">(\d+)<\/span><span class="fr"><span>([^<]+)<\/span><span>([^<]+)<\/span><\/span>/g,'$1과 $2/$3').replace(/<span class="fr"><span>([^<]+)<\/span><span>([^<]+)<\/span><\/span>/g,'$1/$2').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 
 // ===== 필기 패드 =====
-function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span></div><div class="padwrap"><canvas class="pad" id="pad"></canvas></div>`; }
-function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext('2d'); let tool='pen', col='#1f2a44', drawing=false, last=null, pid=null; const strokes=[]; let hist=[]; // hist: 이 문제에서 쓴 모든 획(전체 지우기 포함) — 손풀이 저장용
+function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span><button data-tool="photo">📷 사진</button><input type="file" accept="image/*" capture="environment" class="phin" hidden></div><div class="phs"></div><div class="padwrap"><canvas class="pad" id="pad"></canvas></div>`; }
+function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext('2d'); let tool='pen', col='#1f2a44', drawing=false, last=null, pid=null; const strokes=[]; let hist=[]; let photos=[]; // photos: 종이 풀이 사진(엄마 11/23) / hist: 이 문제에서 쓴 모든 획(전체 지우기 포함) — 손풀이 저장용
   const fit=()=>{ const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cv.width=Math.max(1,r.width*dpr); cv.height=Math.max(1,r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); };
   const paint=(c,list,sc,ox,oy)=>{ list.forEach(s=>{ c.strokeStyle=s.c; c.lineWidth=s.w*sc; c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation=s.er?'destination-out':'source-over'; c.beginPath(); s.pts.forEach((p,i)=>i?c.lineTo((p[0]-ox)*sc,(p[1]-oy)*sc):c.moveTo((p[0]-ox)*sc,(p[1]-oy)*sc)); if(s.pts.length===1) c.lineTo((s.pts[0][0]-ox)*sc+0.1,(s.pts[0][1]-oy)*sc); c.stroke(); }); c.globalCompositeOperation='source-over'; };
   const redraw=()=>{ ctx.clearRect(0,0,cv.width,cv.height); paint(ctx,strokes,1,0,0); };
@@ -3495,6 +3500,7 @@ function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext(
   cv.addEventListener('pointermove',e=>{ if(!drawing||e.pointerId!==pid) return; e.preventDefault(); last.pts.push(pos(e)); redraw(); });
   const up=e=>{ if(e.pointerId!==pid) return; drawing=false; pid=null; if(last) last.t1=Date.now(); }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   root.querySelectorAll('.ptools button').forEach(b=>b.onclick=()=>{ const t=b.dataset.tool;
+    if(t==='photo'){ if(photos.length>=PH_MAX){ toast(`사진은 한 문제에 ${PH_MAX}장까지예요. 지우려면 사진을 눌러요.`); return; } root.querySelector('.phin').click(); return; }
     if(t==='clr'){ strokes.length=0; hist.push({clr:true,t:Date.now()}); redraw(); return; } if(t==='pen-only'){ PROG.penOnly=!PROG.penOnly; DIRTY=true; b.classList.toggle('on',PROG.penOnly); toast(PROG.penOnly?'펜으로만 써져요 (손바닥 OK)':'손가락으로도 써져요'); refreshTop(); return; }
     tool=t; if(b.dataset.c) col=b.dataset.c; root.querySelectorAll('.ptools button[data-tool="pen"],.ptools button[data-tool="er"]').forEach(x=>x.classList.toggle('on',x===b)); });
   // 손풀이 꺼내기: 지금 패드 그림(흰 바탕, 쓴 곳만 잘라서) + 획 순서·시간 + 요약
@@ -3506,7 +3512,20 @@ function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext(
     const out=hist.map(s=>s.clr?{clr:1,t:s.t-t0}:{c:s.c,er:s.er?1:0,t:s.t-t0,p:s.pts.filter((p,i,a)=>i===0||i===a.length-1||Math.abs(p[0]-a[i-1][0])+Math.abs(p[1]-a[i-1][1])>=2).map(p=>[Math.round(p[0]),Math.round(p[1])])});
     const r=cv.getBoundingClientRect();
     return {n:penH.length,first:Math.max(0,Math.round(((penH[0]||{}).t-t0)/1000))||0,erase:hist.filter(s=>s.er).length,clear:hist.filter(s=>s.clr).length,idle:Math.round(idle),img,w:Math.round(r.width),h:Math.round(r.height),strokes:JSON.stringify(out).length<400000?out:[]}; };
-  new ResizeObserver(fit).observe(cv); fit(); return {clear:()=>{strokes.length=0;hist=[];redraw();},snap}; }
+  // 📷 종이 풀이 사진: 줄여서 JPEG로(문서 크기 한도 때문에 장당 약 300KB 이하)
+  const phs=root.querySelector('.phs'), phin=root.querySelector('.phin');
+  const drawPh=()=>{ phs.innerHTML=photos.map((ph,i)=>`<button class="ph" data-i="${i}" title="눌러서 지우기"><img src="${ph.img}" alt="사진 ${i+1}"><b>✕</b></button>`).join(''); phs.style.display=photos.length?'':'none';
+    phs.querySelectorAll('.ph').forEach(b=>b.onclick=()=>{ if(confirm('이 사진을 지울까요?')){ photos.splice(+b.dataset.i,1); drawPh(); } }); };
+  phin.onchange=async()=>{ const f=phin.files&&phin.files[0]; phin.value=''; if(!f) return; try{ const img=await phShrink(f); photos.push({img,t:Date.now()}); drawPh(); toast(`📷 사진을 넣었어요 (${photos.length}장)`); }catch(e){ toast('사진을 못 넣었어요. 다시 찍어 볼래요?'); } };
+  drawPh();
+  const snap2=t0=>{ const s=snap(t0); s.photos=photos.map(x=>x.img); return s; };
+  new ResizeObserver(fit).observe(cv); fit(); return {clear:()=>{strokes.length=0;hist=[];photos=[];drawPh();redraw();},snap:snap2}; }
+const PH_MAX=2, PH_BYTES=300000;
+function phShrink(file){ return new Promise((ok,no)=>{ const u=URL.createObjectURL(file), im=new Image();
+  im.onload=()=>{ URL.revokeObjectURL(u); let side=1400, q=0.72, out='';
+    for(let k=0;k<8;k++){ const sc=Math.min(1,side/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.round(im.width*sc); c.height=Math.round(im.height*sc); const x=c.getContext('2d'); x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height); x.drawImage(im,0,0,c.width,c.height); out=c.toDataURL('image/jpeg',q); if(out.length<=PH_BYTES) break; if(q>0.5) q-=0.1; else side=Math.round(side*0.8); }
+    out.length<=PH_BYTES*1.3?ok(out):no(new Error('too big')); };
+  im.onerror=()=>{ URL.revokeObjectURL(u); no(new Error('load')); }; im.src=u; }); }
 
 // ===== 문제 풀기 =====
 let C=null, PAD=null;

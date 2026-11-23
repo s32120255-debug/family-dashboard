@@ -247,6 +247,11 @@ exports.m32Tutor = onDocumentCreated(
     const first = imgBlock(req.img1), last = imgBlock(req.img2);
     if (first) content.push({ type: "text", text: "처음에 시훈이가 패드에 쓴 풀이:" }, first);
     if (last) content.push({ type: "text", text: "지금 패드에 있는 풀이:" }, last);
+    // 풀이가 길면 시훈이가 종이에 풀고 📷 사진으로 올려요(엄마 11/23)
+    (Array.isArray(req.photos) ? req.photos.slice(0, 2) : []).forEach((ph, k) => {
+      const b = imgBlock(ph);
+      if (b) content.push({ type: "text", text: `시훈이가 종이에 푼 풀이 사진 ${k + 1}:` }, b);
+    });
     content.push({ type: "text", text: lines.join("\n") });
     const Anthropic = require("@anthropic-ai/sdk").default;
     const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
@@ -320,8 +325,14 @@ exports.m32Analyze = onDocumentCreated(
     for (const x of withPen) {
       try {
         const ps = await db.doc("sihun/data/m32pen/" + x.pen.id).get();
-        const img = ps.exists ? imgBlock(unpackDoc(ps.data()).img) : null;
+        const pd = ps.exists ? unpackDoc(ps.data()) : {};
+        const img = imgBlock(pd.img);
         if (img) content.push({ type: "text", text: `손풀이 그림 (key ${x.key}):` }, img);
+        for (const phId of (Array.isArray(pd.ph) ? pd.ph.slice(0, 2) : [])) {
+          const qs = await db.doc("sihun/data/m32pen/" + phId).get();
+          const ph = qs.exists ? imgBlock(unpackDoc(qs.data()).img) : null;
+          if (ph) content.push({ type: "text", text: `종이 풀이 사진 (key ${x.key}):` }, ph);
+        }
       } catch (e) { console.warn("m32Analyze pen", x.pen.id, e.message); }
     }
     const scope = req.kind === "one" ? "이 한 문제" : req.kind === "week" ? `최근 7일(${req.from}~${req.at})` : `${req.at} 하루`;
