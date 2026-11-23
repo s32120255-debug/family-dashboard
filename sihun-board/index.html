@@ -359,7 +359,7 @@ function renderAsk(){
  $("askNote").textContent=board.aiOn?"AI는 답 대신 생각할 질문으로 도와줘요. 엄마도 볼 수 있어요.":"지금은 질문만 저장돼요. AI 답은 엄마가 켜면 와요. 엄마도 볼 수 있어요.";
  $("askInput").disabled=left===0;$("askInput").placeholder=left===0?"오늘 질문은 다 썼어요":"궁금한 것 한 가지";
  const l=S.ask.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,10);
- $("askList").innerHTML=l.map(x=>`<div class="q"><div><b>${esc(x.q)}</b> <span class="meta">${fmtAt(x.createdAt)}</span></div>${x.a?`<div class="a">${esc(x.a)}</div>`:`<div class="meta">답을 기다려요</div>`}</div>`).join("")||`<p class="empty">아직 질문이 없어요.</p>`;
+ $("askList").innerHTML=l.map(x=>`<div class="q"><div><b>${esc(x.q)}</b> <span class="meta">${fmtAt(x.createdAt)}</span></div>${x.a?`<div class="a">${esc(x.a)}</div>`:`<div class="meta">${x.aError?"지금은 답을 못 받았어요":board.aiOn?"생각 중이에요…":"답을 기다려요"}</div>`}</div>`).join("")||`<p class="empty">아직 질문이 없어요.</p>`;
 }
 
 /* ---------- 엄마 확인 ---------- */
@@ -375,14 +375,14 @@ function renderMom(){
  else if(momTab==="deleted"){const l=[...S.money.filter(x=>x.deleted).map(x=>({...x,col:"money"})),...S.memory.filter(x=>x.deleted).map(x=>({...x,col:"memory"}))].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   h=`<ul class="list">${l.map(x=>`<li class="item del"><span class="meta">${fmtAt(x.updatedAt||x.createdAt)}</span><span class="pill info">${COLNAME[x.col]}</span><span class="t">${x.col==="money"?`${esc(moneyText(x))} (${esc(x.date)})`:esc(x.text)}</span><button class="btn small" data-restore="${x.col}:${x.id}">되살리기</button></li>`).join("")||`<li class="empty">지운 게 없어요.</li>`}</ul>`}
  else if(momTab==="ask"){const l=S.ask.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  h=`<div class="list">${l.map(x=>`<div class="q"><div><b>${esc(x.q)}</b> <span class="meta">${fmtAt(x.createdAt)}</span></div>${x.a?`<div class="a">${esc(x.a)}</div>`:`<div class="meta">답 없음</div>`}</div>`).join("")||`<p class="empty">질문이 없어요.</p>`}</div>`}
- else{h=`<form id="setForm" style="display:grid;gap:10px;max-width:560px"><label style="display:grid;gap:4px">학교 알림장 주소<input type="url" name="noticeUrl" value="${esc(board.noticeUrl||"")}" placeholder="https://"></label><label style="display:grid;gap:4px">하루 질문 수<input type="number" name="askLimit" min="1" max="30" value="${askLimit()}"></label><div><button class="btn primary">저장</button></div></form>`}
+  h=`<div class="list">${l.map(x=>`<div class="q"><div><b>${esc(x.q)}</b> <span class="meta">${fmtAt(x.createdAt)}</span></div>${x.a?`<div class="a">${esc(x.a)}</div>`:`<div class="meta">${x.aError?"AI 연결 오류 "+esc(x.aError):"답 없음"}</div>`}</div>`).join("")||`<p class="empty">질문이 없어요.</p>`}</div>`}
+ else{h=`<form id="setForm" style="display:grid;gap:10px;max-width:560px"><label style="display:grid;gap:4px">학교 알림장 주소<input type="url" name="noticeUrl" value="${esc(board.noticeUrl||"")}" placeholder="https://"></label><label style="display:grid;gap:4px">하루 질문 수<input type="number" name="askLimit" min="1" max="30" value="${askLimit()}"></label><label class="row"><input type="checkbox" name="aiOn" ${board.aiOn?"checked":""} style="width:22px;height:22px"> AI 답 켜기 (답 대신 생각할 질문으로 돌려줘요)</label><div><button class="btn primary">저장</button></div></form>`}
  $("momBox").innerHTML=h;
  const sf=$("setForm");if(sf)sf.onsubmit=async e=>{e.preventDefault();const fd=new FormData(sf);const u=String(fd.get("noticeUrl")||"").trim();
   if(u&&!/^https?:\/\//i.test(u))return toast("https:// 로 시작하는 주소를 넣어 주세요");
-  const data={noticeUrl:u||null,askLimit:Math.max(1,Math.min(30,Number(fd.get("askLimit"))||5))};
+  const data={noticeUrl:u||null,askLimit:Math.max(1,Math.min(30,Number(fd.get("askLimit"))||5)),aiOn:fd.get("aiOn")==="on"};
   const b=F.writeBatch(fs);b.set(F.doc(fs,"sihunBoard","main"),data,{merge:true});
-  b.set(F.doc(sub("log")),{at:Date.now(),by:"엄마",uid:user.uid,col:"main",docId:"main",action:"수정",summary:`알림장 주소 ${u?"넣음":"비움"} · 하루 질문 ${data.askLimit}개`,before:board,after:data});
+  b.set(F.doc(sub("log")),{at:Date.now(),by:"엄마",uid:user.uid,col:"main",docId:"main",action:"수정",summary:`알림장 주소 ${u?"넣음":"비움"} · 하루 질문 ${data.askLimit}개 · AI ${data.aiOn?"켬":"끔"}`,before:board,after:data});
   try{await b.commit();toast("저장했어요")}catch(err){toast("저장하지 못했어요: "+(err.code||""))}};
 }
 
@@ -417,7 +417,7 @@ $("askForm").onsubmit=async e=>{e.preventDefault();const v=$("askInput").value.t
  if(await write("ask",null,{q:v,a:null,date:t},"추가",v.slice(0,60))){$("askInput").value="";toast("질문을 저장했어요")}};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=2;
+const VERSION=3;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
