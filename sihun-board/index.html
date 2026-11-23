@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>시훈이 대시보드</title>
-<link rel="manifest" href="manifest.json?v=3">
+<link rel="manifest" href="manifest.json?v=4">
 <link rel="icon" href="icons/cat-192.png">
 <link rel="apple-touch-icon" href="icons/cat-192.png">
 <meta name="theme-color" content="#3f5b4f">
@@ -313,7 +313,7 @@ function renderTasks(){
 function renderNotice(){
  const u=board.noticeUrl||"";
  $("noticeBox").innerHTML=/^https?:\/\//i.test(u)
-  ?`<a class="btn primary" style="font-size:1.15rem;padding:12px 18px;text-align:center" href="${esc(u)}" target="_blank" rel="noopener">알림장 열기</a><p class="meta" style="margin:0">새 창으로 열려요. 다 보면 이 창으로 돌아와요.</p>`
+  ?`<a class="btn primary" style="font-size:1.15rem;padding:12px 18px;text-align:center" href="${esc(u)}" rel="noopener">알림장 열기</a><p class="meta" style="margin:0">다 보면 뒤로 가기를 누르면 여기로 돌아와요.</p>`
   :`<p class="empty" style="margin:0">아직 알림장 주소가 없어요. 엄마가 넣어 줄 거예요.</p>`;
 }
 
@@ -507,7 +507,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=13;
+const VERSION=14;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -551,7 +551,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=13").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=14").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
