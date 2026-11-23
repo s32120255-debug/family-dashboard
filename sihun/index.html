@@ -2267,7 +2267,7 @@ function holdBtn(el,fn){ let t; const on=e=>{ e.preventDefault(); el.classList.a
 
 // ===== 개념 =====
 function learn(i){ const s=SKILLS[i], st=DB.sk[s.id]; let sel=Math.min(st.lv,LV.length-1); if(!lvOpen(i,sel)) sel=0;
-  const desc=['개념 확인 · 자리표가 늘 켜져 있어요','교과서 수준','두세 단계 생각','두세 단계를 엮는 문제 (실력편 수준)','조건 여러 겹 · 개념 엮기 (최상위 수준)'];
+  const desc=['개념 확인 · 자리표가 늘 켜져 있어요','교과서 수준','두세 단계 생각','두세 단계를 엮는 문제','조건 여러 겹 · 개념 엮기'];
   app().innerHTML=`<div class="wrap"><div class="top"><button class="homebtn" id="bk">🏠 처음으로</button><h1>${s.title}</h1></div>
    <div class="learn">${s.learn}<div class="moves"><b>이 기능의 「첫 수」</b>${Object.values(s.moves).map(m=>`<div>${m}</div>`).join('')}</div></div>
    <div class="lvpick"><button data-lesson="1" class="cbtn">개념 수업<small>처음부터 차근차근</small></button><button data-check="1" class="cbtn">개념 확인 ${(st.lesson||0)>=2?'✓':''}<small>5문제 중 4개 → 기초 열림</small></button></div>
@@ -2435,7 +2435,7 @@ function finishUI(){ const p=C.p, fb=$('#fb'); $('.stars').innerHTML=starsHTML()
 // --- 모달 ---
 function modal(html){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="mbox">${html}</div>`; document.body.appendChild(m); return m; }
 function levelUpModal(){ const s=SKILLS[C.sk]; const nx=C.lv+1; const m=modal(`<div class="lvup"><div class="em">${nx>=LV.length?'🏆':'🎉'}</div><h2>${s.title} · ${LV[C.lv]} 통과!</h2>
-  <p>${nx>=LV.length?'이 기능 끝! 최상위까지 해냈어요.':`「${LV[nx]}」 단계가 열렸어요.`}</p><div class="acts"><button class="hint" style="flex:1" id="m1">처음 화면</button>${nx<LV.length?`<button class="ok" id="m2">${LV[nx]} 시작</button>`:''}</div></div>`);
+  <p>${nx>=LV.length?'이 기능 끝! 마지막 단계까지 해냈어요.':`「${LV[nx]}」 단계가 열렸어요.`}</p><div class="acts"><button class="hint" style="flex:1" id="m1">처음 화면</button>${nx<LV.length?`<button class="ok" id="m2">${LV[nx]} 시작</button>`:''}</div></div>`);
   m.querySelector('#m1').onclick=()=>{ m.remove(); home(); }; if(nx<LV.length) m.querySelector('#m2').onclick=()=>{ m.remove(); C.lv=nx; nextProblem(); }; }
 function whyModal(){ const p=C.p, mv=SKILLS[C.sk].moves[p.fm];
   const m=modal(`<h2>어떻게 풀었는지 써 볼까?</h2><p>한두 줄이면 충분해요. 말로 하기 전에 글로 먼저!</p>
@@ -2561,7 +2561,7 @@ function checkDone(){ const s=SKILLS[CK.i], r=DB.sk[s.id]; const pass=CK.right>=
   DB.att.push({sk:s.id,lv:-1,r:pass?'o':'x',fm:true,bug:null,t:0,d:Date.now(),h:0,check:CK.right});
   if(pass) r.lesson=2; ctime('check',s.id,CK.t0); save();
   app().innerHTML=`<div class="wrap lesson"><div class="scene lvup"><div class="em">${pass?'✅':'🔁'}</div><h2>${CK.right} / 5</h2>
-   <p>${pass?'개념 확인 통과! 이제 「기초」 문제를 풀 수 있어요.':'4개 이상이면 통과예요. 틀린 부분을 수업에서 한 번 더 보고 다시 도전!'}</p>
+   <p>${pass?'개념 확인 통과! 이제 「1단계」 문제를 풀 수 있어요.':'4개 이상이면 통과예요. 틀린 부분을 수업에서 한 번 더 보고 다시 도전!'}</p>
    ${!pass&&CK.wrongs.length?`<div class="ex" style="font-size:17px;text-align:left">틀린 것: ${CK.wrongs.join(' / ')}</div>`:''}
    <div class="acts">${pass?`<button class="hint" style="flex:1" id="a1">처음 화면</button><button class="ok" id="a2">1단계 시작</button>`:`<button class="hint" style="flex:1" id="a3">수업 다시 보기</button><button class="ok" id="a4">확인 다시 (새 문제)</button>`}</div><div class="navrow"><button id="a5">🏠 처음 화면</button><button id="a6">그래도 1단계 풀기 ⟶</button></div></div></div>`;
   $('#a5').onclick=home; $('#a6').onclick=()=>startSolve(CK.i,0); if(pass){ $('#a1').onclick=home; $('#a2').onclick=()=>startSolve(CK.i,0); } else { $('#a3').onclick=()=>startLesson(CK.i); $('#a4').onclick=()=>startCheck(CK.i); } }
