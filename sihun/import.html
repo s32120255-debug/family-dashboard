@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기록 옮기기</title>
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  :root{--bg:#fdf8f0;--ink:#1f2a24;--sub:#5b6b62;--acc:#2f6b4f;--card:#fff}
+  @media (prefers-color-scheme:dark){:root{--bg:#151a17;--ink:#eef1ee;--sub:#a5b3aa;--card:#1f2622}}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans KR",sans-serif;padding:16px}
+  .box{max-width:560px;margin:24px auto;background:var(--card);border-radius:16px;padding:20px}
+  button{font-size:17px;padding:12px 18px;border-radius:12px;border:0;background:var(--acc);color:#fff;font-weight:700;cursor:pointer}
+  button[disabled]{opacity:.4}
+  p,li{color:var(--sub)} pre{white-space:pre-wrap;font-size:13px;color:var(--sub)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h2>예전 기록 옮기기 (엄마용)</h2>
+  <p>Claude가 보내 준 <b>sihun-records.json</b> 파일을 고르면, 예전 「오늘의 공부」 기록을 이 웹앱으로 옮겨요. 같은 이름의 기록은 파일 내용으로 바뀌어요.</p>
+  <div id="state">로그인 확인 중…</div>
+  <p><input type="file" id="file" accept=".json,application/json" disabled></p>
+  <p><button id="go" disabled>옮기기</button></p>
+  <pre id="log"></pre>
+</div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,setDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {firebaseConfig} from "../config.js";
+const app=initializeApp(firebaseConfig), auth=getAuth(app), fs=getFirestore(app);
+const $=id=>document.getElementById(id);
+const pack=d=>({_j:JSON.stringify(d===undefined?null:d),at:(d&&d.at!=null)?d.at:null,_t:Date.now()});
+let docs=null;
+onAuthStateChanged(auth,u=>{
+  if(!u){$('state').innerHTML='<button id="li">구글로 로그인</button>';$('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,p)};return}
+  $('state').textContent='로그인됨: '+u.email;$('file').disabled=false;
+});
+$('file').onchange=async e=>{
+  try{const j=JSON.parse(await e.target.files[0].text());docs=j.docs;const ks=Object.keys(docs);
+    $('log').textContent='파일 안 기록 '+ks.length+'개\n'+ks.join('\n');$('go').disabled=!ks.length}
+  catch(err){$('log').textContent='파일을 읽을 수 없어요: '+err.message}
+};
+$('go').onclick=async()=>{
+  $('go').disabled=true;let ok=0,bad=[];
+  for(const [k,v] of Object.entries(docs)){
+    const seg=['sihun','data'].concat(k.split('/'));
+    if(seg.length%2){bad.push(k+' (경로 이상)');continue}
+    try{await setDoc(doc(fs,...seg),pack(v));ok++;$('log').textContent='옮기는 중… '+ok}
+    catch(err){bad.push(k+' ('+(err.code||err.message)+')')}
+  }
+  $('log').textContent='끝났어요. 옮긴 기록 '+ok+'개'+(bad.length?'\n안 된 것 '+bad.length+'개:\n'+bad.join('\n'):'\n모두 잘 옮겼어요.');
+};
+</script>
+</body>
+</html>
