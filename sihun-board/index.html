@@ -507,7 +507,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 놀이를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=10;
+const VERSION=11;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -533,8 +533,8 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
   unsubs.splice(0).forEach(f=>f());fs=null;loaded.clear();for(const c in S)S[c]=[];board={};user=u;momAcct=false;pinOpen=false;famPin=null;mom=false;
   if(!u){$("who").innerHTML="";gate(inApp?"이 앱 안에서는 구글 로그인이 막혀요. 「다른 브라우저로 열기」(Chrome)를 눌러 주세요.":"시훈이 구글 계정으로 들어와요.",!inApp,false);renderAll();return}
   $("gate").hidden=true;
-  const showWho=()=>{syncMom();$("who").innerHTML=`<span>${esc(myName())}${u.displayName?" · "+esc(u.displayName):""}</span>${momAcct?"":`<button class="btn small" id="admBtn">${pinOpen?"관리자 잠그기":"관리자"}</button>`}<button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>A.signOut(auth);
-   const ab=$("admBtn");if(ab)ab.onclick=()=>{if(pinOpen){pinOpen=false;showWho();renderAll();return}
+  const showWho=()=>{syncMom();$("who").innerHTML=`<span>${esc(myName())}${u.displayName?" · "+esc(u.displayName):""}</span><button class="btn small" id="admBtn">${momAcct?"관리자":pinOpen?"관리자 잠그기":"관리자"}</button><button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>A.signOut(auth);
+   const ab=$("admBtn");if(ab)ab.onclick=()=>{if(momAcct){document.getElementById("momCard").scrollIntoView({behavior:"smooth"});return}if(pinOpen){pinOpen=false;showWho();renderAll();return}
     if(!famPin)return toast("우리집 대시보드에서 관리자 비밀번호를 먼저 정해 주세요");
     $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>관리자 비밀번호</h3><label>우리집 대시보드와 같은 비밀번호<input type="password" id="pinIn" inputmode="numeric" autocomplete="off"></label><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">열기</button></div></form></div>`;
     $("pinIn").focus();$("mc").onclick=()=>$("layer").innerHTML="";
@@ -551,7 +551,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=10").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=11").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
