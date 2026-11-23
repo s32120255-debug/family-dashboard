@@ -170,7 +170,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
   </section>
 
   <section class="card wide" id="momCard" style="--tape:var(--purple)" hidden>
-   <h2><span class="ttl">엄마 확인</span><small>엄마 계정에서만 보여요</small></h2>
+   <h2><span class="ttl">엄마 확인</span><small>관리자만 보여요</small></h2>
    <div class="tabs"><button data-mt="log">바뀐 기록</button><button data-mt="deleted">지운 것</button><button data-mt="ask">질문</button><button data-mt="play">놀이</button><button data-mt="hb">한방단어</button><button data-mt="chess">체스</button><button data-mt="set">설정</button></div>
    <div id="momBox"></div>
   </section>
@@ -197,8 +197,10 @@ const $=id=>document.getElementById(id);
 const fmtAt=ms=>{if(!ms)return"";const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
 function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
 
-let user=null,mom=false;
-const myName=()=>mom?"엄마":"시훈";
+let user=null,momAcct=false,pinOpen=false,famPin=null,mom=false;
+// 관리자 = 엄마 계정이거나, 우리집 대시보드와 같은 관리자 비밀번호(settings/main.pin)를 넣었을 때. 비밀번호는 이 창에서만 유효(새로고침하면 잠김).
+const syncMom=()=>{mom=momAcct||pinOpen};
+const myName=()=>momAcct?"엄마":pinOpen?"관리자":"시훈";
 
 /* ---------- 고양이 ---------- */
 function catFace(cx,cy,r,fur,inner,line){return`<g><path d="M${cx-r*0.95},${cy-r*0.35} L${cx-r*0.75},${cy-r*1.25} L${cx-r*0.2},${cy-r*0.85}Z" fill="${fur}" stroke="${line}" stroke-width="2.5" stroke-linejoin="round"/><path d="M${cx+r*0.95},${cy-r*0.35} L${cx+r*0.75},${cy-r*1.25} L${cx+r*0.2},${cy-r*0.85}Z" fill="${fur}" stroke="${line}" stroke-width="2.5" stroke-linejoin="round"/>
@@ -431,8 +433,8 @@ function renderMom(){
   h=`<ul class="list">${l.map(x=>`<li class="item"><span class="meta">${fmtAt(x.at)}</span><span class="pill">${esc(x.by)}</span><span class="pill info">${esc(COLNAME[x.col]||x.col)} ${esc(x.action)}</span><span class="t">${esc(x.summary||"")}${prev(x)}</span></li>`).join("")||`<li class="empty">아직 기록이 없어요.</li>`}</ul>`}
  else if(momTab==="deleted"){const l=[...S.money.filter(x=>x.deleted).map(x=>({...x,col:"money"})),...S.memory.filter(x=>x.deleted).map(x=>({...x,col:"memory"}))].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   h=`<ul class="list">${l.map(x=>`<li class="item del"><span class="meta">${fmtAt(x.updatedAt||x.createdAt)}</span><span class="pill info">${COLNAME[x.col]}</span><span class="t">${x.col==="money"?`${esc(moneyText(x))} (${esc(x.date)})`:esc(x.text)}</span><button class="btn small" data-restore="${x.col}:${x.id}">되살리기</button></li>`).join("")||`<li class="empty">지운 게 없어요.</li>`}</ul>`}
- else if(momTab==="ask"){const l=S.ask.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-  h=`<div class="list">${l.map(x=>`<div class="q"><div><b>${esc(x.q)}</b> <span class="meta">${fmtAt(x.createdAt)}</span></div>${x.a?`<div class="a">${esc(x.a)}</div>`:`<div class="meta">${x.aError?"AI 연결 오류 "+esc(x.aError):"답 없음"}</div>`}</div>`).join("")||`<p class="empty">질문이 없어요.</p>`}</div>`}
+ else if(momTab==="ask"){const n=S.ask.length+S.log.filter(x=>x.col==="ask").length;
+  h=n?`<p style="margin:0">지난 AI 질문 기록이 ${S.ask.length}개 있어요. 질문 칸은 없앴어요.</p><div><button class="btn primary" data-askwipe>질문 기록 모두 지우기</button></div>`:`<p class="empty">질문 기록이 없어요.</p>`}
  else if(momTab==="chess"){const RS={win:"이김",lose:"짐",draw:"비김"},LVN={easy:"쉬움",normal:"보통",hard:"어려움"};const l=S.chess.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   h=`<p class="meta" style="margin:0">끝난 판 ${l.length}개 · 이김 ${l.filter(x=>x.result==="win").length} · 짐 ${l.filter(x=>x.result==="lose").length} · 비김 ${l.filter(x=>x.result==="draw").length}</p><ul class="list">${l.map(x=>`<li class="item"><span class="meta">${fmtAt(x.createdAt)}</span><span class="t">${LVN[x.level]||""} · ${x.color==="w"?"흰색":"검은색"} · ${x.moves}수</span><span class="pill ${x.result==="win"?"ok":x.result==="lose"?"warn":""}">${RS[x.result]||""}</span></li>`).join("")||`<li class="empty">끝난 판이 없어요.</li>`}</ul>`}
  else if(momTab==="hb"){const l=S.hb.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,200);const ok=l.filter(x=>x.correct).length;
@@ -446,7 +448,7 @@ function renderMom(){
   if(u&&!/^https?:\/\//i.test(u))return toast("https:// 로 시작하는 주소를 넣어 주세요");
   const data={noticeUrl:u||null,askLimit:Math.max(1,Math.min(30,Number(fd.get("askLimit"))||5)),aiOn:fd.get("aiOn")==="on",playLimit:Math.max(1,Math.min(100,Number(fd.get("playLimit"))||20))};
   const b=F.writeBatch(fs);b.set(F.doc(fs,"sihunBoard","main"),data,{merge:true});
-  b.set(F.doc(sub("log")),{at:Date.now(),by:"엄마",uid:user.uid,col:"main",docId:"main",action:"수정",summary:`알림장 주소 ${u?"넣음":"비움"} · 하루 질문 ${data.askLimit}개 · 놀이 ${data.playLimit}번 · AI ${data.aiOn?"켬":"끔"}`,before:board,after:data});
+  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"main",docId:"main",action:"수정",summary:`알림장 주소 ${u?"넣음":"비움"} · 하루 질문 ${data.askLimit}개 · 놀이 ${data.playLimit}번 · AI ${data.aiOn?"켬":"끔"}`,before:board,after:data});
   try{await b.commit();toast("저장했어요")}catch(err){toast("저장하지 못했어요: "+(err.code||""))}};
 }
 
@@ -465,6 +467,9 @@ $("memSearch").oninput=renderMemory;
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
  if(d.half){dialHalf=d.half;renderSched();return}
  if(d.mt){momTab=d.mt;renderMom();return}
+ if(d.askwipe!==undefined){if(!mom)return;confirmBox("지난 질문 기록을 모두 지울까요? 되돌릴 수 없어요.",async()=>{try{const b=F.writeBatch(fs);let n=0;
+  for(const x of S.ask){b.delete(F.doc(sub("ask"),x.id));n++}for(const x of S.log.filter(y=>y.col==="ask")){b.delete(F.doc(sub("log"),x.id));n++}
+  if(n)await b.commit();toast(`${n}개 지웠어요`)}catch(e){toast("지우지 못했어요: "+(e.code||""))}});return}
  if(d.hb){if(d.hb==="start"||d.hb==="next")hbNext();else hbAnswer(d.hb);return}
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x||!fs)return;
   F.updateDoc(F.doc(fs,"tasks",x.id),x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}).then(()=>{if(!x.done)toast(`잘했어! ⭐${Number(x.points)||0}`)}).catch(err=>toast("저장하지 못했어요: "+(err.code||"")));return}
@@ -488,7 +493,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 놀이를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=8;
+const VERSION=9;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -511,22 +516,28 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
   try{await A.signInWithPopup(auth,p)}catch(e){$("gateErr").hidden=false;$("gateErr").textContent=(e.code==="auth/popup-blocked"?"로그인 창이 막혔어요. 주소창 오른쪽 팝업 차단 표시에서 '항상 허용'을 눌러 주세요.":"로그인하지 못했어요.")+"\n[오류 코드: "+(e.code||"unknown")+"]"}};
  $("gateOut").onclick=()=>A.signOut(auth);
  A.onAuthStateChanged(auth,u=>{
-  unsubs.splice(0).forEach(f=>f());fs=null;loaded.clear();for(const c in S)S[c]=[];board={};user=u;mom=false;
+  unsubs.splice(0).forEach(f=>f());fs=null;loaded.clear();for(const c in S)S[c]=[];board={};user=u;momAcct=false;pinOpen=false;famPin=null;mom=false;
   if(!u){$("who").innerHTML="";gate(inApp?"이 앱 안에서는 구글 로그인이 막혀요. 「다른 브라우저로 열기」(Chrome)를 눌러 주세요.":"시훈이 구글 계정으로 들어와요.",!inApp,false);renderAll();return}
   $("gate").hidden=true;
-  const showWho=()=>{$("who").innerHTML=`<span>${esc(myName())}${u.displayName?" · "+esc(u.displayName):""}</span><button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>A.signOut(auth)};showWho();
+  const showWho=()=>{syncMom();$("who").innerHTML=`<span>${esc(myName())}${u.displayName?" · "+esc(u.displayName):""}</span>${momAcct?"":`<button class="btn small" id="admBtn">${pinOpen?"관리자 잠그기":"관리자"}</button>`}<button class="linkbtn" id="outBtn">로그아웃</button>`;$("outBtn").onclick=()=>A.signOut(auth);
+   const ab=$("admBtn");if(ab)ab.onclick=()=>{if(pinOpen){pinOpen=false;showWho();renderAll();return}
+    if(!famPin)return toast("우리집 대시보드에서 관리자 비밀번호를 먼저 정해 주세요");
+    $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>관리자 비밀번호</h3><label>우리집 대시보드와 같은 비밀번호<input type="password" id="pinIn" inputmode="numeric" autocomplete="off"></label><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">열기</button></div></form></div>`;
+    $("pinIn").focus();$("mc").onclick=()=>$("layer").innerHTML="";
+    $("mf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===famPin){$("layer").innerHTML="";pinOpen=true;showWho();renderAll();document.getElementById("momCard").scrollIntoView({behavior:"smooth"})}else toast("비밀번호가 달라요")}}};showWho();
   fs=db;let denied=false;
   const onErr=err=>{if(err&&err.code==="permission-denied"&&!denied){denied=true;unsubs.splice(0).forEach(f=>f());fs=null;gate(`${u.email} 계정으로는 열 수 없어요. 시훈이나 엄마 계정으로 로그인해 주세요.`,false,true)}};
   for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll()},onErr));
   for(const c of MINE)unsubs.push(F.onSnapshot(F.collection(db,"sihunBoard","main",c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));renderAll()},onErr));
   unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","main"),s=>{board=s.exists()?s.data():{};renderAll()},onErr));
   // 엄마 확인: 규칙에서 엄마 계정만 이 문서를 읽을 수 있어요
-  unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","mom"),()=>{mom=true;showWho();renderAll()},()=>{mom=false;showWho();renderAll()}));
+  unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","mom"),()=>{momAcct=true;showWho();renderAll()},()=>{momAcct=false;showWho();renderAll()}));
+  unsubs.push(F.onSnapshot(F.doc(db,"settings","main"),s=>{famPin=(s.exists()&&s.data().pin)||null},()=>{}));
   renderAll();
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=8").then(m=>m.mountChess($("chessBox"),{onEnd:r=>{if(!fs)return;F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다시 해 보자")}})).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
+import("./chess-ui.js?v=9").then(m=>m.mountChess($("chessBox"),{onEnd:r=>{if(!fs)return;F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다시 해 보자")}})).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
 </body>
 </html>
