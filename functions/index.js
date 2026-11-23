@@ -93,3 +93,57 @@ exports.askClaude = onDocumentCreated(
     await snap.ref.update({ a: text.slice(0, 500), aAt: Date.now(), aBy: "claude-haiku-5-5", aStop: stop });
   }
 );
+
+// 시훈이 대시보드 「놀이」: 끝말잇기·스무고개 같은 주고받기 놀이. 같은 놀이(sid)의 앞 대화를 기억해요.
+// 엄마가 AI를 켠 때만(aiOn), 하루 놀이 횟수(playLimit, 시훈이가 보낸 말 기준) 안에서만 답해요.
+const PLAY_SYSTEM = `너는 초등학교 3학년 남자아이(시훈)와 말놀이를 하는 친구야. 시훈이는 고양이를 좋아해.
+한국어 반말로, 한 번에 1~2문장으로 아주 짧게 말해. 이모지는 쓰지 마.
+- 끝말잇기, 스무고개, 수수께끼, 낱말 퀴즈 같은 놀이를 시훈이가 고르면 그 규칙대로 한 차례씩 주고받아.
+- 끝말잇기: 앞 낱말의 마지막 글자로 시작하는 실제로 있는 명사만 써. 두음법칙(예: 력→역)은 써도 돼. 이미 나온 낱말은 다시 쓰지 마. 시훈이가 규칙에 안 맞는 낱말을 내면 왜 안 되는지 짧게 말하고 다시 내게 해.
+- 놀이가 정해지지 않았으면 무슨 놀이를 할지 짧게 물어봐.
+- 숙제나 공부 답을 물으면 "그건 질문 칸에 물어봐!"라고 하고 놀이로 돌아와.
+- 아이에게 맞지 않는 내용이나 사람·몸·마음이 걱정되는 말이면 "그건 엄마랑 같이 이야기해 보자."라고만 말해.`;
+
+exports.playClaude = onDocumentCreated(
+  { document: "sihunBoard/main/play/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60, maxInstances: 2 },
+  async (event) => {
+    const snap = event.data;
+    const msg = snap && snap.data();
+    if (!msg || msg.role !== "user" || !msg.text || !msg.sid) return;
+    const db = getFirestore();
+    const col = db.collection("sihunBoard/main/play");
+    const main = (await db.doc("sihunBoard/main").get()).data() || {};
+    if (!main.aiOn) return;
+    const reply = (text, extra) => col.add({ sid: msg.sid, role: "ai", text, date: msg.date || "", createdAt: Date.now(), ...extra });
+    const limit = Number(main.playLimit) || 20;
+    const today = (await col.where("date", "==", msg.date || "").get()).docs
+      .filter((d) => d.data().role === "user" && (d.data().createdAt || 0) < (msg.createdAt || 0)).length;
+    if (today >= limit) return reply("오늘 놀이는 여기까지! 내일 또 하자.", { by: "limit" });
+    const hist = (await col.where("sid", "==", msg.sid).get()).docs.map((d) => d.data())
+      .filter((m) => (m.createdAt || 0) <= (msg.createdAt || 0) && m.by !== "limit" && m.by !== "error")
+      .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).slice(-40);
+    const messages = [];
+    for (const m of hist) {
+      const role = m.role === "user" ? "user" : "assistant";
+      const text = String(m.text || "").slice(0, 200);
+      if (messages.length && messages[messages.length - 1].role === role) messages[messages.length - 1].content += "\n" + text;
+      else messages.push({ role, content: text });
+    }
+    while (messages.length && messages[0].role !== "user") messages.shift();
+    if (!messages.length) return;
+    const Anthropic = require("@anthropic-ai/sdk").default;
+    const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+    try {
+      const res = await client.messages.create({
+        model: "claude-haiku-5-5", max_tokens: 2000, output_config: { effort: "low" },
+        system: PLAY_SYSTEM, messages,
+      });
+      let text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("").trim();
+      if (res.stop_reason === "refusal" || !text) text = "그건 엄마랑 같이 이야기해 보자.";
+      await reply(text.slice(0, 300), { by: "claude-haiku-5-5" });
+    } catch (e) {
+      console.error("playClaude", e && e.status, e && e.message);
+      await reply("지금은 대답을 못 했어. 조금 있다 다시 해 보자.", { by: "error", err: String((e && e.status) || "error") });
+    }
+  }
+);
