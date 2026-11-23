@@ -386,8 +386,8 @@ function renderAsk(){if(!$("askLeft"))return; // 질문 칸은 없앰(2026-11-23
 /* ---------- AI랑 놀이: 같은 놀이(sid) 안에서 앞 대화를 기억 ---------- */
 const playLimit=()=>Number(board.playLimit)||30;
 const chessLimit=()=>Number(board.chessLimit)||3;
-// 오늘 과제를 다 해야 놀이·체스가 열려요(엄마 설정에서 끌 수 있음). 오늘 과제가 없으면 열림.
-const gateOn=()=>board.gateTasks!==false;
+// 엄마 설정에서 켜면 오늘 과제를 다 해야 놀이·체스가 열려요(기본 꺼짐). 오늘 과제가 없으면 열림.
+const gateOn=()=>board.gateTasks===true;
 function tasksLeft(){const t=today();return S.tasks.filter(x=>x.date===t&&!x.done).length}
 function funLock(){if(!gateOn())return null;const n=tasksLeft();return n?`오늘 과제 ${n}개를 다 하면 열려요.`:null}
 let playSid=null,chessApi=null;
