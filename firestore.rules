@@ -21,9 +21,38 @@ service cloud.firestore {
     match /seoyun/{document=**} {
       allow read, write: if isSeoyun();
     }
-    // 가족 대시보드: 가족 모두 (seoyun 은 빼고)
+    // 엄마 계정: 시훈이 대시보드 기록을 지우거나 엄마 화면을 볼 수 있어요
+    function isMom() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'MOM_EMAIL@gmail.com'
+        ];
+    }
+    // 시훈이 대시보드를 쓰는 계정: 시훈 + 엄마
+    function isSihunBoard() {
+      return isMom() || (request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'SIHUN_EMAIL@gmail.com'
+        ]);
+    }
+    // 시훈이 대시보드: 시훈·엄마만. 기록(log)은 고치거나 지울 수 없고, 지우기는 엄마만
+    match /sihunBoard/main {
+      allow read: if isSihunBoard();
+      allow write: if isMom();
+    }
+    match /sihunBoard/mom {
+      allow read, write: if isMom();
+    }
+    match /sihunBoard/main/{col}/{id} {
+      allow read, create: if isSihunBoard();
+      allow update: if isSihunBoard() && col != 'log';
+      allow delete: if isMom();
+    }
+    // 가족 대시보드: 가족 모두 (seoyun, sihunBoard 는 빼고)
     match /{col}/{document=**} {
-      allow read, write: if isFamily() && col != 'seoyun';
+      allow read, write: if isFamily() && col != 'seoyun' && col != 'sihunBoard';
     }
   }
 }
