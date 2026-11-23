@@ -519,7 +519,10 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .ptb{border-collapse:collapse;font-size:16px}.ptb th,.ptb td{border:1.5px solid #999;padding:4px 10px;text-align:center}.ptb th{background:#f4efe3}
 .bx{display:inline-block;margin:10px 0 4px;padding:10px 16px;border:1.5px solid var(--line);border-radius:12px;background:#fff;line-height:1.9}
 .bpg{display:inline-block;margin:6px 8px 6px 0;vertical-align:top;max-width:100%}.bpgt{font-weight:700;text-align:center;margin-bottom:4px}.bpgtab{border-collapse:collapse;background:#fff}.bpgtab th,.bpgtab td{border:1.5px solid #555;padding:4px 8px;font-size:15px}.bpgtab th{background:#f3efe6;white-space:nowrap}.pgc{min-width:150px;line-height:30px}.pgc.r{text-align:right}.pgi{display:inline-block;border-radius:50%;border:1.5px solid #333;margin:1px;vertical-align:middle}.bpgl{font-size:14px;text-align:right;margin-top:4px}
-.gd{background:#f6f9ff;border:1.5px solid #b9cbe8;border-radius:14px;padding:12px;margin-top:10px}.gdh{font-weight:700;margin-bottom:6px}.gds{padding:6px 0;border-bottom:1px dashed #cfd8e8;font-size:16px}.gds.h b{color:#c0612b}.gdt{display:inline-block;background:#2f4a7a;color:#fff;border-radius:8px;padding:1px 8px;font-size:13px;margin-right:4px}.gdq{font-size:18px;margin:10px 0}.twh{background:#fff4e0;border:2px solid #f2a541;border-radius:14px;padding:10px 14px;margin:0 0 10px;font-size:17px}
+.gd{background:#f6f9ff;border:1.5px solid #b9cbe8;border-radius:14px;padding:12px;margin-top:10px}.gdh{font-weight:700;margin-bottom:6px}.gds{padding:6px 0;border-bottom:1px dashed #cfd8e8;font-size:16px}.gds.h b{color:#c0612b}.gdt{display:inline-block;background:#2f4a7a;color:#fff;border-radius:8px;padding:1px 8px;font-size:13px;margin-right:4px}.gdq{font-size:18px;margin:10px 0}.qc{background:#f3f7ff;border:2px solid #9db7e8;border-radius:14px;padding:10px 12px;margin:8px 0}.qch{font-size:16px;margin-bottom:6px}.qcs{display:flex;flex-wrap:wrap;gap:6px}.qcs button{font-size:18px;padding:6px 10px;border:2px solid transparent;border-radius:999px;background:#fff}.qcs button.circ{border-color:#e4572e;color:#c03a17;font-weight:700}.qcs button.blink{animation:qbl 1s infinite}@keyframes qbl{50%{background:#ffe9a8}}.qcf{margin-top:6px;font-size:15px;color:#3a4a6a}
+.ptip{background:#fff;border:1px dashed #9aa;border-radius:10px;padding:6px 10px;margin:6px 0;font-size:15px;line-height:1.5}
+.pgs.bx2 .pgbox{width:46px;height:46px;border:2.5px solid #555;border-radius:4px;display:flex;align-items:center;justify-content:center;background:#fff7e3}
+.twh{background:#fff4e0;border:2px solid #f2a541;border-radius:14px;padding:10px 14px;margin:0 0 10px;font-size:17px}
 .gds5{margin-top:8px;font-weight:700}
 .bsrc{margin-top:8px;font-size:13px;color:var(--soft)}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}.bg{background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px;text-align:left;font-size:16px;cursor:pointer}.bg small{display:block;color:var(--soft);margin-top:4px}.bg.done{border-color:#9bd3b0;background:#f1faf4}.bg.k-stair{border-style:dashed}.bg.k-levelup,.bg.k-high{border-color:#e8c98a}
@@ -3380,7 +3383,7 @@ function renderPic(pic){ if(!pic||!pic.kind||pic.kind==='none') return ''; const
     bars.forEach(b=>{ const n=Math.round(b.parts), s=Math.max(0,Math.min(n,Math.round(b.shade||0))), w=W/n; g+=`<text x="0" y="${y+13}" font-size="14" fill="#444">${E(b.label)}</text>`; for(let i=0;i<n;i++) g+=`<rect x="${(i*w).toFixed(1)}" y="${y+18}" width="${w.toFixed(1)}" height="${H}" fill="${i<s?'#f7c873':'#fff'}" stroke="#555" stroke-width="1.5"/>`; y+=H+30; });
     body=`<svg viewBox="-2 0 304 ${y-8}" width="100%" style="max-width:440px">${g}</svg>`; }
   else if(pic.kind==='groups'){ const gs=(pic.groups||[]).filter(x=>x&&x.size>=0&&x.size<=40).slice(0,16); if(!gs.length) return '';
-    body=`<div class="pgs">${gs.map(x=>`<div class="pg"><div class="pgd">${'<i></i>'.repeat(Math.round(x.size))}</div>${x.label?`<small>${E(x.label)}</small>`:''}</div>`).join('')}</div>`; }
+    body=`<div class="pgs bx2">${gs.map(x=>`<div class="pg"><div class="pgbox"><b>${Math.round(x.size)}</b></div>${x.label?`<small>${E(x.label)}</small>`:''}</div>`).join('')}</div>`; }
   else if(pic.kind==='line'){ const L=pic.line||{}; const lo=Number(L.min)||0, hi=Number(L.max); if(!(hi>lo)||hi-lo>1000) return ''; const div=Math.max(1,Math.min(20,Math.round(L.div||1)));
     const X=v=>10+(v-lo)/(hi-lo)*300; const units=hi-lo; const step=units>20?Math.ceil(units/10):1; let g=`<line x1="10" y1="70" x2="310" y2="70" stroke="#555" stroke-width="2"/>`;
     if(units*div<=80) for(let k=0;k<=units*div;k++){ const v=lo+k/div; g+=`<line x1="${X(v).toFixed(1)}" y1="${k%div?64:60}" x2="${X(v).toFixed(1)}" y2="${k%div?76:80}" stroke="#555" stroke-width="${k%div?1:2}"/>`; }
@@ -3403,7 +3406,7 @@ async function tutorAsk(T,kind){ const id=`${today()}-${SID}-t${String(++TUT_SEQ
   return {state:'error',err:'timeout'}; }
 function tutorSay(txt){ try{ const u=new SpeechSynthesisUtterance(txt); u.lang='ko-KR'; u.rate=0.95; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
 function mountTutor(box,p,st,ist,show,finish,startKind){
-  const T={t0:st.t0,prob:{q:stripTags(p.text),ans:stripTags(answerText(p)),sol:p.sol.map(stripTags)},answers:st.wrong.map(fmtKey),turns:[],calls:0,img1:(PAD&&PAD.snap?PAD.snap(st.t0).img:'')||'',read:'',mom:[],shorter:'',pic:null}; st.tutor=T;
+  const T={t0:st.t0,prob:{q:stripTags(p.text),ans:stripTags(answerText(p)),sol:p.sol.map(stripTags).concat([TEACH])},answers:st.wrong.map(fmtKey),turns:[],calls:0,img1:(PAD&&PAD.snap?PAD.snap(st.t0).img:'')||'',read:'',mom:[],shorter:'',pic:null}; st.tutor=T;
   if(startKind==='fixed') T.turns.push({who:'me',text:`(패드에 쓰다가 스스로 고친 답: ${fmtKey(st.fixedKey)} ⭕)`});
   fb_hide(); const tb=document.createElement('div'); tb.className='tutor'; box.querySelector('#after').before(tb);
   const bub=(who,txt)=>`<div class="tb ${who}">${who==='ai'?'🧑‍🏫 ':'🙋 '}${txt}</div>`;
@@ -3448,6 +3451,7 @@ function mountProblem(box,p,opts){
    <div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="after"></div>`;
   const ist={}; mountInput(box.querySelector('#inp'),p,ist);
   const fb=box.querySelector('#fb');
+  if((opts.mode==='solve'||opts.mode==='twin')&&!opts.noCircle) qCircle(box,p,st);
   const show=(cls,html)=>{ fb.className='fb show '+cls; fb.innerHTML=html; };
   box.querySelector('#hb').onclick=()=>{ if(st.done) return; if(st.hints>=p.hints.length){ toast('힌트를 다 봤어요. 패드에 써 보면서 풀어 봐요!'); return; } show('h',`💡 ${p.hints[st.hints]}`); st.hints++; };
   box.querySelector('#okb').onclick=()=>{ if(st.done) return; const inp=readInput(p,ist); const r=check(p,inp);
@@ -3460,7 +3464,7 @@ function mountProblem(box,p,opts){
   // 엄마 11/23: 맞히면 그냥 넘어감(패드에 쓴 게 있으면 조용히 저장). 틀리면 정답 보여 주기 전에 머릿속 식을 패드에 써 달라고 함.
   function askPen(){ if(st.secAns==null) st.secAns=Math.round((Date.now()-st.t0)/1000); ist.locked=true; box.querySelector('#macts').style.display='none';
     const canFix=!st.fixTried;
-    show('h',`${st.lastMsg?st.lastMsg+'<br>':''}🤔 어떻게 생각했는지 궁금해요.<br>머릿속으로 한 식이나 풀이를 <b>오른쪽 패드</b>에 써 줄래요? 다 쓰면 선생님이 같이 볼게요.<br><small>풀이가 길면 종이에 풀고 📷 사진으로 올려도 돼요.</small>${canFix?'<br><small>쓰다가 답이 보이면 「답 고칠래요」를 눌러요.</small>':''}${opts.onGuide?'<div class="acts"><button class="ok" id="pw4" style="background:#2f4a7a">🧭 길잡이로 풀기</button></div>':''}<div class="acts"><button class="ok" id="pw1">✍️ 다 썼어요</button>${canFix?'<button class="hint" id="pw3" style="flex:0 0 auto">✏️ 답 고칠래요</button>':''}<button class="hint" id="pw2" style="flex:0 0 auto">생각이 안 나요</button></div>`);
+    show('h',`${st.lastMsg?st.lastMsg+'<br>':''}🤔 어떻게 생각했는지 궁금해요.<br>머릿속으로 한 식이나 풀이를 <b>오른쪽 패드</b>에 써 줄래요? 다 쓰면 선생님이 같이 볼게요.<br>${penTips(p)}<small>풀이가 길면 종이에 풀고 📷 사진으로 올려도 돼요.</small>${canFix?'<br><small>쓰다가 답이 보이면 「답 고칠래요」를 눌러요.</small>':''}${opts.onGuide?'<div class="acts"><button class="ok" id="pw4" style="background:#2f4a7a">🧭 길잡이로 풀기</button></div>':''}<div class="acts"><button class="ok" id="pw1">✍️ 다 썼어요</button>${canFix?'<button class="hint" id="pw3" style="flex:0 0 auto">✏️ 답 고칠래요</button>':''}<button class="hint" id="pw2" style="flex:0 0 auto">생각이 안 나요</button></div>`);
     box.querySelector('#pw1').onclick=()=>{ if(PAD&&PAD.snap){ const _s=PAD.snap(st.t0); if(!_s.n&&!(_s.photos||[]).length){ toast('패드에 아직 아무것도 없어요. 풀이가 길면 📷 사진으로 올려도 돼요. 생각이 안 나면 「생각이 안 나요」를 눌러요.'); return; } } st.penAsk='wrote'; if(tutorOK()) mountTutor(box,p,st,ist,show,finish); else { toast('AI 선생님 연결이 안 돼요. 정답을 보여 줄게요.'); finish('x'); } };
     box.querySelector('#pw2').onclick=()=>{ st.penAsk='blank'; finish('x'); };
     if(canFix) box.querySelector('#pw3').onclick=fixAns;
@@ -3475,7 +3479,7 @@ function mountProblem(box,p,opts){
       st.wrong.push(k); if(r.bug&&r.bug.tag) st.tags.push(r.bug.tag); st.lastMsg=(!r.bug&&r.msg)?r.msg:''; askPen(); }; }
   function finish(res,note){ st.done=true; ist.locked=true; st.res=res; const sec=st.secAns!=null?st.secAns:Math.round((Date.now()-st.t0)/1000);
     box.querySelector('#macts').style.display='none';
-    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:p.book?'book:'+p.book:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),penAsk:st.penAsk||null,solSeen:false,fixed:!!st.fixed,learn:null,tutor:st.tutor?{turns:st.tutor.turns,read:st.tutor.read,mom:st.tutor.mom,shorter:st.tutor.shorter,pic:st.tutor.pic||null,end:st.tutor.end,calls:st.tutor.calls,err:st.tutor.err||null}:null}:{})};
+    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:p.book?'book:'+p.book:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,qc:st.qc||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),penAsk:st.penAsk||null,solSeen:false,fixed:!!st.fixed,learn:null,tutor:st.tutor?{turns:st.tutor.turns,read:st.tutor.read,mom:st.tutor.mom,shorter:st.tutor.shorter,pic:st.tutor.pic||null,end:st.tutor.end,calls:st.tutor.calls,err:st.tutor.err||null}:null}:{})};
     const solHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
     if(res==='x'&&solve){ show('x',`정답은 <b>${answerText(p)}</b> 이에요. 괜찮아요, 다음 문제로 가요.<div class="tagline">풀이가 궁금하면 📖 풀이 보기</div>`);
       box.querySelector('#sol').innerHTML=`<button class="solbtn" id="sv">📖 풀이 보기</button>`;
@@ -3504,6 +3508,25 @@ function mountProblem(box,p,opts){
     setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
   return st; }
 const stripTags=h=>String(h).replace(/<span class="mxw">(\d+)<\/span><span class="fr"><span>([^<]+)<\/span><span>([^<]+)<\/span><\/span>/g,'$1과 $2/$3').replace(/<span class="fr"><span>([^<]+)<\/span><span>([^<]+)<\/span><\/span>/g,'$1/$2').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
+
+// ===== 엄마 11/23(리포트 분석 → 엄마 승인): 묻는 말 ◯, 3줄 형식, 네모 칸 =====
+const TEACH='[엄마가 정한 가르치는 순서 — 꼭 따르기] ① 먼저 시훈이가 맞게 한 부분을 사실로 짚어요(예: "24는 먹은 쿠키 맞아요, 계산 정확해요!"). "틀렸어요" 대신 바로 "그런데 문제는 마지막 문장에서 뭘 물어봤을까요?"처럼 묻는 말(남은/전체의/○씩)로 돌려요. ② 식은 시훈이가 쓴 한 줄에서 출발해서 딱 3줄까지만(예: 5/6 = 35 → 1/6 = 7 → 6/6 = 42, 길이 문제는 첫 줄 1 m = 100 cm). 더 쓰라고 하지 않아요. ③ 그림은 동그라미 대신 네모 칸: 묶음 수만큼 네모를 그리고 준 칸에 X, 분모는 전체 칸 수, 분자는 남은 칸 수. 분수는 2÷5가 아니라 위아래로 쓰게 해요. 시훈이가 바르게 쓴 게 있으면 "이렇게 쓴 게 딱 맞아요"라고 짚어 줘요.';
+// '전체의 몇 분의 몇'은 거의 모든 분수 문제에 있어서 빼고, 남은·나머지·○씩·(그 밖의) 전체의 가 있을 때만
+const QKW=['남은','남았','남는','나머지','씩','전체의'];
+const qHits=q=>{ const ws=q.split(/\s+/); return ws.map((w,i)=>QKW.some(k=>w.includes(k))&&!(w.startsWith('전체의')&&ws[i+1]==='몇')); };
+function qSent(p){ const t=stripTags(p.text||''); const ss=t.split(/(?<=[.?!])\s+/).map(x=>x.trim()).filter(Boolean);
+  const qs=ss.filter(x=>/(\?|시오\.|세요\.)$/.test(x)); const q=qs.length?qs[qs.length-1]:''; return q&&qHits(q).some(Boolean)?q:''; }
+function qCircle(box,p,st){ const q=qSent(p); if(!q) return; const ws=q.split(/\s+/), H=qHits(q);
+  const inp=box.querySelector('#inp'), acts=box.querySelector('#macts'); inp.style.display='none'; acts.style.display='none';
+  inp.insertAdjacentHTML('beforebegin',`<div class="qc"><div class="qch">✏️ 답 넣기 전에, 묻는 말에 <b>◯ 하나</b>!</div><div class="qcs">${ws.map((w,i)=>`<button data-i="${i}">${w.replace(/[<&]/g,'')}</button>`).join('')}</div><div class="qcf"></div></div>`);
+  const qc=box.querySelector('.qc'), f=qc.querySelector('.qcf'); st.qc=0;
+  qc.querySelectorAll('.qcs button').forEach(b=>b.onclick=()=>{ if(qc.dataset.done) return; st.qc++;
+    if(H[+b.dataset.i]){ qc.dataset.done=1; b.classList.add('circ'); qc.querySelectorAll('.qcs button').forEach(x=>x.disabled=true); f.innerHTML='👍 맞아요, 이걸 물어봤어요. 이제 답을 넣어요.'; inp.style.display=''; acts.style.display=''; return; }
+    f.innerHTML=st.qc>=2?'이 문장에서 <b>남은 · 전체의 · ○씩</b> 같은 말을 찾아봐요. (반짝이는 말)':'그 말도 문제에 있어요. 그런데 <b>무엇을</b> 물어봤을까요?';
+    if(st.qc>=2) qc.querySelectorAll('.qcs button').forEach((x,i)=>{ if(H[i]) x.classList.add('blink'); }); }); }
+function penTips(p){ const t=stripTags(p.text||''); const len=/\d\s*m\b/.test(t)&&/cm/.test(t); const frac=/class="fr"/.test(p.text||'')||/분의/.test(t);
+  if(!len&&!frac) return '';
+  return `<div class="ptip">📝 <b>3줄만</b> 써요: ${len?'① 1 m = 100 cm ② … ③ …':'① 아는 것 (예: <b>5/6 = 35</b>) ② 한 칸 (<b>1/6 = ?</b>) ③ 전체 (<b>6/6 = ?</b>)'}${frac?'<br>✏️ 그림은 동그라미 대신 <b>네모 칸</b>: 묶음 수만큼 □를 그리고, 준 칸에 X. 분수는 2÷5 말고 <b>위아래로</b>.':''}</div>`; }
 
 // ===== 필기 패드 =====
 function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span><button data-tool="photo">📷 사진</button><input type="file" accept="image/*" capture="environment" class="phin" hidden></div><div class="phs"></div><div class="padwrap"><canvas class="pad" id="pad"></canvas></div>`; }
