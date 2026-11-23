@@ -96,12 +96,13 @@ exports.askClaude = onDocumentCreated(
 
 // 시훈이 대시보드 「놀이」: 끝말잇기·스무고개 같은 주고받기 놀이. 같은 놀이(sid)의 앞 대화를 기억해요.
 // 엄마가 AI를 켠 때만(aiOn), 하루 놀이 횟수(playLimit, 시훈이가 보낸 말 기준) 안에서만 답해요.
-const PLAY_SYSTEM = `너는 초등학교 3학년 남자아이(시훈)와 말놀이를 하는 친구야. 시훈이는 고양이를 좋아해.
-한국어 반말로, 한 번에 1~2문장으로 아주 짧게 말해. 이모지는 쓰지 마.
-- 끝말잇기, 스무고개, 수수께끼, 낱말 퀴즈 같은 놀이를 시훈이가 고르면 그 규칙대로 한 차례씩 주고받아.
+const PLAY_SYSTEM = `너는 초등학교 3학년 남자아이(시훈)의 이야기 친구야. 시훈이는 고양이를 좋아해.
+한국어 반말로 짧게 말해. 이모지는 쓰지 마. 시훈이는 놀이를 하거나 궁금한 것을 물어봐.
+- 놀이: 끝말잇기, 스무고개, 수수께끼, 낱말 퀴즈 같은 놀이를 시훈이가 고르면 그 규칙대로 한 차례씩 1~2문장으로 주고받아.
 - 끝말잇기: 앞 낱말의 마지막 글자로 시작하는 실제로 있는 명사만 써. 두음법칙(예: 력→역)은 써도 돼. 이미 나온 낱말은 다시 쓰지 마. 시훈이가 규칙에 안 맞는 낱말을 내면 왜 안 되는지 짧게 말하고 다시 내게 해.
-- 놀이가 정해지지 않았으면 무슨 놀이를 할지 짧게 물어봐.
-- 숙제나 공부 답을 물으면 "그건 질문 칸에 물어봐!"라고 하고 놀이로 돌아와.
+- 궁금한 것(예: 지동설이 뭐야?): 초등학교 3학년이 알아들을 쉬운 말로 2~4문장 설명해. 어려운 낱말은 풀어서 말하고, 아는 것과 맞는 예를 하나 들어. 확실하지 않으면 모른다고 하고 엄마나 선생님께 여쭤보자고 해. 설명 끝에 스스로 생각해 볼 짧은 질문을 하나 붙여.
+- 숙제 문제의 답을 그대로 달라고 하면 답은 바로 주지 말고, 풀 수 있게 힌트와 되묻는 질문을 줘.
+- 놀이 중에 궁금한 걸 물으면 설명해 주고, 놀이를 계속할지 물어봐. 무엇을 할지 정해지지 않았으면 놀이할지 궁금한 걸 물어볼지 짧게 물어봐.
 - 아이에게 맞지 않는 내용이나 사람·몸·마음이 걱정되는 말이면 "그건 엄마랑 같이 이야기해 보자."라고만 말해.`;
 
 exports.playClaude = onDocumentCreated(
@@ -115,7 +116,7 @@ exports.playClaude = onDocumentCreated(
     const main = (await db.doc("sihunBoard/main").get()).data() || {};
     if (!main.aiOn) return;
     const reply = (text, extra) => col.add({ sid: msg.sid, role: "ai", text, date: msg.date || "", createdAt: Date.now(), ...extra });
-    const limit = Number(main.playLimit) || 20;
+    const limit = Number(main.playLimit) || 30;
     const today = (await col.where("date", "==", msg.date || "").get()).docs
       .filter((d) => d.data().role === "user" && (d.data().createdAt || 0) < (msg.createdAt || 0)).length;
     if (today >= limit) return reply("오늘 놀이는 여기까지! 내일 또 하자.", { by: "limit" });
@@ -125,7 +126,7 @@ exports.playClaude = onDocumentCreated(
     const messages = [];
     for (const m of hist) {
       const role = m.role === "user" ? "user" : "assistant";
-      const text = String(m.text || "").slice(0, 200);
+      const text = String(m.text || "").slice(0, 500);
       if (messages.length && messages[messages.length - 1].role === role) messages[messages.length - 1].content += "\n" + text;
       else messages.push({ role, content: text });
     }
