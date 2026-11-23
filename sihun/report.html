@@ -103,6 +103,23 @@ async function mountAna(k,MI){
   document.querySelectorAll('.abtn[data-one]').forEach(b=>b.onclick=()=>{ const x=MI.find(y=>y.ts===b.dataset.one); if(!x) return;
     runAna('one',k,[anaItem(x)],{key:x.ts},MI,b.previousElementSibling,b); });
 }
+// ===== 기록 내보내기 (엄마 11/23): 기간의 기록 + 손풀이 그림 + AI 대화·분석을 JSON 파일 하나로 =====
+async function exportRecs(k,days){ const out=document.getElementById('expout'); const t=new Date(k+'T12:00:00'); const f=new Date(t); f.setDate(t.getDate()-days+1); const fk=dkey(f);
+  const inR=d=>d&&d>=fk&&d<=k; out.textContent='모으는 중…';
+  try{ const C=CACHE;
+    const math=C.m32.filter(d=>inR(d.date)).flatMap(d=>d.items||[]);
+    const pens={}; const ids=math.filter(x=>x.pen&&x.pen.id).map(x=>x.pen.id); let n=0;
+    for(const id of ids){ const d=await getD('m32pen/'+id).catch(()=>null); if(d) pens[id]={img:d.img,strokes:(d.strokes||[]).length,w:d.w,h:d.h}; out.textContent=`손풀이 그림 ${++n}/${ids.length}…`; }
+    const ana=(await getC('m32ana').catch(()=>[])).filter(d=>inR(d.at)&&d.res).map(d=>({kind:d.kind,at:d.at,key:d.key||null,from:d.from||null,res:d.res}));
+    const ko=C.results.filter(r=>r.at&&inR(dkey(new Date(r.at))));
+    const daily={}; for(let x=new Date(f);dkey(x)<=k;x.setDate(x.getDate()+1)){ const dd=await getD('daily/'+dkey(x)).catch(()=>null); if(dd) daily[dkey(x)]=dd; }
+    const R=C.routine&&C.routine.days||{}, V=C.vcheck&&C.vcheck.days||{};
+    const en={routine:Object.fromEntries(Object.entries(R).filter(([d])=>inR(d))),vocab:Object.fromEntries(Object.entries(V).filter(([d])=>inR(d)))};
+    const changes=((C.changes&&C.changes.items)||[]).filter(x=>inR(x.date));
+    const data={app:'sihun-report-export',v:1,from:fk,to:k,made:new Date().toISOString(),math,pens,ana,ko,en,daily,changes};
+    const blob=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`시훈기록_${fk}_${k}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    out.innerHTML=`✅ 파일을 받았어요 (수학 ${math.length}문제, 손풀이 ${Object.keys(pens).length}장, ${Math.round(blob.size/1024)}KB). 다운로드 폴더의 <b>시훈기록_…json</b>을 Claude에게 올려 주세요.`;
+  }catch(e){ out.textContent='내보내기가 안 됐어요: '+(e.code||e.message); } }
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
@@ -134,6 +151,7 @@ async function render(){
   // 바뀐 것
   const ch=((C.changes&&C.changes.items)||[]).filter(x=>x.date===k);
   h+=`<div class="card"><h2>🔧 이날 앱에서 바뀐 것</h2>${ch.length?`<ul>${ch.map(x=>`<li>${esc(x.what)}</li>`).join('')}</ul>`:'<p class="muted">바뀐 것 없음</p>'}</div>`;
+  h+=`<div class="card"><h2>📦 기록 내보내기</h2><p class="muted" style="font-size:14px">파일로 받아서 Claude에게 올리면 손풀이·대화까지 보고 가르치는 방법을 다듬어요.</p><div><button class="abtn" data-exp="1">이날</button><button class="abtn" data-exp="7">최근 7일</button><button class="abtn" data-exp="30">최근 30일</button></div><div id="expout" class="muted" style="font-size:14px"></div></div>`;
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&d.img)el.innerHTML=`<img src="${d.img}" alt="손풀이">`;else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
@@ -141,6 +159,7 @@ async function render(){
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
+  document.querySelectorAll('[data-exp]').forEach(b=>b.onclick=()=>exportRecs(k,+b.dataset.exp));
 }
 onAuthStateChanged(auth,u=>{
   if(!u){M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p><button class="btn" id="li">구글로 로그인</button></p></div>`;document.getElementById('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p)}catch(e){alert('로그인이 안 됐어요: '+(e.code||e.message))}};return}
