@@ -73,7 +73,7 @@ async function start(){
   }catch(e){M.innerHTML=`<div class="card bad">기록을 못 불러왔어요 (${esc(e.code||e.message)})</div>`}
 }
 // ===== 수학 AI 분석 (엄마 11/23): 버튼을 누르면 서버(m32Analyze)가 기록·손풀이·AI 대화를 읽고 분석해요 =====
-const LVN=['기초','교과','응용','심화','최상위','📘 책'];
+const LVN=['기초','교과','응용','심화','최상위','📘 최상위 문제집'];
 const anaItem=x=>({key:x.ts,d:x.d,q:x.q,ans:x.ans,lv:LVN[x.lv]||x.lv,res:x.res,wrong:x.wrong,sec:x.sec,hints:x.hints,tries:x.tries,tags:x.tags,fixed:!!x.fixed,learn:x.learn||null,penAsk:x.penAsk||null,solSeen:!!x.solSeen,
   pen:x.pen?{id:x.pen.id,n:x.pen.n,first:x.pen.first,erase:x.pen.erase,idle:x.pen.idle,photos:x.pen.ph||0}:null,tutor:x.tutor?{turns:(x.tutor.turns||[]).map(t=>({who:t.who,text:t.text})),read:x.tutor.read,mom:x.tutor.mom,shorter:x.tutor.shorter,end:x.tutor.end}:null});
 function anaHTML(r,MI){ if(!r) return ''; if(r.state==='limit') return '<div class="ana bad">오늘 분석 횟수를 다 썼어요.</div>'; if(r.state!=='ok') return `<div class="ana bad">분석이 안 됐어요 (${esc(r.err||r.state)}). 잠시 뒤 다시 눌러 주세요.</div>`;
