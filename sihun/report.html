@@ -30,6 +30,8 @@
   .gate input{font-size:22px;padding:10px;border-radius:12px;border:2px solid var(--line);width:180px;text-align:center;background:var(--card);color:var(--ink)}
   a{color:inherit}
   .tut{background:var(--chip);border-radius:12px;padding:8px 12px;margin-top:6px}
+  .ana{background:#f3f7ff;border:1.5px solid #c9d8f5;border-radius:12px;padding:10px 14px;margin-top:8px}.ana h4{margin:8px 0 4px;font-size:15px}.ana ul{margin:4px 0;padding-left:20px}
+  .abtn{background:#fff;border:1.5px solid #9db6e6;border-radius:10px;padding:6px 12px;font-size:14px;margin:4px 6px 0 0;cursor:pointer}.abtn:disabled{opacity:.5}
   .pen img{max-width:100%;max-height:320px;background:#fff;border:1.5px solid var(--line);border-radius:10px;margin-top:6px}
 </style>
 </head>
@@ -38,7 +40,7 @@
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,collection,getDocs,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getFirestore,doc,getDoc,setDoc,collection,getDocs,query,orderBy,limit,where} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {firebaseConfig} from "../config.js";
 const app=initializeApp(firebaseConfig), auth=getAuth(app), fs=getFirestore(app);
 const M=document.getElementById('m');
@@ -47,6 +49,8 @@ const unpack=v=>(v&&typeof v._j==='string')?JSON.parse(v._j):v;
 const P=['sihun','data'];
 const getD=async p=>{const s=await getDoc(doc(fs,...P,...p.split('/')));return s.exists()?unpack(s.data()):null};
 const getC=async (c,...cons)=>(await getDocs(query(collection(fs,...P,c),...cons))).docs.map(d=>({id:d.id,...unpack(d.data())}));
+const pack=d=>({_j:JSON.stringify(d),at:d&&d.at!=null?d.at:null,_t:Date.now()});
+const setD=(p,d)=>setDoc(doc(fs,...P,...p.split('/')),pack(d));
 const pad=n=>String(n).padStart(2,'0');
 const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const WHY={understand:'📘 규칙을 잘 몰랐어',attention:'🎯 처음엔 놓쳤는데 힌트 보고 알았어',retrieval:'🗣️ 아는데 바로 안 나왔어',fatigue:'🔋 뒤로 갈수록 집중이 안 됐어',condition:'🌊 오늘 좀 피곤했어',none:'✨ 별로 안 막혔어'};
@@ -67,6 +71,37 @@ async function start(){
     const [routine,vcheck,changes,results,m32]=await Promise.all([getD('log/routine'),getD('vocab/check'),getD('meta/changes'),getC('results',orderBy('at','desc'),limit(800)),getC('m32att')]);
     CACHE={routine,vcheck,changes,results,m32};render();
   }catch(e){M.innerHTML=`<div class="card bad">기록을 못 불러왔어요 (${esc(e.code||e.message)})</div>`}
+}
+// ===== 수학 AI 분석 (엄마 11/23): 버튼을 누르면 서버(m32Analyze)가 기록·손풀이·AI 대화를 읽고 분석해요 =====
+const LVN=['기초','교과','응용','심화','최상위'];
+const anaItem=x=>({key:x.ts,d:x.d,q:x.q,ans:x.ans,lv:LVN[x.lv]||x.lv,res:x.res,wrong:x.wrong,sec:x.sec,hints:x.hints,tries:x.tries,tags:x.tags,fixed:!!x.fixed,learn:x.learn||null,penAsk:x.penAsk||null,solSeen:!!x.solSeen,
+  pen:x.pen?{id:x.pen.id,n:x.pen.n,first:x.pen.first,erase:x.pen.erase,idle:x.pen.idle}:null,tutor:x.tutor?{turns:(x.tutor.turns||[]).map(t=>({who:t.who,text:t.text})),read:x.tutor.read,mom:x.tutor.mom,shorter:x.tutor.shorter,end:x.tutor.end}:null});
+function anaHTML(r,MI){ if(!r) return ''; if(r.state==='limit') return '<div class="ana bad">오늘 분석 횟수를 다 썼어요.</div>'; if(r.state!=='ok') return `<div class="ana bad">분석이 안 됐어요 (${esc(r.err||r.state)}). 잠시 뒤 다시 눌러 주세요.</div>`;
+  const qOf=k=>{const x=MI.find(y=>y.ts===k);return x?x.q:''};
+  return `<div class="ana"><b>🔍 AI 분석</b> <span class="muted" style="font-size:12px">${r.atRes?new Date(r.atRes).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):''}${r.imgs!=null?` · 손풀이 ${r.imgs}장 봄`:''}</span>
+    <p>${esc(r.summary)}</p>${(r.problems||[]).length>1||(r.problems||[]).length&&!r.one?`<h4>문제별</h4><ul>${r.problems.map(p=>`<li>${qOf(p.key)?`<span class="muted">${esc(qOf(p.key).slice(0,50))}</span><br>`:''}<b>본 것:</b> ${esc(p.saw)}<br><b>왜:</b> ${esc(p.why)}<br><b>다음엔:</b> ${esc(p.next)}</li>`).join('')}</ul>`:(r.problems||[]).map(p=>`<p><b>본 것:</b> ${esc(p.saw)}<br><b>왜:</b> ${esc(p.why)}<br><b>다음엔:</b> ${esc(p.next)}</p>`).join('')}
+    ${r.pattern?`<h4>반복되는 모습</h4><p>${esc(r.pattern)}</p>`:''}${(r.teach||[]).length?`<h4>이렇게 가르쳐 보세요</h4><ul>${r.teach.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}</div>`; }
+async function runAna(kind,k,items,extra,MI,out,btn){
+  const id=`${k}-${kind}-${Date.now()}`; btn&&(btn.disabled=true); out.innerHTML='<div class="ana muted">🔍 분석 중이에요… 1~3분 걸려요. 이 화면을 열어 두세요.</div>';
+  try{ await setD('m32ana/'+id,{at:k,date:k,ts:new Date().toISOString(),kind,items,...extra});
+    for(let i=0;i<110;i++){ await new Promise(r=>setTimeout(r,3000)); const d=await getD('m32ana/'+id).catch(()=>null); if(d&&d.res){ out.innerHTML=anaHTML({...d.res,one:kind==='one'},MI); btn&&(btn.disabled=false); return; } }
+    out.innerHTML='<div class="ana bad">답이 너무 늦어요. 잠시 뒤 새로고침해서 확인해 주세요.</div>';
+  }catch(e){ out.innerHTML=`<div class="ana bad">요청을 못 보냈어요 (${esc(e.code||e.message)})</div>`; }
+  btn&&(btn.disabled=false); }
+async function mountAna(k,MI){
+  // 저장된 분석 보여 주기(가장 최근 것)
+  getC('m32ana',where('at','==',k)).then(L=>{ L=L.filter(d=>d.res).sort((a,b)=>(a.res.atRes||0)-(b.res.atRes||0));
+    const lastOf=f=>L.filter(f).slice(-1)[0];
+    const dd=lastOf(d=>d.kind==='day'||d.kind==='week'); const o=document.getElementById('adayout'); if(dd&&o&&!o.innerHTML) o.innerHTML=(dd.kind==='week'?'<div class="muted" style="font-size:13px">최근 7일 분석</div>':'')+anaHTML(dd.res,MI);
+    document.querySelectorAll('.aslot[data-key]').forEach(el=>{ const a=lastOf(d=>d.kind==='one'&&d.key===el.dataset.key); if(a&&!el.innerHTML) el.innerHTML=anaHTML({...a.res,one:true},MI); });
+  }).catch(()=>{});
+  const day=document.getElementById('aday'), week=document.getElementById('aweek'), out=document.getElementById('adayout');
+  if(day) day.onclick=()=>runAna('day',k,MI.map(anaItem),{},MI,out,day);
+  if(week) week.onclick=()=>{ const t=new Date(k+'T12:00:00'); const from=new Date(t); from.setDate(t.getDate()-6); const fk=dkey(from);
+    const W=CACHE.m32.filter(d=>d.date>=fk&&d.date<=k).flatMap(d=>d.items||[]).filter(x=>x.mode==='solve');
+    runAna('week',k,W.map(anaItem),{from:fk},W,out,week); };
+  document.querySelectorAll('.abtn[data-one]').forEach(b=>b.onclick=()=>{ const x=MI.find(y=>y.ts===b.dataset.one); if(!x) return;
+    runAna('one',k,[anaItem(x)],{key:x.ts},MI,b.previousElementSibling,b); });
 }
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
@@ -90,9 +125,9 @@ async function render(){
   // 수학
   const MA=C.m32.filter(d=>d.date===k).flatMap(d=>d.items||[]);const MI=MA.filter(x=>x.mode==='solve');const mo=MI.filter(x=>x.res==='o'||x.res==='h').length,mx=MI.filter(x=>x.res==='x').length,ms=MI.filter(x=>x.res==='s').length;
   const mt=MA.reduce((a,x)=>a+(+x.sec||0),0);const ma=(S.math&&S.math.actual)||{};
-  const MW=MI.filter(x=>x.res==='x'||x.res==='s'||(x.tutor&&x.tutor.turns&&x.tutor.turns.length));
-  const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.solSeen?' · 📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<div class="tut"><b>🧑‍🏫 AI 과외</b> <span class="muted">(${({solved:'스스로 찾음',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</span>${x.tutor.read?`<div class="muted">읽은 식: ${esc(x.tutor.read)}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${esc(t.text)}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${esc([...new Set(x.tutor.mom)].join(' / '))}</div>`:''}${x.tutor.shorter?`<div>💡 더 간단한 방법: ${esc(x.tutor.shorter)}</div>`:''}</div>`:''}</li>`).join('');
-  h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}</div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제 · 손풀이 · AI 과외 대화</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
+  const MW=MI.filter(x=>x.res==='x'||x.res==='s'||x.fixed||(x.res==='h'&&x.pen)||(x.tutor&&x.tutor.turns&&x.tutor.turns.length));
+  const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':x.res==='h'?'△':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.solSeen?' · 📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<div class="tut"><b>🧑‍🏫 AI 과외</b> <span class="muted">(${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</span>${x.tutor.read?`<div class="muted">읽은 식: ${esc(x.tutor.read)}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${esc(t.text)}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${esc([...new Set(x.tutor.mom)].join(' / '))}</div>`:''}${x.tutor.shorter?`<div>💡 더 간단한 방법: ${esc(x.tutor.shorter)}</div>`:''}${x.learn&&(x.learn.nw||x.learn.use)?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</div>`:''}${x.fixed?'<div class="muted">✏️ 패드에 쓰다가 스스로 고침</div>':''}${x.ts?`<div class="aslot" data-key="${esc(x.ts)}"></div><button class="abtn" data-one="${esc(x.ts)}">🔍 이 문제 AI 분석</button>`:''}</li>`).join('');
+  h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}</div><div><button class="abtn" id="aday">🔍 이날 수학 AI 분석</button><button class="abtn" id="aweek">🔍 최근 7일 AI 분석</button><span class="muted" style="font-size:13px"> 1~3분 걸려요</span></div><div id="adayout"></div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제 · 손풀이 · AI 과외 대화</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
   // 막힌 이유
   const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
   h+=`<div class="card"><h2>🧭 시훈이가 고른 막힌 이유</h2>${ws?`<ul>${ws}</ul>`:'<p class="muted">이날은 고른 게 없어요.</p>'}<p class="muted">판단은 5일 이상 기록이 쌓인 뒤에 해요.</p></div>`;
@@ -102,6 +137,7 @@ async function render(){
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&d.img)el.innerHTML=`<img src="${d.img}" alt="손풀이">`;else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
+  if(MI.length) mountAna(k,MI);
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
