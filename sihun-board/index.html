@@ -540,7 +540,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
     $("pinIn").focus();$("mc").onclick=()=>$("layer").innerHTML="";
     $("mf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===famPin){$("layer").innerHTML="";pinOpen=true;showWho();renderAll();document.getElementById("momCard").scrollIntoView({behavior:"smooth"})}else toast("비밀번호가 달라요")}}};showWho();
   fs=db;let denied=false;
-  const onErr=err=>{if(err&&err.code==="permission-denied"&&!denied){denied=true;unsubs.splice(0).forEach(f=>f());fs=null;gate(`${u.email} 계정으로는 열 수 없어요. 시훈이나 엄마 계정으로 로그인해 주세요.`,false,true)}};
+  const onErr=err=>{if(err&&err.code==="permission-denied"&&!denied){denied=true;unsubs.splice(0).forEach(f=>f());fs=null;gate(`${u.email} 계정으로는 열 수 없어요. 가족 계정으로 로그인해 주세요.`,false,true)}};
   for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll()},onErr));
   for(const c of MINE)unsubs.push(F.onSnapshot(F.collection(db,"sihunBoard","main",c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));renderAll()},onErr));
   unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","main"),s=>{board=s.exists()?s.data():{};renderAll()},onErr));
