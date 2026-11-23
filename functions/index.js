@@ -369,3 +369,217 @@ exports.m32Analyze = onDocumentCreated(
     }
   }
 );
+
+// ===================================================================================
+// 시훈 공부방 국어 AI (엄마 11/23): 국어 과외 koTutor · 글쓰기 첨삭 writeCoach · 국어 분석 koAnalyze
+// 수학 함수와 같은 방식: 앱이 sihun/data/<칸>/{id} 에 요청을 쓰면 여기서 같은 문서에 res를 채워요.
+// ===================================================================================
+const KO_TUTOR_LIMIT = 150; // 하루 국어 과외 호출 상한
+const WRITE_LIMIT = 100;    // 하루 글쓰기 첨삭 호출 상한
+const KOANA_LIMIT = 30;     // 하루 국어 분석 상한
+const SIHUN_ABOUT = `시훈이에 대해(엄마가 알려 준 것): 초등학교 3학년. 어려운 개념도 빨리 이해하지만 아는 걸 바로 꺼내는 속도가 느리고, 처음에 조건이나 묻는 말을 놓칠 때가 있어. 완벽주의라 틀렸다는 말과 힌트에 예민해. 종이에 쓰는 걸 매우 어려워해. 국어는 수능 입문반(초3에게 어려운 비문학·문학·문법)을 듣고 있어.`;
+
+async function callJson(system, content, schema, opts) {
+  const Anthropic = require("@anthropic-ai/sdk").default;
+  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
+  const base = {
+    model: TUTOR_MODEL, max_tokens: opts.max || 8000,
+    output_config: { effort: opts.effort || "medium", format: { type: "json_schema", schema } },
+    system, messages: [{ role: "user", content }],
+  };
+  if (opts.think) base.thinking = { type: "adaptive" };
+  let res;
+  try {
+    res = await client.beta.messages.stream({ ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }).finalMessage();
+  } catch (e1) {
+    if (!(e1 && e1.status === 400)) throw e1;
+    console.warn(opts.tag, "fallback params rejected, retrying plain", e1.message);
+    res = await client.messages.stream(base).finalMessage();
+  }
+  if (res.stop_reason === "refusal") return { refusal: true, model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } };
+  const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
+  return { out: JSON.parse(text), model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } };
+}
+async function usedToday(col, at) {
+  return (await getFirestore().collection("sihun/data/" + col).where("at", "==", at || "").get()).size;
+}
+
+// ----- 국어 과외: 틀린 문제에서 시훈이 답에서 출발해 근거를 되묻기 (답은 절대 알려 주지 않음) -----
+const KO_TUTOR_SYSTEM = `너는 시훈이의 국어 과외 선생님이야. 시훈이 옆에 앉아 같은 문제를 보는 사람처럼 말해.
+${SIHUN_ABOUT}
+말하는 법:
+- 한국어, 친근한 해요체. 1~2문장. 한 번에 질문은 하나만. 이모지, 거창한 용어, 일반론, 과한 칭찬 금지.
+- "틀렸어요"라고 하지 마. 시훈이가 고른 답에서 출발해 "왜 그걸 골랐는지"부터 물어.
+- 정답 번호, 정답 선택지의 말, 정답으로 바로 이어지는 결론은 절대 말하지 마. 시훈이가 지문과 문제에서 스스로 찾게 해.
+- 어려운 문제는 단계로 쪼개(엄마가 정한 순서): ① 질문 바꿔 말하기(문제가 무엇을 묻는지 시훈이 말로) → ② 근거 찾기(지문이나 보기에서 그 판단의 근거가 되는 문장/낱말) → ③ 고르기(근거와 맞는 선택지 다시 고르기). 시훈이가 이미 한 단계는 건너뛰어.
+- 문제 속 낱말이 초3에게 어려우면(예: 통시, 이항 대립, 비음화) 뜻을 쉬운 말로 한 번 풀어 주는 건 괜찮아. 단, 답을 가리키면 안 돼.
+- 시훈이가 근거를 찾아 다시 고를 준비가 되면 state "retry"로 "그럼 다시 골라 볼까요?"처럼 말해.
+- 시훈이가 다시 골라 맞혔다는 요청이 오면 무엇을 근거로 맞혔는지 시훈이 말로 한 문장 짚고 state "end".
+- 대화가 길어졌는데도 막혀 있으면 정답 대신 해설의 첫 실마리(어디를 다시 읽을지)만 주고 state "retry".
+step: 지금 묻는 단계(restate/evidence/choose/wrap).
+mom: 엄마에게 남기는 한 문장 메모. 시훈이가 어디서 어떻게 생각했는지 구체적으로(일반론 금지).
+keyDoubt: 문제·선택지·정답을 보고 정답이 의심스러우면(답이 둘이거나, 정답이 지문과 안 맞거나) true와 이유를 doubtWhy에. 시훈이에게는 절대 말하지 마. 아니면 false와 빈 문자열.`;
+const KO_TUTOR_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["state", "step", "say", "mom", "keyDoubt", "doubtWhy"],
+  properties: {
+    state: { type: "string", enum: ["ask", "retry", "end"] },
+    step: { type: "string", enum: ["restate", "evidence", "choose", "wrap"] },
+    say: { type: "string" }, mom: { type: "string" },
+    keyDoubt: { type: "boolean" }, doubtWhy: { type: "string" },
+  },
+};
+exports.koTutor = onDocumentCreated(
+  { document: "sihun/data/kotutor/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.problem || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("kotutor", req.at)) > KO_TUTOR_LIMIT) return done({ state: "limit", say: "", mom: "하루 AI 상한을 넘었어요" });
+    const p = req.problem;
+    const lines = [
+      p.psg ? `지문:\n${p.psg}` : "",
+      `문제(${p.area || "국어"}${p.src ? ", " + p.src : ""}): ${p.q}`,
+      p.box ? `보기/제시문: ${p.box}` : "",
+      p.opts && p.opts.length ? `선택지:\n${p.opts.map((o, i) => `${i + 1}. ${o}`).join("\n")}` : "",
+      `정답(시훈이에게 말하지 마): ${p.ans}`,
+      p.exp ? `앱 해설(시훈이에게 그대로 말하지 마): ${p.exp}` : "",
+      p.raw ? `문항 데이터(정답·해설 포함, 시훈이에게 그대로 말하지 마): ${String(p.raw).slice(0, 4000)}` : "",
+      `시훈이가 고른 답: ${(req.picks || []).join(" → ") || "없음"}`,
+    ].filter(Boolean);
+    if (req.turns && req.turns.length) {
+      lines.push("지금까지 대화:");
+      req.turns.forEach((t) => lines.push(`${t.who === "ai" ? "선생님" : "시훈"}: ${t.text}`));
+    }
+    lines.push(req.kind === "solved" ? "시훈이가 방금 다시 골라 정답을 맞혔어요. 마무리해 주세요." : "다음에 할 말을 정해 주세요.");
+    try {
+      const r = await callJson(KO_TUTOR_SYSTEM, [{ type: "text", text: lines.join("\n") }], KO_TUTOR_SCHEMA, { tag: "koTutor", max: 6000, effort: "medium" });
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "", mom: "", model: r.model, usage: r.usage });
+      return done({ ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("koTutor", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", mom: "" });
+    }
+  }
+);
+
+// ----- 글쓰기 첨삭: 대신 쓰지 않고 질문으로만 (내용은 100% 시훈이 말) -----
+const WRITE_SYSTEM = `너는 시훈이의 글쓰기 선생님이야. 시훈이가 말한 조각들을 보고 질문으로만 글을 키워 줘.
+${SIHUN_ABOUT}
+절대 규칙:
+- 문장을 대신 써 주거나, "이렇게 써 봐" 하고 예시 문장을 주지 마. 낱말 하나도 대신 고르지 마. 내용은 100% 시훈이 입에서 나와야 해.
+- 한 번에 질문은 하나만. 한국어 친근한 해요체, 1~2문장. 이모지·과한 칭찬·일반론 금지.
+- 반드시 시훈이가 실제로 한 말에서 출발해(예: "'카렌이 나빴다'고 했는데, 책 어디에서 그렇게 느꼈어요?").
+질문 고르는 순서(이미 된 건 건너뛰기): ① 과제가 묻는 것에 대한 내 답이 있나 → ② 왜 그렇게 생각하는지(왜냐하면) → ③ 근거(책·경험에서 어디, 무슨 장면) → ④ 예나 자세한 설명 하나 → ⑤ 마무리(그래서 내 생각은).
+- 답·이유·근거가 다 있으면 state "ready"로 "이제 순서대로 놓아 볼까요?"처럼 말해.
+spell: 시훈이 조각에서 맞춤법이 틀린 낱말만 골라 word(시훈이가 쓴 그대로)와 hint(고친 말이 아니라 "받침을 다시 봐요" 같은 힌트)로. 고친 낱말을 알려 주지 마. 없으면 빈 배열.
+focus: 이번 질문이 노리는 것(answer/reason/evidence/example/wrap/none).
+mom: 엄마에게 남기는 한 문장 메모(시훈이 생각이 어디서 막히는지 구체적으로).`;
+const WRITE_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["state", "say", "focus", "spell", "mom"],
+  properties: {
+    state: { type: "string", enum: ["ask", "ready"] },
+    say: { type: "string" },
+    focus: { type: "string", enum: ["answer", "reason", "evidence", "example", "wrap", "none"] },
+    spell: { type: "array", items: { type: "object", additionalProperties: false, required: ["word", "hint"], properties: { word: { type: "string" }, hint: { type: "string" } } } },
+    mom: { type: "string" },
+  },
+};
+exports.writeCoach = onDocumentCreated(
+  { document: "sihun/data/writecoach/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.task || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("writecoach", req.at)) > WRITE_LIMIT) return done({ state: "limit", say: "", spell: [], mom: "하루 AI 상한을 넘었어요" });
+    const t = req.task;
+    const content = [];
+    const img = imgBlock(t.img);
+    if (img) content.push({ type: "text", text: "과제 종이 사진:" }, img);
+    const lines = [
+      `과제: ${t.title || ""}${t.q ? "\n묻는 것: " + t.q : ""}${t.note ? "\n참고: " + t.note : ""}${t.psg ? "\n읽은 글(시훈이가 근거를 찾을 곳): " + String(t.psg).slice(0, 6000) : ""}`,
+      "시훈이가 지금까지 한 말(조각):",
+      ...(req.pieces || []).map((x, i) => `${i + 1}. ${x}`),
+    ];
+    if (req.turns && req.turns.length) {
+      lines.push("지금까지 대화:");
+      req.turns.forEach((x) => lines.push(`${x.who === "ai" ? "선생님" : "시훈"}: ${x.text}`));
+    }
+    lines.push("다음 질문 하나를 정해 주세요.");
+    content.push({ type: "text", text: lines.join("\n") });
+    try {
+      const r = await callJson(WRITE_SYSTEM, content, WRITE_SCHEMA, { tag: "writeCoach", max: 6000, effort: "medium" });
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "", spell: [], mom: "", model: r.model, usage: r.usage });
+      return done({ ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("writeCoach", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", spell: [], mom: "" });
+    }
+  }
+);
+
+// ----- 국어 분석: 엄마 리포트 「🔍 국어 AI 분석」 -----
+const KOANA_SYSTEM = `너는 시훈이의 국어 과외 선생님이고, 지금 엄마에게 국어 공부를 보고하는 중이야.
+${SIHUN_ABOUT}
+기록 읽는 법: 한 줄이 한 활동이야. test=누적 테스트(wrong에 틀린 문제: 문제·시훈 답·정답), daily=복습 카드, hw=숙제, write=독서 워크지 서술형, tutor=AI 국어 과외 대화, writing=글쓰기 첨삭 코너. sec=걸린 초.
+보고하는 법:
+- 한국어, 엄마에게 말하듯 담백한 해요체. 짧고 구체적으로. 반드시 기록(문제, 시훈 답, 대화)에서 본 것을 근거로. 근거가 약하면 "(추측)".
+- areas: 영역(비문학/문학/문법/스키마/독서/글쓰기)별로 어디가 어려운지. 실력 문제(개념을 모름)인지, 문제를 잘못 읽은 것인지, 너무 어려운 수준인지 구분해.
+- keyDoubts: 정답지가 의심스러운 문제(답이 둘이거나 정답이 지문과 안 맞음)만. 없으면 빈 배열.
+- teach: 내일 바로 해 볼 가르치는 방법 2~3개. 시훈이 실제 답에서 출발하고, 예민한 성격을 생각해 어떻게 말할지까지.
+- 문제가 적으면 pattern에 "아직 기록이 적어서 더 봐야 해요"처럼 솔직하게. 검사 결과나 나이로 단서 달지 마.`;
+const KOANA_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["summary", "areas", "keyDoubts", "pattern", "teach"],
+  properties: {
+    summary: { type: "string" },
+    areas: { type: "array", items: { type: "object", additionalProperties: false, required: ["area", "saw", "why"], properties: { area: { type: "string" }, saw: { type: "string" }, why: { type: "string" } } } },
+    keyDoubts: { type: "array", items: { type: "object", additionalProperties: false, required: ["src", "why"], properties: { src: { type: "string" }, why: { type: "string" } } } },
+    pattern: { type: "string" },
+    teach: { type: "array", items: { type: "string" } },
+  },
+};
+exports.koAnalyze = onDocumentCreated(
+  { document: "sihun/data/koana/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 300, maxInstances: 2 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !Array.isArray(req.items) || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("koana", req.at)) > KOANA_LIMIT) return done({ state: "limit" });
+    const scope = req.kind === "week" ? `최근 7일(${req.from}~${req.at})` : `${req.at} 하루`;
+    const text = `${scope}의 국어 기록이에요. JSON 한 줄이 한 활동이에요.\n` + req.items.slice(0, 120).map((x) => JSON.stringify(x)).join("\n") + "\n\n엄마에게 보고해 주세요.";
+    try {
+      const r = await callJson(KOANA_SYSTEM, [{ type: "text", text }], KOANA_SCHEMA, { tag: "koAnalyze", max: 16000, effort: "high", think: true });
+      if (r.refusal) return done({ state: "error", err: "refusal", model: r.model, usage: r.usage });
+      return done({ state: "ok", ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("koAnalyze", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error") });
+    }
+  }
+);
+
+// ----- AI 사용량 기록 (엄마 11/23: 리포트에서 하루·한 달 사용량과 대략 비용 보기) -----
+// AI 요청 문서에 답(res)이 처음 채워질 때 토큰 수를 sihun/data/aiuse/{YYYY-MM} 에 더해요. 앱 코드는 안 건드려요.
+const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
+const { FieldValue } = require("firebase-admin/firestore");
+for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach"]) {
+  exports["aiUse_" + col] = onDocumentUpdated(
+    { document: "sihun/data/" + col + "/{id}", region: "asia-northeast3", maxInstances: 2 },
+    async (event) => {
+      const before = unpackDoc(event.data.before.data());
+      const after = unpackDoc(event.data.after.data());
+      if (before.res || !after.res) return;
+      const u = after.res.usage || {};
+      const day = /^\d{4}-\d{2}-\d{2}$/.test(String(after.at || "")) ? after.at : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+      await getFirestore().doc("sihun/data/aiuse/" + day.slice(0, 7)).set(
+        { days: { [day]: { [col]: { n: FieldValue.increment(1), in: FieldValue.increment(+u.in || 0), out: FieldValue.increment(+u.out || 0) } } } },
+        { merge: true }
+      );
+    }
+  );
+}

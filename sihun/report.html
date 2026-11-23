@@ -32,6 +32,8 @@
   .tut{background:var(--chip);border-radius:12px;padding:8px 12px;margin-top:6px}
   .ana{background:#f3f7ff;border:1.5px solid #c9d8f5;border-radius:12px;padding:10px 14px;margin-top:8px}.ana h4{margin:8px 0 4px;font-size:15px}.ana ul{margin:4px 0;padding-left:20px}
   .abtn{background:#fff;border:1.5px solid #9db6e6;border-radius:10px;padding:6px 12px;font-size:14px;margin:4px 6px 0 0;cursor:pointer}.abtn:disabled{opacity:.5}
+  .kot{border-collapse:collapse;font-size:14px;margin:4px 0}.kot td{padding:3px 8px;border-bottom:1px solid var(--line)}.bar{width:110px;height:10px;background:var(--chip);border-radius:5px;overflow:hidden}.bar i{display:block;height:100%}
+  .kowr{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}.kobox{background:var(--chip);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:14px}.kocmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}.kocmp div{background:var(--chip);border-radius:8px;padding:6px 10px}.kocmp span{display:block;font-size:12px;color:var(--sub)}
   .pen img{max-width:100%;max-height:320px;background:#fff;border:1.5px solid var(--line);border-radius:10px;margin-top:6px}
 </style>
 </head>
@@ -112,14 +114,135 @@ async function exportRecs(k,days){ const out=document.getElementById('expout'); 
     for(const id of ids){ const d=await getD('m32pen/'+id).catch(()=>null); if(d){ const photos=[]; for(const q of (d.ph||[])){ const pd=await getD('m32pen/'+q).catch(()=>null); if(pd&&pd.img) photos.push(pd.img); } pens[id]={img:d.img,strokes:(d.strokes||[]).length,w:d.w,h:d.h,photos}; } out.textContent=`손풀이 그림 ${++n}/${ids.length}…`; }
     const ana=(await getC('m32ana').catch(()=>[])).filter(d=>inR(d.at)&&d.res).map(d=>({kind:d.kind,at:d.at,key:d.key||null,from:d.from||null,res:d.res}));
     const ko=C.results.filter(r=>r.at&&inR(dkey(new Date(r.at))));
+    const kotutor=latestTut(await getC('kotutor',where('at','>=',fk),where('at','<=',k)).catch(()=>[])).map(t=>({at:t.at,problem:t.problem,picks:t.picks,turns:t.turns,res:t.res,kind:t.kind}));
+    const writing=await getWrite(fk,k); const koana=(await getC('koana',where('at','>=',fk),where('at','<=',k)).catch(()=>[])).filter(d=>d.res).map(d=>({kind:d.kind,at:d.at,res:d.res}));
     const daily={}; for(let x=new Date(f);dkey(x)<=k;x.setDate(x.getDate()+1)){ const dd=await getD('daily/'+dkey(x)).catch(()=>null); if(dd) daily[dkey(x)]=dd; }
     const R=C.routine&&C.routine.days||{}, V=C.vcheck&&C.vcheck.days||{};
     const en={routine:Object.fromEntries(Object.entries(R).filter(([d])=>inR(d))),vocab:Object.fromEntries(Object.entries(V).filter(([d])=>inR(d)))};
     const changes=((C.changes&&C.changes.items)||[]).filter(x=>inR(x.date));
-    const data={app:'sihun-report-export',v:1,from:fk,to:k,made:new Date().toISOString(),math,pens,ana,ko,en,daily,changes};
+    const data={app:'sihun-report-export',v:1,from:fk,to:k,made:new Date().toISOString(),math,pens,ana,ko,kotutor,koana,writing,en,daily,changes};
     const blob=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`시훈기록_${fk}_${k}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     out.innerHTML=`✅ 파일을 받았어요 (수학 ${math.length}문제, 손풀이 ${Object.keys(pens).length}장, ${Math.round(blob.size/1024)}KB). 다운로드 폴더의 <b>시훈기록_…json</b>을 Claude에게 올려 주세요.`;
   }catch(e){ out.textContent='내보내기가 안 됐어요: '+(e.code||e.message); } }
+// ===== 국어 상세 (엄마 11/23) =====
+let KOSRC=null; // 앱의 BANK(누테 문제)·HW(숙제) — 예전 기록엔 문제 글이 없어서 앱 파일에서 읽어 와요
+async function koSrc(){ if(KOSRC) return KOSRC; KOSRC={bank:{},hw:{}};
+  try{ const t=await (await fetch('./index.html',{cache:'no-cache'})).text();
+    const grab=n=>{const i=t.indexOf('const '+n+'=[');if(i<0)return [];const j=t.indexOf('\n];',i);return new Function('return '+t.slice(i+n.length+7,j+2))()};
+    grab('BANK').forEach(b=>KOSRC.bank[b.id]=b); grab('HW').forEach(h=>KOSRC.hw[h.id]=h);
+  }catch(e){ console.warn('koSrc',e); } return KOSRC; }
+const strip=x=>String(x==null?'':x).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
+const mmss=s=>s==null?'':s>=60?`${Math.floor(s/60)}분 ${s%60}초`:`${s}초`;
+const KOAREA={'비문학':'비문학','문학':'문학','문법':'문법','스키마':'스키마'};
+async function koFill(KR){
+  const el=document.getElementById('kobody'); if(!el) return; const src=await koSrc();
+  const tsum=KR.reduce((a,r)=>a+(+r.sec||0),0);
+  const tests=KR.filter(r=>r.type==='test'); const wrongAll=[];
+  let h=`<div class="row">${stat(KR.length+'개','한 활동')}${tsum?stat(mmss(tsum),'걸린 시간 합'):''}${tests.map(t=>stat(t.score+'점',`누테 ${t.mode==='weak'?'(약점)':''}${t.area?' '+esc(t.area):''}`)).join('')}</div><ul>`;
+  for(const r of KR){
+    const time=r.sec?` <span class="muted">· ${mmss(+r.sec)}</span>`:'';
+    if(r.type==='test'){ const it=r.items||[]; const ok=it.filter(x=>x.ok).length; const wr=it.filter(x=>!x.ok);
+      h+=`<li><b>누적 테스트${r.mode==='weak'?' (약점)':''}</b>${r.area?' · '+esc(r.area):''}${r.range?` · ${esc([].concat(r.range).join('~'))}주차`:''} — <span class="${ok===it.length?'ok':''}">${ok}/${it.length}</span> · ${r.score}점${time}${r.shift&&r.shift.length?' <span class="bad">· 답안 밀려 쓴 흔적 있음</span>':''}</li>`;
+      wr.forEach(x=>wrongAll.push({src:'누테 '+x.n+'번',id:x.id,w:x.w,area:x.area,pick:x.omrText,ans:x.ansText,q:x.q,box:x.box,variant:x.variant})); }
+    else if(r.type==='daily'){ const c=r.cards||[]; const ok=c.filter(x=>x.ok&&!x.miss).length; const miss=c.filter(x=>x.miss).length;
+      h+=`<li><b>복습 카드</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 한 번에 ${ok}/${c.length}${miss?` · <span class="bad">헤맨 카드 ${miss}</span>`:''}${time}</li>`; }
+    else if(r.type==='hw'){ const H=src.hw[r.set]; const it=r.items||[];
+      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}</li>`;
+      it.filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).forEach(x=>{const q=H&&H.items[x.i]; const ans=q?(q.o?strip(q.o[q.a]):q.bl?q.bl.map(b=>b.a).join(' / '):''):'';
+        wrongAll.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?q.q:'',pick:x.pickText||x.pick||(x.miss?`헤맴 ${x.miss}번`:''),ans,chk:q&&q.chk}); }); }
+    else if(r.type==='write'){
+      h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
+        ${r.ev&&r.ev.length?`<br><span class="muted">고른 근거:</span> ${r.ev.map(e=>'“'+esc(e)+'”').join(' ')}`:''}
+        ${r.parts&&Object.keys(r.parts).length?`<br><span class="muted">시훈이가 쓴 말:</span> ${Object.values(r.parts).map(v=>'「'+esc(v)+'」').join(' ')}`:''}
+        ${r.text?`<br><span class="muted">완성 문장:</span> <b>${esc(r.text)}</b>`:''}${r.img?`<div class="pen"><img src="${r.img}" alt="원고지"></div>`:''}</li>`; }
+    else if(r.type==='wrong'||r.type==='retry'){ h+=`<li><b>${r.type==='wrong'?'오답 다시 풀기':'틀린 문제 다시'}</b> — ${r.ok?'<span class="ok">맞음</span>':'<span class="bad">또 틀림</span>'} <span class="muted">${esc(strip(r.q||'').slice(0,50))}</span></li>`;
+      if(!r.ok){const b=src.bank[r.id];wrongAll.push({src:r.type==='wrong'?'오답 다시':'다시 풀기',id:r.id,w:b&&b.w,area:b&&b.area,pick:[].concat(r.pickText||[]).join(', '),ans:[].concat(r.ansText||(b?[b.opts[b.a]]:[])).join(', '),q:b?b.q:r.q});} }
+    else if(r.type==='note'){ h+=`<li><b>${r.mode==='fill'?'핵심 빈칸':'개념 정리'}</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 획 ${r.strokes||0}${r.checked?' · 확인함':''}${time}</li>`; }
+    else { const arr=r.items||r.cards||[]; const n=arr.length; const ok=arr.filter(x=>x.ok).length;
+      h+=`<li><b>${KOT[r.type]||esc(r.type||'기록')}</b>${r.area?' · '+esc(r.area):''}${r.mode?' · '+esc(r.mode):''} — ${n?`${ok}/${n}`:r.ok===true?'<span class="ok">맞음</span>':r.ok===false?'<span class="bad">헤맴</span>':''}${r.miss?` · 헤맴 ${r.miss}`:''}${time}</li>`; }
+  }
+  h+='</ul>';
+  if(wrongAll.length){
+    h+=`<h3 style="font-size:16px;margin:12px 0 4px">❌ 틀린 문제 · 시훈 답 vs 정답</h3><p class="muted" style="font-size:13px;margin:0 0 6px">정답이 이상해 보이면 Claude에게 알려 주세요. ⚠️는 정답지 없이 Claude가 푼 문제예요.</p>`;
+    h+=wrongAll.map(x=>{const b=x.id&&src.bank[x.id]; const q=x.q||(b&&b.q)||''; const box=x.box||(b&&b.box)||'';
+      return `<div class="kowr"><div class="muted" style="font-size:13px">${esc(x.src)}${x.w?` · ${x.w}주차`:''}${x.area?' · '+esc(x.area):''}${x.variant?' · 바뀐 버전':''}${x.chk?' · ⚠️ 정답 확인 필요':''}${x.id?` · ${esc(x.id)}`:''}</div>
+        <div>${esc(strip(q))||'<span class="muted">(문제 글 없음)</span>'}</div>${box?`<div class="kobox">${esc(strip(box))}</div>`:''}
+        <div class="kocmp"><div><span>시훈 답</span><b class="bad">${esc(strip(x.pick))||'(안 고름)'}</b></div><div><span>정답</span><b class="ok">${esc(strip(x.ans))}</b></div></div>
+        ${b&&b.exp?`<details><summary class="muted" style="font-size:13px">해설</summary><div style="font-size:14px">${b.exp}</div></details>`:''}</div>`}).join('');
+  }
+  // 영역별 (누테 문제 + 복습 카드)
+  const AR={}; const addA=(a,ok)=>{a=a||'기타';AR[a]=AR[a]||{n:0,ok:0};AR[a].n++;if(ok)AR[a].ok++};
+  KR.forEach(r=>{ if(r.type==='test')(r.items||[]).forEach(x=>addA(x.area||r.area,x.ok)); else if(r.type==='daily')(r.cards||[]).forEach(x=>addA(r.area,x.ok&&!x.miss)); });
+  const ars=Object.entries(AR).sort((a,b)=>a[1].ok/a[1].n-b[1].ok/b[1].n);
+  if(ars.length) h+=`<h3 style="font-size:16px;margin:12px 0 4px">📊 영역별 (누테 문제 + 복습 카드)</h3><table class="kot">${ars.map(([a,v])=>{const p=Math.round(v.ok/v.n*100);return `<tr><td>${esc(a)}</td><td>${v.ok}/${v.n}</td><td><div class="bar"><i style="width:${p}%;background:${p>=80?'#3a9d5d':p>=60?'#e0a030':'#d9534f'}"></i></div></td><td>${p}%</td></tr>`}).join('')}</table>`;
+  h+=`<div style="margin-top:10px"><button class="abtn" id="kaday">🔍 이날 국어 AI 분석</button><button class="abtn" id="kaweek">🔍 최근 7일 국어 AI 분석</button><span class="muted" style="font-size:13px"> 1~3분 걸려요</span></div><div id="kaout"></div><div id="kotut"></div>`;
+  el.innerHTML=h;
+}
+// ===== 국어 AI 분석 · AI 과외 대화 · 글쓰기 기록 · AI 사용량 (엄마 11/23) =====
+function koItems(R,src,tut,wr){ const out=[];
+  for(const r of R){ const b={type:r.type,date:r.at?dkey(new Date(r.at)):'',area:r.area||'',sec:+r.sec||0};
+    if(r.type==='test'){ const it=r.items||[]; out.push({...b,score:r.score,n:it.length,ok:it.filter(x=>x.ok).length,shift:!!(r.shift&&r.shift.length),
+      wrong:it.filter(x=>!x.ok).map(x=>{const k=x.id&&src.bank[x.id];return {area:x.area,q:strip(x.q||(k&&k.q)||'').slice(0,300),box:strip(x.box||(k&&k.box)||'').slice(0,300),pick:strip(x.omrText),ans:strip(x.ansText),exp:strip(k&&k.exp||'').slice(0,300)}})}); }
+    else if(r.type==='daily'){ const c=r.cards||[]; out.push({...b,n:c.length,first:c.filter(x=>x.ok&&!x.miss).length,miss:c.filter(x=>x.miss).length}); }
+    else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&q.q||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0}})}); }
+    else if(r.type==='write') out.push({...b,title:r.title,qok:r.qok,qn:r.qn,miss:r.miss,emiss:r.emiss,asked:r.asked,ev:r.ev,parts:r.parts,text:r.text});
+    else out.push({...b,ok:r.ok,miss:r.miss,q:strip(r.q||'').slice(0,150)});
+  }
+  (tut||[]).forEach(t=>out.push({type:'tutor',date:t.at,area:t.problem&&t.problem.area||'',q:strip(t.problem&&t.problem.q||'').slice(0,300),picks:t.picks,ans:t.problem&&t.problem.ans,turns:(t.turns||[]).map(x=>x.who+': '+x.text).concat(t.res&&t.res.say?['ai: '+t.res.say]:[]),end:t.kind}));
+  (wr||[]).forEach(w=>out.push({type:'writing',date:w.date,title:w.task&&w.task.title,q:w.task&&w.task.q,pieces:w.pieces,turns:(w.turns||[]).map(x=>x.who+': '+x.text),spell:(w.spell||[]).map(x=>x.word),final:w.final,done:w.done,sec:w.sec}));
+  return out; }
+const latestTut=L=>{const g={};L.filter(d=>d.res&&d.sid).forEach(d=>{const o=g[d.sid];if(!o||(d.ts||'')>(o.ts||''))g[d.sid]=d});return Object.values(g).sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:1)};
+const getWrite=async (fk,k)=>{const a=new Date(fk+'T00:00:00');a.setDate(a.getDate()-1);const z=new Date(k+'T00:00:00');z.setDate(z.getDate()+2);
+  return (await getC('writelog',where('at','>=',dkey(a)),where('at','<',dkey(z))).catch(()=>[])).filter(w=>w.date>=fk&&w.date<=k)};
+function koAnaHTML(r){ if(!r) return ''; if(r.state==='limit') return '<div class="ana bad">오늘 분석 횟수를 다 썼어요.</div>'; if(r.state!=='ok') return `<div class="ana bad">분석이 안 됐어요 (${esc(r.err||r.state)}). 잠시 뒤 다시 눌러 주세요.</div>`;
+  return `<div class="ana"><b>🔍 국어 AI 분석</b> <span class="muted" style="font-size:12px">${r.atRes?new Date(r.atRes).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'}):''}</span><p>${esc(r.summary)}</p>
+    ${(r.areas||[]).length?`<h4>영역별</h4><ul>${r.areas.map(a=>`<li><b>${esc(a.area)}</b>: ${esc(a.saw)}<br><span class="muted">왜:</span> ${esc(a.why)}</li>`).join('')}</ul>`:''}
+    ${(r.keyDoubts||[]).length?`<h4>⚠️ 정답이 의심스러운 문제</h4><ul>${r.keyDoubts.map(a=>`<li><b>${esc(a.src)}</b>: ${esc(a.why)}</li>`).join('')}</ul>`:''}
+    ${r.pattern?`<h4>반복되는 모습</h4><p>${esc(r.pattern)}</p>`:''}${(r.teach||[]).length?`<h4>이렇게 가르쳐 보세요</h4><ul>${r.teach.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}</div>`; }
+async function koAna(kind,k){ const out=document.getElementById('kaout'), btn=document.getElementById(kind==='day'?'kaday':'kaweek'); if(!out) return;
+  btn.disabled=true; out.innerHTML='<div class="ana muted">🔍 분석 중이에요… 1~3분 걸려요. 이 화면을 열어 두세요.</div>';
+  try{ const src=await koSrc(); let fk=k;
+    if(kind==='week'){const t=new Date(k+'T12:00:00');t.setDate(t.getDate()-6);fk=dkey(t)}
+    const R=CACHE.results.filter(r=>r.at&&(d=>d>=fk&&d<=k)(dkey(new Date(r.at)))).sort((a,b)=>a.at<b.at?-1:1);
+    const tut=latestTut(await getC('kotutor',where('at','>=',fk),where('at','<=',k)).catch(()=>[]));
+    const wr=await getWrite(fk,k);
+    const id=`${k}-${kind}-${Date.now()}`;
+    await setD('koana/'+id,{at:k,date:k,ts:new Date().toISOString(),kind,from:fk,items:koItems(R,src,tut,wr)});
+    for(let i=0;i<110;i++){ await new Promise(r=>setTimeout(r,3000)); const d=await getD('koana/'+id).catch(()=>null); if(d&&d.res){ out.innerHTML=(kind==='week'?'<div class="muted" style="font-size:13px">최근 7일 분석</div>':'')+koAnaHTML(d.res); btn.disabled=false; return; } }
+    out.innerHTML='<div class="ana bad">답이 너무 늦어요. 잠시 뒤 새로고침해서 확인해 주세요.</div>';
+  }catch(e){ out.innerHTML=`<div class="ana bad">요청을 못 보냈어요 (${esc(e.code||e.message)})</div>`; }
+  btn.disabled=false; }
+async function koExtra(k){
+  // 저장된 국어 분석(가장 최근 것)
+  getC('koana',where('at','==',k)).then(L=>{const d=L.filter(x=>x.res).sort((a,b)=>(a.res.atRes||0)-(b.res.atRes||0)).slice(-1)[0];const o=document.getElementById('kaout');if(d&&o&&!o.innerHTML)o.innerHTML=(d.kind==='week'?'<div class="muted" style="font-size:13px">최근 7일 분석</div>':'')+koAnaHTML(d.res)}).catch(()=>{});
+  const a=document.getElementById('kaday'),b=document.getElementById('kaweek'); if(a)a.onclick=()=>koAna('day',k); if(b)b.onclick=()=>koAna('week',k);
+  // AI 국어 과외 대화
+  const T=latestTut(await getC('kotutor',where('at','==',k)).catch(()=>[])); const el=document.getElementById('kotut'); if(!el||!T.length) return;
+  el.innerHTML=`<h3 style="font-size:16px;margin:12px 0 4px">🧑‍🏫 AI 국어 과외 대화 (${T.length}문제)</h3>`+T.map(t=>{const p=t.problem||{};const r=t.res||{};const turns=(t.turns||[]).concat(r.say?[{who:'ai',text:r.say}]:[]);
+    return `<div class="tut"><div class="muted" style="font-size:13px">${esc(p.src||'')}${p.area?' · '+esc(p.area):''} · ${t.kind==='solved'?'<span class="ok">다시 골라 맞힘</span>':r.state==='end'?'끝냄':r.state==='limit'?'횟수 끝':r.state==='error'?'연결 안 됨':'중간에 멈춤'}</div>
+      <div>${esc(strip(p.q).slice(0,160))}</div><div class="muted" style="font-size:13px">시훈이가 고른 답: ${esc((t.picks||[]).join(' → ')||'-')}${p.ans?` · 정답: ${esc(p.ans)}`:''}</div>
+      ${turns.map(x=>`<div>${x.who==='ai'?'🧑‍🏫':'🙋'} ${esc(x.text)}</div>`).join('')}${r.mom?`<div><b>엄마 메모:</b> ${esc(r.mom)}</div>`:''}${r.keyDoubt?`<div class="bad">⚠️ 정답 의심: ${esc(r.doubtWhy)}</div>`:''}</div>`}).join('');
+}
+async function writeFill(k){ const el=document.getElementById('wrbody'); if(!el) return; const L=(await getWrite(k,k)).sort((a,b)=>(a.at||'')<(b.at||'')?-1:1);
+  if(!L.length){el.innerHTML='<p class="muted">이날 글쓰기 기록이 없어요.</p>';return}
+  el.innerHTML=L.map(w=>{const t=w.task||{};return `<div class="kowr"><b>${esc(t.title)}</b> ${w.done?'<span class="ok">· 다 씀 ✅</span>':`<span class="muted">· 중간 저장 (${esc(w.step||'')})</span>`}${w.sec?` <span class="muted">· ${mmss(+w.sec)}</span>`:''}
+    ${t.q?`<div class="kobox">${esc(t.q)}</div>`:''}
+    ${(w.pieces||[]).length?`<div><span class="muted">시훈이가 꺼낸 생각:</span><ol style="margin:4px 0">${w.pieces.map(x=>`<li>${esc(x)}</li>`).join('')}</ol></div>`:''}
+    ${(w.turns||[]).length?`<details><summary class="muted" style="font-size:13px">AI 쌤과 나눈 말 (${w.turns.length})</summary>${w.turns.map(x=>`<div>${x.who==='ai'?'🧑‍🏫':'🙋'} ${esc(x.text)}</div>`).join('')}</details>`:''}
+    ${(w.spell||[]).length?`<div class="muted" style="font-size:13px">맞춤법 짚은 낱말: ${w.spell.map(x=>esc(x.word)).join(', ')}</div>`:''}
+    ${w.final?`<div><span class="muted">완성 글:</span> <b>${esc(w.final)}</b></div>`:''}
+    ${w.img?`<div class="pen"><div class="muted">원고지 (S펜)</div><img src="${w.img}" alt="원고지"></div>`:''}${w.photo?`<div class="pen"><div class="muted">📷 종이 사진</div><img src="${w.photo}" alt="종이"></div>`:''}</div>`}).join('');
+}
+const AIN={m32tutor:'수학 과외',m32ana:'수학 분석',kotutor:'국어 과외',koana:'국어 분석',writecoach:'글쓰기 첨삭'};
+const usd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당)
+const won=d=>'약 '+Math.round(d*1450).toLocaleString('ko-KR')+'원';
+async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) return; const M=await getD('aiuse/'+k.slice(0,7)).catch(()=>null); const D=(M&&M.days)||{};
+  const sum=o=>Object.values(o||{}).reduce((a,v)=>({n:a.n+(v.n||0),in:a.in+(v.in||0),out:a.out+(v.out||0)}),{n:0,in:0,out:0});
+  const day=D[k]||{}, dS=sum(day); const mon={}; Object.values(D).forEach(o=>Object.entries(o).forEach(([c,v])=>{mon[c]=mon[c]||{n:0,in:0,out:0};mon[c].n+=v.n||0;mon[c].in+=v.in||0;mon[c].out+=v.out||0}));
+  const mS=sum(mon); const nd=Object.keys(D).length;
+  el.innerHTML=`<div class="row">${stat(dS.n+'번','이날 AI 사용')}${stat(won(usd(dS)),'이날 비용')}${stat(mS.n+'번',`${+k.slice(5,7)}월 AI 사용`)}${stat(won(usd(mS)),`${+k.slice(5,7)}월 비용`)}</div>
+    ${mS.n?`<table class="kot"><tr><td></td><td>이날</td><td>${+k.slice(5,7)}월</td></tr>${Object.keys(AIN).filter(c=>mon[c]).map(c=>`<tr><td>${AIN[c]}</td><td>${day[c]?day[c].n+'번 · '+won(usd(day[c])):'-'}</td><td>${mon[c].n}번 · ${won(usd(mon[c]))}</td></tr>`).join('')}</table>`:''}
+    <p class="muted" style="font-size:13px">시훈 공부방 AI만 센 대략 값이에요(1달러 1,450원으로 계산). 정확한 청구액과 한 달 한도는 Claude 콘솔(platform.claude.com)의 Usage·Limits에서 봐요.${nd?` 이번 달 AI 쓴 날 ${nd}일, 하루 평균 ${won(usd(mS)/nd)}.`:' 기록은 서버 업데이트 뒤부터 쌓여요.'}</p>`; }
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
@@ -133,29 +256,30 @@ async function render(){
   h+=`<div class="card"><h2>🇺🇸 영어</h2><div class="row">${stat(vn+'개',`단어 체크 (알아요 ${vk})`)}${stat((en.main||R.n||0)+'문장',`문장 (맞음 ${en.ok||0}${en.skipped?`, 건너뜀 ${en.skipped}`:''})`)}${stat(pred!=null?pred+'분':'–','예측 시간')}${stat(act!=null?act+'분':'–','실제 시간')}</div>
     ${pred!=null&&act!=null?`<p>예측 ${pred}분 → 실제 ${act}분 · <b>${Math.abs(act-pred)<=Math.max(2,pred*.2)?'<span class="ok">예측이 정확했어요</span>':act>pred?'예상보다 오래 걸렸어요':'예상보다 빨리 끝났어요'}</b></p>`:''}
     ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
-  // 국어
-  const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k);
-  const kol=KR.map(r=>{const arr=r.items||r.cards||[];const n=arr.length||r.qn||(r.ok!=null?1:0);const ok=arr.length?arr.filter(x=>x.ok).length:(r.qok!=null?r.qok:(r.ok?1:0));
-    return `<li>${KOT[r.type]||esc(r.type||'기록')}${r.area?' · '+esc(r.area):''}${r.title?' · '+esc(r.title):''}${r.src?' · '+esc(r.src):''} — ${n?`<span class="${ok===n?'ok':''}">${ok}/${n}</span>`:''}${r.score!=null?` · ${r.score}점`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}</li>`}).join('');
-  const ko=(S.ko&&S.ko.actual)||{};
-  h+=`<div class="card"><h2>📖 국어</h2>${ko.score!=null?`<div class="row">${stat(ko.score+'점','테스트 점수')}</div>`:''}${kol?`<ul>${kol}</ul>`:'<p class="muted">이날 국어 기록이 없어요.</p>'}</div>`;
+  // 국어 (엄마 11/23: 그날 한 것 + 틀린 문제를 시훈 답·정답 나란히)
+  const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k).sort((a,b)=>a.at<b.at?-1:1);
+  h+=`<div class="card"><h2>📖 국어</h2><div id="kobody">${KR.length?'<p class="muted">불러오는 중…</p>':'<p class="muted">이날 국어 기록이 없어요.</p>'}</div></div>`;
   // 수학
   const MA=C.m32.filter(d=>d.date===k).flatMap(d=>d.items||[]);const MI=MA.filter(x=>x.mode==='solve');const mo=MI.filter(x=>x.res==='o'||x.res==='h').length,mx=MI.filter(x=>x.res==='x').length,ms=MI.filter(x=>x.res==='s').length;
   const mt=MA.reduce((a,x)=>a+(+x.sec||0),0);const ma=(S.math&&S.math.actual)||{};
   const MW=MI.filter(x=>x.res==='x'||x.res==='s'||x.fixed||(x.res==='h'&&x.pen)||(x.tutor&&x.tutor.turns&&x.tutor.turns.length)||x.guide);
   const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':x.res==='h'?'△':x.res==='o'?'⭕':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">${x.pen.ph?`📷 사진 ${x.pen.ph} · `:''}✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.solSeen?' · 📖 풀이 봄':''}${x.twin?`<div>🔁 쌍둥이 문제: ${x.twin.res==='o'?'⭕ 혼자 한 번에 맞힘':x.twin.res==='h'?'△ 두 번째에 맞힘':'❌ 못 맞힘'} <span class="muted">(${esc(x.twin.q)} · 정답 ${esc(x.twin.ans)}${x.twin.wrong&&x.twin.wrong.length?` · 쓴 답 ${esc(x.twin.wrong.join(', '))}`:''})</span></div>`:''}${x.guide?`<div class="muted">🧭 길잡이로 풂${x.guideAfterWrong?'(틀린 뒤)':'(처음부터)'} · 작은 질문 ${x.guide}칸 중 스스로 맞힘 ${x.guideOk}</div>`:''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<div class="tut"><b>🧑‍🏫 AI 과외</b> <span class="muted">(${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</span>${x.tutor.read?`<div class="muted">읽은 식: ${esc(x.tutor.read)}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${esc(t.text)}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${esc([...new Set(x.tutor.mom)].join(' / '))}</div>`:''}${x.tutor.shorter?`<div>💡 더 간단한 방법: ${esc(x.tutor.shorter)}</div>`:''}${x.learn&&(x.learn.nw||x.learn.use)?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</div>`:''}${x.fixed?'<div class="muted">✏️ 패드에 쓰다가 스스로 고침</div>':''}${x.ts?`<div class="aslot" data-key="${esc(x.ts)}"></div><button class="abtn" data-one="${esc(x.ts)}">🔍 이 문제 AI 분석</button>`:''}</li>`).join('');
   h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}</div><div><button class="abtn" id="aday">🔍 이날 수학 AI 분석</button><button class="abtn" id="aweek">🔍 최근 7일 AI 분석</button><span class="muted" style="font-size:13px"> 1~3분 걸려요</span></div><div id="adayout"></div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제 · 손풀이 · AI 과외 대화</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
+  h+=`<div class="card"><h2>✍️ 글쓰기 첨삭</h2><div id="wrbody"><p class="muted">불러오는 중…</p></div></div>`;
   // 막힌 이유
-  const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
+  const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별',write:'글쓰기'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
   h+=`<div class="card"><h2>🧭 시훈이가 고른 막힌 이유</h2>${ws?`<ul>${ws}</ul>`:'<p class="muted">이날은 고른 게 없어요.</p>'}<p class="muted">판단은 5일 이상 기록이 쌓인 뒤에 해요.</p></div>`;
   // 바뀐 것
   const ch=((C.changes&&C.changes.items)||[]).filter(x=>x.date===k);
   h+=`<div class="card"><h2>🔧 이날 앱에서 바뀐 것</h2>${ch.length?`<ul>${ch.map(x=>`<li>${esc(x.what)}</li>`).join('')}</ul>`:'<p class="muted">바뀐 것 없음</p>'}</div>`;
+  h+=`<div class="card"><h2>🤖 AI 사용량 · 대략 비용</h2><div id="aiuse"><p class="muted">불러오는 중…</p></div></div>`;
   h+=`<div class="card"><h2>📦 기록 내보내기</h2><p class="muted" style="font-size:14px">파일로 받아서 Claude에게 올리면 손풀이·대화까지 보고 가르치는 방법을 다듬어요.</p><div><button class="abtn" data-exp="1">이날</button><button class="abtn" data-exp="7">최근 7일</button><button class="abtn" data-exp="30">최근 30일</button></div><div id="expout" class="muted" style="font-size:14px"></div></div>`;
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&(d.img||(d.ph||[]).length)){el.innerHTML=d.img?`<img src="${d.img}" alt="손풀이">`:'';for(const q of (d.ph||[])){const pd=await getD('m32pen/'+q).catch(()=>null);if(pd&&pd.img)el.insertAdjacentHTML('beforeend',`<div class="muted">📷 종이 풀이 사진</div><img src="${pd.img}" alt="사진">`)}}else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   if(MI.length) mountAna(k,MI);
+  if(KR.length) koFill(KR).then(()=>koExtra(k));
+  writeFill(k); aiUse(k);
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
