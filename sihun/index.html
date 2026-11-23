@@ -511,10 +511,8 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .fmo.bad{border-color:var(--no);background:#fbefec}.fmo.good{border-color:var(--ok);background:#e9f6ef}
 .move{margin:10px 0 4px;padding:9px 14px;background:#eef5f0;border-left:5px solid var(--ok);border-radius:0 12px 12px 0;font-size:16px}
 .whys{display:grid;grid-template-columns:1fr 1fr;gap:8px}.whys button{background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px;font-size:16px;text-align:left}.whys button.on{border-color:var(--ink);background:var(--ink);color:#fff}
-.sik{background:#fff;border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin:12px 0 4px}
-.sikh{font-family:'Jua';font-size:20px}.sikh small{font-family:'IBM Plex Sans KR';font-size:14px;color:var(--soft);margin-left:8px}
-.sikl .ln{min-height:42px;border-bottom:2px dashed #c9c2b0;font-size:25px;font-weight:600;padding:4px 6px;font-variant-numeric:tabular-nums}.sikl .ln.on{border-bottom-color:var(--accent)}
-.sikk{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:8px}.sikk button{height:46px;border-radius:11px;background:#fff;border:1.5px solid var(--line);font-size:22px;font-weight:600;box-shadow:0 2px 0 var(--line)}.sikk .fn{background:var(--chip);font-size:18px}.sikk button:disabled{opacity:.5}
+.penview{max-height:60vh;overflow:auto;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:8px;text-align:center}.penview img,.penview canvas{max-width:100%}
+.penbtn{padding:4px 10px;border-radius:9px;background:var(--chip);border:1.5px solid var(--line);font-size:14px;font-weight:600}
 .solbtn{margin-top:8px;padding:10px 16px;border-radius:12px;background:var(--chip);border:1.5px solid var(--line);font-size:17px;font-weight:600}
 .skipq{margin-top:6px;font-size:15px;color:var(--soft);text-decoration:underline}
 .navrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.navrow button{flex:1;min-width:100px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:16px;color:var(--ink)}.navrow button:disabled{opacity:.35}
@@ -3218,18 +3216,19 @@ async function loadDB(){
   clearTimeout(timer); if(CUR==='home') home(); else refreshTop(); }
 let SAVING=false;
 async function saveAll(quiet){ quiet=quiet===true; if(SAVING) return; if(!DBH){ if(!quiet) toast('저장할 수 없어요. 인터넷 연결을 확인하고 앱을 다시 열어 주세요.'); return; }
-  if(!UNSAVED.length&&!DIRTY){ if(!quiet) toast('새로 저장할 기록이 없어요.'); return; }
-  SAVING=true; refreshTop(); const items=UNSAVED.slice();
-  try{ if(items.length){ SEQ++; await DBH.doc(`m32att/${today()}-${SID}-${String(SEQ).padStart(3,'0')}`).set({date:today(),savedAt:new Date().toISOString(),items}); }
+  if(!UNSAVED.length&&!DIRTY&&!PENQ.length){ if(!quiet) toast('새로 저장할 기록이 없어요.'); return; }
+  SAVING=true; refreshTop(); const items=UNSAVED.slice(); const pens=PENQ.slice();
+  try{ for(const pd of pens){ await DBH.doc('m32pen/'+pd.id).set(pd); } PENQ=PENQ.slice(pens.length);
+    if(items.length){ SEQ++; await DBH.doc(`m32att/${today()}-${SID}-${String(SEQ).padStart(3,'0')}`).set({date:today(),savedAt:new Date().toISOString(),items}); }
     PROG.whys=PROG.whys.slice(-200); PROG.ctime=PROG.ctime.slice(-100); await DBH.doc('m32/progress').set(JSON.parse(JSON.stringify(PROG)));
     SAVED_ATT=SAVED_ATT.concat(items); UNSAVED=UNSAVED.slice(items.length); DIRTY=false; m32Backup(); if(!quiet) toast('💾 저장했어요!'); }
   catch(e){ if(!quiet) toast('저장이 안 됐어요. 잠시 뒤 다시 눌러 주세요.'); }
   SAVING=false; refreshTop(); }
 // 엄마 11/23: 중간에 나가도 기록이 남게 → 문제마다 자동 저장 + 기기(브라우저)에 임시 백업, 다음에 열면 이어서 저장
 const BK='sihun:m32:unsaved'; let AUTO_T=null;
-function m32Backup(){ try{ if(UNSAVED.length) localStorage.setItem(BK,JSON.stringify(UNSAVED)); else localStorage.removeItem(BK); }catch(e){} }
+function m32Backup(){ try{ if(UNSAVED.length) localStorage.setItem(BK,JSON.stringify(UNSAVED)); else localStorage.removeItem(BK); }catch(e){} try{ if(PENQ.length) localStorage.setItem(BK+':pen',JSON.stringify(PENQ)); else localStorage.removeItem(BK+':pen'); }catch(e){} }
 function autoSave(){ m32Backup(); if(DB_STATE!=='ok'||!DBH) return; clearTimeout(AUTO_T); AUTO_T=setTimeout(()=>saveAll(true),1200); }
-function m32Restore(){ let b=[]; try{ b=JSON.parse(localStorage.getItem(BK)||'[]'); }catch(e){} if(!Array.isArray(b)||!b.length) return; const have=new Set(allAtt().map(x=>x.ts+'|'+x.q)); b.forEach(x=>{ if(x&&x.ts&&!have.has(x.ts+'|'+x.q)) UNSAVED.push(x); }); if(UNSAVED.length) autoSave(); }
+function m32Restore(){ let b=[]; try{ b=JSON.parse(localStorage.getItem(BK)||'[]'); }catch(e){} if(!Array.isArray(b)) b=[]; const have=new Set(allAtt().map(x=>x.ts+'|'+x.q)); b.forEach(x=>{ if(x&&x.ts&&!have.has(x.ts+'|'+x.q)) UNSAVED.push(x); }); try{ const pb=JSON.parse(localStorage.getItem(BK+':pen')||'[]'); if(Array.isArray(pb)) pb.forEach(d=>{ if(d&&d.id&&!PENQ.some(q=>q.id===d.id)){ PENQ.push(d); PENC[d.id]=d; } }); }catch(e){} if(UNSAVED.length||PENQ.length){ DIRTY=true; autoSave(); } }
 if(typeof document!=='undefined'&&document.addEventListener){ const flush=()=>{ m32Backup(); if((UNSAVED.length||DIRTY)&&DBH&&DB_STATE==='ok') saveAll(true); }; try{ window.addEventListener('pagehide',flush); window.document.addEventListener('visibilitychange',()=>{ if(window.document.visibilityState==='hidden') flush(); }); }catch(e){} }
 function unsavedN(){ return UNSAVED.length+(DIRTY&&!UNSAVED.length?1:0); }
 function saveBtnHTML(){ const n=UNSAVED.length; const lab=SAVING?'저장 중…':n?`💾 저장 <span class="badge">${n}</span>`:DIRTY?'💾 저장 <span class="badge">•</span>':'💾 저장'; return `<button class="savebtn ${n||DIRTY?'need':''}" data-act="save">${lab}</button>`; }
@@ -3310,100 +3309,46 @@ function inputKey(p,inp){ if(p.type==='frac') return `${Number(inp.w||0)}|${inp.
 // ===== 문제 하나 (문제 풀기·개념 확인·수업에서 같이 씀) =====
 // opts: {onDone(rec), mode, allowSkipHints}
 function problemCard(p){ return `<div class="pcard">${p.text}${p.svg?`<div class="picwrap">${p.svg}</div>`:''}</div>`; }
-// ===== 식 분석 (엄마 11/23: 식 남기고 분석 → 시훈이에게 맞는 교수법 찾기) =====
-// 규칙 기반. 문제의 풀이(sol) 안에 있는 「식 = 값」을 기대 단계로 뽑고, 시훈이 식과 값으로 맞춰 봄.
-const SIK_UF={mL:1,L:1000,kg:1000,g:1,cm:1,m:100};
-function sikTok(str){ const s=String(str).replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' '); const T=[]; let i=0;
-  while(i<s.length){ const c=s[i];
-    if(c===' '||c==='\t'){ i++; continue; }
-    const m=s.slice(i).match(/^\d+(?:\.\d+)?/);
-    if(m){ i+=m[0].length; let v=Number(m[0]);
-      let j=i; while(s[j]===' ') j++; const um=s.slice(j).match(/^(mL|kg|cm|L|g|m)(?![A-Za-z])/);
-      if(um){ i=j+um[1].length; const f=SIK_UF[um[1]]; v*=f;
-        if(f===1000){ let k=i; while(s[k]===' ') k++; const m2=s.slice(k).match(/^(\d+)\s*(mL|g)(?![A-Za-z])/); if(m2){ v+=Number(m2[1]); i=k+m2[0].length; } } }
-      else if(s[j]==='/'&&/\d/.test(s[j+1]||'')){ const m3=s.slice(j+1).match(/^\d+/); v=v/Number(m3[0]); i=j+1+m3[0].length; }
-      T.push({t:"n",v}); continue; }
-    if('+−-×÷*'.includes(c)){ T.push({t:'o',v:c==='−'||c==='-'?'-':c==='×'||c==='*'?'*':c==='÷'?'/':'+'}); i++; continue; }
-    if(c==='('||c===')'){ T.push({t:c}); i++; continue; }
-    if(c==='='){ T.push({t:'='}); i++; continue; }
-    if(T.length&&T[T.length-1].t==='w'){ i++; continue; } T.push({t:'w'}); i++; }
-  return T; }
-function sikEval(T){ let k=0; const peek=()=>T[k];
-  const prim=()=>{ const t=T[k]; if(!t) throw 0; if(t.t==='n'){ k++; return t.v; } if(t.t==='('){ k++; const v=add(); if(!T[k]||T[k].t!==')') throw 0; k++; return v; } throw 0; };
-  const mul=()=>{ let v=prim(); while(peek()&&peek().t==='o'&&(peek().v==='*'||peek().v==='/')){ const o=T[k++].v; const r=prim(); v=o==='*'?v*r:v/r; } return v; };
-  const add=()=>{ let v=mul(); while(peek()&&peek().t==='o'&&(peek().v==='+'||peek().v==='-')){ const o=T[k++].v; const r=mul(); v=o==='+'?v+r:v-r; } return v; };
-  const v=add(); if(k!==T.length) throw 0; return v; }
-const sikEq=(a,b)=>a!=null&&b!=null&&Math.abs(a-b)<1e-9;
-const sikNums=T=>T.filter(t=>t.t==='n').map(t=>t.v).sort((a,b)=>a-b).join(',');
-// 토큰 줄 → [{nums,val,rhs,ops}] (「식 = 값」 쌍마다 하나, = 없는 식 줄도 하나)
-function sikSteps(T,strict){ const parts=[[]]; T.forEach(t=>{ if(t.t==='=') parts.push([]); else parts[parts.length-1].push(t); }); const out=[];
-  const tail=P=>{ let j=P.length; while(j>0&&P[j-1].t!=='w') j--; return P.slice(j); };
-  const head=P=>{ const q=P.filter(t=>t.t!=='w'); return q.length&&q[0].t==='n'?q[0].v:null; };
-  for(let a=0;a<parts.length;a++){ const L=strict?tail(parts[a]):parts[a].filter(t=>t.t!=='w'); if(!L.some(t=>t.t==='o')) continue; let val; try{ val=sikEval(L); }catch(e){ if(!strict) out.push({nums:sikNums(L),val:null,rhs:null,bad:true}); continue; }
-    const rhs=a+1<parts.length?head(parts[a+1]):null; out.push({nums:sikNums(L),val,rhs}); }
-  return out; }
-// 기대 단계: 풀이 줄에서 「식 = 값」이 실제로 맞는 것만
-function sikExpect(p){ const E=[]; (p.sol||[]).forEach(line=>{ const txt=String(line).replace(/<span class="mxw">(\d+)<\/span><span class="fr"><span>([^<]+)<\/span><span>(\d+)<\/span><\/span>/g,' 분수 ').replace(/<span class="fr"><span>([^<]+)<\/span><span>(\d+)<\/span><\/span>/g,'$1/$2').replace(/<[^>]+>/g,' ');
-    sikSteps(sikTok(txt),true).forEach(s=>{ if(s.rhs!=null&&sikEq(s.val,s.rhs)) E.push(s); }); }); return E; }
-function sikAnsVal(p){ return (p.type==='num'||p.type==='lm')&&typeof p.answer==='number'?p.answer:null; }
-const SIKC={ok:'식 맞음',alt:'다른 식으로 맞힘',none:'식 안 씀',copy:'식은 끝까지 맞고, 답 칸에서 틀림',calc:'식은 맞게 세우고, 계산에서 틀림',op:'같은 수로 연산(＋－×÷)을 다르게 고름',stop:'앞 단계는 맞게 가다가 멈춤',other:'문제를 다르게 읽은 식',free:'식이 필요 없는 문제',bad:'식 모양이 안 맞음(계산 불가)'};
-// lines: 시훈이가 쓴 식 줄(문자열), res: o|h|x|s
-function sikAnalyze(p,lines,res){ const E=sikExpect(p); const n=E.length; const A=sikAnsVal(p); const fin=n?E[n-1].val:A;
-  const S=[]; (lines||[]).forEach(l=>sikSteps(sikTok(l),false).forEach(s=>S.push(s)));
-  const C=S.filter(s=>!s.bad); C.forEach(s=>{ s.cok=s.rhs==null||sikEq(s.val,s.rhs); s.got=s.cok?s.val:s.rhs; });
-  const V=E.map(e=>e.val); const onV=v=>V.some(x=>sikEq(x,v))||sikEq(v,A);
-  const k=E.filter(e=>C.some(s=>(s.cok&&sikEq(s.val,e.val))||(!s.cok&&s.nums===e.nums&&sikEq(s.val,e.val)))).length;
-  const base={n,k};
-  if(!S.length) return Object.assign(base,{c:n?'none':'free'});
-  if(!C.length) return Object.assign(base,{c:'bad'});
-  const reach=C.some(s=>s.cok&&(sikEq(s.val,fin)||sikEq(s.val,A)));
-  if(res==='o'||res==='h') return Object.assign(base,{c:(!n||k===n||C.every(s=>s.cok&&onV(s.val)))?'ok':'alt'});
-  if(reach) return Object.assign(base,{c:'copy'});
-  if(C.some(s=>!s.cok&&onV(s.val))) return Object.assign(base,{c:'calc'});
-  if(C.some(s=>E.some(e=>e.nums===s.nums&&!sikEq(e.val,s.val)))) return Object.assign(base,{c:'op'});
-  if(C.every(s=>s.cok&&onV(s.val))) return Object.assign(base,{c:'stop'});
-  if(C.some(s=>!s.cok)) return Object.assign(base,{c:'calc2'});
-  return Object.assign(base,{c:'other'}); }
-SIKC.calc2='식도 다르고 계산도 틀림';
-// 식 칸 (문제 풀기에서만). 엄마 11/23: 오답이어도 식을 남겨 분석, 틀리면 다시 풀지 않고 다음으로.
-const SIK_K=['1','2','3','+','−','(','4','5','6','×','÷',')','7','8','9','=','L','mL','0','⌫','↵ 줄','kg','g','지우기'];
-function sikHTML(need){ return `<div class="sik"><div class="sikh">✍️ 식 <small>${need?'식을 먼저 쓰고 답을 써요':'식이 필요 없으면 안 써도 돼요'}</small></div><div class="sikl" id="skl"></div><div class="sikk">${SIK_K.map(k=>`<button data-k="${k}" class="${/^\d$/.test(k)?'':'fn'}">${k}</button>`).join('')}</div></div>`; }
-function mountSik(box,st){ st.sik=[[]]; st.sikT=null; const L=box.querySelector('#skl');
-  const draw=()=>{ L.innerHTML=st.sik.map((ln,i)=>`<div class="ln ${i===st.sik.length-1?'on':''}">${ln.join(' ')||'&nbsp;'}</div>`).join(''); };
-  box.querySelectorAll('.sikk button').forEach(b=>b.onclick=()=>{ if(st.done) return; const k=b.dataset.k; const ln=st.sik[st.sik.length-1]; const last=ln[ln.length-1];
-    if(st.sikT==null) st.sikT=Math.round((Date.now()-st.t0)/1000);
-    if(/^\d$/.test(k)){ if(last&&/^\d+$/.test(last)){ if(last.length<7) ln[ln.length-1]=(last==='0'?'':last)+k; } else ln.push(k); }
-    else if(k==='⌫'){ if(last&&/^\d{2,}$/.test(last)) ln[ln.length-1]=last.slice(0,-1); else if(ln.length) ln.pop(); else if(st.sik.length>1) st.sik.pop(); }
-    else if(k==='↵ 줄'){ if(ln.length&&st.sik.length<8) st.sik.push([]); }
-    else if(k==='지우기'){ st.sik=[[]]; }
-    else if(ln.length<24) ln.push(k);
-    draw(); });
-  draw(); }
-const sikLines=st=>st&&st.sik?st.sik.map(l=>l.join(' ')).filter(Boolean):[];
-const sikHasOp=st=>sikLines(st).some(l=>/[+−×÷]/.test(l));
-function sikRec(p,st,res){ const lines=sikLines(st); return {sik:lines,sikT:st&&st.sikT!=null?st.sikT:null,sikA:sikAnalyze(p,lines,res),solSeen:false}; }
+// ===== 손풀이 저장 (엄마 11/23: S펜 풀이를 남겨서 나중에 AI로 분석) =====
+// 문제마다 패드 그림(PNG)과 획 순서·시간을 m32pen/<id>에 저장. 기록(rec.pen)엔 요약만.
+let PENQ=[]; const PENC={}; // 저장 대기 / 이번에 본 것 캐시
+function penSnap(st){ if(!PAD||!PAD.snap) return null; const s=PAD.snap(st.t0); if(!s||!s.n) return null;
+  const id=`${today()}-${SID}-${Date.now().toString(36)}`; const doc={id,d:today(),t0:new Date(st.t0).toISOString(),w:s.w,h:s.h,img:s.img,strokes:s.strokes};
+  PENQ.push(doc); PENC[id]=doc; return {id,n:s.n,first:s.first,erase:s.erase,clear:s.clear,idle:s.idle}; }
+async function penLoad(id){ if(PENC[id]) return PENC[id]; if(!DBH) return null; try{ const sn=await DBH.doc('m32pen/'+id).get(); if(sn.exists){ PENC[id]=sn.data(); return PENC[id]; } }catch(e){} return null; }
+function penModal(id,title){ const m=modal(`<h2>✍️ 손풀이</h2><p class="sm">${title||''}</p><div id="pv" class="penview">불러오는 중…</div><div class="acts"><button class="ok" id="pr">▶ 쓴 순서대로 보기</button><button class="hint" id="pc" style="flex:1">닫기</button></div>`);
+  m.querySelector('#pc').onclick=()=>m.remove();
+  penLoad(id).then(doc=>{ const v=m.querySelector('#pv'); if(!doc){ v.textContent='손풀이를 못 불러왔어요.'; return; }
+    v.innerHTML=`<img src="${doc.img}" alt="손풀이">`;
+    m.querySelector('#pr').onclick=()=>{ const W=Math.min(760,doc.w), sc=W/doc.w; v.innerHTML=`<canvas width="${W}" height="${Math.round(doc.h*sc)}"></canvas>`; const ctx=v.querySelector('canvas').getContext('2d');
+      const S=doc.strokes||[]; let k=0; const step=()=>{ if(k>=S.length) return; const s=S[k++]; ctx.strokeStyle=s.c||'#1f2a44'; ctx.lineWidth=(s.er?24:3)*sc; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalCompositeOperation=s.er?'destination-out':'source-over'; ctx.beginPath(); s.p.forEach((q,i)=>i?ctx.lineTo(q[0]*sc,q[1]*sc):ctx.moveTo(q[0]*sc,q[1]*sc)); ctx.stroke(); ctx.globalCompositeOperation='source-over'; const nx=S[k]; setTimeout(step,nx?Math.min(900,Math.max(40,(nx.t-s.t)/4)):0); }; step(); }; }); }
+const penInfo=x=>x.pen?`✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.clear?` · 전체 지움 ${x.pen.clear}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}`:'';
+function penSummaryHTML(A){ const S=A.filter(x=>x.mode==='solve'&&x.res!=='s'); const P=S.filter(x=>x.pen); if(!S.length) return '';
+  const med=a=>a.length?median(a):'–'; const W=P.filter(x=>x.res==='x'), O=P.filter(x=>x.res!=='x');
+  return `<div class="sec">✍️ 손풀이 (11/23부터)</div><div class="tw"><table class="ptab"><tr><th></th><th>손풀이 남긴 문제</th><th>첫 획까지 (중간값)</th><th>가장 오래 멈춤 (중간값)</th></tr>
+   <tr><td>맞힌 문제</td><td>${O.length}</td><td>${med(O.map(x=>x.pen.first))}초</td><td>${med(O.map(x=>x.pen.idle))}초</td></tr><tr><td>틀린 문제</td><td>${W.length}</td><td>${med(W.map(x=>x.pen.first))}초</td><td>${med(W.map(x=>x.pen.idle))}초</td></tr></table></div>
+   <p class="note">아래 최근 문제에서 ✍️를 누르면 손풀이를 보고 쓴 순서대로 다시 볼 수 있어요. AI 분석은 준비되면 여기에 붙여요.</p>`; }
 function mountProblem(box,p,opts){
   const st={tries:0,hints:0,wrong:[],tags:[],t0:Date.now(),done:false};
-  const solve=opts.mode==='solve'; const need=solve&&sikExpect(p).length>0&&(p.type==='num'||p.type==='lm'||p.type==='frac');
-  box.innerHTML=`${problemCard(p)}${solve?sikHTML(need):''}<div id="inp">${inputHTML(p)}</div>
+  const solve=opts.mode==='solve';
+  box.innerHTML=`${problemCard(p)}<div id="inp">${inputHTML(p)}</div>
    <div class="acts"><button class="hint" id="hb">💡 힌트</button><button class="ok" id="okb">확인</button></div>
    <div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="after"></div>`;
-  if(solve) mountSik(box,st);
   const ist={}; mountInput(box.querySelector('#inp'),p,ist);
   const fb=box.querySelector('#fb');
   const show=(cls,html)=>{ fb.className='fb show '+cls; fb.innerHTML=html; };
   box.querySelector('#hb').onclick=()=>{ if(st.done) return; if(st.hints>=p.hints.length){ toast('힌트를 다 봤어요. 패드에 써 보면서 풀어 봐요!'); return; } show('h',`💡 ${p.hints[st.hints]}`); st.hints++; };
   box.querySelector('#okb').onclick=()=>{ if(st.done) return; const inp=readInput(p,ist); const r=check(p,inp);
     if(r.empty){ show('h',r.msg); return; } if(r.normalize){ show('h',r.msg); return; }
-    if(need&&!sikHasOp(st)){ show('h','✍️ 식을 먼저 써 봐요. 식을 쓰면 확인할 수 있어요.'); return; }
+    if(solve&&PAD&&PAD.snap&&!PAD.snap(st.t0).n){ show('h','✍️ 오른쪽 패드에 풀이를 먼저 써요. 쓰고 나서 확인을 눌러요.'); return; }
     st.tries++; if(r.ok){ finish(st.tries===1&&st.hints===0?'o':'h', r.note); return; }
     st.wrong.push(inputKey(p,inp)); if(r.bug&&r.bug.tag) st.tags.push(r.bug.tag);
     if(solve||st.tries>=2){ finish('x', r.bug?r.bug.msg:r.msg); return; }
     show('x',`🤔 ${r.bug?r.bug.msg:(r.msg?r.msg+' ':'')+'다시 생각해 볼까?'}${!r.bug&&st.hints<p.hints.length?' 힌트를 봐도 좋아요.':''}<div class="tagline">한 번 더 할 수 있어요</div>`);
     if(p.type==='choice'||p.type==='cmp'){ box.querySelectorAll('.chs button.on').forEach(b=>{b.classList.remove('on');b.classList.add('wrong');}); ist.val=null; } };
   function finish(res,note){ st.done=true; ist.locked=true; st.res=res; const sec=Math.round((Date.now()-st.t0)/1000);
-    box.querySelector('.acts').style.display='none'; box.querySelectorAll('.sikk button').forEach(b=>b.disabled=true);
-    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?sikRec(p,st,res):{})};
+    box.querySelector('.acts').style.display='none';
+    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),solSeen:false}:{})};
     const solHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
     if(res==='x'&&solve){ show('x',`정답은 <b>${answerText(p)}</b> 이에요. 괜찮아요, 다음 문제로 가요.<div class="tagline">풀이가 궁금하면 📖 풀이 보기</div>`);
       box.querySelector('#sol').innerHTML=`<button class="solbtn" id="sv">📖 풀이 보기</button>`;
@@ -3424,38 +3369,31 @@ function mountProblem(box,p,opts){
     else { nextBtn(); }
     setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
   return st; }
-// 엄마 보기: 식 분석 요약 + 교수법 실마리
-const SIK_TEACH={op:['📘','구조','식을 세우기 전에 문제를 그림(묶음·막대·눈금)으로 먼저 그려 보게 하는 설명'],other:['📘','구조','「무엇을 구하지?」를 먼저 말로 정하고, 그다음 식을 세우는 순서'],
- stop:['🎯','조건 붙들기','조건을 하나씩 체크하고, 마지막에 「묻는 게 뭐였지?」를 다시 보게 하기'],calc:['🌊','계산','식은 되니 계산 확인 한 줄(검산) 습관. 계산 자동화는 수피온'],calc2:['📘','구조','식을 세우기 전에 문제를 그림으로 먼저 그려 보게 하는 설명 (계산도 함께 틀림)'],
- copy:['🎯','옮겨 적기','답 칸에 쓰기 전에 식 마지막 줄을 다시 보기'],none:['🗣️','시작','첫 줄 식의 시작점만 알려 주는 힌트(나머지는 스스로)']};
-function sikStats(A){ const S=A.filter(x=>x.mode==='solve'&&x.sikA&&x.res!=='s'); const days=uniq(S.map(x=>x.d)); const W=S.filter(x=>x.res==='x'); const cnt={}; W.forEach(x=>cnt[x.sikA.c]=(cnt[x.sikA.c]||0)+1);
-  // 풀이 보기 효과: 틀린 뒤 같은 기능의 다음 문제 결과
-  const sol={seen:[0,0],not:[0,0]}; const solveA=A.filter(x=>x.mode==='solve'&&x.res!=='s');
-  solveA.forEach((x,i)=>{ if(x.res!=='x'||!x.sikA) return; const nx=solveA.slice(i+1).find(y=>y.sk===x.sk); if(!nx) return; const b=x.solSeen?sol.seen:sol.not; b[0]++; if(nx.res==='o') b[1]++; });
-  const hint={used:[0,0],no:[0,0]}; S.forEach(x=>{ const b=x.hints?hint.used:hint.no; b[0]++; if(x.res!=='x') b[1]++; });
-  return {S,W,days,cnt,sol,hint}; }
-function sikSummaryHTML(A){ const z=sikStats(A); if(!z.S.length) return `<div class="sec">✍️ 식 분석</div><p class="note">11/23부터 식을 모아요. 아직 식 기록이 없어요.</p>`;
-  const rows=Object.entries(z.cnt).sort((a,b)=>b[1]-a[1]).map(([c,n])=>{ const t=SIK_TEACH[c]; return `<tr><td>${SIKC[c]||c}</td><td>${n}</td><td class="sm">${t?`${t[0]} ${t[1]}: ${t[2]}`:'–'}</td></tr>`; }).join('');
-  const pct=b=>b[0]?`${Math.round(b[1]/b[0]*100)}% (${b[1]}/${b[0]})`:'–';
-  const enough=z.days.length>=5;
-  return `<div class="sec">✍️ 식 분석 · 틀린 문제 ${z.W.length}개 (기록 ${z.days.length}일)</div><div class="tw"><table class="ptab"><tr><th>틀린 모양</th><th>문제 수</th><th>시도해 볼 설명 방법</th></tr>${rows||'<tr><td colspan="3">아직 틀린 문제가 없어요</td></tr>'}</table></div>
-   <div class="tw"><table class="ptab"><tr><th>무엇이 통하나</th><th>다음 문제 한 번에 정답</th></tr><tr><td>틀린 뒤 📖 풀이를 봤을 때</td><td>${pct(z.sol.seen)}</td></tr><tr><td>틀린 뒤 풀이를 안 봤을 때</td><td>${pct(z.sol.not)}</td></tr><tr><td>💡 힌트를 본 문제 (맞힌 비율)</td><td>${pct(z.hint.used)}</td></tr><tr><td>힌트 없이 푼 문제 (맞힌 비율)</td><td>${pct(z.hint.no)}</td></tr></table></div>
-   <p class="note">${enough?'5일 넘게 쌓였어요. 가장 많은 틀린 모양의 설명 방법부터 시도해 볼 만해요.':'아직 5일이 안 됐어요. 숫자는 참고만 하고, 판단은 5일 이상 쌓인 뒤에 해요.'}</p>`; }
 const stripTags=h=>String(h).replace(/<span class="mxw">(\d+)<\/span><span class="fr"><span>([^<]+)<\/span><span>(\d+)<\/span><\/span>/g,'$1과 $2/$3').replace(/<span class="fr"><span>([^<]+)<\/span><span>(\d+)<\/span><\/span>/g,'$1/$2').replace(/<br>/g,' ').replace(/<[^>]+>/g,'').replace(/&gt;/g,'>').replace(/&lt;/g,'<').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
 
 // ===== 필기 패드 =====
 function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span></div><div class="padwrap"><canvas class="pad" id="pad"></canvas></div>`; }
-function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext('2d'); let tool='pen', col='#1f2a44', drawing=false, last=null, pid=null; const strokes=[];
+function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext('2d'); let tool='pen', col='#1f2a44', drawing=false, last=null, pid=null; const strokes=[]; let hist=[]; // hist: 이 문제에서 쓴 모든 획(전체 지우기 포함) — 손풀이 저장용
   const fit=()=>{ const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cv.width=Math.max(1,r.width*dpr); cv.height=Math.max(1,r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); };
-  const redraw=()=>{ ctx.clearRect(0,0,cv.width,cv.height); strokes.forEach(s=>{ ctx.strokeStyle=s.c; ctx.lineWidth=s.w; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalCompositeOperation=s.er?'destination-out':'source-over'; ctx.beginPath(); s.pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1])); ctx.stroke(); }); ctx.globalCompositeOperation='source-over'; };
+  const paint=(c,list,sc,ox,oy)=>{ list.forEach(s=>{ c.strokeStyle=s.c; c.lineWidth=s.w*sc; c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation=s.er?'destination-out':'source-over'; c.beginPath(); s.pts.forEach((p,i)=>i?c.lineTo((p[0]-ox)*sc,(p[1]-oy)*sc):c.moveTo((p[0]-ox)*sc,(p[1]-oy)*sc)); if(s.pts.length===1) c.lineTo((s.pts[0][0]-ox)*sc+0.1,(s.pts[0][1]-oy)*sc); c.stroke(); }); c.globalCompositeOperation='source-over'; };
+  const redraw=()=>{ ctx.clearRect(0,0,cv.width,cv.height); paint(ctx,strokes,1,0,0); };
   const pos=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
-  cv.addEventListener('pointerdown',e=>{ if(e.pointerType!=='pen'&&e.pointerType!=='mouse') return; /* 엄마 11/22: S펜만 (손가락·손바닥 무시) */ if(drawing) return; e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){} pid=e.pointerId; drawing=true; const s={c:col,w:tool==='er'?24:3,er:tool==='er',pts:[pos(e)]}; strokes.push(s); last=s; });
+  cv.addEventListener('pointerdown',e=>{ if(e.pointerType!=='pen'&&e.pointerType!=='mouse') return; /* 엄마 11/22: S펜만 (손가락·손바닥 무시) */ if(drawing) return; e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(_){} pid=e.pointerId; drawing=true; const s={c:col,w:tool==='er'?24:3,er:tool==='er',pts:[pos(e)],t:Date.now()}; strokes.push(s); hist.push(s); last=s; });
   cv.addEventListener('pointermove',e=>{ if(!drawing||e.pointerId!==pid) return; e.preventDefault(); last.pts.push(pos(e)); redraw(); });
-  const up=e=>{ if(e.pointerId!==pid) return; drawing=false; pid=null; }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+  const up=e=>{ if(e.pointerId!==pid) return; drawing=false; pid=null; if(last) last.t1=Date.now(); }; cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
   root.querySelectorAll('.ptools button').forEach(b=>b.onclick=()=>{ const t=b.dataset.tool;
-    if(t==='clr'){ strokes.length=0; redraw(); return; } if(t==='pen-only'){ PROG.penOnly=!PROG.penOnly; DIRTY=true; b.classList.toggle('on',PROG.penOnly); toast(PROG.penOnly?'펜으로만 써져요 (손바닥 OK)':'손가락으로도 써져요'); refreshTop(); return; }
+    if(t==='clr'){ strokes.length=0; hist.push({clr:true,t:Date.now()}); redraw(); return; } if(t==='pen-only'){ PROG.penOnly=!PROG.penOnly; DIRTY=true; b.classList.toggle('on',PROG.penOnly); toast(PROG.penOnly?'펜으로만 써져요 (손바닥 OK)':'손가락으로도 써져요'); refreshTop(); return; }
     tool=t; if(b.dataset.c) col=b.dataset.c; root.querySelectorAll('.ptools button[data-tool="pen"],.ptools button[data-tool="er"]').forEach(x=>x.classList.toggle('on',x===b)); });
-  new ResizeObserver(fit).observe(cv); fit(); return {clear:()=>{strokes.length=0;redraw();}}; }
+  // 손풀이 꺼내기: 지금 패드 그림(흰 바탕, 쓴 곳만 잘라서) + 획 순서·시간 + 요약
+  const snap=t0=>{ const ink=strokes.filter(s=>!s.er); const penH=hist.filter(s=>!s.clr&&!s.er); if(!ink.length) return {n:0};
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; ink.forEach(s=>s.pts.forEach(p=>{ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]); x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); }));
+    x0=Math.max(0,x0-20); y0=Math.max(0,y0-20); x1+=20; y1+=20; const bw=x1-x0, bh=y1-y0; const sc=Math.min(1.5,1000/Math.max(bw,bh));
+    let img=''; try{ const oc=document.createElement('canvas'); oc.width=Math.max(1,Math.round(bw*sc)); oc.height=Math.max(1,Math.round(bh*sc)); const o=oc.getContext('2d'); const tmp=document.createElement('canvas'); tmp.width=oc.width; tmp.height=oc.height; paint(tmp.getContext('2d'),strokes,sc,x0,y0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height); o.drawImage(tmp,0,0); img=oc.toDataURL('image/png'); }catch(e){}
+    const ev=hist.filter(s=>s.t>=t0); const times=ev.map(s=>s.t); let idle=0; for(let i=1;i<ev.length;i++) idle=Math.max(idle,(ev[i].t-(ev[i-1].t1||ev[i-1].t))/1000);
+    const out=hist.map(s=>s.clr?{clr:1,t:s.t-t0}:{c:s.c,er:s.er?1:0,t:s.t-t0,p:s.pts.filter((p,i,a)=>i===0||i===a.length-1||Math.abs(p[0]-a[i-1][0])+Math.abs(p[1]-a[i-1][1])>=2).map(p=>[Math.round(p[0]),Math.round(p[1])])});
+    const r=cv.getBoundingClientRect();
+    return {n:penH.length,first:Math.max(0,Math.round(((penH[0]||{}).t-t0)/1000))||0,erase:hist.filter(s=>s.er).length,clear:hist.filter(s=>s.clr).length,idle:Math.round(idle),img,w:Math.round(r.width),h:Math.round(r.height),strokes:JSON.stringify(out).length<400000?out:[]}; };
+  new ResizeObserver(fit).observe(cv); fit(); return {clear:()=>{strokes.length=0;hist=[];redraw();},snap}; }
 
 // ===== 문제 풀기 =====
 let C=null, PAD=null;
@@ -3466,7 +3404,7 @@ function solveBar(){ const s=SKILLS[C.si], r=PROG.sk[s.id], n=r.st[C.lv]||0; con
   return `<div class="sbar"><button class="homebtn" data-act="home">⏮ 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span><div class="cnt">이번에 ${done}문제</div></div><span class="stars"><b>${'★'.repeat(n)}</b>${'☆'.repeat(Math.max(0,5-n))}</span>${saveBtnHTML()}</div>`; }
 function navRow(){ return `<div class="navrow"><button id="pv" ${C.idx<=0?'disabled':''}>◀ 이전</button><button id="nxp">다음 ▶</button><button id="lvdn" ${C.lv<=0?'disabled':''}>단계 ▼</button><button id="lvup" ${C.lv>=4?'disabled':''}>단계 ▲</button></div>`; }
 function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } };
-  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),...sikRec(cur.p,cur.st,'s')}); cur.rec={res:'s'}; }
+  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),pen:cur.st?penSnap(cur.st):null}); cur.rec={res:'s'}; }
     if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
   $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<4){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
@@ -3474,7 +3412,7 @@ function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   L.innerHTML=`${solveBar()}<div id="pbox"></div>${navRow()}`; bindNav();
   const box=$('#pbox');
-  if(it.rec){ box.innerHTML=`${problemCard(it.p)}<div class="fb show ${it.rec.res==='x'?'x':it.rec.res==='s'?'h':'o'}">${it.rec.res==='s'?'건너뛴 문제예요.':it.rec.res==='x'?'틀린 문제예요.':'맞힌 문제예요.'} 정답: <b>${answerText(it.p)}</b>${it.rec.sik&&it.rec.sik.length?`<div class="tagline">내가 쓴 식: ${it.rec.sik.join(' / ')}</div>`:''}</div><div class="sol">${it.p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div>`; return; }
+  if(it.rec){ box.innerHTML=`${problemCard(it.p)}<div class="fb show ${it.rec.res==='x'?'x':it.rec.res==='s'?'h':'o'}">${it.rec.res==='s'?'건너뛴 문제예요.':it.rec.res==='x'?'틀린 문제예요.':'맞힌 문제예요.'} 정답: <b>${answerText(it.p)}</b></div><div class="sol">${it.p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div>`; return; }
   it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
 function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true;
@@ -3567,10 +3505,10 @@ function parent(tab='rec'){ CUR='parent'; const A=allAtt();
     const days={}; A.forEach(x=>{ (days[x.d]=days[x.d]||[]).push(x); });
     const drows=Object.keys(days).sort().reverse().slice(0,14).map(d=>{ const a=days[d].filter(x=>x.mode==='solve'&&x.res!=='s'); const o=a.filter(x=>x.res==='o').length; const sec=days[d].reduce((s,x)=>s+(x.sec||0),0); const w=PROG.whys.filter(x=>x.d===d).flatMap(x=>x.why).map(k=>WHYL[k]||k);
       return `<tr><td>${d}</td><td>${a.length}</td><td>${a.length?Math.round(o/a.length*100)+'%':'–'}</td><td>${Math.round(sec/60)}분</td><td class="sm">${uniq(w).join(', ')||'–'}</td></tr>`; }).join('');
-    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||x.sk} · ${LVM[x.lv]}${x.mode!=='solve'?` (${x.mode==='check'?'확인':'수업'})`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.sik&&x.sik.length?`<b>${x.sik.join(' / ')}</b><br>`:''}${x.sikA?`${SIKC[x.sikA.c]||x.sikA.c}${x.sikA.n?` (${x.sikA.k}/${x.sikA.n}단계)`:''}<br>`:''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
+    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||x.sk} · ${LVM[x.lv]}${x.mode!=='solve'?` (${x.mode==='check'?'확인':'수업'})`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}<br>`:''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
     body=`<div class="sec">기능별</div><div class="tw"><table class="ptab"><tr><th>기능</th><th>개념/확인</th><th>지금 단계</th><th>푼 문제</th><th>한 번에 정답</th><th>시간(중간값)</th><th>많이 나온 틀린 이유</th></tr>${rows}</table></div>
-     ${sikSummaryHTML(A)}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
-     <div class="sec">최근 30문제</div><div class="tw"><table class="ptab"><tr><th>시각</th><th>기능</th><th></th><th>문제</th><th>정답 / 쓴 답</th><th>식 · 틀린 이유</th><th>시간</th></tr>${recent||'<tr><td colspan="7">아직 기록이 없어요</td></tr>'}</table></div>
+     ${penSummaryHTML(A)}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
+     <div class="sec">최근 30문제</div><div class="tw"><table class="ptab"><tr><th>시각</th><th>기능</th><th></th><th>문제</th><th>정답 / 쓴 답</th><th>손풀이 · 틀린 이유</th><th>시간</th></tr>${recent||'<tr><td colspan="7">아직 기록이 없어요</td></tr>'}</table></div>
      <p class="note">△ = 힌트를 보고 맞힘 (11/23부터 틀리면 다시 풀지 않고 바로 다음 문제로 가요). 저장 안 된 기록 ${UNSAVED.length}개 포함. 막힌 이유는 5일 이상 쌓인 뒤 판단해요.</p>`; }
   else { const si=parent.si||0, lv=parent.lv||0; const ps=[]; for(let k=0;k<4;k++) ps.push(makeProblem(si,lv));
     body=`<div class="lvpick">${SKILLS.map((s,i)=>`<button data-s="${i}" class="${i===si?'on':''}" style="min-width:150px;font-size:16px">${s.title}</button>`).join('')}</div><div class="lvpick">${LVM.map((n,l)=>`<button data-l="${l}" class="${l===lv?'on':''}">${n}</button>`).join('')}</div>
@@ -3578,6 +3516,7 @@ function parent(tab='rec'){ CUR='parent'; const A=allAtt();
      ${ps.map((p,k)=>`<div class="pcard" style="margin-top:12px"><div class="qtag">${k+1}</div>${p.text}${p.svg?`<div class="picwrap">${p.svg}</div>`:''}${p.type==='choice'?`<div class="sm">보기: ${p.options.join(' / ')}</div>`:''}<div class="ans">정답: <b>${answerText(p)}</b></div><div class="sol">${p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div><div class="sm">힌트: ${p.hints.join(' → ')}</div><div class="sm">틀린 답 진단: ${p.bugs.map(b=>`${fmtKey(b.v)} → ${TAGS[b.tag]||b.tag}`).join(' · ')||'–'}</div></div>`).join('')}`; }
   app().innerHTML=`<div class="wrap">${topBar('👩 엄마 보기','시훈이 기록 · 문제와 답')}${tabs}${body}</div>`; bindCommon();
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>parent(b.dataset.t));
+  document.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>penModal(b.dataset.pen,b.closest('tr').children[3].textContent));
   if(tab==='prev'){ document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ parent.si=+b.dataset.s; parent('prev'); }); document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ parent.lv=+b.dataset.l; parent('prev'); }); $('#again').onclick=()=>parent('prev'); } }
 
 home(); loadDB();

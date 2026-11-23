@@ -29,6 +29,7 @@
   .gate{max-width:360px;margin:60px auto;text-align:center}
   .gate input{font-size:22px;padding:10px;border-radius:12px;border:2px solid var(--line);width:180px;text-align:center;background:var(--card);color:var(--ink)}
   a{color:inherit}
+  .pen img{max-width:100%;max-height:320px;background:#fff;border:1.5px solid var(--line);border-radius:10px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -66,22 +67,6 @@ async function start(){
     CACHE={routine,vcheck,changes,results,m32};render();
   }catch(e){M.innerHTML=`<div class="card bad">기록을 못 불러왔어요 (${esc(e.code||e.message)})</div>`}
 }
-const SIKC={ok:'식 맞음',alt:'다른 식으로 맞힘',none:'식 안 씀',copy:'식은 끝까지 맞고, 답 칸에서 틀림',calc:'식은 맞게 세우고, 계산에서 틀림',op:'같은 수로 연산(＋－×÷)을 다르게 고름',stop:'앞 단계는 맞게 가다가 멈춤',other:'문제를 다르게 읽은 식',free:'식이 필요 없는 문제',bad:'식 모양이 안 맞음(계산 불가)',calc2:'식도 다르고 계산도 틀림'};
-const SIKT={op:'📘 구조 → 식 세우기 전에 문제를 그림(묶음·막대·눈금)으로 먼저 그려 보게 하는 설명',other:'📘 구조 → 「무엇을 구하지?」를 먼저 말로 정하고 식을 세우는 순서',calc2:'📘 구조 → 그림으로 먼저 그려 보게 하는 설명 (계산도 함께 틀림)',stop:'🎯 조건 붙들기 → 조건을 하나씩 체크하고 마지막에 「묻는 게 뭐였지?」 다시 보기',calc:'🌊 계산 → 식은 되니 검산 한 줄 습관 (계산 자동화는 수피온)',copy:'🎯 옮겨 적기 → 답 칸에 쓰기 전에 식 마지막 줄 다시 보기',none:'🗣️ 시작 → 첫 줄 식의 시작점만 알려 주는 힌트'};
-// 지금까지 쌓인 식으로 본 틀린 모양 + 무엇이 통하는지 (누적, 보고 있는 날까지)
-function sikCard(all,k){
-  const A=all.filter(x=>x.mode==='solve'&&x.res!=='s'&&x.d<=k).sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));const S=A.filter(x=>x.sikA);
-  if(!S.length) return `<div class="card"><h2>✍️ 수학 식 분석 (누적)</h2><p class="muted">11/23부터 식을 모아요. 아직 식 기록이 없어요.</p></div>`;
-  const days=[...new Set(S.map(x=>x.d))];const W=S.filter(x=>x.res==='x');const cnt={};W.forEach(x=>cnt[x.sikA.c]=(cnt[x.sikA.c]||0)+1);
-  const sol={seen:[0,0],not:[0,0]};A.forEach((x,i)=>{if(x.res!=='x'||!x.sikA)return;const nx=A.slice(i+1).find(y=>y.sk===x.sk);if(!nx)return;const b=x.solSeen?sol.seen:sol.not;b[0]++;if(nx.res==='o')b[1]++;});
-  const pct=b=>b[0]?`${Math.round(b[1]/b[0]*100)}% (${b[1]}/${b[0]})`:'–';
-  const rows=Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<li><b>${SIKC[c]||c}</b> ${n}문제${SIKT[c]?`<br><span class="muted">${SIKT[c]}</span>`:''}</li>`).join('');
-  const okS=S.filter(x=>x.res!=='x');const okFirst=okS.filter(x=>x.sikA.c==='ok'||x.sikA.c==='alt').length;
-  return `<div class="card"><h2>✍️ 수학 식 분석 (누적 ${days.length}일)</h2><div class="row">${stat(S.length+'문제','식 기록 있는 문제')}${stat(W.length,'틀린 문제')}${stat(okFirst,'식 쓰고 맞힘')}</div>
-   ${rows?`<p style="margin:10px 0 2px"><b>틀린 모양 → 시도해 볼 설명 방법</b></p><ul>${rows}</ul>`:'<p class="muted">아직 틀린 문제가 없어요.</p>'}
-   <p style="margin:10px 0 2px"><b>무엇이 통하나</b> (틀린 뒤 같은 기능 다음 문제를 한 번에 맞힌 비율)</p><ul><li>📖 풀이를 봤을 때: ${pct(sol.seen)}</li><li>풀이를 안 봤을 때: ${pct(sol.not)}</li></ul>
-   <p class="muted">${days.length>=5?'5일 넘게 쌓였어요. 가장 많은 틀린 모양의 설명 방법부터 시도해 볼 만해요.':'아직 5일이 안 됐어요. 숫자는 참고만, 판단은 5일 이상 쌓인 뒤에 해요.'}</p></div>`;
-}
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
@@ -104,10 +89,9 @@ async function render(){
   // 수학
   const MA=C.m32.filter(d=>d.date===k).flatMap(d=>d.items||[]);const MI=MA.filter(x=>x.mode==='solve');const mo=MI.filter(x=>x.res==='o'||x.res==='h').length,mx=MI.filter(x=>x.res==='x').length,ms=MI.filter(x=>x.res==='s').length;
   const mt=MA.reduce((a,x)=>a+(+x.sec||0),0);const ma=(S.math&&S.math.actual)||{};
-  const MW=MI.filter(x=>(x.res==='x'||x.res==='s')&&(x.sikA||x.sik));
-  const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span><br>식: <b>${x.sik&&x.sik.length?esc(x.sik.join(' / ')):'없음'}</b>${x.sikA?` → ${SIKC[x.sikA.c]||x.sikA.c}${x.sikA.n?` (${x.sikA.k}/${x.sikA.n}단계)`:''}`:''}${x.solSeen?' · 📖 풀이 봄':''}</li>`).join('');
-  h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}</div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제와 시훈이 식</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
-  h+=sikCard(C.m32.flatMap(d=>d.items||[]),k);
+  const MW=MI.filter(x=>x.res==='x'||x.res==='s');
+  const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.solSeen?' · 📖 풀이 봄':''}</li>`).join('');
+  h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}</div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린·건너뛴 문제와 손풀이</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
   // 막힌 이유
   const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
   h+=`<div class="card"><h2>🧭 시훈이가 고른 막힌 이유</h2>${ws?`<ul>${ws}</ul>`:'<p class="muted">이날은 고른 게 없어요.</p>'}<p class="muted">판단은 5일 이상 기록이 쌓인 뒤에 해요.</p></div>`;
@@ -116,6 +100,7 @@ async function render(){
   h+=`<div class="card"><h2>🔧 이날 앱에서 바뀐 것</h2>${ch.length?`<ul>${ch.map(x=>`<li>${esc(x.what)}</li>`).join('')}</ul>`:'<p class="muted">바뀐 것 없음</p>'}</div>`;
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
+  document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&d.img)el.innerHTML=`<img src="${d.img}" alt="손풀이">`;else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
