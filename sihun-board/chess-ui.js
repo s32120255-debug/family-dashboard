@@ -48,10 +48,12 @@ export function mountChess(el,{onEnd}){
   for(let i=0;i<8;i++)for(let j=0;j<8;j++){const r=flip?7-i:i,c=flip?7-j:j;const sq="abcdefgh"[c]+(8-r);const p=b[r][c];
    const dark=(r+c)%2===1;const isSel=sel===sq,isLeg=legal.includes(sq),isLast=last&&(last.from===sq||last.to===sq);
    cells+=`<button class="cq" data-sq="${sq}" style="background:${isSel?"#f7c873":isLast?"#f3d9a4":dark?"#8fcfb8":"#fbf5e8"}" aria-label="${sq}">${p?`<span class="pc ${p.color}">${GLYPH[p.type]}</span>`:""}${isLeg?`<span class="dot ${p?"cap":""}"></span>`:""}</button>`}
-  el.innerHTML=`<div class="row between"><b id="chStatus">${status()}</b><span class="meta">${LV[st.level]} · 시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
+  el.innerHTML=`<div class="row between"><span class="meta">난이도</span><div class="tabs">${Object.entries(LV).map(([k,v])=>`<button data-lv="${k}" aria-pressed="${k===st.level}">${v}</button>`).join("")}</div></div>
+  <div class="row between"><b id="chStatus">${status()}</b><span class="meta">시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
   <div class="board">${cells}</div>
   <div class="row"><button class="btn small" data-ch="undo">한 수 무르기</button><button class="btn small" data-ch="new">새 판</button></div>`;
   el.querySelectorAll(".cq").forEach(x=>x.onclick=()=>tap(x.dataset.sq));
+  el.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{if(thinking)return;st.level=x.dataset.lv;save();render()});
   el.querySelector('[data-ch=undo]').onclick=undo;el.querySelector('[data-ch=new]').onclick=newGame}
  function tap(sq){if(thinking||g.isGameOver()||g.turn()!==st.me)return;const p=g.get(sq);
   if(sel){const mv=g.moves({square:sel,verbose:true}).find(m=>m.to===sq);
