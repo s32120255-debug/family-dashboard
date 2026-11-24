@@ -30,28 +30,35 @@ window.penApply();
   function makeDic(){
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if(!SR) return null;
-    var rec = null, finals = [], states = [];
+    var rec = null, finals = [], states = [], want = false, G = 0;
     function emit(list, v){ list.forEach(function(f){ try{ f(v); }catch(e){} }); }
     return {
       onFinal: function(cb){ finals.push(cb); },
       onState: function(cb){ states.push(cb); },
+      /* 엄마 11/25: 녹음이 너무 짧게 끊김 → 말을 멈춰도 끊지 않고, ⏹(멈추기)나 시간 끝(앱이 stop 부름)까지 계속 다시 들어요 */
       start: function(){
         return new Promise(function(res, rej){
           if(rec){ try{ rec.onend = null; rec.abort(); }catch(e){} rec = null; }
-          var r = new SR(); rec = r; var started = false;
-          r.lang = 'en-US'; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
-          r.onstart = function(){ started = true; emit(states, {state:'listening'}); res(); };
-          r.onresult = function(e){
-            for(var i = e.resultIndex; i < e.results.length; i++){
-              if(e.results[i].isFinal) emit(finals, {text: e.results[i][0].transcript});
-            }
-          };
-          r.onerror = function(e){ if(!started) rej({code: e.error || 'error'}); };
-          r.onend = function(){ if(rec === r) rec = null; if(started) emit(states, {state:'idle'}); };
-          try{ r.start(); }catch(err){ rec = null; rej({code:'start'}); }
+          want = true; var first = true, gen = ++G;
+          function go(){
+            var r = new SR(); rec = r; var started = false;
+            r.lang = 'en-US'; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
+            r.onstart = function(){ started = true; if(first){ first = false; emit(states, {state:'listening'}); res(); } };
+            r.onresult = function(e){
+              for(var i = e.resultIndex; i < e.results.length; i++){
+                if(e.results[i].isFinal) emit(finals, {text: e.results[i][0].transcript});
+              }
+            };
+            r.onerror = function(e){ if(/not-allowed|service-not-allowed|audio-capture/.test(e.error||'')) want = false; if(first){ want = false; rej({code: e.error || 'error'}); } };
+            r.onend = function(){ if(rec === r) rec = null; if(gen !== G) return;
+              if(want && !first){ setTimeout(function(){ if(want && gen === G) go(); else if(!first) emit(states, {state:'idle'}); }, 120); return; }
+              want = false; if(!first) emit(states, {state:'idle'}); };
+            try{ r.start(); }catch(err){ rec = null; if(first){ want = false; rej({code:'start'}); } else { want = false; emit(states, {state:'idle'}); } }
+          }
+          go();
         });
       },
-      stop: function(){ try{ if(rec) rec.stop(); }catch(e){} return Promise.resolve(); }
+      stop: function(){ want = false; try{ if(rec) rec.stop(); }catch(e){} return Promise.resolve(); } /* 다시 듣기 사이(rec 없음)면 기다리던 타이머가 idle을 알려요 */
     };
   }
   window.claude = {
@@ -1504,7 +1511,7 @@ const ACT={
     rc.kGood=good;rc.phase='speak';save();render()},
   hintme:()=>{const left=hintKinds(rc.it).filter(k=>!(rc.hk||[]).includes(k));if(!left.length)return;rc.hk=(rc.hk||[]).concat(left[0]);if(!rc.again)rc.preH=(rc.preH||0)+1;render()},
   mic:()=>{if(rc.phase==='listening'){DIC.stop().catch(()=>{});return}rc.heard='';rc.tMic=Date.now();rc.tFirst=null;rc.phase='listening';
-    clearTimeout(rc.maxT);rc.maxT=setTimeout(()=>{if(rc&&rc.phase==='listening')DIC.stop().catch(()=>{})},12000);
+    clearTimeout(rc.maxT);rc.maxT=setTimeout(()=>{if(rc&&rc.phase==='listening')DIC.stop().catch(()=>{})},30000);
     DIC.start().catch(e=>{rc.phase='speak';const l=$('#live');if(l)l.textContent='마이크를 쓸 수 없어요'});
     const m=$('.mic');if(m){m.classList.add('live');m.textContent='⏹'}const l=$('#live');if(l)l.textContent='듣고 있어요…'},
   said:()=>{rc.phase='self';render();say(rc.it.en[0])},
@@ -1549,7 +1556,7 @@ const ACT={
   vrnext:()=>vStart(),
   sayAns:()=>{if(rc.phase2==='rec')return;say(rc.it.en[0])},
   recGo:()=>{if(!DIC)return;try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}rc.recHeard='';rc.recT0=Date.now();rc.phase2='rec';
-    DIC.start().catch(e=>{rc.phase2=null;rc.recFail=(e&&e.code)||'x';render()});render();clearTimeout(rc.recMax);rc.recMax=setTimeout(()=>{if(rc&&rc.phase2==='rec')DIC.stop().catch(()=>{})},12000)},
+    DIC.start().catch(e=>{rc.phase2=null;rc.recFail=(e&&e.code)||'x';render()});render();clearTimeout(rc.recMax);rc.recMax=setTimeout(()=>{if(rc&&rc.phase2==='rec')DIC.stop().catch(()=>{})},30000)},
   recStop:()=>{if(rc.phase2==='rec')DIC.stop().catch(()=>{})}
 };
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const f=ACT[t.dataset.act];if(f)f(t)});
