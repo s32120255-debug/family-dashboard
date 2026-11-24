@@ -57,6 +57,7 @@ const setD=(p,d)=>setDoc(doc(fs,...P,...p.split('/')),pack(d));
 const pad=n=>String(n).padStart(2,'0');
 const dkey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const WHY={understand:'📘 규칙을 잘 몰랐어',attention:'🎯 처음엔 놓쳤는데 힌트 보고 알았어',retrieval:'🗣️ 아는데 바로 안 나왔어',fatigue:'🔋 뒤로 갈수록 집중이 안 됐어',condition:'🌊 오늘 좀 피곤했어',none:'✨ 별로 안 막혔어'};
+const STN={'be+':'be 지금 · 긍정','be-':'be 지금 · 부정','beQ':'be 지금 · 의문','loc':'📍 at · in · on (장소)','be+past':'be 과거 · 긍정','be-past':'be 과거 · 부정','beQpast':'be 과거 · 의문','there+':'There is/are','there-':'There 부정','thereQ':'Is/Are there?','do+':'일반동사 지금','do+s':'일반동사 -s','do+past':'일반동사 과거','do-':'do not','do-s':'does not','do-past':'did not','doQ':'Do ~?','doesQ':'Does ~?','didQ':'Did ~?'};
 const CLS={ok:'바로 완성',access:'힌트 보고 고쳐서 완성',unknown:'두 번 틀려 정답 보고 익힘',speak:'말하기 막힘'};
 const KOT={daily:'복습 카드',test:'누적 테스트',wrong:'오답',hw:'숙제',write:'독서 워크지',lit:'문학 개념',fill:'핵심 빈칸',note:'개념 정리'};
 let day=new Date(); let CACHE=null;
@@ -303,6 +304,10 @@ async function render(){
   const cls=R.cls||{};const clsL=Object.entries(cls).filter(([,n])=>n>0).map(([c,n])=>`<li>${CLS[c]||c}: ${n}문장</li>`).join('');
   h+=`<div class="card"><h2>🇺🇸 영어</h2><div class="row">${stat(vn+'개',`단어 체크 (알아요 ${vk})`)}${stat((en.main||R.n||0)+'문장',`문장 (맞음 ${en.ok||0}${en.skipped?`, 건너뜀 ${en.skipped}`:''})`)}${stat(pred!=null?pred+'분':'–','예측 시간')}${stat(act!=null?act+'분':'–','실제 시간')}</div>
     ${pred!=null&&act!=null?`<p>예측 ${pred}분 → 실제 ${act}분 · <b>${Math.abs(act-pred)<=Math.max(2,pred*.2)?'<span class="ok">예측이 정확했어요</span>':act>pred?'예상보다 오래 걸렸어요':'예상보다 빨리 끝났어요'}</b></p>`:''}
+    ${(()=>{const G=C.routine&&C.routine.g2;const g=G&&G.days&&G.days[k];if(!g)return '';const q=g.quiz||{};
+      return `<p>📌 <b>문법 단계: ${esc(STN[g.k]||g.k)}</b>${g.back?' (🔁 다시 다지는 날)':''}<br>혼자 · 철자까지 정확 <b>${g.perfect??'–'} / ${g.n??'–'}</b> · 오늘의 문법 고르기 <b>${q.n?q.ok+' / '+q.n:'–'}</b>${(q.picks||[]).some(p=>p&&!p.ok)?` <span class="muted">(틀린 고르기: ${(q.picks||[]).filter(p=>p&&!p.ok).map(p=>esc(p.v)).join(', ')})</span>`:''}
+      <br>${g.pass?`<span class="ok">🎉 통과${g.fast?' (빠른 통과)':''}</span>`:g.eval?(g.good?'4문장 이상 정확 · 한 번 더 이러면 통과':'아직 · 다음에 새 문장으로 다시'):'<span class="muted">아직 안 끝남</span>'}${g.sendBack?` · 복습 이틀 틀려 <b>${esc(STN[g.sendBack]||g.sendBack)}</b> 하루 다시`:''}
+      <br><span class="muted">지금까지 통과: ${Object.keys(G.passed||{}).map(x=>esc(STN[x]||x)).join(' → ')||'없음'}</span></p>`})()}
     ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
   // 국어 (엄마 11/23: 그날 한 것 + 틀린 문제를 시훈 답·정답 나란히)
   const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k).sort((a,b)=>a.at<b.at?-1:1);
