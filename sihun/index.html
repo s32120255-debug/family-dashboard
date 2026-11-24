@@ -1,6 +1,6 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.json">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.json?v=2">
+<link rel="icon" href="icons/icon-192.png?v=2">
+<link rel="apple-touch-icon" href="icons/icon-192.png?v=2">
 <meta name="theme-color" content="#2f6b4f">
 <script>
 /* 시훈 공부방 웹앱 연결부: claude.ai 아티팩트의 저장(db)·받아쓰기(dictation)를 Firebase·Chrome 음성 인식으로 바꿔 줌 */
@@ -98,7 +98,7 @@ function gateBox(html){
 const btn = 'font-size:18px;padding:14px 22px;border-radius:14px;border:0;background:#2f6b4f;color:#fff;font-weight:700;cursor:pointer';
 
 function showLogin(err){
-  const el = gateBox('<img src="icons/icon-192.png" style="width:88px;height:88px;border-radius:20px"><h2 style="margin:14px 0 6px">시훈 공부방</h2>'
+  const el = gateBox('<img src="icons/icon-192.png?v=2" style="width:88px;height:88px;border-radius:20px"><h2 style="margin:14px 0 6px">시훈 공부방</h2>'
     + '<p style="color:#5b6b62;margin:0 0 18px">가족 구글 계정으로 들어와요</p>'
     + '<button id="sihunLogin" style="' + btn + '">구글로 로그인</button>'
     + (err ? '<p style="color:#c0392b;margin-top:14px">' + err + '</p>' : '')
