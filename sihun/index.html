@@ -3,6 +3,14 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png?v=2">
 <meta name="theme-color" content="#2f6b4f">
 <script>
+/* ✍️ S펜 칸 크기(엄마 11/24): 줄 간격·모눈·원고지 칸을 모두 13mm로. 기기마다 화면 1mm가 달라서 관리자 모드 「📏 S펜 칸 크기 맞추기」로 자로 재서 맞춤(이 기기에 저장) */
+window.PEN_MM=13;
+window.penPxPerMm=function(){var k=0;try{k=+localStorage.getItem('pen:pxmm')||0}catch(e){}return k>1?k:96/25.4};
+window.penPx=function(){return Math.round(window.PEN_MM*window.penPxPerMm())};
+window.penApply=function(){document.documentElement.style.setProperty('--penmm',window.penPx()+'px')};
+window.penApply();
+</script>
+<script>
 /* 시훈 공부방 웹앱 연결부: claude.ai 아티팩트의 저장(db)·받아쓰기(dictation)를 Firebase·Chrome 음성 인식으로 바꿔 줌 */
 (function(){
   var resolveDb; var dbReady = new Promise(function(r){ resolveDb = r; });
@@ -361,7 +369,7 @@ h1,h2,h3,.jua{font-family:'Jua','IBM Plex Sans KR',sans-serif;font-weight:400;ma
 .ptools .lbl{font-size:13px;color:var(--soft)}
 .padwrap{flex:1;position:relative;min-height:0}
 canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;
-  background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:34px 34px}
+  background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:var(--penmm,49px) var(--penmm,49px)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:16px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
 /* modal */
@@ -369,7 +377,7 @@ canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;
 .mbox{background:var(--paper);border-radius:22px;width:min(860px,94vw);padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
 .mbox h2{font-size:26px}.mbox p{margin:4px 0 10px;color:var(--soft)}
 .mpad{position:relative;height:280px;border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
-.mpad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(transparent 55px,#e7e1d2 56px);background-size:100% 56px}
+.mpad canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(transparent calc(var(--penmm,49px) - 1px),#e7e1d2 var(--penmm,49px));background-size:100% var(--penmm,49px)}
 .starter{font-size:18px;margin:8px 0;padding:8px 12px;background:#fff;border-radius:10px;border:1.5px dashed var(--line)}
 .lvup{text-align:center}.lvup .em{font-size:64px}
 /* parent */
@@ -544,7 +552,7 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .padwrap{flex:1;position:relative;min-height:0}
 .phs{display:flex;gap:8px;padding:6px 12px;border-bottom:1.5px solid var(--line);background:#fffdf8;overflow-x:auto}.phs .ph{position:relative;border:1.5px solid var(--line);border-radius:10px;padding:0;background:#fff;height:64px;flex:0 0 auto}.phs .ph img{height:60px;border-radius:9px;display:block}.phs .ph b{position:absolute;top:-6px;right:-6px;background:#e4572e;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:20px}
 .phv img{max-width:100%;margin-top:6px;border-radius:10px;border:1.5px solid var(--line)}
-canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:34px 34px}
+canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:var(--penmm,49px) var(--penmm,49px)}
 /* 수업 */
 .lesson{max-width:900px}
 .prog{display:flex;gap:5px;margin:0 0 12px}.prog i{flex:1;height:7px;border-radius:4px;background:#e9e3d3;max-width:44px}.prog i.d{background:var(--ink)}.prog i.n{background:var(--accent)}
@@ -641,7 +649,7 @@ header .big{font-size:28px;font-weight:900;color:var(--navy);letter-spacing:-1px
 .kfull{border:0;background:none;color:var(--muted);font:500 12px 'Noto Sans KR';text-decoration:underline;cursor:pointer}
 .frow{border-top:1px solid var(--line);padding:12px 0}.frow:first-child{border-top:0}
 .fsent{font-size:19px;line-height:2;word-break:keep-all}.fbox{display:inline-block;min-width:84px;border-bottom:3px solid var(--pen);margin:0 4px;text-align:center;color:var(--pen);font-weight:900}.fbox i{font-style:normal;color:transparent}.fbox.show i{color:#1d5e3a}
-.fcv{display:block;width:100%;height:130px;margin-top:6px;border:1.5px dashed #b9c6da;border-radius:12px;touch-action:none;background:#fff linear-gradient(transparent 92px,#e3e8f0 93px,transparent 94px)}
+.fcv{display:block;width:100%;height:calc(var(--penmm,49px) * 2 + 8px);margin-top:6px;border:1.5px dashed #b9c6da;border-radius:12px;touch-action:none;background:#fff linear-gradient(transparent calc(var(--penmm,49px) - 1px),#e3e8f0 var(--penmm,49px)) 0 4px/100% var(--penmm,49px)}
 .gwrap{margin:12px auto;border:2.5px solid #d27a6c;background-color:#fff;background-image:linear-gradient(to right,#ecb1a8 1.5px,transparent 1.5px),linear-gradient(to bottom,#ecb1a8 1.5px,transparent 1.5px);position:relative}
 .gwrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
 .gguide{font-size:22px;line-height:1.8;background:#fff8e6;border-radius:12px;padding:12px 16px;font-weight:700;word-break:keep-all}
@@ -834,7 +842,7 @@ table.lmap th small{font-weight:500;color:var(--muted)}
 .lchip.done{background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a}.lchip.learn{background:var(--warnbg);border-color:#f3c06b}.lchip:disabled{cursor:default}
 .btn.sm{padding:6px 12px;font-size:13px}.btn.mini{padding:5px 10px;font-size:12px;border-radius:9px}
 .nwrap{position:relative;height:440px;border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:10px}
-.nwrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(transparent 47px,#e6ebf3 48px);background-size:100% 48px}
+.nwrap canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(transparent calc(var(--penmm,49px) - 1px),#e6ebf3 var(--penmm,49px));background-size:100% var(--penmm,49px)}
 .ntools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px}.ntools button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:7px 11px;font:700 14px 'Noto Sans KR';color:#1c2533;cursor:pointer}
 .ntools button.on{border-color:var(--navy);box-shadow:inset 0 0 0 1.5px var(--navy)}.ntools .dot{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:middle}.ntools .sp{flex:1}
 .npts{margin:8px 0 0;padding-left:20px;line-height:1.75;font-size:16px}.npts li{margin:4px 0}.npts .gl{color:var(--muted);font-size:13px}
@@ -6158,7 +6166,7 @@ function viewWrite(w){const L=READS.filter(r=>r.w===(w||MAXW));
         WR.txt[k]=v;WR.es=k===0?'s2':k===2?'s3':'ord';WR.ord=[];WR.sh=null;top()}}
     document.querySelectorAll('[data-od]').forEach(b=>b.onclick=()=>{const i=+b.dataset.od;if(i===WR.ord.length){WR.ord.push(i);redraw()}else{WR.bmiss++;bad(b,'💡 순서: 어떤 → 소녀는 → ~하여 → 결국 ~했다')}});
     const we=$('#wedit');if(we)we.onclick=()=>{WR.es='s0';WR.ord=[];top()}}
-  const gw=$('#gw');if(gw){const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const fit=()=>{const W=Math.min(gw.parentNode.clientWidth-4,cols*80);const c=Math.floor(W/cols);gw.style.width=c*cols+'px';gw.style.height=c*rows+'px';gw.style.backgroundSize=c+'px '+c+'px'};fit();
+  const gw=$('#gw');if(gw){const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const fit=()=>{const c=Math.min(Math.floor((gw.parentNode.clientWidth-4)/cols),penPx());gw.style.width=c*cols+'px';gw.style.height=c*rows+'px';gw.style.backgroundSize=c+'px '+c+'px'};fit();
     const pad=new KPad($('#gcv'));pad.width=4;$('#gundo').onclick=()=>pad.undo();$('#gclr').onclick=()=>pad.clear();
     $('#gback').onclick=()=>{WR.st--;WR.es='ord';top()};
     $('#gpen').onclick=e=>{const v=!(store('sihun_penOnly')!==false);store('sihun_penOnly',v);e.currentTarget.textContent='✋ '+(v?'S펜만':'손가락도')};
@@ -6829,7 +6837,29 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${A('📘','최상위 문제집 미리보기','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
       ${A('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
       ${A('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
+      ${A('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
       </div>`}
+  function penCal(){let k=window.penPxPerMm();const d=document.createElement('div');
+    d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;font-size:16px;line-height:1.5;color:#222">
+      <b style="font-size:18px">📏 S펜 칸 크기 맞추기</b>
+      <p style="margin:8px 0">시훈이 태블릿에서 해 주세요. 아래 파란 막대에 자를 대고, <b>정확히 5cm</b>가 되도록 − / + 를 눌러 맞춘 뒤 저장하세요.</p>
+      <div style="overflow:hidden;padding:6px 0"><div id="pcBar" style="height:22px;background:#3b82f6;border-radius:3px"></div></div>
+      <div style="display:flex;gap:8px;justify-content:center;margin:10px 0">
+        <button data-pc="-5" style="font-size:18px;padding:8px 12px">−−</button><button data-pc="-1" style="font-size:18px;padding:8px 14px">−</button>
+        <button data-pc="1" style="font-size:18px;padding:8px 14px">+</button><button data-pc="5" style="font-size:18px;padding:8px 12px">++</button></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:6px 0">13mm 칸 미리보기: <div id="pcSq" style="border:2px solid #3b82f6;box-sizing:border-box"></div></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button data-pc="reset" style="padding:8px 12px">처음 값</button><button data-pc="x" style="padding:8px 12px">취소</button>
+        <button data-pc="ok" style="padding:8px 14px;background:#3b82f6;color:#fff;border:0;border-radius:8px">💾 저장</button></div></div>`;
+    const draw=()=>{d.querySelector('#pcBar').style.width=(50*k)+'px';const q=d.querySelector('#pcSq');q.style.width=q.style.height=Math.round(13*k)+'px'};
+    d.addEventListener('click',ev=>{const b=ev.target.closest('[data-pc]');if(!b)return;const v=b.dataset.pc;
+      if(v==='x'){d.remove();return}
+      if(v==='reset'){k=96/25.4}
+      else if(v==='ok'){try{localStorage.setItem('pen:pxmm',String(k))}catch(e){}window.penApply();d.remove();alert('저장했어요. 이 기기의 S펜 칸이 13mm가 돼요.');return}
+      else{k=Math.max(1.5,Math.min(12,k*(1+(+v)/500)))}
+      draw()});
+    document.body.appendChild(d);draw()}
   function koPlan(st){let E={};try{E=APP_KO.est()}catch(x){}
     let P=[];try{P=APP_KO.plan()}catch(x){}const est=P.map(p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5);const nx=P.findIndex(p=>!p.done);
     const rows=P.map((p,i)=>[(p.done?'✅ ':(i+1)+'. ')+p.label,p.sub,est[i]||10]);const tot=rows.filter((r,i)=>!P[i].done).reduce((a,r)=>a+r[2],0);
@@ -6898,6 +6928,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
     else if(a==='report'){location.href='./report.html'}
+    else if(a==='pencal'){penCal()}
     else if(a==='lock'){try{sessionStorage.removeItem('hub:mom')}catch(e){}location.reload()}
     else if(a==='why'){const w=t.dataset.w;if(w==='none')WHYSEL=WHYSEL.includes('none')?[]:['none'];else{WHYSEL=WHYSEL.filter(x=>x!=='none');WHYSEL=WHYSEL.includes(w)?WHYSEL.filter(x=>x!==w):[...WHYSEL,w]}
       t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',WHYSEL.includes(b.dataset.w)))}

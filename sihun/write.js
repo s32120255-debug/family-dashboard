@@ -121,7 +121,7 @@ textarea,input[type=text]{width:100%;font:600 18px 'Noto Sans KR';padding:10px;b
     const ph=$('#ph');if(ph)ph.onchange=async()=>{const f=ph.files[0];if(!f)return;toast('사진 줄이는 중…');W.photo=await shrink(f,1100);keep();render()}}
   // 원고지 (S펜·마우스만, 손가락·손바닥 무시: 엄마 11/22)
   let PAD=null;
-  function grid(){const gw=$('#gw');const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const W0=Math.min(gw.parentNode.clientWidth-4,cols*76);const c=Math.floor(W0/cols);
+  function grid(){const gw=$('#gw');const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const c=Math.min(Math.floor((gw.parentNode.clientWidth-4)/cols),window.penPx?penPx():76);
     gw.style.width=c*cols+'px';gw.style.height=c*rows+'px';gw.style.backgroundImage='linear-gradient(#e7b8b8 1px,transparent 1px),linear-gradient(90deg,#e7b8b8 1px,transparent 1px)';gw.style.backgroundSize=c+'px '+c+'px';
     const cv=$('#gcv');const ctx=cv.getContext('2d');const d=window.devicePixelRatio||1;cv.width=c*cols*d;cv.height=c*rows*d;ctx.setTransform(d,0,0,d,0,0);
     const S=PAD&&PAD.id===W.id?PAD.strokes:[];PAD={id:W.id,strokes:S,cur:null,pid:null};
