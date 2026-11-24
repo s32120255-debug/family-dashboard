@@ -4,24 +4,24 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=32">
+<link rel="manifest" href="manifest.json?v=33">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<meta name="theme-color" content="#2f6b4f">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<meta name="theme-color" content="#ffc928">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 레이아웃: 위에 날짜·시계 띠, 아래 카드 격자(태블릿 가로 3열 · 세로 2열 · 폰 1열). 관리자 모드에서만 추가·수정·삭제 버튼이 보임 */
 :root{
- --bg:#eef1ee;--card:#ffffff;--fg:#1d2621;--muted:#68736d;--line:#dbe1dc;--accent:#2f6b4f;--accent-soft:#e1efe7;
- --warn:#b4541f;--warn-soft:#fbe9dc;--ok:#2f8a5b;--info:#3a6ea5;--info-soft:#e4edf7;--admin:#7a4fb0;--admin-soft:#efe7f8;
- --display:"Gowun Dodum","Noto Sans KR",sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
+ --bg:#fff8e1;--card:#ffffff;--fg:#2b2414;--muted:#7a6f55;--line:#f0e2b6;--accent:#ffc928;--accent-soft:#fff1bf;--on-accent:#3a2a00;--accent-ink:#9a6400;
+ --warn:#d9480f;--warn-soft:#ffe8dc;--ok:#2f8a5b;--info:#2f6fd6;--info-soft:#e3edff;--admin:#7a4fb0;--admin-soft:#efe7f8;
+ --display:"Jua","Noto Sans KR",sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
- --bg:#121815;--card:#1b231f;--fg:#e7ece9;--muted:#9aa59f;--line:#2b3530;--accent:#7cc4a0;--accent-soft:#1d3028;
- --warn:#f0a070;--warn-soft:#3a2518;--ok:#6cc497;--info:#7fa9d8;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}}
+ --bg:#17140c;--card:#221e12;--fg:#f3ecd8;--muted:#b3a888;--line:#3a3320;--accent:#ffcf3a;--accent-soft:#3a3010;--on-accent:#2b2000;--accent-ink:#ffd95a;
+ --warn:#ff9a6a;--warn-soft:#3a2518;--ok:#6cc497;--info:#8fb4f0;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}}
 :root[data-theme="dark"]{
- --bg:#121815;--card:#1b231f;--fg:#e7ece9;--muted:#9aa59f;--line:#2b3530;--accent:#7cc4a0;--accent-soft:#1d3028;
- --warn:#f0a070;--warn-soft:#3a2518;--ok:#6cc497;--info:#7fa9d8;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}
+ --bg:#17140c;--card:#221e12;--fg:#f3ecd8;--muted:#b3a888;--line:#3a3320;--accent:#ffcf3a;--accent-soft:#3a3010;--on-accent:#2b2000;--accent-ink:#ffd95a;
+ --warn:#ff9a6a;--warn-soft:#3a2518;--ok:#6cc497;--info:#8fb4f0;--info-soft:#1f2b38;--admin:#bf92dc;--admin-soft:#2b2233;color-scheme:dark}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px}
@@ -38,10 +38,10 @@ body.admin .adminbar{display:flex}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
 @media (max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;display:grid;gap:10px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;box-shadow:0 3px 0 var(--line);grid-template-columns:minmax(0,1fr);padding:14px 16px;min-width:0;display:grid;gap:10px}
 .card.wide{grid-column:span 2}
 @media (max-width:640px){.card.wide{grid-column:auto}}
-.card h2{font-family:var(--display);font-size:1.25rem;margin:0;display:flex;align-items:center;gap:8px;justify-content:space-between}
+.card h2{font-family:var(--display);font-weight:400;font-size:1.35rem;margin:0;display:flex;align-items:center;gap:8px;justify-content:space-between}
 .card h2 small{font-family:var(--body);font-size:.8rem;color:var(--muted);font-weight:400}
 .list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
 .item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--bg);min-width:0}
@@ -53,16 +53,16 @@ body.admin .adminbar{display:flex}
 .item.overdue{background:var(--warn-soft)}
 .pill{font-size:.75rem;padding:2px 8px;border-radius:999px;white-space:nowrap}
 .pill.warn{background:var(--warn);color:var(--card)}
-.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.pill.ok{background:var(--accent-soft);color:var(--accent-ink)}
 .pill.low{background:var(--warn-soft);color:var(--warn)}
 .pill.out{background:var(--warn);color:var(--card)}
 .pill.info{background:var(--info-soft);color:var(--info)}
 .btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
 a.btn{text-decoration:none;display:inline-block}
 .btn.small{padding:3px 9px;font-size:.85rem}
 .btn:focus-visible,.adminbtn:focus-visible,.cal button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.check{width:26px;height:26px;border-radius:7px;border:2px solid var(--accent);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:var(--card);font-weight:700}
+.check{width:26px;height:26px;border-radius:7px;border:2px solid var(--accent);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:var(--on-accent);font-weight:700}
 .check.on{background:var(--accent)}
 .adm{display:none;gap:4px}
 body.admin .adm{display:inline-flex}
@@ -74,15 +74,15 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .addrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--bg)}
 .tabs{display:flex;gap:4px;flex-wrap:wrap}
 .tabs button{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;cursor:pointer}
-.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--card)}
+.tabs button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:700}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
 .cal .dow{font-size:.8rem;color:var(--muted);padding:2px 0}
 .cal button{border:none;background:var(--bg);border-radius:8px;min-height:42px;cursor:pointer;display:grid;align-content:start;justify-items:center;gap:2px;padding:4px 0;font-variant-numeric:tabular-nums}
 .cal button.other{opacity:.35}
 .cal button.today{outline:2px solid var(--accent)}
-.cal button.sel{background:var(--accent);color:var(--card)}
+.cal button.sel{background:var(--accent);color:var(--on-accent)}
 .cal .dot{width:6px;height:6px;border-radius:50%;background:var(--info)}
-.cal button.sel .dot{background:var(--card)}
+.cal button.sel .dot{background:var(--on-accent)}
 .calhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .meals{overflow-x:auto}
 .meals table{border-collapse:collapse;width:100%;min-width:520px;font-size:.9rem}
@@ -108,7 +108,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .gbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:12px 18px;cursor:pointer;font-weight:700;display:inline-flex;gap:10px;align-items:center;justify-content:center}
 .gbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .who{color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.linkbtn{border:none;background:none;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
+.linkbtn{border:none;background:none;color:var(--accent-ink);cursor:pointer;padding:0;text-decoration:underline}
 .datenav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .datenav b{min-width:8.5em;text-align:center}
 .schedbody{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:16px;align-items:start}
@@ -124,7 +124,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .pt b{font-size:1.3rem;font-variant-numeric:tabular-nums}
 .pt small{color:var(--muted);font-size:.75rem}
 .pt.main{background:var(--accent-soft)}
-.pt.main b{color:var(--accent)}
+.pt.main b{color:var(--accent-ink)}
 .sub2{font-weight:700;font-size:.9rem;color:var(--muted);margin:4px 0 0}
 .msg{display:grid;gap:2px;padding:8px 10px;border-radius:10px;background:var(--bg)}
 .msg .h{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.8rem}
@@ -135,6 +135,32 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .daysbox{display:flex;gap:4px;flex-wrap:wrap}
 .daysbox label{display:inline-flex;gap:3px;align-items:center;color:var(--fg);font-size:.95rem;border:1px solid var(--line);border-radius:8px;padding:4px 8px}
 .ttl{display:inline-flex;align-items:center;gap:6px}.ttl svg{width:28px;height:28px;flex:none}
+.brand{display:flex;align-items:center;gap:10px}
+.brand svg{width:52px;height:52px;flex:none}
+.brand h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1}
+.date{font-family:var(--display);font-size:1.1rem;line-height:1.2;color:var(--muted)}
+.clock{font-family:var(--display);font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1}
+.navtabs{position:sticky;top:0;z-index:10;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0 10px;margin:-4px 0 0;border-bottom:2px dashed var(--line)}
+.navtabs::-webkit-scrollbar{display:none}
+.navtabs button{flex:1 1 0;min-width:max-content;justify-content:center;border:2px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;cursor:pointer;font-family:var(--display);font-size:1.1rem;color:var(--muted);display:inline-flex;gap:4px;align-items:center}
+.navtabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:0 3px 0 #e0a800}
+.navtabs button:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+@media (max-width:420px){.navtabs{gap:4px}.navtabs button{padding:6px 4px;font-size:1rem}}
+.grid.one{grid-template-columns:minmax(0,1fr);max-width:760px;width:100%;margin:0 auto}
+.grid.one .card.wide{grid-column:auto}
+@media (min-width:641px){.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.card.full{grid-column:1/-1}
+.hero{border-radius:18px;background:linear-gradient(135deg,#ffe066,#ffc928);color:#3a2a00;padding:16px 18px;display:grid;gap:10px;position:relative;overflow:hidden}
+.hero .bolt{position:absolute;right:-8px;top:-10px;width:110px;height:110px;opacity:.22}
+.hero .lbl{font-size:.9rem;font-weight:700;opacity:.75}
+.hero .now{font-family:var(--display);font-size:2.3rem;line-height:1.1;overflow-wrap:anywhere}
+.hero .tm{font-size:.95rem;font-variant-numeric:tabular-nums}
+.bar{height:16px;border-radius:999px;background:rgba(255,255,255,.65);overflow:hidden;border:2px solid #3a2a00}
+.bar i{display:block;height:100%;background:repeating-linear-gradient(-45deg,#3a2a00 0 8px,#5a4300 8px 16px);border-radius:999px}
+.hero .left{font-family:var(--display);font-size:1.2rem}
+.nextup{display:flex;gap:8px;align-items:center;background:var(--card);border:2px dashed var(--line);border-radius:14px;padding:8px 12px;font-size:.95rem;color:var(--muted)}
+.nextup b{color:var(--fg)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar{background:rgba(0,0,0,.15)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -145,11 +171,11 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 32</p></div></div>
+<p style="font-size:.75rem">버전 33</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div><div class="date" id="today"></div><div class="sub" id="status">불러오는 중…</div><div class="who" id="who"></div></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집</h1><div class="date" id="today"></div></div></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -159,14 +185,18 @@ body.admin #tplBox{display:grid!important;gap:6px}
   <button class="btn small" id="adminOff">관리자 모드 끄기</button>
  </div>
 
- <main class="grid">
-  <section class="card wide" id="c-sched">
+ <nav class="navtabs" role="tablist" id="navtabs">
+  <button role="tab" data-nav="today" aria-selected="true">오늘</button><button role="tab" data-nav="cal" aria-selected="false">달력</button><button role="tab" data-nav="mail" aria-selected="false">편지</button><button role="tab" data-nav="food" aria-selected="false">먹거리</button><button role="tab" data-nav="stuff" aria-selected="false">물건</button>
+ </nav>
+ <main class="grid" id="main">
+  <section class="card full" data-tab="today" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
+   <div id="heroBox"></div>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="schedbody"><div><div id="dial"></div><div class="dlegend"><span>줄무늬 칸 = 일정 · 점선 칸 = 집공부·자유 (엄마가 정해요) · 빨간 점선 = 시작 시각만 있는 일정</span></div></div><ul class="list" id="schedList"></ul></div>
+   <ul class="list" id="schedList"></ul>
   </section>
 
-  <section class="card" id="c-tasks">
+  <section class="card" data-tab="today" id="c-tasks">
    <h2>오늘의 과제 <span class="adm"><button class="btn small" data-add="tasks">＋</button></span></h2>
    <div class="pts" id="points"></div>
    <div class="datenav"><button class="icon" id="tPrev" aria-label="전날">◀</button><b id="tLabel"></b><button class="icon" id="tNext" aria-label="다음날">▶</button><button class="btn small" id="tToday">오늘</button></div>
@@ -175,14 +205,14 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <div class="adm" style="display:none" id="tplBox"></div>
   </section>
 
-  <section class="card">
+  <section class="card" data-tab="cal">
    <div class="calhead"><h2 style="flex:1">달력 <button class="btn small" data-add="events">＋</button></h2>
     <button class="icon" id="prevM" aria-label="이전 달">◀</button><b id="monthLabel"></b><button class="icon" id="nextM" aria-label="다음 달">▶</button></div>
    <div class="cal" id="cal"></div>
    <ul class="list" id="eventList"></ul>
   </section>
 
-  <section class="card">
+  <section class="card" data-tab="mail">
    <h2>서로에게 할 말</h2>
    <form id="noteForm" style="display:grid;gap:6px">
     <div class="fromto"><select id="noteFrom" aria-label="보내는 사람"></select> 이(가) <select id="noteTo" aria-label="받는 사람"></select> 에게</div>
@@ -192,34 +222,35 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="noteList"></ul>
   </section>
 
-  <section class="card">
+  <section class="card" data-tab="food">
    <h2>먹고 싶은 음식</h2>
    <form class="addrow" id="foodForm"><input id="foodInput" placeholder="먹고 싶은 것" aria-label="먹고 싶은 음식"><button class="btn primary">추가</button></form>
    <ul class="list" id="foodList"></ul>
   </section>
 
-  <section class="card">
-   <h2>냉장고·간식·부식창고</h2>
-   <div class="tabs" id="pantryTabs"></div>
-   <form class="addrow" id="pantryForm"><input id="pantryInput" placeholder="넣은 것 적기 (예: 우유 2개)" aria-label="먹을거리"><button class="btn primary">추가</button></form>
-   <ul class="list" id="pantryList"></ul>
-  </section>
-
-  <section class="card wide">
+  <section class="card full" data-tab="food">
    <h2>식단표 <small>칸을 눌러 입력</small></h2>
    <div class="tabs"><button type="button" data-mtab="plan" aria-pressed="true">이번 주 식단표</button><button type="button" data-mtab="ate" aria-pressed="false">먹은 메뉴 기록</button></div>
    <div class="meals" id="meals"></div>
    <div id="atePane" hidden><div class="datenav" style="margin-bottom:6px"><button class="icon" id="atePrev" aria-label="이전 주">◀</button><b id="ateLabel"></b><button class="icon" id="ateNext" aria-label="다음 주">▶</button><button class="btn small" id="ateCopy">오늘 식단표대로 먹음</button></div><div class="meals" id="ateTable"></div></div>
   </section>
 
-  <section class="card">
+  <section class="card" data-tab="food">
+   <h2>냉장고·간식·부식창고</h2>
+   <div class="tabs" id="pantryTabs"></div>
+   <form class="addrow" id="pantryForm"><input id="pantryInput" placeholder="넣은 것 적기 (예: 우유 2개)" aria-label="먹을거리"><button class="btn primary">추가</button></form>
+   <ul class="list" id="pantryList"></ul>
+  </section>
+
+
+  <section class="card" data-tab="food">
    <h2>장보기 <button class="btn small" id="clearBought">산 것 지우기</button></h2>
    <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
    <ul class="list" id="shopList"></ul>
   </section>
 
 
-  <section class="card">
+  <section class="card" data-tab="stuff">
    <h2>물건 위치 <button class="btn small" id="locAdd" data-add="locations">＋</button></h2>
    <div class="tabs"><button type="button" data-ltab="loc" aria-pressed="true">물건 위치</button><button type="button" data-ltab="sup" aria-pressed="false">소모품 <span id="supBadge"></span></button></div>
    <div id="locPane"><input class="search" id="locSearch" placeholder="찾을 물건" aria-label="찾을 물건">
@@ -228,18 +259,19 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="supplyList"></ul></div>
   </section>
 
-  <section class="card" hidden><!-- 살림은 서윤 보드로 옮김(데이터는 그대로 둠) -->
+  <section class="card" data-tab="none" hidden><!-- 살림은 서윤 보드로 옮김(데이터는 그대로 둠) -->
    <h2>오늘 할 살림 <small id="choreCount"></small><button class="btn small" data-add="chores">＋</button></h2>
    <div class="pts" id="chorePts"></div>
    <ul class="list" id="choreList"></ul>
   </section>
 
-  <section class="card">
+  <section class="card" data-tab="today">
    <h2>해결할 미션 <small id="helpCount"></small><button class="btn small" data-add="helpmom">＋</button></h2>
    <div class="pts" id="helpPts"></div>
    <ul class="list" id="helpList"></ul>
   </section>
  </main>
+ <div class="sub" style="text-align:center"><span id="status">불러오는 중…</span><div class="who" id="who" style="justify-content:center"></div></div>
 </div>
 <div id="layer"></div>
 
@@ -248,8 +280,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=32";
-import {SEED_SCHEDULE} from "./seed.js?v=32";
+import {firebaseConfig} from "./config.js?v=33";
+import {SEED_SCHEDULE} from "./seed.js?v=33";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -351,6 +383,14 @@ function catFace(cx,cy,r,fur,inner,line){return`<g><path d="M${cx-r*0.95},${cy-r
 <path d="M${cx-r*0.08},${cy+r*0.18} L${cx+r*0.08},${cy+r*0.18} L${cx},${cy+r*0.28}Z" fill="${inner}"/>
 <path d="M${cx},${cy+r*0.28} q-${r*0.1},${r*0.16} -${r*0.2},${r*0.06} M${cx},${cy+r*0.28} q${r*0.1},${r*0.16} ${r*0.2},${r*0.06}" fill="none" stroke="${line}" stroke-width="1.8" stroke-linecap="round"/>
 <ellipse cx="${cx-r*0.55}" cy="${cy+r*0.25}" rx="${r*0.14}" ry="${r*0.08}" fill="${inner}" opacity=".8"/><ellipse cx="${cx+r*0.55}" cy="${cy+r*0.25}" rx="${r*0.14}" ry="${r*0.08}" fill="${inner}" opacity=".8"/></g>`}
+// 번개 고양이(오리지널): 노란 고양이 + 이마 번개 + 볼터치
+const BOLT=(x,y,s,fill)=>`<path transform="translate(${x},${y}) scale(${s})" d="M6 0 L0 11 H5 L3 20 L11 7 H6 L9 0Z" fill="${fill}" stroke="#3a2a00" stroke-width="1.2" stroke-linejoin="round"/>`;
+function boltCat(){return`<svg viewBox="0 0 60 60" aria-hidden="true"><path d="M44 40 L54 34 L49 30 L57 22" fill="none" stroke="#3a2a00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 40 L54 34 L49 30 L57 22" fill="none" stroke="#ffc928" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M11 24 L9 5 L24 15Z M49 24 L51 5 L36 15Z" fill="#ffd43b" stroke="#3a2a00" stroke-width="2.2" stroke-linejoin="round"/><path d="M13 18 L12 10 L19 15Z M47 18 L48 10 L41 15Z" fill="#ff9f7a"/>
+<ellipse cx="30" cy="32" rx="22" ry="19" fill="#ffd43b" stroke="#3a2a00" stroke-width="2.2"/>${BOLT(26.5,15,.62,"#ff8a1f")}
+<ellipse cx="21" cy="31" rx="2.6" ry="3.4" fill="#3a2a00"/><ellipse cx="39" cy="31" rx="2.6" ry="3.4" fill="#3a2a00"/><circle cx="21.9" cy="29.8" r="1" fill="#fff"/><circle cx="39.9" cy="29.8" r="1" fill="#fff"/>
+<circle cx="14.5" cy="38" r="3.6" fill="#ff7a6b" opacity=".85"/><circle cx="45.5" cy="38" r="3.6" fill="#ff7a6b" opacity=".85"/>
+<path d="M28.6 36 H31.4 L30 37.6Z" fill="#3a2a00"/><path d="M30 37.6 q-1.6 2.4 -3.4 1 M30 37.6 q1.6 2.4 3.4 1" fill="none" stroke="#3a2a00" stroke-width="1.4" stroke-linecap="round"/></svg>`}
 function dialA(items,half,nowMin,showNow){
  const C=170,f=n=>n.toFixed(1),lo=half==="am"?0:720,hi=lo+720,RO=116,RI=56;
  const pt=(r,min)=>{const a=(min%720)/720*2*Math.PI-Math.PI/2;return[C+r*Math.cos(a),C+r*Math.sin(a)]};
@@ -382,7 +422,8 @@ function dialA(items,half,nowMin,showNow){
 }
 
 let dialHalf=null;
-{const icon=`<svg viewBox="0 0 40 40" aria-hidden="true">${catFace(20,23,13,"#f7c873","#f49b8b","#3f5b4f")}</svg>`;
+$("logo").innerHTML=boltCat();
+{const icon=boltCat();
  document.querySelectorAll(".card h2").forEach(h=>{const t=[...h.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());if(!t)return;
   const sp=document.createElement("span");sp.className="ttl";sp.innerHTML=icon+esc(t.textContent.trim());h.replaceChild(sp,t);h.insertBefore(document.createTextNode(" "),sp.nextSibling)})}
 function tickHands(){const d=new Date(),sec=d.getSeconds(),m=d.getMinutes()+sec/60,h=(d.getHours()%12)+m/60;
@@ -400,8 +441,8 @@ function renderSched(){
  $("sLabel").textContent=`${pd.getMonth()+1}월 ${pd.getDate()}일 ${DAYNAME[dayKey(pd)]}요일${isToday?" (오늘)":""}`;
  $("sToday").hidden=isToday;
  const all=schedItems(schedDate);const items=all.filter(x=>!x.skipped);
- renderDial(items,isToday);
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ $("heroBox").innerHTML=isToday?heroHTML(items,nm):"";
  let nextMarked=false,h="",prevEnd=null;
  const shown=admin?all:items;
  for(const it of shown){
@@ -416,6 +457,24 @@ function renderSched(){
    :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
   h+=`<li class="item ${cls}"><span class="meta" style="min-width:5.5em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${tag}${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}${ab}</li>`}
  $("schedList").innerHTML=h||`<li class="empty">이 날 일정이 없어요.</li>`;
+}
+function heroHTML(items,nm){
+ const tl=items.filter(x=>x.start).map(x=>({...x,s:mins(x.start),e:x.end?mins(x.end):null})).sort((a,b)=>a.s-b.s);
+ let cur=null,next=null,from=null,to=null,free=false;
+ for(const x of tl){if(x.e!=null&&nm>=x.s&&nm<x.e){cur=x;from=x.s;to=x.e}}
+ next=tl.find(x=>x.s>nm&&x!==cur)||null;
+ if(!cur){const prev=tl.filter(x=>(x.e??x.s)<=nm);const pe=prev.length?Math.max(...prev.map(x=>x.e??x.s)):null;
+  if(next&&pe!=null){free=true;from=pe;to=next.s}}
+ const span=(to!=null&&from!=null)?Math.max(1,to-from):0,left=to!=null?to-nm:0,pct=span?Math.min(100,Math.max(0,(nm-from)/span*100)):0;
+ const bolt=`<svg class="bolt" viewBox="0 0 12 20" aria-hidden="true"><path d="M6 0 L0 11 H5 L3 20 L11 7 H6 L9 0Z" fill="#fff"/></svg>`;
+ let main;
+ if(cur)main=`<div class="lbl">⚡ 지금 할 일</div><div class="now">${esc(cur.title)}</div><div class="tm">${fmtT(cur.start)} ~ ${fmtT(cur.end).replace(/^오[전후] /,"")}${cur.note?" · "+esc(cur.note):""}</div>`;
+ else if(free)main=`<div class="lbl">⚡ 지금은</div><div class="now">집공부·자유</div><div class="tm">엄마가 정해요</div>`;
+ else if(next)main=`<div class="lbl">⚡ 곧 시작</div><div class="now">${esc(next.title)}</div><div class="tm">${dur(next.s-nm)} 뒤 시작 (${fmtT(next.start)})</div>`;
+ else main=`<div class="lbl">⚡ 오늘 일정</div><div class="now">${tl.length?"다 끝났어요!":"일정이 없어요"}</div><div class="tm">푹 쉬어요</div>`;
+ const bar=span?`<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="지난 시간"><i style="width:${pct.toFixed(1)}%"></i></div><div class="left">${dur(left)} 남았어요</div>`:"";
+ const nx=(cur||free)&&next?`<div class="nextup"><span>다음</span><b>${esc(next.title)}</b><span style="margin-left:auto;font-variant-numeric:tabular-nums">${fmtT(next.start)}</span></div>`:"";
+ return`<div class="hero">${bolt}${main}${bar}</div>${nx}`;
 }
 function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["note","메모","text"],...(scopeOpts?[["scope","어떻게 바꿀까요","select",scopeOpts]]:[]),]}}
 function openSched(item,src){
@@ -648,6 +707,12 @@ $("locSearch").oninput=renderLoc;
 $("sPrev").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,-1);renderSched()};
 $("sNext").onclick=()=>{dialHalf=null;schedDate=addDays(schedDate,1);renderSched()};
 $("sToday").onclick=()=>{dialHalf=null;schedDate=today();renderSched()};
+function showTab(t){if(!document.querySelector(`[data-nav="${t}"]`))t="today";
+ document.querySelectorAll("#navtabs [data-nav]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.nav===t)));
+ let n=0;document.querySelectorAll("#main > section[data-tab]").forEach(sec=>{const on=sec.dataset.tab===t;sec.style.display=on?"":"none";if(on&&!sec.hidden)n++});
+ $("main").classList.toggle("one",n<=1);$("main").classList.toggle("two",t==="food");try{sessionStorage.setItem("tab",t)}catch(e){}}
+$("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
+{let t0="today";try{t0=sessionStorage.getItem("tab")||"today"}catch(e){}showTab(t0)}
 $("tPrev").onclick=()=>{taskDate=addDays(taskDate,-1);renderTasks()};
 $("tNext").onclick=()=>{taskDate=addDays(taskDate,1);renderTasks()};
 $("tToday").onclick=()=>{taskDate=today();renderTasks()};
@@ -674,7 +739,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=32;
+const VERSION=33;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
