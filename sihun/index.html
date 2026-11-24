@@ -4069,7 +4069,7 @@ function teachMomBind(){ $('#tmom').onclick=()=>teachHome(true); const el=$('#tl
 home(); loadDB();
 // ===== 오늘의 공부 홈 화면과 주고받는 것 =====
 function allPassed(){ return SKILLS.every(s=>PROG.sk[s.id].lv>=5); } // 10개 기능 모두 최상위 통과 → 4학년 큰 수로
-function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length, teach:teachDone()}; }
+function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length, teach:teachDone(), pf:PROG.pfday===t}; }
 function todayTime(){ const t=today(); const concept=PROG.ctime.filter(c=>c.d===t).reduce((s,c)=>s+(c.sec||0),0); const problem=allAtt().filter(x=>x.d===t&&x.mode==='solve').reduce((s,x)=>s+(x.sec||0),0); return {concept,problem}; }
 function hubPlan(){ const t=nextTarget(), s=SKILLS[t.i], r=PROG.sk[s.id]; const lvn=t.kind==='solve'?LV[t.lv]:LV[Math.min(r.lv,4)];
   return {kind:t.kind, title:s.title, unit:s.unit, lv:lvn, lessonMin:estLesson(), checkMin:estCheck(), probMin:estProblems(), per:PER, ready:DB_STATE!=='loading', passed:SKILLS.filter(x=>PROG.sk[x.id].lv>=5).length, total:SKILLS.length}; }
@@ -4176,7 +4176,7 @@ function bookMomBind(){
   let s=''; m.querySelectorAll('.keys button').forEach(k=>k.onclick=async()=>{ const d=k.dataset.d; if(d==='x'){ m.remove(); return; } if(d==='b') s=s.slice(0,-1); else if(s.length<12) s+=d; m.querySelector('#bc').textContent=s;
     if(s.length===12){ const f=m.querySelector('#bcf'); f.className='fb show h'; f.textContent='여는 중…'; if(await bookUnlock(s)){ m.remove(); toast('📘 최상위 문제집이 열렸어요!'); parent('book'); } else { s=''; m.querySelector('#bc').textContent=''; f.className='fb show x'; f.textContent='코드가 달라요.'; } } }); }; }
 if(typeof document!=='undefined') setTimeout(()=>{ const w=setInterval(()=>{ if(DB_STATE!=='loading'){ clearInterval(w); bookLoad().then(ok=>{ if(ok&&CUR==='home') home(); }); } },500); },0);
-return { open(v){ home(); if(v==='preview') parentGate('prev'); else if(v==='book') parentGate('book'); else if(v==='teach') parentGate('teach'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
+return { open(v){ home(); if(v==='preview') parentGate('prev'); else if(v==='rec') parentGate('rec'); else if(v==='book') parentGate('book'); else if(v==='teach') parentGate('teach'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
 })(mountApp('host-m32','t-m32'));}catch(e){console.error('수학 3-2 불러오기 실패',e);return null}})();
 
 const APP_CONCEPT=(function(document){
@@ -7110,22 +7110,50 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
       <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
-  // 관리자 모드 (엄마 11/24: 첫 화면에서 바로 · 비밀번호 한 번)
-  function admin(){const A=(ic,t,sub,attr)=>`<button class="go light" style="text-align:left;font:600 18px 'Noto Sans KR',sans-serif" ${attr}>${ic} ${t}<span style="display:block;font-size:13px;font-weight:400;color:var(--sub)">${sub}</span></button>`;
+  // 관리자 모드 (엄마 11/24: 첫 화면에서 바로 · 비밀번호 한 번 / 11/25: 과목별 말고 한 화면에 — 💰 AI 비용 · 오늘 한눈에 · 하는 일별 버튼)
+  const AIN={m32tutor:'🔢 수학 과외',m32teachai:'🧑‍🏫 수학 가르치기',m32ana:'🔢 수학 AI 분석',kotutor:'📖 국어 과외',koana:'📖 국어 AI 분석',writecoach:'✍️ 글쓰기 첨삭'};
+  const aiUsd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당) — report.html 과 같은 값
+  const aiWon=d=>Math.round(d*1450).toLocaleString('ko-KR')+'원';
+  async function adminAI(){const el=document.getElementById('admAI');if(!el)return;const t=HUB.today(),ym=t.slice(0,7);let M=null;
+    try{const d=DB||await HUB.db;if(d){const s=await d.doc('aiuse/'+ym).get();M=s.exists?s.data():null}}catch(e){el.innerHTML='<p class="note">AI 비용을 못 불러왔어요. 인터넷 연결을 확인해 주세요.</p>';return}
+    if(!document.getElementById('admAI'))return;
+    const D=(M&&M.days)||{};const add=(a,v)=>{a.n+=v.n||0;a.in+=v.in||0;a.out+=v.out||0;return a};const Z=()=>({n:0,in:0,out:0});
+    const day=D[t]||{},dS=Object.values(day).reduce(add,Z());const mon={},mS=Z();
+    Object.values(D).forEach(o=>Object.entries(o).forEach(([c,v])=>{mon[c]=add(mon[c]||Z(),v);add(mS,v)}));
+    const keys=Object.keys(D).sort();const y=+ym.slice(0,4),m=+ym.slice(5,7),dim=new Date(y,m,0).getDate();
+    const since=keys.length?Math.max(1,+t.slice(8,10)-+keys[0].slice(8,10)+1):0;const proj=since?aiUsd(mS)/since*dim:0;
+    const box=(v,l)=>`<div style="flex:1;min-width:120px;background:var(--bg,#f6f7fb);border-radius:12px;padding:10px 12px"><b style="font-size:20px">${v}</b><div class="note" style="margin:2px 0 0">${l}</div></div>`;
+    el.innerHTML=!mS.n?`<p class="note" style="margin:0">이번 달 AI 사용 기록이 아직 없어요. 시훈이가 AI를 썼는데도 계속 비어 있으면 서버 기록이 꺼져 있는 거예요. Claude에게 말해 주세요.</p>`:
+      `<div style="display:flex;gap:8px;flex-wrap:wrap">${box(aiWon(aiUsd(dS)),`오늘 · ${dS.n}번`)}${box(aiWon(aiUsd(mS)),`${m}월 지금까지 · ${mS.n}번`)}${box('약 '+aiWon(proj),`이 속도면 ${m}월 한 달`)}</div>
+      <table class="plan" style="text-align:left;margin-top:10px;font-size:15px"><tr><td></td><td class="m">오늘</td><td class="m">${m}월</td></tr>
+      ${Object.keys(AIN).filter(c=>mon[c]).map(c=>`<tr><td>${AIN[c]}</td><td class="m">${day[c]?day[c].n+'번 · '+aiWon(aiUsd(day[c])):'-'}</td><td class="m">${mon[c].n}번 · ${aiWon(aiUsd(mon[c]))}</td></tr>`).join('')}</table>
+      <p class="note" style="margin:6px 0 0">실제로 쓴 토큰으로 계산한 값이에요(1달러 1,450원). 기록 ${since}일 기준 하루 평균 ${aiWon(aiUsd(mS)/since)}. 정확한 청구액은 Claude 콘솔(platform.claude.com) Usage에서 봐요.</p>`}
+  function admin(){const B=(ic,t,sub,attr)=>`<button class="go light" style="text-align:left;font:600 17px 'Noto Sans KR',sans-serif;margin:6px 0" ${attr}>${ic} ${t}<span style="display:block;font-size:13px;font-weight:400;color:var(--sub)">${sub}</span></button>`;
+    const H=t=>`<h2 style="font-size:19px;margin:20px 0 6px">${t}</h2>`;const ms=stats('math');
+    const row=(ic,n,h)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><span style="min-width:92px"><b>${ic} ${n}</b></span>${h}</div>`;
     $h('#hub').innerHTML=`<div class="hh"><h1>👩 관리자 모드</h1><div class="d">${dateLabel()}</div></div>
       <div class="nav"><button data-h="home">◀ 첫 화면</button><span></span><button data-h="lock">🔒 잠그기</button></div>
-      <div class="panel">
-      ${A('📋','하루 리포트','과목별 기록 · 틀린 문제 · AI 분석 · AI 사용량','data-h="report"')}
-      ${A('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
-      ${A('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
-      ${A('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
-      ${A('🔢','수학 3-2 미리보기','문제 · 정답 · 시훈이 결과','data-h="aopen" data-app="m32" data-v="preview"')}
-      ${A('📘','최상위 문제집 미리보기','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
-      ${A('🧑‍🏫','수학 AI에게 가르치기','직접 해 보기 · 시훈이가 콩이와 한 대화 전체','data-h="aopen" data-app="m32" data-v="teach"')}
-      ${A('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
-      ${A('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
-      ${A('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
-      </div>`}
+      <div class="panel" style="text-align:left">
+      ${H('💰 AI 비용')}<div id="admAI"><p class="note" style="margin:0">불러오는 중…</p></div>
+      ${H('📅 오늘 시훈이')}
+      ${row('🇺🇸','영어',status('en'))}${row('📖','국어',status('ko'))}${row('🔢','수학',status('math'))}
+      ${M32()?row('🖼','그림 복습',`<span class="st ${ms.pf?'done':''}">${ms.pf?'오늘 1문제 했어요 ✅':'오늘은 아직(헤맨 5단계 문제가 있을 때만 나와요)'}</span>`):''}
+      ${row('✍️','글쓰기',status('write'))}
+      ${H('📋 기록 보기')}
+      ${B('📋','하루 리포트','과목별 기록 · 틀린 문제 · 🔍 AI 분석 · 기록 내보내기','data-h="report"')}
+      ${B('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
+      ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
+      ${B('🧑‍🏫','가르치기 대화','시훈이가 콩이와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
+      ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
+      ${H('👀 직접 해 보기 (답 포함)')}
+      ${B('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
+      ${B('🔢','수학 3-2 미리보기','문제 · 정답','data-h="aopen" data-app="m32" data-v="preview"')}
+      ${B('📘','최상위 문제집','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
+      ${B('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
+      ${H('⚙️ 넣기 · 설정')}
+      ${B('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
+      ${B('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
+      </div>`;adminAI()}
   function penCal(){let k=window.penPxPerMm();const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;font-size:16px;line-height:1.5;color:#222">
