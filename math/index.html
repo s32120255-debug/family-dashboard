@@ -101,6 +101,8 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .qline.txt{font-size:28px}
 .qline.stack{flex-direction:column;gap:10px}
 .qline .sub{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.qline.five .box{min-width:1.9em;padding:0 .1em}
+.qline.five .sub{gap:6px}
 .box{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.3em;padding:0 .2em;border:3px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 .box.act{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
 .box.ok{border-color:var(--green);background:var(--green-soft)}
@@ -252,15 +254,16 @@ const TYPES={
     {h:`그럼 ${b*q} ÷ ${b} = [[0]]`,a:[String(q)],hints:["바로 위 곱셈 식의 빈칸과 비교해 볼까? 같은 걸 묻고 있을까?"]}]}),
   pat:(p,g)=>{const v=+g[0];let s=p.b+"단";if(Math.abs(v-p.q)===1)s+=" · 한 칸 옆";return s}},
 
- A3:{hard:p=>(p.k>=6?1:0)+(p.N%p.k?0.3:0),name:"배수",code:"A3",ex:"36은 4의 배수? O / X",sec:2.5,why:"최소공배수 → 통분 → 분모가 다른 분수 계산으로 가는 길이에요.",
-  idea:"□의 배수는 □단(□×1, □×2, …)에 나오는 수예요.",
-  rand:()=>{const k=ri(2,9),q=ri(2,9),yes=Math.random()<.5;return{k,N:yes?k*q:k*q+ri(1,k-1)}},key:p=>p.k+"/"+p.N,
-  make:({k,N})=>({html:`${N}은 ${k}의<br>배수일까?`,a:[N%k===0?"O":"X"],kind:"ox",text:`${N}은 ${k}의 배수?`,cls:"txt"}),
-  steps:({k,N})=>{const q=Math.floor(N/k);return{head:`${N}은 ${k}의 배수일까?`,list:[
-    {h:`${k}단을 ${N}까지 세면 마지막은 ${k} × [[0]]`,a:[String(q)],hints:[`${k} × 5는 얼마야? ${N}보다 클까 작을까?`,`${k} × ${q} 와 ${k} × ${q+1} 중에 ${N}을 넘지 않는 건?`]},
-    {h:`${k} × ${q} = [[0]]`,a:[String(k*q)],hints:[`${k}단에서 ${q}번째 수는?`]},
-    {h:`${N}이 ${k}단에 나와?`,a:[N%k===0?"O":"X"],kind:"ox",hints:[`${k} × ${q} = ${k*q}. 이게 ${N}과 같은지 보자.`]}]}},
-  pat:(p,g)=>(g[0]==="O"?"X인데 O":"O인데 X")+" · "+p.k+"단"},
+ A3:{hard:p=>(p.k>=6?1:0),name:"배수",code:"A3",ex:"7의 배수 5개",sec:6,why:"공배수 → 통분으로 가는 길이다냥.",
+  idea:"앞의 수에 같은 수를 계속 더하면 다음 배수다냥.",
+  rand:()=>({k:ri(2,12)}),key:p=>""+p.k,
+  make:({k})=>({html:`<span class="sub">${k}의 배수</span><span class="sub">[[0]] [[1]] [[2]] [[3]] [[4]]</span>`,a:[1,2,3,4,5].map(i=>String(k*i)),kind:"num",cls:"mid stack five",text:`${k}의 배수 5개`}),
+  steps:({k})=>({head:`${k}의 배수 5개`,list:[
+    {h:`${k} × 1 = [[0]]`,a:[String(k)],hints:["1번 곱하면 그대로다냥."]},
+    {h:`${k} + ${k} = [[0]]`,a:[String(2*k)],hints:[`${k} × 2랑 같다냥.`]},
+    {h:`${2*k} + ${k} = [[0]]`,a:[String(3*k)],hints:[`${k} × 3이다냥.`]},
+    {h:`그다음 둘: [[0]] [[1]]`,a:[String(4*k),String(5*k)],hints:[`계속 ${k}씩 더하자냥.`]}]}),
+  pat:(p,g)=>{const i=g.findIndex((v,x)=>+v!==p.k*(x+1));return (i>=0?(i+1)+"번째 칸":"")+" · "+p.k+"단"}},
 
  A6:{hard:p=>(p.k>=6?1:0)+(p.N%p.k?0.3:0),name:"약수",code:"A6",ex:"6은 42의 약수? O / X",sec:2.5,why:"최대공약수 → 약분 → 분수의 곱셈으로 가는 길이에요.",
   idea:"□가 ○의 약수면 ○ ÷ □가 나누어떨어져요(나머지 0).",
@@ -361,8 +364,8 @@ const TYPES={
   steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
   pat:(p,g)=>multPat(p.x,p.c,g[0])},
 
- T12:{hard:p=>p.c>=6?1:0,name:"11·12단",code:"0-2",ex:"12 × 7",sec:2.5,why:"19단과 두 자리 곱셈의 바탕이에요.",idea:"12 × 7을 10 × 7과 2 × 7로 쪼개요.",
-  rand:()=>({x:ri(11,12),c:ri(2,9)}),key:p=>p.x+"x"+p.c,
+ T12:{hard:p=>p.c>=6?1:0,name:"12단",code:"0-2",ex:"12 × 7",sec:2.5,why:"19단과 두 자리 곱셈의 바탕이다냥.",idea:"12 × 7을 10 × 7과 2 × 7로 쪼개요.",
+  rand:()=>({x:12,c:ri(2,12)}),key:p=>p.x+"x"+p.c,
   make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",text:`${x}×${c}`}),
   steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
   pat:(p,g)=>multPat(p.x,p.c,g[0])},
@@ -376,17 +379,28 @@ const TYPES={
     {h:`모두 ${fr(1,d)}이 [[0]]개 → ${fr("?",d)}`,a:[String(a+b)],hints:["두 개수를 더하면?"]}]}),
   pat:(p,g)=>+g[0]===p.a*p.b?"분자를 곱함":"분자 계산 틀림"}
 };
-const ORDER0=["A1","A3","B5","A6","T19","FR","OF","CO","A2","A7","B6","T12","C1"];
-const PLAN0={A1:3,A3:2,B5:2,A6:1,T19:1,FR:1,OF:1};
+const ORDER0=["A1","A3","B5","A6","T12","T19","FR","OF","CO","A2","A7","B6","C1"];
+const PLAN0={A1:3,A3:2,B5:2,A6:1,T12:1,FR:1,OF:1,CO:1};
 
 /* ───────── 상태 ───────── */
 const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
 function freshCore(){return{v:1,cfg:{plan:clone(PLAN0),order:ORDER0.slice(),carryOn:true,tc:{}},ts:{},lastDay:null,carry:{},savedAt:0}}
+/* 사람마다 기록을 따로 */
+const PROFILES=[{id:"sihun",name:"시훈",icon:"🥷"},{id:"mom",name:"엄마",icon:"🐱"}];
+let PID=null;try{PID=localStorage.getItem("sihun-app-pid")}catch(e){}
+if(!PROFILES.some(p=>p.id===PID))PID="sihun";
+const kCore=()=>PID==="sihun"?KCORE:KCORE+"-"+PID,kDays=()=>PID==="sihun"?KDAYS:KDAYS+"-"+PID;
+const dCore=()=>PID==="sihun"?"app/core":"core/"+PID,dDays=()=>PID==="sihun"?"days":"days-"+PID;
+const pname=()=>PROFILES.find(p=>p.id===PID).name;
 let S=freshCore(),DAYS={};
-try{const c=JSON.parse(localStorage.getItem(KCORE)||"null");if(c&&c.cfg)S=c}catch(e){}
-try{DAYS=JSON.parse(localStorage.getItem(KDAYS)||"{}")||{}}catch(e){DAYS={}}
-ORDER0.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});
-S.cfg.order=S.cfg.order.filter(id=>TYPES[id]);
+function loadLocal(){S=freshCore();DAYS={};
+  try{const c=JSON.parse(localStorage.getItem(kCore())||"null");if(c&&c.cfg)S=c}catch(e){}
+  try{DAYS=JSON.parse(localStorage.getItem(kDays())||"{}")||{}}catch(e){DAYS={}}
+  ORDER0.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});
+  S.cfg.order=S.cfg.order.filter(id=>TYPES[id]);
+  if(!S.cfg.coAdded){S.cfg.coAdded=true;if(!S.cfg.plan.CO)S.cfg.plan.CO=1}
+  if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
+loadLocal();
 
 const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??1,n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
 const tst=id=>{const t=S.ts[id]||(S.ts[id]={runs:[],start:null,target:null,grad:false,gradDays:[],conceptDone:false,pool:[]});if(!t.facts)t.facts={};return t};
@@ -408,59 +422,69 @@ function owed(id){const d=D();return (d.plan[id]||0)+(d.carry[id]||0)}
 /* 저장: 이 기기(localStorage) + 가능하면 계정 저장소(db) */
 let DB=null,sync="local";const dirty=new Set();let flushT=null,flushing=false;
 function persistLocal(){
-  try{localStorage.setItem(KCORE,JSON.stringify(S))}catch(e){}
-  try{const keys=Object.keys(DAYS).sort(),cut=keys.length-45,slim={};keys.forEach((k,i)=>{slim[k]=i<cut?{...DAYS[k],sets:DAYS[k].sets.map(s=>({...s,items:undefined}))}:DAYS[k]});localStorage.setItem(KDAYS,JSON.stringify(slim))}catch(e){}
+  try{localStorage.setItem(kCore(),JSON.stringify(S))}catch(e){}
+  try{const keys=Object.keys(DAYS).sort(),cut=keys.length-45,slim={};keys.forEach((k,i)=>{slim[k]=i<cut?{...DAYS[k],sets:DAYS[k].sets.map(s=>({...s,items:undefined}))}:DAYS[k]});localStorage.setItem(kDays(),JSON.stringify(slim))}catch(e){}
 }
 function save(dayKey){S.savedAt=Date.now();dirty.add("core");if(dayKey&&DAYS[dayKey]){DAYS[dayKey].savedAt=Date.now();dirty.add("d:"+dayKey)}persistLocal();if(DB){clearTimeout(flushT);flushT=setTimeout(flush,1200)}}
 async function flush(){if(!DB)return;if(flushing){flushT=setTimeout(flush,1200);return}flushing=true;
-  try{for(const k of [...dirty]){dirty.delete(k);try{if(k==="core")await DB.doc("app/core").set(clone(S));else{const d=k.slice(2);await DB.doc("days/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
+  try{for(const k of [...dirty]){dirty.delete(k);try{if(k==="core")await DB.doc(dCore()).set(clone(S));else{const d=k.slice(2);await DB.doc(dDays()+"/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
+let DBH=null;
 async function connectDB(){
-  try{if(!window.claude||!window.claude.use)return;const db=await window.claude.use("db");if(!db)return;
-    const core=await db.doc("app/core").get();let changed=false;
+  try{if(!DBH){if(!window.claude||!window.claude.use)return;DBH=await window.claude.use("db");if(!DBH)return}const db=DBH;
+    const core=await db.doc(dCore()).get();let changed=false;
     if(core.exists){const c=core.data();if((c.savedAt||0)>(S.savedAt||0)&&c.cfg){S=clone(c);changed=true}}
-    const ds=await db.collection("days").limit(1000).get();
+    const ds=await db.collection(dDays()).limit(1000).get();
     ds.docs.forEach(d=>{const v=d.data();if(!v)return;if(!DAYS[d.id]||(v.savedAt||0)>(DAYS[d.id].savedAt||0)){DAYS[d.id]=clone(v);changed=true}});
     DB=db;sync="db";
     if(!core.exists){dirty.add("core");Object.keys(DAYS).forEach(k=>dirty.add("d:"+k))}
     else{const remote=new Set(ds.docs.map(d=>d.id));Object.keys(DAYS).forEach(k=>{if(!remote.has(k))dirty.add("d:"+k)})}
     S.lastDay=S.lastDay||null;ensureToday();persistLocal();flush();
-    if(changed&&(view==="home"||view==="parent"||view==="report"))render();
+    if(changed&&(view==="home"||view==="parent"||view==="report"||view==="mine"))render();
   }catch(e){sync="local"}
 }
 
+async function switchTo(pid){
+  if(DB){clearTimeout(flushT);await flush()}
+  PID=pid;try{localStorage.setItem("sihun-app-pid",pid)}catch(e){}
+  loadLocal();DB=null;sync="local";dirty.clear();ensureToday();
+  view="home";render();connectDB();
+}
 /* ───────── 화면 ───────── */
 let PREVIEW=false;
-let view="home",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
+let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord}[view]||vHome;
+  const f={who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord}[view]||vHome;
   app.innerHTML=f()+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
 }
 const bar=(title,right="")=>`${PREVIEW?'<div class="pv">미리 보기 · 기록이 남지 않아요 · <button data-act="pvexit">끝내기</button></div>':""}<div class="bar"><button class="nb" data-act="home">처음으로</button><span class="where">${title}</span><span class="sp"></span>${right}</div>`;
 
+/* 누가 하나 */
+function vWho(){return `<div class="page" style="justify-content:center;gap:14px"><h1 style="text-align:center">누가 할 거냥?</h1>
+  ${PROFILES.map(p=>`<button class="next" style="align-items:center" data-act="who" data-arg="${p.id}"><span class="v">${p.icon} ${p.name}</span></button>`).join("")}
+  <p class="small muted" style="text-align:center">기록은 사람마다 따로 남아요.</p></div>`}
 /* 홈 */
 function nextItem(){for(const id of S.cfg.order){const o=owed(id);if(o>0&&(D().done[id]||0)<o)return id}return null}
 function vHome(){
-  if(!greeted&&!PREVIEW&&!modal){greeted=true;modal=greetModal}
   const d=D(),nx=nextItem(),totalOwed=S.cfg.order.reduce((s,id)=>s+owed(id),0),totalDone=S.cfg.order.reduce((s,id)=>s+Math.min(d.done[id]||0,owed(id)),0);
   const carryN=Object.values(d.carry).reduce((a,b)=>a+b,0);
   const items=S.cfg.order.filter(id=>owed(id)>0).map(id=>{const T=TYPES[id],o=owed(id),dn=d.done[id]||0,plan=d.plan[id]||0,st=tst(id);
     const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
     return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span></button>`}).join("");
-  const opt=S.cfg.order.filter(id=>TYPES[id].optional&&!owed(id)).map(id=>`<button data-act="open" data-arg="${id}"><b>${TYPES[id].name}</b><span>골라서 한 세트 · ${TYPES[id].ex}</span></button>`).join("");
-  return `${bar(dayLabel(today()))}<div class="page">
+  const opt=S.cfg.order.filter(id=>TYPES[id].optional&&!owed(id)).map(id=>`<button data-act="open" data-arg="${id}"><b>${TYPES[id].name}</b><span>골라서 한 판</span></button>`).join("");
+  return `${bar(dayLabel(today()),`<button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`)}<div class="page">
    ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${TYPES[nx].ex}</span></button>`
-     :`<div class="notice good"><b>오늘 계획 ${totalOwed}세트를 다 했어.</b> 더 하고 싶으면 아래에서 골라도 돼.</div>`}
-   ${carryN?`<p class="small muted">점선 동그라미는 지난번에 남은 세트예요 (${carryN}세트).</p>`:""}
+     :`<div class="notice good"><b>오늘 ${totalOwed}판 끝! 수고했다냥.</b></div>`}
+   ${carryN?`<p class="small muted">점선 = 지난번에 남은 판 (${carryN})</p>`:""}
    <div class="plan">${items||'<p class="muted">오늘 계획이 비어 있어요. 부모님 화면에서 정해 주세요.</p>'}</div>
    <div class="side">${opt}
-     <button data-act="go" data-arg="word"><b>문장제 코너</b><span>시계 없이 천천히 · 준비 중</span></button>
-     <button data-act="go" data-arg="mine"><b>내 기록</b><span>내가 얼마나 빨라졌나</span></button>
-     <button class="gate" id="gate" data-hold="parent"><b>부모님</b><span>꾹 누르고 있기</span><i class="fill"></i></button>
+     <button data-act="go" data-arg="word"><b>문장제 코너</b><span>준비 중</span></button>
+     <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
+     <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
    </div></div>`;
 }
 
@@ -473,15 +497,13 @@ function growthLine(){
   S.cfg.order.forEach(id=>{const per=k=>{const ss=(DAYS[k].sets||[]).filter(x=>x.type===id);return ss.length?Math.min(...ss.map(x=>x.t/x.n)):null};
     const ks=past.filter(k=>per(k)!=null);if(ks.length<2)return;const a=per(ks[ks.length-2]),b=per(ks[ks.length-1]),n=tc(id).n,gain=(a-b)*n;
     if(gain>=1&&(!best||gain>best.gain))best={id,gain,a:a*n,b:b*n}});
-  if(best)return `지난번 기록을 보면 ${TYPES[best.id].name}가 ${fmt(best.a)} → ${fmt(best.b)}, ${Math.round(best.gain)}초 빨라졌어. 네 머리가 실제로 빨라지고 있다는 증거야.`;
-  const last=past[past.length-1],ls=DAYS[last].sets;let hit=ls.filter(x=>x.pred&&x.pred.t!=null&&Math.abs(x.t-x.pred.t)<=Math.max(5,x.pred.t*.1)).length;
-  if(hit)return `지난번에 시간 예측을 ${ls.length}세트 중 ${hit}번 맞혔어. 자기 속도를 정확히 아는 게 똑똑한 거야.`;
-  return `지금까지 ${past.length}일, ${past.reduce((a,k)=>a+DAYS[k].sets.length,0)}세트를 했어. 기록이 쌓일수록 빨라지는 게 더 잘 보여.`;
+  if(best)return `${TYPES[best.id].name} ${fmt(best.a)} → ${fmt(best.b)}. ${Math.round(best.gain)}초 빨라졌다냥!`;
+  return `벌써 ${past.reduce((a,k)=>a+DAYS[k].sets.length,0)}판 했다냥.`;
 }
-const CHEER=["오늘도 한 세트씩. 시작 전에 예측부터 정확하게 해 보자.","틀려도 괜찮아. 어디서 막혔는지 알면 그게 다음 세트의 힌트야.","빨리보다 정확히 먼저. 정확하면 속도는 따라와.","어제의 너랑만 겨루는 거야. 오늘은 몇 초 줄일 수 있을까?","모르는 건 방법 찾기로 같이 보면 돼. 시작해 볼까?"];
+const CHEER=["오늘도 한 판 가보자냥!","틀려도 괜찮다옹. 다시 보면 된다냥.","정확하게 먼저. 빠르기는 따라온다냥.","어제의 너보다 1초만 줄여 보자옹.","닌자는 조용히 빠르다냥. 가보자!"];
 function greetModal(){const g=growthLine();const c=CHEER[(new Date().getDate()+Object.keys(DAYS).length)%CHEER.length];
-  return `<div class="veil"><div class="sheet"><h2>시작하기 전에</h2>
-   <p>화면의 시계는 너를 재촉하려고 있는 게 아니야. <b>네 머리가 아는 걸 꺼내는 속도</b>가 얼마나 빨라지는지 네 눈으로 보려고 있는 거야. 다른 사람이 아니라 어제의 너랑만 비교해.</p>
+  return `<div class="veil"><div class="sheet"><h2>🐱 시작 전에</h2>
+   <p>시계는 재촉이 아니다냥. <b>네 머리가 빨라지는 걸</b> 보는 거다옹. 어제의 너랑만 겨룬다냥.</p>
    ${g?`<p class="notice good">${g}</p>`:""}<p>${c}</p>
    <button class="bigbtn" data-act="greetok">시작!</button></div></div>`}
 let PRED={t:null,w:null};
@@ -492,27 +514,22 @@ function predOpts(id){const n=tc(id).n,lr=lastRun(id);let base;
   const s=finalPQ(id)*n;return [1,1.5,2,2.5,3,4].map(k=>Math.round(s*k/10)*10)}
 function vIntro(){
   if(PREVIEW){const id=RUN.type,T=TYPES[id];return `${bar(T.name)}<div class="page">
-    <div class="card"><h2>${T.name}</h2><p class="muted">${T.ex}</p><p><b>이걸 하면:</b> ${T.why}</p><p class="small muted">시훈이가 보는 화면 그대로예요. "다음 ▶"으로 넘기면서 보세요. 시간, 오답, 예측, 진도 모두 저장되지 않아요.</p></div>
+    <div class="card"><h2>${T.name}</h2><p class="muted">${T.ex}</p><p><b>이걸 하면:</b> ${T.why}</p><p class="small muted">시훈이가 보는 화면 그대로예요. "다음 ▶"으로 넘기면서 보세요. 시간, 오답, 진도 모두 저장되지 않아요.</p></div>
     <button class="bigbtn" data-act="concept">처음 한 번 보여주기 + 방법 찾기 보기</button>
     ${T.scaffold?`<button class="bigbtn ghost" data-act="pvset" data-arg="0">세트 보기 (칸 채우기 단계)</button><button class="bigbtn ghost" data-act="pvset" data-arg="1">세트 보기 (답 칸만 단계)</button>`:`<button class="bigbtn ghost" data-act="pvset" data-arg="1">세트 보기 (${tc(id).n}문제)</button>`}</div>`}
   const id=RUN.type,T=TYPES[id],c=tc(id),st=tst(id),n=c.n,lr=lastRun(id),bp=bestPQ(id);
   const needConcept=!st.conceptDone&&!c.skipConcept;
-  const tgt=st.target?`지금 목표 <b>${fmt(st.target*n)}</b> (최종 기준 ${fmt(finalPQ(id)*n)})`
-    :st.runs.length===0?`처음 한 번은 빠른 확인이야. <b>${fmt(finalPQ(id)*n)}</b> 안에 오답 ${c.allow}개까지면 이미 되는 거라 바로 졸업.`
-    :`세트를 ${3-Math.min(3,st.runs.length)}번 더 하면 네 출발 기록이 정해져. 목표는 거기서 10%씩 줄여 가.`;
-  const tchips=predOpts(id).map(v=>`<button class="chip ${PRED.t===v?"on":""}" data-act="pt" data-arg="${v}">${fmt(v)}</button>`).join("");
-  const wchips=[0,1,2,3].map(v=>`<button class="chip ${PRED.w===v?"on":""}" data-act="pw" data-arg="${v}">${v===3?"3개 넘게":v+"개"}</button>`).join("");
+  const tgt=st.target?`목표 <b>${fmt(st.target*n)}</b>`
+    :st.runs.length===0?`처음 한 판! <b>${fmt(finalPQ(id)*n)}</b> 안이면 바로 졸업이다냥.`
+    :`${3-Math.min(3,st.runs.length)}판 더 하면 내 출발 기록이 생긴다냥.`;
   return `${bar(T.name)}<div class="page">
-   <div class="card"><h2>${T.name} <span class="small muted">${n}문제</span></h2><p class="muted">${T.ex}</p>
-     <p><b>이걸 하면:</b> ${T.why}</p>
+   <div class="card"><h2>${T.name} <span class="small muted">${n}문제</span></h2>
      ${lr?`<dl class="kv"><dt>지난번</dt><dd class="tab">${fmt(lr.t)} · 오답 ${lr.w}</dd>${bp?`<dt>내 가장 빠른</dt><dd class="tab">${fmt(bp*n)}</dd>`:""}</dl>`:""}
-     ${T.scaffold?`<p class="small"><span class="pill new">${lvl(id)===0?"칸 채우기 단계":"답 칸만"}</span> ${lvl(id)===0?"식 칸을 순서대로 채워. 기준 안에 한 세트를 풀면 답 칸만 나오는 단계로 가.":""}</p>`:""}
+     ${T.scaffold?`<p class="small"><span class="pill new">${lvl(id)===0?"칸 채우기 단계":"답 칸만"}</span> ${lvl(id)===0?"칸을 순서대로 채우자냥.":""}</p>`:""}
      <p class="small">${tgt}</p></div>
-   ${needConcept?`<div class="notice"><b>처음이니까 방법부터.</b> 한 문제를 먼저 같이 보고, 그다음 시계 없이 ${T.conceptN||3}문제를 빈칸 채우면서 풀어.</div>
-     <button class="bigbtn" data-act="concept">방법 찾기 시작</button>`:""}
-   <div class="card"><h3>먼저 예측해 봐</h3><p class="small muted">몇 초 걸릴까?</p><div class="chips">${tchips}</div>
-     <p class="small muted">몇 개 틀릴까?</p><div class="chips">${wchips}</div></div>
-   <button class="bigbtn ${needConcept?"ghost":""}" data-act="start" ${PRED.t==null||PRED.w==null?"disabled":""}>${needConcept?"방법 알아, 바로 시작":"시작"}</button>
+   ${needConcept?`<div class="notice"><b>처음이니까 먼저 같이 보자냥.</b></div>
+     <button class="bigbtn" data-act="concept">방법 보기</button>`:""}
+   <button class="bigbtn ${needConcept?"ghost":""}" data-act="start">${needConcept?"알아! 바로 시작":"시작!"}</button>
    ${st.conceptDone||c.skipConcept?`<button class="nb" data-act="concept">방법 다시 보기</button>`:""}
   </div>`;
 }
@@ -545,6 +562,8 @@ function buildSet(id,lvOver){
   const out=[],grp={},gk=p=>JSON.stringify(Object.values(p)[0]);
   for(const [w,p] of scored){if(out.length>=n)break;const g=gk(p);if((grp[g]||0)>=3&&scored.length>n*3)continue;grp[g]=(grp[g]||0)+1;out.push(p)}
   for(const [w,p] of scored){if(out.length>=n)break;if(!out.includes(p))out.push(p)}
+  if(out.length<n){const keys=new Set(out.map(T.key));cand.forEach((p,k)=>{if(out.length<n&&!keys.has(k)){keys.add(k);out.push(p)}})}
+  while(out.length<n&&out.length)out.push(out[out.length%Math.max(1,out.length)]);
   out.sort(()=>Math.random()-.5);
   const lv=lvOver??lvl(id);return out.map(p=>({p,q:T.make(p,lv)}));
 }
@@ -558,7 +577,7 @@ function updateFacts(id,probs,items){
 function startSet(){
   const id=RUN.type;RUN.probs=buildSet(id,PREVIEW?RUN.lv:undefined);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
   RUN.items=RUN.probs.map(()=>({ms:0,tries:[],skip:false,mis:0,ok:false,ok1:false}));
-  RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred={...PRED};RUN.started=Date.now();RUN.user=null;
+  RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred=null;RUN.started=Date.now();RUN.user=null;
   view="play";beginQ();render();
 }
 const curIdx=()=>RUN.order[RUN.pos];
@@ -603,7 +622,7 @@ function submit(){
   else if(q.kind==="ox")given=RUN.vals.slice(0,1);
   else{given=q.a.map((_,k)=>RUN.vals[k]||"");const empty=given.findIndex(v=>!v);if(empty>=0){RUN.act=empty;softRender();return}
     // 잘못 누른 게 분명할 때: 자리 수가 다르면 한 번 묻고, 시간은 멈춤
-    if(!it.misAsked&&given.some((v,k)=>v.length!==q.a[k].length)){it.misAsked=true;it.mis++;stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>이렇게 낼까?</h3><p class="qline mid">${esc(given.join(" , "))}</p><p class="muted small">누르다 손이 미끄러졌을 수도 있어서 한 번만 물어봐. 이 시간은 안 세.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="misfix">고칠래</button><button class="bigbtn" style="flex:1" data-act="miskeep">이대로 낼래</button></div></div></div>`;render();return}}
+    if(!it.misAsked&&given.some((v,k)=>v.length!==q.a[k].length)){it.misAsked=true;it.mis++;stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>이렇게 낼 거냥?</h3><p class="qline mid">${esc(given.join(" , "))}</p><p class="muted small">손이 미끄러졌을 수도 있다옹. 이 시간은 안 센다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="misfix">고칠래</button><button class="bigbtn" style="flex:1" data-act="miskeep">이대로 낼래</button></div></div></div>`;render();return}}
   judge(given);
 }
 function judge(given){
@@ -612,7 +631,7 @@ function judge(given){
   it.tries.push(given.join("|"));
   if(ok){it.ok=true;if(it.tries.length===1)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();setTimeout(nextQ,220);return}
   if(it.tries.length===1){it.pat=TYPES[RUN.type].pat(pr.p,given)||"";}
-  if(it.tries.length===1&&q.kind!=="ox"){RUN.say="다시 한 번 볼까?";RUN.vals=q.kind==="plot"?[]:[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
+  if(it.tries.length===1&&q.kind!=="ox"){RUN.say="다시 보자냥";RUN.vals=q.kind==="plot"?[]:[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
   stopClock();nextQ();
 }
 function nextQ(){
@@ -651,29 +670,24 @@ function finishSet(){
 function vResult(){
   const {rec,out,prevBest,prevLast,id,wrongs}=LAST,T=TYPES[id],c=tc(id),st=tst(id),n=rec.n;
   const facts=[];
-  if(rec.pred&&rec.pred.t!=null){const diff=rec.t-rec.pred.t,tol=Math.max(5,rec.pred.t*.1);
-    if(Math.abs(diff)<=tol)facts.push([1,`시간 예측이 맞았어. ${fmt(rec.pred.t)}라고 했고 ${fmt(rec.t)} 걸렸어. 네 판단이 정확했어.`]);
-    else facts.push([0,`예측은 ${fmt(rec.pred.t)}, 실제는 ${fmt(rec.t)}. ${diff>0?Math.round(diff)+"초 더":Math.round(-diff)+"초 덜"} 걸렸어.`]);
-    const pw=rec.pred.w,hit=pw===3?rec.w>=3:pw===rec.w;
-    facts.push(hit?[1,`오답 예측도 맞았어. ${pw===3?"3개 넘게":pw+"개"}라고 했고 ${rec.w}개였어.`]:[0,`오답은 ${pw===3?"3개 넘게":pw+"개"}라고 했고 ${rec.w}개였어.`]);}
-  if(prevLast){const dl=prevLast.t/prevLast.n*n-rec.t;if(dl>=1)facts.push([1,`지난번(${fmt(prevLast.t/prevLast.n*n)})보다 ${Math.round(dl)}초 빨라졌어.`]);else facts.push([0,`지난번은 ${fmt(prevLast.t/prevLast.n*n)}였어.`])}
-  if(prevBest!=null&&rec.w<=c.allow&&rec.t/n<prevBest-0.01)facts.push([1,`네 기록 중에 가장 빨라. 전에는 ${fmt(prevBest*n)}였어.`]);
-  if(out.levelUp)facts.push([1,`칸 채우기 세트를 기준 안에 풀었어. 다음부터는 답 칸만 나와. 순서는 머릿속으로: ÷ 다음 ×.`]);
-  else if(out.quick)facts.push([1,`첫 세트에 기준 ${fmt(finalPQ(id)*n)} 안에 들어왔어. 이건 이미 되는 거라 졸업이야.`]);
-  else if(out.grad)facts.push([1,`서로 다른 이틀에 최종 기준 안에 들어왔어. 졸업이야.`]);
-  else if(out.pass)facts.push([1,`목표 ${fmt(out.tgtBefore*n)} 안에 들어왔어. 다음 목표는 ${fmt(st.target*n)}.`]);
-  else if(out.newStart)facts.push([0,`세 번 푼 평균 ${fmt(st.start*n)}이 네 출발 기록이야. 첫 목표는 ${fmt(st.target*n)}.`]);
-  else if(st.target&&rec.w<=c.allow)facts.push([0,`목표는 ${fmt(st.target*n)}. 이번엔 ${Math.round(rec.t-st.target*n)}초 차이였어.`]);
-  if(rec.w>c.allow)facts.push([0,`오답이 ${rec.w}개라 이번 세트는 기록만 남겨. 틀린 문제를 같이 짚어 볼까?`]);
+  if(prevLast){const dl=prevLast.t/prevLast.n*n-rec.t;if(dl>=1)facts.push([1,`지난번보다 ${Math.round(dl)}초 빨라졌다냥!`]);else facts.push([0,`지난번은 ${fmt(prevLast.t/prevLast.n*n)}였다냥.`])}
+  if(prevBest!=null&&rec.w<=c.allow&&rec.t/n<prevBest-0.01)facts.push([1,`내 최고 기록이다냥!`]);
+  if(out.levelUp)facts.push([1,`칸 채우기 졸업! 다음부터는 답 칸만 나온다냥.`]);
+  else if(out.quick)facts.push([1,`처음부터 기준 안! 바로 졸업이다냥.`]);
+  else if(out.grad)facts.push([1,`이틀 기준 통과! 졸업이다냥.`]);
+  else if(out.pass)facts.push([1,`목표 통과! 다음 목표는 ${fmt(st.target*n)}이다냥.`]);
+  else if(out.newStart)facts.push([0,`내 출발 기록 ${fmt(st.start*n)}. 첫 목표는 ${fmt(st.target*n)}이다냥.`]);
+  else if(st.target&&rec.w<=c.allow)facts.push([0,`목표까지 ${Math.max(1,Math.round(rec.t-st.target*n))}초 남았다냥.`]);
+  if(rec.w>c.allow)facts.push([0,`이번 판은 기록만 남긴다냥. 틀린 거 같이 보자옹.`]);
   const mx=Math.max(...rec.items.map(x=>x.ms),1),bw=300/n;
   const bars=`<svg viewBox="0 0 300 90" role="img" aria-label="문제별 걸린 시간">${rec.items.slice().sort((a,b)=>a.o-b.o).map((x,k)=>{const h=Math.max(3,x.ms/mx*70);return `<rect x="${k*bw+1.5}" y="${80-h}" width="${bw-3}" height="${h}" rx="2" fill="${x.ok1?"var(--blue)":"var(--amber)"}"/>`}).join("")}<line x1="0" y1="80.5" x2="300" y2="80.5" stroke="var(--line)"/><text x="0" y="90" font-size="9" fill="var(--ink-2)">1번</text><text x="300" y="90" font-size="9" text-anchor="end" fill="var(--ink-2)">${n}번</text></svg>`;
   const left=owed(id)-(D().done[id]||0);
   return `${bar(T.name)}<div class="page">
    <div class="row" style="justify-content:space-between;align-items:flex-end"><div><p class="muted small">걸린 시간</p><p class="big">${fmt(rec.t)}</p></div><div style="text-align:right"><p class="muted small">오답</p><p class="big">${rec.w}</p></div></div>
    <div class="facts">${facts.map(([s,t])=>`<p class="${s?"star":""}">${t}</p>`).join("")}</div>
-   <div class="card"><p class="small muted">문제마다 걸린 시간 (주황은 처음에 틀린 문제)</p><div class="bars">${bars}</div></div>
-   ${wrongs.length?`<button class="bigbtn ${rec.w>c.allow?"":"ghost"}" data-act="review">틀린 ${wrongs.length}문제 같이 짚기</button>`:""}
-   ${left>0?`<button class="bigbtn" data-act="again">${T.name} 한 세트 더 (${left}세트 남음)</button>`:""}
+   <div class="card"><p class="small muted">문제마다 걸린 시간 · 주황은 틀린 것</p><div class="bars">${bars}</div></div>
+   ${wrongs.length?`<button class="bigbtn ${rec.w>c.allow?"":"ghost"}" data-act="review">틀린 ${wrongs.length}문제 같이 보기</button>`:""}
+   ${left>0?`<button class="bigbtn" data-act="again">한 판 더 (${left}판 남음)</button>`:""}
    <button class="bigbtn ghost" data-act="home">처음으로</button></div>`;
 }
 
@@ -697,10 +711,10 @@ function vConcept(){
     const lines=s.list.slice(0,dm.shown).map((st,k)=>`<div class="st ${k===dm.shown-1?"cur":"done"}"><span class="n">${"①②③④⑤⑥⑦⑧"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b class="box ok">${esc(st.a[+i])}</b>`)}${st.kind==="ox"?` <b class="box ok">${st.a[0]}</b>`:""}${st.kind==="plot"?` → (${esc(st.a[0])})`:""}</div>`).join("");
     const fig=s.fig==="PLOT"?"":s.fig?`<div class="fig">${s.fig}</div>`:"";
     return `${bar("먼저 한 번 보기")}<div class="page">
-      <p class="small muted">${TYPES[CON.type].name}는 처음이니까 한 문제를 같이 보자. 줄마다 무엇을 하는지 봐.</p>
+      <p class="small muted">처음이니까 같이 보자냥.</p>
       <div class="qline mid" style="justify-content:flex-start">${s.head}</div>${fig}
       <div class="steps">${lines}</div>
-      ${all?`<div class="notice">${TYPES[CON.type].idea}</div><button class="bigbtn" data-act="demoend">이제 내가 해 볼게</button>`:`<button class="bigbtn" data-act="demonext">다음 줄 보기</button>`}</div>`}
+      ${all?`<div class="notice">${TYPES[CON.type].idea}</div><button class="bigbtn" data-act="demoend">이제 내가 해볼게!</button>`:`<button class="bigbtn" data-act="demonext">다음 줄 보기</button>`}</div>`}
   const T=TYPES[CON.type],fin=CON.pi>=CON.probs.length,PI=Math.min(CON.pi,CON.probs.length-1),pr=CON.probs[PI],s=pr.s,cur=fin?null:curStep(),SI=fin?s.list.length:CON.si;
   const doneList=s.list.slice(0,SI).map((st,k)=>`<div class="st done"><span class="n">${"①②③④⑤⑥⑦⑧"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b>${esc(st.a[+i])}</b>`).replace(/^/,"")}${st.kind==="ox"?` <b>${st.a[0]}</b>`:""}</div>`).join("");
   const curHTML=cur?`<div class="st cur"><span class="n">${"①②③④⑤⑥⑦⑧"[SI]}</span>${cur.kind==="num"?boxesHTML(cur.h,CON.vals,CON.act,CON.boxState):cur.h}</div>`:"";
@@ -709,7 +723,7 @@ function vConcept(){
   const stuck=PREVIEW&&cur?`<span class="ans-pv">정답 ${esc(cur.a.join(" , "))}</span><button class="nb pri" data-act="cskip">다음 ▶</button>`:CON.miss>=3?`<button class="nb" data-act="cskip">이 칸은 부모님이랑 볼게</button>`:"";
   return `${bar(`${CON.mode==="review"?"같이 짚기":"방법 찾기"} · ${PI+1}/${CON.probs.length}`)}
    <div class="page" style="padding-bottom:8px">
-    ${CON.pi===0&&CON.si===0&&CON.mode!=="review"?`<p class="small muted">${T.name}: 순서대로 빈칸을 채워 봐. 시계는 없어.</p>`:""}
+    ${CON.pi===0&&CON.si===0&&CON.mode!=="review"?`<p class="small muted">빈칸을 순서대로 채우자냥. 시계는 없다옹.</p>`:""}
     <div class="qline mid" style="justify-content:flex-start">${s.head}</div>${fig}
     <div class="steps">${doneList}${curHTML}</div>${hint}<div class="row">${stuck}</div></div>
    ${cur?padHTML(cur.kind,!!CON.user):""}`;
@@ -729,7 +743,7 @@ function advanceStep(){
     if(CON.pi>=CON.probs.length){const id=CON.type;
       if(CON.mode==="concept"&&!PREVIEW){tst(id).conceptDone=true;save()}
       const T=TYPES[id];
-      modal=()=>`<div class="veil"><div class="sheet"><h3>${CON.mode==="review"?"다 짚었어":CON.probs.length+"문제를 같은 순서로 풀었어"}</h3><p>${T.idea}</p><p class="small muted">세트에서도 이 순서를 머릿속으로 떠올려 봐.</p><button class="bigbtn" data-act="${CON.mode==="review"?"home":"tointro"}">${CON.mode==="review"?"처음으로":"세트 하러 가기"}</button></div></div>`;
+      modal=()=>`<div class="veil"><div class="sheet"><h3>${CON.mode==="review"?"다 봤다냥!":"같은 순서로 다 풀었다냥!"}</h3><p>${T.idea}</p><button class="bigbtn" data-act="${CON.mode==="review"?"home":"tointro"}">${CON.mode==="review"?"처음으로":"세트 하러 가자!"}</button></div></div>`;
       render();return}}
   render();
 }
@@ -758,7 +772,6 @@ function vReport(){
       ${ss.some(s=>s.h1!=null)?`<p class="small tab muted">앞 절반 / 뒤 절반: ${ss.filter(s=>s.h1!=null).map(s=>`${Math.round(s.h1)}초 / ${Math.round(s.h2)}초`).join(" · ")}</p>`:""}
       <dl class="kv"><dt>오늘 가장 빠른</dt><dd class="tab">${fmt(best)}</dd>
       ${pbest!=null?`<dt>지난 기록 (${pd.k.slice(5).replace("-","/")})</dt><dd class="tab">${fmt(pbest)} → ${best<pbest?Math.round(pbest-best)+"초 빨라짐":best>pbest?Math.round(best-pbest)+"초 느림":"같음"}</dd>`:""}
-      <dt>예측 맞음</dt><dd>${predHit}/${ss.length}세트</dd>
       ${pats?`<dt>틀린 모양</dt><dd>${pats}</dd>`:""}
       <dt>신호</dt><dd class="small">처음 3문제 오답 ${sg.first3} · 오래 멈췄다 맞힘 ${sg.stall} · 고쳐서 맞힘 ${sg.fixed}${sg.lateAvg?` · 후반이 앞보다 문제당 ${sg.lateAvg>0?"+":""}${sg.lateAvg.toFixed(1)}초`:""}</dd></dl></div>`}).join("");
   const nDays=daysWith.length;
@@ -783,13 +796,13 @@ function vMine(){
     const allSets=Object.values(DAYS).flatMap(d=>d.sets||[]).filter(x=>x.type===id&&x.pred&&x.pred.t!=null),hit=allSets.filter(x=>Math.abs(x.t-x.pred.t)<=Math.max(5,x.pred.t*.1)).length;
     return `<div class="card"><div class="row" style="justify-content:space-between"><h3>${T.name}</h3>${st.grad?'<span class="pill ok">졸업</span>':st.target?`<span class="pill new">목표 ${fmt(st.target*n)}</span>`:`<span class="pill">출발 기록 만드는 중</span>`}</div>
       <div class="bars"><svg viewBox="0 0 300 100" role="img" aria-label="${T.name} 세트별 시간">${bars}${tgt}<line x1="0" y1="92.5" x2="300" y2="92.5" stroke="var(--line)"/></svg></div>
-      <p class="small muted">막대가 짧을수록 빨라. 초록은 내 가장 빠른 기록${st.target?", 주황 점선은 지금 목표":""}.</p>
-      <dl class="kv"><dt>처음</dt><dd class="tab">${fmt(first)}</dd><dt>가장 빠른</dt><dd class="tab">${fmt(best)}${first-best>=1?` <span class="pill ok">${Math.round(first-best)}초 빨라짐</span>`:""}</dd><dt>예측 맞힘</dt><dd>${allSets.length?`${hit} / ${allSets.length}세트`:"아직 없음"}</dd><dt>푼 세트</dt><dd>${pr}</dd></dl></div>`}).join("");
+      <p class="small muted">짧을수록 빨라 · 초록 = 내 최고${st.target?" · 점선 = 목표":""}</p>
+      <dl class="kv"><dt>처음</dt><dd class="tab">${fmt(first)}</dd><dt>가장 빠른</dt><dd class="tab">${fmt(best)}${first-best>=1?` <span class="pill ok">${Math.round(first-best)}초 빨라짐</span>`:""}</dd><dt>푼 세트</dt><dd>${pr}</dd></dl></div>`}).join("");
   const road=S.cfg.order.filter(id=>!TYPES[id].optional&&((S.cfg.plan[id]||0)>0||tst(id).runs.length||tst(id).grad)).map(id=>{const st=tst(id);const c=st.grad?"ok":st.runs.length?"new":"";return `<span class="pill ${c}">${st.grad?"✓ ":""}${TYPES[id].name}</span>`}).join(" → ");
   return `${bar("내 기록")}<div class="page">
-   <p>내 기록은 나하고만 비교해. 세트마다 얼마나 걸렸는지 그대로 남아.</p>
-   ${cards||'<p class="muted">아직 기록이 없어. 첫 세트를 하면 여기에 막대가 생겨.</p>'}
-   <div class="card"><h3>내가 가는 길</h3><p class="small muted">초록은 졸업, 파랑은 하는 중이야. 하나를 졸업하면 다음 유형이 열려.</p><div class="row small">${road}</div>
+   <p>나하고만 비교한다냥.</p>
+   ${cards||'<p class="muted">첫 판을 하면 여기 막대가 생긴다냥.</p>'}
+   <div class="card"><h3>내가 가는 길</h3><p class="small muted">초록 = 졸업 · 파랑 = 하는 중</p><div class="row small">${road}</div>
    <a class="small" href="${TREE}" target="_blank" rel="noopener">전체 계통표 보기</a></div></div>`;
 }
 
@@ -824,7 +837,7 @@ function vParent(){
   const syncTxt=sync==="db"?"이 계정에 저장되고 있어요. 같은 계정으로 다른 기기에서 열어도 이어져요.":sync==="err"?"계정 저장이 잠깐 안 됐어요. 이 기기에는 저장돼 있고, 다음에 다시 시도해요.":"이 기기(브라우저)에만 저장돼요. 가끔 아래에서 기록을 파일로 저장해 두세요.";
   return `${bar("부모님")}<div class="page">
    ${MSG?`<div class="notice good">${esc(MSG)}</div>`:""}
-   <div class="card"><h3>하루 계획 · ${total}세트</h3><p class="small muted">"미리 보기"를 누르면 시훈이 화면 그대로 보여주기·방법 찾기·세트 문제를 "다음 ▶"으로 넘겨 볼 수 있어요. 기록은 남지 않아요. +/−로 유형별 세트 수를 정해요. 0이면 오늘 목록에서 빠져요. 좌표 놀이는 0이어도 홈에서 골라서 할 수 있어요. 순서대로 "다음 할 것"이 나와요.</p>${rows}</div>
+   <div class="card"><h3>${pname()} 하루 계획 · ${total}세트</h3><p class="small muted">+/− 세트 수 · 미리 보기는 기록 안 남음</p>${rows}</div>
    <div class="card"><h3>밀린 세트</h3><p>지금 밀린 세트: <b>${carryN}</b>${carryN?" ("+Object.entries(d.carry).map(([k,v])=>TYPES[k].name+" "+v).join(", ")+")":""}</p>
      <label class="row"><input id="carry" type="checkbox" ${S.cfg.carryOn?"checked":""} data-ch="carry"> 못 한 세트를 다음 날로 넘기기 (앱을 연 날 기준)</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
@@ -832,32 +845,35 @@ function vParent(){
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button></div>
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
      <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button></div></div>
-   <div class="card"><h3>기준이 어디서 왔나</h3><p class="small">한 세트는 10문제(부모님이 유형별로 바꿀 수 있어요), 오답 허용은 1개(20문제 기준 2개와 같은 비율). 문제는 시훈이가 틀리거나 느렸던 것, 7·8·9단·받아올림·0 낀 수처럼 어려운 것 위주로 골라요. 자기 평균보다 빠르게 두 번 연속 맞힌 문제는 쉬어 가고 7일 뒤에 다시 확인해요. 통과: 오답 허용 안에서 목표 시간 안. 출발 기록은 처음 3세트 평균, 목표는 거기서 10%씩 줄여 최종 기준에서 멈춰요. 첫 세트가 최종 기준 안이면 바로 졸업, 그 밖에는 서로 다른 날 2번 최종 기준 안이면 졸업이에요. 잘못 누른 게 분명한 답(자리 수가 다름)은 한 번 되묻고, 그 시간은 세지 않아요.</p>
-     <p class="small">유형 순서와 다음 유형은 <a href="${TREE}" target="_blank" rel="noopener">계통표</a>에 있어요.</p></div>
+   <div class="card"><h3>기준</h3><p class="small">10문제 · 오답 1개까지 · 처음 3판 평균에서 10%씩 줄임 · 기준 안 2일이면 졸업 · <a href="${TREE}" target="_blank" rel="noopener">계통표</a></p></div>
   </div>`;
 }
 
 /* ───────── 동작 ───────── */
 const ACT={
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
-    if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>세트를 그만할까?</h3><p class="muted small">그만하면 이 세트는 기록에 안 남아.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
+    if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
     RUN=null;CON=null;MSG="";go("home")},
   quit:()=>{RUN=null;if(PREVIEW){go("intro");return}go("home")},
   preview:id=>{PREVIEW=true;RUN={type:id};PRED={t:null,w:null};go("intro")},
   pvset:lv=>{RUN={type:RUN.type,lv:+lv};PRED={t:null,w:null};startSet()},
   pvnext:()=>{stopClock();nextQ()},
   pvback:()=>{modal=null;go("intro")},
+  who:pid=>{switchTo(pid)},
+  pin:()=>{modal=()=>`<div class="veil"><div class="sheet"><h3>부모님 비밀번호</h3><input id="pinin" type="password" inputmode="numeric" autocomplete="off" maxlength="8"><p class="small muted" id="pinmsg"></p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">닫기</button><button class="bigbtn" style="flex:1" data-act="pinok">열기</button></div></div></div>`;render();setTimeout(()=>{const i=$("#pinin");if(i)i.focus()},50)},
+  pinok:()=>{const v=($("#pinin")||{}).value||"";let h=2166136261;for(const ch of "sihun-math:"+v){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)>>>0}
+    if(h===2501581160){modal=null;MSG="";go("parent")}else{const m=$("#pinmsg");if(m)m.textContent="번호가 달라요.";const i=$("#pinin");if(i){i.value="";i.focus()}}},
   greetok:()=>{modal=null;render()},
   pvexit:()=>{PREVIEW=false;RUN=null;CON=null;MSG="";go("parent")},
   mclose:()=>{modal=null;resumeClock();render()},
   go:a=>go(a),
-  open:id=>{RUN={type:id};PRED={t:null,w:null};go("intro")},
+  open:id=>{RUN={type:id};PRED={t:null,w:null};go("intro");if(!PREVIEW){modal=greetModal;render()}},
   pt:v=>{PRED.t=+v;render()},pw:v=>{PRED.w=+v;render()},
-  start:()=>{if(PRED.t==null||PRED.w==null)return;startSet()},
+  start:()=>startSet(),
   concept:()=>startConcept(RUN.type,null,"concept"),
   tointro:()=>{modal=null;RUN={type:CON.type};CON=null;go("intro")},
   review:()=>{startConcept(LAST.id,LAST.wrongs.slice(0,5),"review")},
-  again:()=>{RUN={type:LAST.id};PRED={t:null,w:null};go("intro")},
+  again:()=>{RUN={type:LAST.id};PRED={t:null,w:null};go("intro");modal=greetModal;render()},
   cskip:()=>advanceStep(),
   demonext:()=>{CON.demo.shown++;render()},
   demoend:()=>{CON.demo=null;render()},
@@ -865,7 +881,7 @@ const ACT={
   ox:v=>{if(view==="play"){RUN.vals=[v];submit()}else{CON.vals=[v];conceptSubmit()}},
   submit:()=>submit(),
   plotclear:()=>{const ctx=view==="play"?RUN:CON;ctx.user=null;render()},
-  pause:()=>{stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>잠깐 멈췄어</h3><p class="muted small">멈춘 시간은 안 세.</p><button class="bigbtn" data-act="mclose">이어서 하기</button></div></div>`;render()},
+  pause:()=>{stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>잠깐 쉬는 중이다냥</h3><button class="bigbtn" data-act="mclose">이어서 하기</button></div></div>`;render()},
   later:()=>{const i=curIdx();RUN.items[i].skip=true;stopClock();RUN.order.splice(RUN.pos,1);RUN.order.push(i);beginQ();render()},
   misfix:()=>{modal=null;resumeClock();render()},
   miskeep:()=>{modal=null;resumeClock();const i=curIdx(),q=RUN.probs[i].q;render();judge(q.a.map((_,k)=>RUN.vals[k]||""))},
