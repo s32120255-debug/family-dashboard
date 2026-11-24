@@ -176,7 +176,8 @@ body.noscroll{overflow:hidden}
    <h2><span class="ttl">오늘 꼭</span><small>우리집 기지와 같은 목록</small></h2>
    <ul class="list" id="mustList"></ul>
   </section>
-  <section data-tab="today" class="card wide" style="--tape:var(--yellow)">
+  <!-- 요약 오늘: 엄마 11/24 「시훈이꺼엔 요약오늘은 없애자」 → 숨김(코드는 둠) -->
+  <section data-tab="today" class="card wide" style="--tape:var(--yellow)" hidden>
    <h2><span class="ttl">요약 오늘</span><small id="sumDate"></small></h2>
    <div class="chips" id="sumChips"></div>
    <p class="meta" style="margin:0">자세한 건 아래 「상세 오늘」에서 확인해요</p>
@@ -833,7 +834,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=48;
+const VERSION=49;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -877,7 +878,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=48").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=49").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:useChessCoupon, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 열기 (${n}장)`,note:"우리집 기지 상점에서 산 체스권이 있어요."}:{label:"🏪 우리집 기지 상점 가기",note:"우리집 기지 상점에서 「체스 1판」(1점)을 사면 열려요."}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
