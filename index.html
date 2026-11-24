@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=34">
+<link rel="manifest" href="manifest.json?v=35">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#ffc928">
@@ -133,6 +133,14 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .tt-b .icon{color:#3a2a00;padding:0 3px}
 .tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid #e8590c;pointer-events:none}
 .tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:#e8590c}
+.gcal button{cursor:default;min-height:46px}
+.gcal .n{font-size:.7rem;opacity:.8}
+.glegend{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.glegend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-2px;border:1px solid var(--line)}
+.gbars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;height:120px}
+.gbars .c{display:flex;gap:2px;align-items:end;justify-content:center;height:100%}
+.gbars .c i{display:block;width:40%;border-radius:4px 4px 0 0;min-height:2px}
+.gbl{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;font-size:.8rem;color:var(--muted);margin-top:4px}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
 .item.skipped{opacity:.45}
 .item.skipped .t{text-decoration:line-through}
@@ -188,7 +196,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 34</p></div></div>
+<p style="font-size:.75rem">버전 35</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -203,7 +211,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  </div>
 
  <nav class="navtabs" role="tablist" id="navtabs">
-  <button role="tab" data-nav="today" aria-selected="true">NOW</button><button role="tab" data-nav="cal" aria-selected="false">DAYS</button><button role="tab" data-nav="mail" aria-selected="false">MAIL</button><button role="tab" data-nav="food" aria-selected="false">YUM</button><button role="tab" data-nav="stuff" aria-selected="false">FIND</button>
+  <button role="tab" data-nav="today" aria-selected="true">NOW</button><button role="tab" data-nav="cal" aria-selected="false">DAYS</button><button role="tab" data-nav="mail" aria-selected="false">MAIL</button><button role="tab" data-nav="food" aria-selected="false">YUM</button><button role="tab" data-nav="stuff" aria-selected="false">FIND</button><button role="tab" data-nav="grow" aria-selected="false">GROW</button>
  </nav>
  <main class="grid" id="main">
   <section class="card full" data-tab="today" id="c-sched">
@@ -276,6 +284,21 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="supplyList"></ul></div>
   </section>
 
+  <section class="card" data-tab="grow" id="c-points">
+   <h2>포인트</h2>
+   <div class="pts" id="gPts"></div>
+   <p class="sub2">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
+   <p class="sub2">미션 포인트</p><div class="pts" id="gHelp"></div>
+  </section>
+
+  <section class="card" data-tab="grow" id="c-grow">
+   <div class="calhead"><h2 style="flex:1">성장 달력</h2><button class="icon" id="gPrev" aria-label="이전 달">◀</button><b id="gMonth"></b><button class="icon" id="gNext" aria-label="다음 달">▶</button></div>
+   <div class="pts" id="gStreak"></div>
+   <div class="cal gcal" id="gCal"></div>
+   <div class="glegend"><span><i style="background:#ffc928"></i>다 했어요</span><span><i style="background:#fff1bf"></i>조금 했어요</span><span><i style="background:#ffe1d6"></i>못 했어요</span></div>
+   <p class="sub2">이번 주 vs 지난주 (한 과제 수)</p><div id="gBars"></div>
+  </section>
+
   <section class="card" data-tab="none" hidden><!-- 살림은 서윤 보드로 옮김(데이터는 그대로 둠) -->
    <h2>오늘 할 살림 <small id="choreCount"></small><button class="btn small" data-add="chores">＋</button></h2>
    <div class="pts" id="chorePts"></div>
@@ -297,8 +320,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=34";
-import {SEED_SCHEDULE} from "./seed.js?v=34";
+import {firebaseConfig} from "./config.js?v=35";
+import {SEED_SCHEDULE} from "./seed.js?v=35";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -635,6 +658,32 @@ function renderHelp(){const t=today(),ws=weekStart();const n=S.helpmom.filter(x=
   return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-help="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}${on&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("helpmom",x.id,x.title)}</li>`}).join("")
   :`<li class="empty">미션이 아직 없어요.</li>`}
 
+let growMonth=new Date();
+function renderGrow(){
+ const t=today(),ws=weekStart(),sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
+ const earned=sum(S.tasks.filter(x=>x.done)),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws));
+ $("gPts").innerHTML=`<div class="pt main"><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>지금까지 모은</small><b>${earned}</b></div><div class="pt"><small>쓴 포인트</small><b>${used}</b></div>`;
+ const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
+ const tot={},wk={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
+ $("gHelp").innerHTML=PEOPLE.map(p=>`<div class="pt"><small>${p}</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
+ // 날짜별 과제 기록
+ const by={};for(const x of S.tasks){if(!x.date)continue;const o=by[x.date]||(by[x.date]={n:0,d:0});o.n++;if(x.done)o.d++}
+ const st=k=>{const o=by[k];if(!o||!o.n)return"";return o.d===o.n?"all":o.d?"some":k<t?"none":""};
+ let streak=0;{let k=by[t]&&by[t].d===by[t].n?t:addDays(t,-1);while(by[k]&&by[k].n&&by[k].d===by[k].n){streak++;k=addDays(k,-1)}}
+ const days=Object.keys(by).filter(k=>k<=t),full=days.filter(k=>st(k)==="all").length;
+ $("gStreak").innerHTML=`<div class="pt main"><small>연속으로 다 한 날</small><b>⚡ ${streak}일</b></div><div class="pt"><small>다 한 날 (전체)</small><b>${full}일</b></div>`;
+ const y=growMonth.getFullYear(),m=growMonth.getMonth();$("gMonth").textContent=`${y}년 ${m+1}월`;
+ const start=new Date(y,m,1);start.setDate(1-((start.getDay()+6)%7));
+ const BG={all:"#ffc928",some:"#fff1bf",none:"#ffe1d6"};
+ let h=DAYS.map(([,l])=>`<div class="dow">${l}</div>`).join("");
+ for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=ymd(d),c=st(k),o=by[k];
+  h+=`<button type="button" tabindex="-1" class="${d.getMonth()!==m?"other":""} ${k===t?"today":""}" style="${c?`background:${BG[c]};color:#2b2414`:""}"><span>${d.getDate()}</span>${o&&o.n&&k<=t?`<span class="n">${c==="all"?"⚡":`${o.d}/${o.n}`}</span>`:""}</button>`}
+ $("gCal").innerHTML=h;
+ const cnt=from=>Array.from({length:7},(_,i)=>{const k=addDays(from,i);return S.tasks.filter(x=>x.done&&(x.doneDate||x.date)===k).length});
+ const a=cnt(ws),b=cnt(addDays(ws,-7)),mx=Math.max(1,...a,...b);
+ $("gBars").innerHTML=`<div class="gbars">${a.map((v,i)=>`<div class="c" title="지난주 ${b[i]} · 이번 주 ${v}"><i style="height:${b[i]/mx*100}%;background:var(--line)"></i><i style="height:${v/mx*100}%;background:#ffc928;${v?"border:1.5px solid #3a2a00":""}"></i></div>`).join("")}</div><div class="gbl">${DAYS.map(([,l])=>`<span>${l}</span>`).join("")}</div><div class="glegend" style="margin-top:6px"><span><i style="background:var(--line)"></i>지난주 ${b.reduce((x,y)=>x+y,0)}개</span><span><i style="background:#ffc928"></i>이번 주 ${a.reduce((x,y)=>x+y,0)}개</span></div>`;
+}
 function renderCal(){
  const y=calMonth.getFullYear(),m=calMonth.getMonth();$("monthLabel").textContent=`${y}년 ${m+1}월`;
  const start=new Date(y,m,1);start.setDate(1-((start.getDay()+6)%7));
@@ -674,7 +723,7 @@ function renderSupplies(){const need=S.supplies.filter(x=>x.status&&x.status!=="
 function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.filter(x=>!q||(x.name+" "+x.place).includes(q)).sort((a,b)=>String(a.name).localeCompare(b.name));
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
-function renderAll(){renderTop();renderSched();renderTasks();renderNotes();renderFood();renderPantry();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
+function renderAll(){renderGrow();renderTop();renderSched();renderTasks();renderNotes();renderFood();renderPantry();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -736,9 +785,11 @@ $("sToday").onclick=()=>{dialHalf=null;schedDate=today();renderSched()};
 function showTab(t){if(!document.querySelector(`[data-nav="${t}"]`))t="today";
  document.querySelectorAll("#navtabs [data-nav]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.nav===t)));
  let n=0;document.querySelectorAll("#main > section[data-tab]").forEach(sec=>{const on=sec.dataset.tab===t;sec.style.display=on?"":"none";if(on&&!sec.hidden)n++});
- $("main").classList.toggle("one",n<=1);$("main").classList.toggle("two",t==="food");try{sessionStorage.setItem("tab",t)}catch(e){}}
+ $("main").classList.toggle("one",n<=1||t==="grow");$("main").classList.toggle("two",t==="food");try{sessionStorage.setItem("tab",t)}catch(e){}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 {let t0="today";try{t0=sessionStorage.getItem("tab")||"today"}catch(e){}showTab(t0)}
+$("gPrev").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()-1,1);renderGrow()};
+$("gNext").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()+1,1);renderGrow()};
 $("tPrev").onclick=()=>{taskDate=addDays(taskDate,-1);renderTasks()};
 $("tNext").onclick=()=>{taskDate=addDays(taskDate,1);renderTasks()};
 $("tToday").onclick=()=>{taskDate=today();renderTasks()};
@@ -765,7 +816,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=34;
+const VERSION=35;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
