@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=87">
-<link rel="icon" href="icon-192.png?v=87">
-<link rel="apple-touch-icon" href="icon-192.png?v=87">
+<link rel="manifest" href="manifest.json?v=88">
+<link rel="icon" href="icon-192.png?v=88">
+<link rel="apple-touch-icon" href="icon-192.png?v=88">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -180,6 +180,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .scard .sm{font-size:.8rem;color:#7a6f55}
 .scard .sp{font-family:var(--display);font-size:1.3rem}
 .scard{grid-auto-rows:auto}.scard button+button{margin-top:4px}
+.scard a.go{display:block;text-align:center;text-decoration:none;border:2px solid #3a2a00;background:#fff8dc;color:#3a2a00;border-radius:999px;padding:6px;font-weight:700}
 .scard button{border:2px solid #3a2a00;background:#ffc928;color:#3a2a00;border-radius:999px;padding:6px;font-weight:700;cursor:pointer}
 .scard button:disabled{background:#eee3c0;color:#9a8f78;border-color:#c9bfa8;cursor:not-allowed}
 .star{font-style:normal;color:#e8590c;margin-right:3px}
@@ -245,7 +246,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 87</p></div></div>
+<p style="font-size:.75rem">버전 88</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -395,8 +396,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=87";
-import {SEED_SCHEDULE} from "./seed.js?v=87";
+import {firebaseConfig} from "./config.js?v=88";
+import {SEED_SCHEDULE} from "./seed.js?v=88";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -882,7 +883,7 @@ function openWish(w){const def={title:"받고 싶은 보상",f:[["who","누가 (
 // 🏪 상점: 엄마·아빠가 자기 「받고 싶은 보상」(who=나, points 정해진 것)을 가족 도움 포인트로 사기. 기록은 wishGot과 같은 형식
 let shopTab="task";
 // 시훈 고정 상품: rewards{use,who:"시훈",points:1,date,createdAt,by,(kind:"help")} — 시훈이 대시보드가 같은 기록을 봄(체스는 안 쓴 chess 기록이 있으면 판이 열림)
-const FIXED_ITEMS=[{k:"snack",e:"🍪",n:"간식 1개",p:1,sm:"말하고 누르고 먹어요"},{k:"chess",e:"♟",n:"체스 1판",p:1,sm:"시훈이 대시보드 체스판이 열려요"},{k:"wordchain",e:"🔤",n:"끝말잇기 1판",p:1,sm:"시훈이 대시보드 끝말잇기가 열려요"}];
+const FIXED_ITEMS=[{k:"snack",e:"🍪",n:"간식 1개",p:1,sm:"말하고 누르고 먹어요"},{k:"chess",e:"♟",n:"체스 1판",p:1,sm:"시훈기지에서 1점 내면 바로 시작해요",go:1},{k:"wordchain",e:"🔤",n:"끝말잇기 1판",p:1,sm:"시훈기지에서 1점 내면 바로 시작해요",go:1}];
 // 산 기록: 누가 무엇을 언제(최근 15개). 관리자 모드에서 취소(포인트 돌려줌)
 function renderBought(){const fmt=ms=>{const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
  const l=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,15);
@@ -900,7 +901,7 @@ function renderStore(){const tab=shopTab==="help"?"help":"task";
  const tb=taskBal();
  $("shopBal").innerHTML=`<div class="pt main"><small>시훈 과제 포인트</small><b>⭐ ${tb}</b></div>`;
  const ub=(attr,p)=>`<button type="button" ${attr} data-from="task" ${!p||tb<p?"disabled":""}>${!p?"가격을 정해 주세요":tb<p?`${p-tb}점 더 모아요`:"사기"}</button>`;
- const fixed=FIXED_ITEMS.map(it=>`<div class="scard"><div class="st">${it.e} ${it.n}</div><div class="sm">${it.sm}</div><div class="sp">⭐ ${it.p}</div>${ub(`data-buyuse="${it.k}"`,it.p)}</div>`).join("");
+ const fixed=FIXED_ITEMS.map(it=>`<div class="scard"><div class="st">${it.e} ${it.n}</div><div class="sm">${it.sm}</div><div class="sp">⭐ ${it.p}</div>${it.go?`<a class="go" href="sihun-board/">🥷 시훈기지로</a>`:ub(`data-buyuse="${it.k}"`,it.p)}</div>`).join("");
  const l=S.wishes.filter(w=>w.who==="시훈"&&!w.got).sort((a,b)=>(Number(a.points)||1e9)-(Number(b.points)||1e9));
  $("shopGrid").innerHTML=fixed+l.map(w=>{const pts=Number(w.points)||0;return`<div class="scard"><div class="st">${esc(w.title)}</div><div class="sm">${w.to?esc(w.to)+"가 해 줘요":""}</div><div class="sp">${pts?"⭐ "+pts:"<span class='sm'>포인트 미정</span>"}</div>${w.req?`<button type="button" disabled>승인 대기 · ${esc(w.to||"")}</button>`:ub(`data-buy="${w.id}"`,pts)}</div>`}).join("")}
 let growMonth=new Date();
@@ -1035,7 +1036,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.shoptab){shopTab=d.shoptab;renderStore();return}
  if(b.hasAttribute("data-gowish")){openSheet(null);showTab("grow");setTimeout(()=>$("c-wish").scrollIntoView({behavior:"smooth",block:"start"}),50);return}
  if(d.fold){setFold(d.fold,$(d.fold).classList.contains("folded"));return}
- if(d.buyuse){if(!db)return toast("저장소에 연결되지 않았어요");const it=FIXED_ITEMS.find(x=>x.k===d.buyuse);if(!it)return;const help=d.from==="help",hb=helpBal(),bal=help?(hb.tot["시훈"]||0)-(hb.sp["시훈"]||0):taskBal();
+ if(d.buyuse){if(!db)return toast("저장소에 연결되지 않았어요");const it=FIXED_ITEMS.find(x=>x.k===d.buyuse);if(!it||it.go)return;const help=d.from==="help",hb=helpBal(),bal=help?(hb.tot["시훈"]||0)-(hb.sp["시훈"]||0):taskBal();
   if(bal<it.p)return toast("포인트가 모자라요");
   run(db.collection("rewards").add({title:it.n,points:it.p,who:"시훈",use:it.k,date:today(),createdAt:Date.now(),...(me?{by:me}:{}),...(help?{kind:"help"}:{})}),it.k==="snack"?"간식 1개 샀어요 🍪":`${it.n} 샀어요 ${it.e} 시훈이 대시보드에서 해요`);return}
  if(d.unbuy){const r=S.rewards.find(x=>x.id===d.unbuy);if(!r)return;if(r.wishId){const w=S.wishes.find(x=>x.id===r.wishId);if(w&&w.got)return wishGot(w)}run(db.collection("rewards").doc(r.id).delete(),"취소했어요 (포인트 돌려놨어요)");return}
@@ -1108,7 +1109,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=87;
+const VERSION=88;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
