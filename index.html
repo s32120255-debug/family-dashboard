@@ -320,8 +320,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=37";
-import {SEED_SCHEDULE} from "./seed.js?v=37";
+import {firebaseConfig} from "./config.js?v=38";
+import {SEED_SCHEDULE} from "./seed.js?v=38";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -487,6 +487,7 @@ function renderSched(){
 }
 // 타임테이블: 세로 시간 줄(1시간=48px) 위에 일정 칸. 관리자 모드에서 빈 시간 줄을 누르면 그 시각으로 새 일정
 const HPX=48;
+const SHOW_FREE=false; // 일정 사이 빈 시간 "집공부·자유" 칸 — 엄마 11/24: 일단 끔. 다시 켜려면 true
 function timetable(list,nm){
  const timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start);return{...x,s:s0,e:x.end?Math.max(mins(x.end),s0+10):s0+20}}).sort((a,b)=>a.s-b.s||a.e-b.e);
  const untimed=list.filter(x=>!x.start);
@@ -496,7 +497,7 @@ function timetable(list,nm){
  const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
    :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
  let rows="";for(let h=lo;h<hi;h++)rows+=`<div class="tt-row" style="top:${(h-lo)*HPX}px"><span class="tt-h">${h<12?"오전":"오후"} ${h%12||12}시</span>${admin?`<button class="tt-slot" data-slot="${pad(h)}:00" aria-label="${h}시에 일정 넣기"></button>`:""}</div>`;
- let gaps="",pe=null;for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>집공부·자유 · 엄마가 정해요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
+ let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>집공부·자유 · 엄마가 정해요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
  const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
  const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.s&&nm<x.e;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
@@ -512,7 +513,7 @@ function heroHTML(items,nm){
  for(const x of tl){if(x.e!=null&&nm>=x.s&&nm<x.e){cur=x;from=x.s;to=x.e}}
  next=tl.find(x=>x.s>nm&&x!==cur)||null;
  if(!cur){const prev=tl.filter(x=>(x.e??x.s)<=nm);const pe=prev.length?Math.max(...prev.map(x=>x.e??x.s)):null;
-  if(next&&pe!=null){free=true;from=pe;to=next.s}}
+  if(SHOW_FREE&&next&&pe!=null){free=true;from=pe;to=next.s}}
  const span=(to!=null&&from!=null)?Math.max(1,to-from):0,left=to!=null?to-nm:0,pct=span?Math.min(100,Math.max(0,(nm-from)/span*100)):0;
  const bolt=`<svg class="bolt" viewBox="0 0 12 20" aria-hidden="true"><path d="M6 0 L0 11 H5 L3 20 L11 7 H6 L9 0Z" fill="#fff"/></svg>`;
  let main;
@@ -687,14 +688,19 @@ function renderGrow(){
 function renderCal(){
  const y=calMonth.getFullYear(),m=calMonth.getMonth();$("monthLabel").textContent=`${y}년 ${m+1}월`;
  const start=new Date(y,m,1);start.setDate(1-((start.getDay()+6)%7));
- const has=new Set(S.events.map(e=>e.date));const t=today();
+ const has=new Set([...S.events.map(e=>e.date),...S.schedOverrides.filter(o=>!o.skip&&o.date).map(o=>o.date)]);const t=today();
  let h=DAYS.map(([,l])=>`<div class="dow">${l}</div>`).join("");
  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=ymd(d);
   if(i>=35&&d.getMonth()!==m)break;
   h+=`<button data-date="${s}" class="${d.getMonth()!==m?"other":""} ${s===t?"today":""} ${s===selDate?"sel":""}" aria-label="${d.getMonth()+1}월 ${d.getDate()}일">${d.getDate()}${has.has(s)?'<span class="dot"></span>':""}</button>`}
  $("cal").innerHTML=h;
- const ev=S.events.filter(e=>e.date===selDate).sort((a,b)=>(a.time||"").localeCompare(b.time||""));const sd=parse(selDate);
- $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(ev.length?ev.map(e=>`<li class="item"><span class="meta">${e.time?fmtT(e.time):"하루 종일"}</span><span class="t">${esc(e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${e.id}" data-name="${esc(e.title)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">일정 없음</li>`);
+ const ev=S.events.filter(e=>e.date===selDate).map(e=>({k:"ev",t:e.time||"",e}));const sd=parse(selDate);
+ // 「오늘 일정」의 시훈이 일정(매주 반복 + 그날만)도 같이 보여 줌. 그날만 뺀 일정은 안 보임. 달력에선 보기만.
+ const sc=schedItems(selDate).filter(x=>!x.skipped).map(x=>({k:"sc",t:x.start||"",x}));
+ const all=[...ev,...sc].sort((a,b)=>(a.t||"").localeCompare(b.t||""));
+ const row=r=>r.k==="ev"?`<li class="item"><span class="meta">${r.e.time?fmtT(r.e.time):"하루 종일"}</span><span class="t">${esc(r.e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${r.e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${r.e.id}" data-name="${esc(r.e.title)}" aria-label="삭제">✕</button></span></li>`
+  :`<li class="item"><span class="meta">${r.x.start?fmtT(r.x.start)+(r.x.end?"~"+fmtT(r.x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${r.x.src==="week"?"🔁":"📌"} ${esc(r.x.title)}${r.x.note?` <span class="meta">${esc(r.x.note)}</span>`:""}</span></li>`;
+ $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(all.length?all.map(row).join(""):`<li class="empty">일정 없음</li>`)+(sc.length?`<li class="meta" style="list-style:none;font-size:.8rem">🔁 매주 · 📌 그날만 — 시훈이 일정은 「오늘 일정」에서 고쳐요</li>`:"");
 }
 
 let ateEnd=null;
@@ -816,7 +822,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=37;
+const VERSION=38;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
