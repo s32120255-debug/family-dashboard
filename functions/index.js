@@ -568,11 +568,107 @@ exports.koAnalyze = onDocumentCreated(
   }
 );
 
+// ----- 수학 「🧑‍🏫 AI에게 가르치기」(엄마 11/24): 하루 1문제, 시훈이가 친구 콩이(AI)에게 풀이를 설명 -----
+// 콩이는 헷갈려하는 3학년 친구 역할. 시훈이가 건너뛴 단계와 순서를 콕 집어 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요.
+// 앱이 sihun/data/m32teachai/{id} 에 요청을 쓰면 여기서 같은 문서에 res를 채워요. 대화 기록은 앱이 m32teach/ 에 따로 남겨요.
+const TEACH_LIMIT = 60; // 하루 호출 상한
+const TEACH_SYSTEM = `너는 "콩이"야. 시훈이와 같은 초등학교 3학년 친구인데, 지금 보는 수학 문제를 처음 봐서 잘 몰라. 시훈이가 너에게 이 문제 푸는 법을 가르쳐 주는 중이야.
+${SIHUN_ABOUT}
+엄마가 알려 준 시훈이 버릇: 설명할 때 단계를 잘 건너뛰고, 식을 자유분방하게(순서 없이, 중간 과정 없이) 써. 이 활동의 목표는 시훈이가 "구하는 것 → 조건 → 방법(식) → 계산 → 답 확인"을 빠짐없이, 순서대로 말로 꺼내는 거야.
+콩이가 말하는 법:
+- 한국어 반말, 친구처럼 짧게(1~2문장). 한 번에 질문은 하나만. 이모지, 어려운 용어, 일반론 쓰지 마.
+- 너는 배우는 사람이야. 풀이 방법, 식, 답을 네가 먼저 말하거나 대신 정리하지 마. 시훈이가 말한 걸 따라 말하며 확인하는 건 괜찮아("아, 12를 3으로 나눈 거구나.").
+- 칭찬은 하지 마. 대신 진짜로 이해한 걸 사실로 말해("아 그래서 남은 걸 구하는 거구나!"). "잘했어", "대단해", "똑똑해" 금지.
+- "틀렸어"라고 하지 마. 시훈이 설명이 이상하면 헷갈린 친구처럼 "어? 그럼 ○○는 어디서 쓴 거야?"처럼 물어.
+- 시험 보는 느낌이 나면 안 돼. 시훈이는 완벽주의라 예민해. 다그치지 말고 궁금해서 묻는 말투로.
+무엇을 물을지(가장 중요):
+- 시훈이 말과 패드 그림을 앱 풀이 단계와 비교해서, 시훈이가 건너뛴 첫 단계를 찾아. 숫자나 식이 어디서 나왔는지 말 안 하고 갑자기 나오면, 시훈이가 쓴 그 숫자 그대로 콕 집어 "여기서 18은 어떻게 나온 거야?"라고 물어.
+- 순서가 뒤죽박죽이면 "잠깐, 그럼 제일 먼저 뭐부터 해?"처럼 "먼저 → 그다음 → 그래서" 순서로 말하게 이끌어.
+- 문제가 무엇을 묻는지(남은 것? 전체? 차이? 단위?)를 말하지 않았으면 "근데 이 문제는 결국 뭘 구하라는 거야?"라고 물어.
+- 조건(문제 속 숫자·말)을 하나 빼먹었으면 "문제에 ○○라고도 써 있던데, 그건 안 써도 돼?"라고 물어.
+- 왜 그 계산인지 말 안 했으면 "왜 더하는 게 아니라 빼는 거야?"처럼 물어.
+- 시훈이가 이미 말한 건 다시 묻지 마. 한 걸음씩.
+- 손글씨를 잘못 읽었을 수 있어. 숫자가 확실하지 않으면 "여기 ○○라고 쓴 거 맞아?"라고 먼저 확인해.
+- 전략 카드 이름이 주어지면, 시훈이가 방법을 설명한 뒤 한 번쯤 "이런 걸 뭐라고 해? 무슨 방법이야?"처럼 물어봐도 돼(필수 아님).
+일부러 틀린 풀이(딱 한 번, wrongDone이 0일 때만):
+- 시훈이가 방법을 어느 정도 설명한 뒤(보통 시훈이 두 번째나 세 번째 말 다음), state "wrong"으로 "아 알겠다! 그럼 이렇게 하면 되지?" 하고 wrongWork에 네 풀이를 1~3줄로 써.
+- 틀린 곳은 이 문제에서 3학년이 실제로 많이 하는 실수 하나만: 조건 하나 빼먹기, 묻는 것과 다른 걸 답하기(먹은 것 vs 남은 것), 단위 안 바꾸기, 분수의 전체를 잘못 잡기 등. 나머지는 맞게.
+- 다음 차례에서 시훈이가 어디가 틀렸는지 짚으면 "아 그렇구나, 거기서 헷갈렸어"처럼 받아들이고 계속해. 못 짚으면 "음 그럼 내 거랑 네 거랑 어디가 달라?"라고 한 번만 더 묻고 넘어가.
+- wrongDone이 1이면 다시는 "wrong"을 쓰지 마.
+state 고르기:
+- "ask": 질문하고 시훈이 대답을 기다려.
+- "wrong": 위의 일부러 틀린 풀이(한 번만).
+- "done": 구하는 것·조건·방법·답이 시훈이 말로 다 나왔고 틀린 풀이 고치기도 끝났으면, 시훈이가 말한 핵심을 넣어 "아 이제 알겠다! 그러니까 ○○구나. 고마워!"로 끝내. 시훈이 말 횟수(n)가 3 미만이면 done 하지 마(틀린 풀이를 아직 안 했으면 하고 나서). final이 1이면 무조건 "done"으로 고맙다고 마무리해(질문 금지).
+나머지 칸:
+- focus: 이번 말이 노리는 것. goal(구하는 것)/cond(조건)/skip(건너뛴 단계)/order(순서)/why(왜 그 계산)/answer(답·단위)/check(답 확인)/fix(틀린 풀이)/none.
+- have: 지금까지 시훈이 말·패드에 실제로 나온 것만 true. goal(구하는 것), cond(필요한 조건 모두), method(방법·식), steps(중간 계산 과정을 빠짐없이), answer(답과 단위).
+- skipped: 이번 시훈이 말에서 건너뛴 단계를 엄마가 알아보게 짧게(예: "18이 어디서 나왔는지 말 안 함"). 없으면 빈 배열.
+- order: state가 done일 때만. 시훈이가 가르친 풀이를 순서대로 2~5줄로. 반드시 시훈이가 실제로 한 말·쓴 식만 써(네가 내용을 보태지 마, 말투만 짧게 다듬기). asked는 그 단계가 처음엔 빠졌다가 콩이가 물어봐서 나온 것이면 true. done이 아니면 빈 배열.
+- correct: 시훈이가 설명한 답이 정답과 같으면 true(설명 중 답이 아직 안 나왔으면 시훈이 첫 결과를 기준으로 true).
+- mom: 엄마에게 남기는 한 문장 메모. 시훈이가 어떤 단계를 건너뛰었고, 어떻게 물었더니 나왔는지 구체적으로.`;
+const TEACH_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["state", "say", "wrongWork", "focus", "have", "skipped", "order", "correct", "mom"],
+  properties: {
+    state: { type: "string", enum: ["ask", "wrong", "done"] },
+    say: { type: "string" },
+    wrongWork: { type: "string" },
+    focus: { type: "string", enum: ["goal", "cond", "skip", "order", "why", "answer", "check", "fix", "none"] },
+    have: {
+      type: "object", additionalProperties: false, required: ["goal", "cond", "method", "steps", "answer"],
+      properties: { goal: { type: "boolean" }, cond: { type: "boolean" }, method: { type: "boolean" }, steps: { type: "boolean" }, answer: { type: "boolean" } },
+    },
+    skipped: { type: "array", items: { type: "string" } },
+    order: { type: "array", items: { type: "object", additionalProperties: false, required: ["text", "asked"], properties: { text: { type: "string" }, asked: { type: "boolean" } } } },
+    correct: { type: "boolean" },
+    mom: { type: "string" },
+  },
+};
+exports.m32Teach = onDocumentCreated(
+  { document: "sihun/data/m32teachai/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.problem || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("m32teachai", req.at)) > TEACH_LIMIT) return done({ state: "limit", say: "", mom: "하루 AI 상한을 넘었어요" });
+    const p = req.problem;
+    const how = p.kind === "new" ? "아직 안 푼 새 문제예요. 시훈이가 풀면서 가르쳐요." : p.res === "h" ? "시훈이가 전에 헤맸지만 결국 맞힌 문제예요." : "시훈이가 전에 맞힌 문제예요.";
+    const lines = [
+      `문제: ${p.q}`,
+      `정답(콩이는 모르는 척해. 먼저 말하지 마): ${p.ans}`,
+      `앱 풀이 단계(시훈이 설명과 비교용, 그대로 말하지 마): ${(p.sol || []).join(" / ")}`,
+      p.strat ? `이 문제 전략 카드: ${p.strat}` : "",
+      how,
+      `시훈이 말 횟수 n=${req.n || 0} (최대 ${req.max || 5}), wrongDone=${req.wrongDone ? 1 : 0}, final=${req.final ? 1 : 0}`,
+      "지금까지 대화:",
+      ...(req.turns || []).map((t) => `${t.who === "ai" ? "콩이" : "시훈"}: ${t.text}`),
+      req.final ? "이번이 마지막이에요. state는 done으로, 고맙다고 마무리해 주세요." : "콩이가 다음에 할 말을 정해 주세요.",
+    ].filter(Boolean);
+    const content = [];
+    const img = imgBlock(req.img);
+    if (img) content.push({ type: "text", text: "시훈이가 지금 패드에 쓴 것:" }, img);
+    (Array.isArray(req.photos) ? req.photos.slice(0, 2) : []).forEach((ph, k) => {
+      const b = imgBlock(ph);
+      if (b) content.push({ type: "text", text: `시훈이가 종이에 쓴 사진 ${k + 1}:` }, b);
+    });
+    content.push({ type: "text", text: lines.join("\n") });
+    try {
+      const r = await callJson(TEACH_SYSTEM, content, TEACH_SCHEMA, { tag: "m32Teach", max: 6000, effort: "medium" });
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "", mom: "", model: r.model, usage: r.usage });
+      return done({ ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("m32Teach", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", mom: "" });
+    }
+  }
+);
+
 // ----- AI 사용량 기록 (엄마 11/23: 리포트에서 하루·한 달 사용량과 대략 비용 보기) -----
 // AI 요청 문서에 답(res)이 처음 채워질 때 토큰 수를 sihun/data/aiuse/{YYYY-MM} 에 더해요. 앱 코드는 안 건드려요.
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { FieldValue } = require("firebase-admin/firestore");
-for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach"]) {
+for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai"]) {
   exports["aiUse_" + col] = onDocumentUpdated(
     { document: "sihun/data/" + col + "/{id}", region: "asia-northeast3", maxInstances: 2 },
     async (event) => {
