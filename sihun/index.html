@@ -606,6 +606,11 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .ptools button{height:42px;min-width:42px;border-radius:11px;border:1.5px solid var(--line);background:#fff;font-size:15px;padding:0 10px}.ptools button.on{border-color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
 .dot{width:20px;height:20px;border-radius:50%;display:inline-block;vertical-align:middle}.ptools .sp{flex:1}
 .padwrap{flex:1;position:relative;min-height:0}
+.pfr{position:absolute;pointer-events:none;z-index:0}.pfr svg{display:block}canvas.pad{z-index:1}.pfui{position:absolute;top:6px;left:6px;right:6px;z-index:2;pointer-events:none;display:flex;justify-content:flex-end}.pfui>*{pointer-events:auto}
+.pfch{width:100%;background:#fffdf6f2;border:2px solid #e8c98a;border-radius:14px;padding:10px}.pfq{font-weight:700;font-size:17px;margin-bottom:8px}.pfos{display:flex;gap:8px;flex-wrap:wrap}.pfos button{flex:1;min-width:110px;background:#fff;border:2px solid #c9d3e2;border-radius:12px;padding:6px;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:4px}.pfth{display:block;width:120px;height:80px}.pfth svg{width:100%;height:100%}.pfme{font-size:40px;line-height:80px;text-align:center}
+.pfsm{background:#fff;border:1.5px solid #c9d3e2;border-radius:999px;padding:4px 12px;font-size:14px;color:#4a5878}
+.big.pfbig{color:#4a3500;box-shadow:0 4px 0 #e0c27a;background:linear-gradient(135deg,#fff4dc,#ffe7b8);border-color:#e8c98a;margin-bottom:10px}
+.pfcmp{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}.pfcol{flex:1;min-width:220px;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:8px}.pfcol img{width:100%;height:auto;display:block}.pfh{font-weight:700;margin-bottom:6px}.pfq2{margin-top:8px;font-size:16px;color:#3a4a6a}
 .phs{display:flex;gap:8px;padding:6px 12px;border-bottom:1.5px solid var(--line);background:#fffdf8;overflow-x:auto}.phs .ph{position:relative;border:1.5px solid var(--line);border-radius:10px;padding:0;background:#fff;height:64px;flex:0 0 auto}.phs .ph img{height:60px;border-radius:9px;display:block}.phs .ph b{position:absolute;top:-6px;right:-6px;background:#e4572e;color:#fff;border-radius:50%;width:20px;height:20px;font-size:12px;line-height:20px}
 .phv img{max-width:100%;margin-top:6px;border-radius:10px;border:1.5px solid var(--line)}
 canvas.pad{position:absolute;inset:0;width:100%;height:100%;touch-action:none;background-image:linear-gradient(#eef0f4 1px,transparent 1px),linear-gradient(90deg,#eef0f4 1px,transparent 1px);background-size:var(--penmm,49px) var(--penmm,49px)}
@@ -3368,7 +3373,7 @@ function freshProg(){ const sk={}; SKILLS.forEach(s=>sk[s.id]={lv:0,st:[0,0,0,0,
 let PROG=freshProg(), SAVED_ATT=[], UNSAVED=[], DIRTY=false, DBH=null, DB_STATE='loading';
 const today=()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const allAtt=()=>SAVED_ATT.concat(UNSAVED);
-function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; return f; }
+function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; f.pf=d.pf||{}; f.pfrev=d.pfrev||{}; if(d.pfday) f.pfday=d.pfday; return f; }
 async function loadDB(){
   const timer=setTimeout(()=>{ if(DB_STATE==='loading'){ DB_STATE='offline'; refreshTop(); } },10000);
   try{ DBH=EMBED?await HUB.db:await claude.use('db'); }catch(e){ DBH=null; }
@@ -3441,13 +3446,14 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   SKILLS.forEach((sk,i)=>{ if(sk.unit!==lastU){ if(lastU) units+='</div>'; units+=`<div class="day">${sk.unit}</div><div class="grid">`; lastU=sk.unit; } units+=skCard(sk,i); if(!SKILLS[i+1]||SKILLS[i+1].unit!==sk.unit) units+=bookCard(sk.unit); }); units+='</div>';
   app().innerHTML=`<div class="wrap">${topBar('시훈 수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
-   <button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
+   ${pfReviewHome()}<button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
    ${EMBED?`<button class="big tbig ${teachDone()?'done':''}" id="tgo"><div><div class="t">${teachDone()?'✅ 오늘의 가르치기 끝':'🧑‍🏫 오늘의 가르치기 · 1문제'}</div><div class="s">${teachDone()?'콩이에게 잘 알려 줬어요. 내일 또 해요!':'친구 콩이에게 풀이를 처음부터 순서대로 알려 줘요'}</div></div><span class="go">${teachDone()?'✓':'▶'}</span></button>`:''}
    ${units}
    <div class="note">기록은 문제마다 자동으로 저장돼요. 중간에 나가도 다음에 이어서 해요.</div>
    <div class="foot"><button class="pbtn" id="parent">👩 엄마 보기</button></div></div>`;
   document.querySelectorAll('.bkc').forEach(b=>b.onclick=()=>{ if(b.classList.contains('lock')){ toast(`${b.querySelector('h3').textContent.split('· ')[1]} 1~5단계를 다 하면 열려요.`); return; } bookHome(b.dataset.u); });
   const tgo=$('#tgo'); if(tgo) tgo.onclick=()=>{ if(teachDone()){ toast('오늘 가르치기는 끝! 내일 또 해요.'); return; } teachHome(); };
+  if($('#pfgo')) $('#pfgo').onclick=startReview;
   $('#go').onclick=()=>{ if(t.kind==='book') bookStart(t.ui,t.gi); else if(t.kind==='lesson') startLesson(t.i); else if(t.kind==='check') startCheck(t.i); else startSolve(t.i,t.lv); };
   document.querySelectorAll('.sk:not(.bkc)').forEach(b=>b.onclick=()=>skillPage(+b.dataset.i)); $('#parent').onclick=parentGate; bindCommon(); }
 function bookCard(u){ const BOOK=bookObj(); if(!BOOK) return ''; const U=BOOK.units.find(x=>x.title===u); if(!U) return ''; const D=PROG.book||{};
@@ -3705,10 +3711,80 @@ function penTips(p){ const t=stripTags(p.text||''); const len=/\d\s*m\b/.test(t)
   if(!len&&!frac) return '';
   return `<div class="ptip">📝 <b>3줄만</b> 써요: ${len?'① 1 m = 100 cm ② … ③ …':'① 아는 것 (예: <b>5/6 = 35</b>) ② 한 칸 (<b>1/6 = ?</b>) ③ 전체 (<b>6/6 = ?</b>)'}${frac?'<br>✏️ 그림은 동그라미 대신 <b>네모 칸</b>: 묶음 수만큼 □를 그리고, 준 칸에 X. 분수는 2÷5 말고 <b>위아래로</b>.':''}</div>`; }
 
+// ===== 🖼 그림 틀 (엄마 11/24): 5단계 문제는 S펜 칸에 빈 틀 → 틀 고르기 → 혼자 그리기 =====
+const PF_INK='#9fb0c8', PF_TX='#7d8ca6';
+const PF={ // k: [이름, 전략 카드]
+  stair:['막대 계단','🧱 한 칸'], bar2:['막대 두 줄','🧱 한 칸'], list:['빠짐없이 표','📋 나눠 세기'], sd:['선분 두 개','⚖️ 합차'], sd3:['선분 세 개','⚖️ 합차'], eq2:['같은 길이 두 줄','🔄 같은 모양'], scale2:['저울 두 개','🔁 바꿔 넣기'] };
+const PF_STAGE=['빈 틀','틀 고르기','혼자 그리기'];
+function frameOf(p){ if(!p||p.book||p.lv!==4||p.sk==null||!SKILLS[p.sk]) return null; const id=SKILLS[p.sk].id, t=stripTags(p.text||'');
+  if(id==='part') return p.fm==='back'?'bar2':'stair'; if(id==='group') return 'bar2';
+  if(id==='kind') return /합이/.test(t)?'sd':'list'; if(id==='cmp') return 'list'; if(id==='cap') return 'eq2'; if(id==='wt'||id==='wtcalc') return 'scale2'; if(id==='capcalc') return /세 사람/.test(t)?'sd3':'sd';
+  if(id==='pgread'||id==='pgdraw') return 'sd'; return null; }
+function pfSVG(k,tag){ const R=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="none" stroke="${PF_INK}" stroke-width="2.5" stroke-dasharray="9 6"/>`;
+  const T=(x,y,s,o)=>`<text x="${x}" y="${y}" font-size="${(o&&o.fs)||22}" fill="${PF_TX}" style="white-space:pre" ${o&&o.end?'text-anchor="end"':o&&o.mid?'text-anchor="middle"':''}>${s}</text>`;
+  const L=(x1,y1,x2,y2,d)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${PF_INK}" stroke-width="2.5" ${d?'stroke-dasharray="7 6"':''}/>`;
+  const sub='칸 수 □    한 칸 □'; let g='';
+  if(k==='stair'){ [[20,'전체 □'],[120,'남은 것 □'],[220,'남은 것 □']].forEach(([x,lab],i)=>{ const y=50+i*118; g+=T(x,y-10,lab)+R(x,y,580-x,46); if(i<2) g+=T(x,y+72,sub,{fs:19}); }); }
+  else if(k==='bar2'){ [['어떤 수 □',60],['다시 나누기',200]].forEach(([lab,y])=>{ g+=T(20,y-10,lab)+R(20,y,560,46)+T(20,y+72,sub,{fs:19}); }); g+=T(20,370,'답 □'); }
+  else if(k==='list'){ g+=T(20,36,'빠짐없이 하나씩 적어요',{fs:20}); [70,210].forEach(y=>{ g+=T(20,y+34,'수',{fs:19})+T(20,y+88,'○ ✕',{fs:17}); for(let i=0;i<9;i++) g+=R(90+i*54,y,48,48)+R(90+i*54,y+56,48,44); }); g+=T(20,385,'모두 □개'); }
+  else if(k==='sd'){ g+=T(60,100,'큰 것 □')+L(60,120,500,120)+L(60,108,60,132)+L(500,108,500,132)+T(60,210,'작은 것 □')+L(60,230,340,230)+L(60,218,60,242)+L(340,218,340,242)+L(340,100,340,250,1)+T(420,100,'차 □',{mid:1})+L(345,135,495,135,1)+L(545,110,545,240)+L(530,110,545,110)+L(530,240,545,240)+T(590,182,'합 □',{end:1,fs:20}); }
+  else if(k==='sd3'){ [['가 □',90,520],['나 □',190,420],['다 □',290,320]].forEach(([lab,y,x2])=>{ g+=T(60,y-20,lab)+L(60,y,x2,y)+L(60,y-12,60,y+12)+L(x2,y-12,x2,y+12); }); g+=L(320,60,320,310,1)+L(545,80,545,300)+L(530,80,545,80)+L(530,300,545,300)+T(590,196,'합 □',{end:1,fs:20}); }
+  else if(k==='eq2'){ g+=T(20,70,'가 컵 □번')+R(20,80,560,46)+T(300,180,'=',{mid:1,fs:30})+T(20,220,'나 컵 □번')+R(20,230,560,46)+T(20,350,'가 컵 1번 □     나 컵 1번 □',{fs:20}); }
+  else if(k==='scale2'){ [[150,'저울 1'],[450,'저울 2']].forEach(([cx,lab])=>{ g+=T(cx,50,lab,{mid:1,fs:20})+R(cx-125,80,100,70)+R(cx+25,80,100,70)+L(cx-130,160,cx+130,160)+L(cx,160,cx,250)+L(cx-50,250,cx+50,250)+T(cx,290,'□ g',{mid:1,fs:20}); }); }
+  if(tag) g+=T(590,24,PF[k][1],{end:1,fs:17});
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%" preserveAspectRatio="xMidYMin meet" font-family="sans-serif">${g}</svg>`; }
+const pfSt=k=>{ PROG.pf=PROG.pf||{}; return PROG.pf[k]||(PROG.pf[k]={st:0,ok:0}); };
+function pfOptions(k){ const twin={stair:'bar2',bar2:'stair',sd:'sd3',sd3:'sd'}; const others=Object.keys(PF).filter(x=>x!==k&&twin[k]!==x); const o=[k]; while(o.length<3){ const x=pick(others); if(!o.includes(x)) o.push(x); } return o.sort(()=>Math.random()-0.5); }
+// 문제(it)에 맞게 패드 위 틀/고르기를 붙임. it.fr = {k, stage, pick, picks[], out, shown}
+function pfApply(it){ if(!PAD||!PAD.frame) return; if(it.rec||!it.fr){ PAD.frame(it.fr&&it.fr.shown||null); PAD.ui(''); return; }
+  const f=it.fr; PAD.frame(f.shown||null,f.tag&&f.shown===f.k);
+  const chooser=()=>{ if(!f.opts) f.opts=pfOptions(f.k);
+    PAD.ui(`<div class="pfch"><div class="pfq">어떤 그림으로 풀어 볼까?</div><div class="pfos">${f.opts.map(x=>`<button data-k="${x}"><span class="pfth">${pfSVG(x)}</span>${PF[x][0]}</button>`).join('')}<button data-k="none"><span class="pfth pfme">✍️</span>내가 그릴래</button></div></div>`,
+      b=>{ const x=b.dataset.k; if(!x) return; f.picks.push(x); if(f.pick==null) f.pick=x; f.shown=x==='none'?null:x; PAD.frame(f.shown,false); small(); }); };
+  const small=()=>PAD.ui(`<button class="pfsm" data-a="open">${f.stage===2&&!f.out?'🖼 틀 꺼내기':'🖼 틀 바꾸기'}</button>`,b=>{ if(b.dataset.a!=='open') return; if(f.stage===2) f.out=true; chooser(); });
+  if(f.stage===0) PAD.ui(''); else if(f.stage===1&&f.pick==null) chooser(); else small(); }
+function pfNew(it){ const k=frameOf(it.p); if(!k) return; const s=pfSt(k); it.fr={k,stage:Math.min(2,s.st||0),pick:null,picks:[],out:false,shown:(s.st||0)===0?k:null,tag:(s.st||0)===0}; }
+function pfAfter(it,rec){ const f=it.fr; if(!f) return; const s=pfSt(f.k); const used=!!(rec.pen&&rec.pen.n>0);
+  rec.frame={k:f.k,stage:f.stage,pick:f.pick,picks:f.picks.slice(),pickOk:f.stage===1?(f.pick===f.k?1:f.pick==='none'?null:0):null,out:f.out||false};
+  if(rec.res==='x'){ s.ok=0; } else if(rec.res==='o'&&used&&(f.stage===0||(f.stage===1&&(f.pick===f.k||f.pick==='none'))||(f.stage===2&&!f.out))){ s.ok=(s.ok||0)+1;
+    if(s.ok>=3&&s.st<2){ s.st++; s.ok=0; s.at=today(); toast(s.st===1?'🖼 이제 그림 틀을 내가 골라요!':'🖼 이제 그림을 혼자 그려요!'); } }
+  DIRTY=true; }
+// --- 🖼 그림 복습 (하루 1문제): 최근 틀렸거나 헤맨 5단계 문제를 그대로 + 빈 틀 → 쉬운 방법 그림과 비교 → 쌍둥이(틀 없이)
+const pfKey=ts=>String(ts||'').replace(/\W/g,'');
+function pfReviewProb(x){ const si=SKI(x.sk); if(si<0) return null;
+  if(x.pq){ const p=Object.assign({},x.pq,{sk:si,lv:x.lv,fm:x.fm}); p.hints=p.hints||[]; p.sol=p.sol||[]; p.bugs=p.bugs||[]; return p; }
+  const m=/^(\d+)\s*([^\d\s]*)$/.exec(String(x.ans||'').trim()); if(!m||!x.q||x.q.length>=140) return null; // 옛 기록: 숫자 답만
+  return {text:picEsc(x.q),type:'num',unit:m[2]||'',answer:+m[1],sk:si,lv:x.lv,fm:x.fm,hints:[],sol:[],bugs:[]}; }
+function pfReviewPick(){ PROG.pfrev=PROG.pfrev||{}; if(PROG.pfday===today()) return null; const lim=new Date(Date.now()-14*864e5).toISOString().slice(0,10);
+  const C2=allAtt().filter(x=>x.mode==='solve'&&x.lv===4&&!String(x.sk).startsWith('book:')&&(x.res==='x'||x.res==='h')&&x.d>=lim&&!PROG.pfrev[pfKey(x.ts)]).map(x=>({x,p:pfReviewProb(x)})).filter(c=>c.p&&frameOf(c.p));
+  C2.sort((a,b)=>((b.x.tutor&&b.x.tutor.pic?1:0)-(a.x.tutor&&a.x.tutor.pic?1:0))||String(b.x.ts).localeCompare(String(a.x.ts))); return C2[0]||null; }
+function pfReviewHome(){ const c=pfReviewPick(); return c?`<button class="big pfbig" id="pfgo"><div><div class="t">🖼 그림 복습 · 1문제</div><div class="s">지난번에 헤맨 문제를 그림 틀에 채워서 다시 풀어요</div></div><span class="go">▶</span></button>`:''; }
+function startReview(){ const c=pfReviewPick(); if(!c) return home(); CUR='review';
+  app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right'));
+  const L=$('#left'); L.innerHTML=`<div class="sbar"><button class="homebtn" data-act="home">⏮ 처음으로</button><div class="stitle">🖼 그림 복습<div class="cnt">${c.x.d.slice(5).replace('-','/')}에 헤맨 문제 · 그림 틀에 채워서 풀어요</div></div>${saveBtnHTML()}</div><div id="pbox"></div>`; bindCommon();
+  const k=frameOf(c.p); const it={p:c.p,fr:{k,stage:0,pick:null,picks:[],out:false,shown:k,tag:true}}; PAD.frame(k,true); PAD.ui(''); const t0=Date.now();
+  mountProblem($('#pbox'),c.p,{mode:'review',nextLabel:'🔁 쌍둥이 문제 ▶',onDone:rec=>{ rec.of=c.x.ts; rec.frame={k,stage:0}; rec.pen=penSnap({t0}); recordAtt(rec); PROG.pfrev[pfKey(c.x.ts)]=today(); PROG.pfday=today(); DIRTY=true; refreshTop();
+      const mine=rec.pen&&PENC[rec.pen.id]?PENC[rec.pen.id].img:''; const pic=c.x.tutor&&c.x.tutor.pic, sh=c.x.tutor&&c.x.tutor.shorter;
+      const cmp=`<div class="pfcmp"><div class="pfcol"><div class="pfh">✍️ 내 그림</div>${mine?`<img src="${mine}" alt="내 그림">`:'<div class="sm">(패드에 그린 게 없어요)</div>'}</div><div class="pfcol"><div class="pfh">💡 더 쉬운 방법</div>${sh?`<div class="short">${picEsc(sh)}</div>`:''}${pic?renderPic(pic):''}${!sh&&!pic&&c.p.sol.length?c.p.sol.map(s=>`<div class="st">${s}</div>`).join(''):''}${!sh&&!pic&&!c.p.sol.length?`<div class="sm">정답: <b>${picEsc(c.x.ans)}</b></div>`:''}</div></div><div class="pfq2">내 그림이랑 비교해 봐요. 어디가 같고 어디가 달라요?</div>`;
+      $('#pbox').querySelector('#sol').insertAdjacentHTML('beforebegin',cmp); },
+    onNext:()=>pfTwin(c)}); if(!c.p.hints.length){ const hb=$('#pbox').querySelector('#hb'); if(hb) hb.style.display='none'; } }
+function pfTwin(c){ let p=null; try{ p=makeProblem(SKI(c.x.sk),4); }catch(e){} if(!p) return home(); PAD.clear(); PAD.frame(null); PAD.ui('');
+  const L=$('#left'); L.querySelector('.cnt').textContent='🔁 쌍둥이 문제 · 이번엔 틀 없이 혼자 그려요'; const box=$('#pbox'); box.innerHTML='';
+  const t0=Date.now(); mountProblem(box,p,{mode:'twin',nextLabel:'수학 계속하기 ▶',onDone:rec=>{ rec.of=c.x.ts; rec.pen=penSnap({t0}); recordAtt(rec); },onNext:home}); }
+const PQK=['text','svg','type','unit','units','form','answer','sol','hints','bugs','item','unitName','value','options'];
+function pfPQ(p){ const o={}; PQK.forEach(k=>{ if(p[k]!==undefined) o[k]=p[k]; }); try{ return JSON.parse(JSON.stringify(o)); }catch(e){ return null; } }
+function pfMomHTML(){ const P=PROG.pf||{}; const ks=Object.keys(PF); const A=allAtt(); const rv=A.filter(x=>x.mode==='review');
+  const rows=ks.map(k=>{ const s=P[k]; const a=A.filter(x=>x.frame&&x.frame.k===k&&x.mode==='solve'); const o=a.filter(x=>x.res==='o').length; const pk=a.filter(x=>x.frame.stage===1&&x.frame.pickOk!=null); const pko=pk.filter(x=>x.frame.pickOk===1).length;
+    return `<tr><td>${PF[k][0]}<br><span class="sm">${PF[k][1]}</span></td><td>${PF_STAGE[(s&&s.st)||0]}${s&&s.st<2?` (${s.ok||0}/3)`:''}</td><td>${a.length}</td><td>${a.length?o+'/'+a.length:'–'}</td><td>${pk.length?pko+'/'+pk.length:'–'}</td><td>${a.filter(x=>x.frame.out).length||'–'}</td></tr>`; }).join('');
+  return `<div class="sec">🖼 그림 틀 (5단계) · 그림 복습</div><div class="tw"><table class="ptab"><tr><th>틀</th><th>지금</th><th>푼 문제</th><th>한 번에 정답</th><th>맞는 틀 고름</th><th>틀 꺼냄</th></tr>${rows}</table></div>
+   <p class="note">빈 틀 → 같은 틀로 한 번에 맞히기(패드에 쓰고) 3번 → 틀 고르기 → 맞는 틀 골라 3번 → 혼자 그리기. 틀리면 그 단계 횟수만 0으로. 그림 복습: ${rv.length}문제 (오늘 ${PROG.pfday===today()?'함':'아직'}) · 한 번에 정답 ${rv.filter(x=>x.res==='o').length}</p>`; }
+
 // ===== 필기 패드 =====
-function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span><button data-tool="photo">📷 사진</button><input type="file" accept="image/*" capture="environment" class="phin" hidden></div><div class="phs"></div><div class="padwrap"><canvas class="pad" id="pad"></canvas></div>`; }
+function padHTML(){ return `<div class="ptools"><button class="on" data-tool="pen" data-c="#1f2a44"><span class="dot" style="background:#1f2a44"></span></button><button data-tool="pen" data-c="#2f6fed"><span class="dot" style="background:#2f6fed"></span></button><button data-tool="pen" data-c="#e4572e"><span class="dot" style="background:#e4572e"></span></button><button data-tool="er">지우개</button><button data-tool="clr">전체 지우기</button><span class="sp"></span><button data-tool="photo">📷 사진</button><input type="file" accept="image/*" capture="environment" class="phin" hidden></div><div class="phs"></div><div class="padwrap"><div class="pfr"></div><canvas class="pad" id="pad"></canvas><div class="pfui"></div></div>`; }
 function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext('2d'); let tool='pen', col='#1f2a44', drawing=false, last=null, pid=null; const strokes=[]; let hist=[]; let photos=[]; // photos: 종이 풀이 사진(엄마 11/23) / hist: 이 문제에서 쓴 모든 획(전체 지우기 포함) — 손풀이 저장용
-  const fit=()=>{ const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cv.width=Math.max(1,r.width*dpr); cv.height=Math.max(1,r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); };
+  const pfr=root.querySelector('.pfr'), pfui=root.querySelector('.pfui'); let fk=null, fimg=null, fbox={x:0,y:0,w:0,h:0}; // 🖼 그림 틀(엄마 11/24): 캔버스 아래에 깔려서 지우개로 안 지워짐
+  const place=()=>{ if(!pfr) return; const r=cv.getBoundingClientRect(); const fw=Math.max(0,Math.min(r.width-16,r.height*0.7*1.5)), fh=fw/1.5; fbox={x:(r.width-fw)/2,y:6,w:fw,h:fh}; Object.assign(pfr.style,{left:fbox.x+'px',top:fbox.y+'px',width:fw+'px',height:fh+'px'}); };
+  const fit=()=>{ const r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cv.width=Math.max(1,r.width*dpr); cv.height=Math.max(1,r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); place(); redraw(); };
   const paint=(c,list,sc,ox,oy)=>{ list.forEach(s=>{ c.strokeStyle=s.c; c.lineWidth=s.w*sc; c.lineCap='round'; c.lineJoin='round'; c.globalCompositeOperation=s.er?'destination-out':'source-over'; c.beginPath(); s.pts.forEach((p,i)=>i?c.lineTo((p[0]-ox)*sc,(p[1]-oy)*sc):c.moveTo((p[0]-ox)*sc,(p[1]-oy)*sc)); if(s.pts.length===1) c.lineTo((s.pts[0][0]-ox)*sc+0.1,(s.pts[0][1]-oy)*sc); c.stroke(); }); c.globalCompositeOperation='source-over'; };
   const redraw=()=>{ ctx.clearRect(0,0,cv.width,cv.height); paint(ctx,strokes,1,0,0); };
   const pos=e=>{ const r=cv.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; };
@@ -3722,8 +3798,9 @@ function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext(
   // 손풀이 꺼내기: 지금 패드 그림(흰 바탕, 쓴 곳만 잘라서) + 획 순서·시간 + 요약
   const snap=t0=>{ const ink=strokes.filter(s=>!s.er); const penH=hist.filter(s=>!s.clr&&!s.er); if(!ink.length) return {n:0};
     let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; ink.forEach(s=>s.pts.forEach(p=>{ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]); x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); }));
+    if(fk&&fbox.w){ x0=Math.min(x0,fbox.x); y0=Math.min(y0,fbox.y); x1=Math.max(x1,fbox.x+fbox.w); y1=Math.max(y1,fbox.y+fbox.h); }
     x0=Math.max(0,x0-20); y0=Math.max(0,y0-20); x1+=20; y1+=20; const bw=x1-x0, bh=y1-y0; const sc=Math.min(1.5,1000/Math.max(bw,bh));
-    let img=''; try{ const oc=document.createElement('canvas'); oc.width=Math.max(1,Math.round(bw*sc)); oc.height=Math.max(1,Math.round(bh*sc)); const o=oc.getContext('2d'); const tmp=document.createElement('canvas'); tmp.width=oc.width; tmp.height=oc.height; paint(tmp.getContext('2d'),strokes,sc,x0,y0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height); o.drawImage(tmp,0,0); img=oc.toDataURL('image/png'); }catch(e){}
+    let img=''; try{ const oc=document.createElement('canvas'); oc.width=Math.max(1,Math.round(bw*sc)); oc.height=Math.max(1,Math.round(bh*sc)); const o=oc.getContext('2d'); const tmp=document.createElement('canvas'); tmp.width=oc.width; tmp.height=oc.height; paint(tmp.getContext('2d'),strokes,sc,x0,y0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height); if(fk&&fimg&&fimg.complete&&fimg.naturalWidth){ try{ o.drawImage(fimg,(fbox.x-x0)*sc,(fbox.y-y0)*sc,fbox.w*sc,fbox.h*sc); }catch(_){} } o.drawImage(tmp,0,0); img=oc.toDataURL('image/png'); }catch(e){}
     const ev=hist.filter(s=>s.t>=t0); const times=ev.map(s=>s.t); let idle=0; for(let i=1;i<ev.length;i++) idle=Math.max(idle,(ev[i].t-(ev[i-1].t1||ev[i-1].t))/1000);
     const out=hist.map(s=>s.clr?{clr:1,t:s.t-t0}:{c:s.c,er:s.er?1:0,t:s.t-t0,p:s.pts.filter((p,i,a)=>i===0||i===a.length-1||Math.abs(p[0]-a[i-1][0])+Math.abs(p[1]-a[i-1][1])>=2).map(p=>[Math.round(p[0]),Math.round(p[1])])});
     const r=cv.getBoundingClientRect();
@@ -3735,7 +3812,9 @@ function mountPad(root){ const cv=root.querySelector('#pad'), ctx=cv.getContext(
   phin.onchange=async()=>{ const f=phin.files&&phin.files[0]; phin.value=''; if(!f) return; try{ const img=await phShrink(f); photos.push({img,t:Date.now()}); drawPh(); toast(`📷 사진을 넣었어요 (${photos.length}장)`); }catch(e){ toast('사진을 못 넣었어요. 다시 찍어 볼래요?'); } };
   drawPh();
   const snap2=t0=>{ const s=snap(t0); s.photos=photos.map(x=>x.img); return s; };
-  new ResizeObserver(fit).observe(cv); fit(); return {clear:()=>{strokes.length=0;hist=[];photos=[];drawPh();redraw();},snap:snap2}; }
+  const frame=(k,tag)=>{ fk=k||null; if(!pfr) return; place(); pfr.innerHTML=fk?pfSVG(fk,tag):''; fimg=null; if(fk){ const im=new Image(); im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(pfSVG(fk,tag).replace('width="100%" height="100%"','width="1200" height="800"')); fimg=im; } };
+  const ui=(html,on)=>{ if(!pfui) return; pfui.innerHTML=html||''; pfui.style.display=html?'':'none'; pfui.onclick=e=>{ const b=e.target.closest('button'); if(b&&on) on(b); }; };
+  new ResizeObserver(fit).observe(cv); fit(); ui(''); return {clear:()=>{strokes.length=0;hist=[];photos=[];drawPh();redraw();},snap:snap2,frame,ui}; }
 const PH_MAX=2, PH_BYTES=300000;
 function phShrink(file){ return new Promise((ok,no)=>{ const u=URL.createObjectURL(file), im=new Image();
   im.onload=()=>{ URL.revokeObjectURL(u); let side=1400, q=0.72, out='';
@@ -3761,8 +3840,9 @@ function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   L.innerHTML=`${solveBar()}<div id="pbox"></div>${navRow()}`; bindNav();
   const box=$('#pbox');
-  if(it.rec){ box.innerHTML=`${problemCard(it.p)}<div class="fb show ${it.rec.res==='x'?'x':it.rec.res==='s'?'h':'o'}">${it.rec.res==='s'?'건너뛴 문제예요.':it.rec.res==='x'?'틀린 문제예요.':'맞힌 문제예요.'} 정답: <b>${answerText(it.p)}</b></div><div class="sol">${it.p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div>`; return; }
-  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
+  if(it.rec){ pfApply(it); box.innerHTML=`${problemCard(it.p)}<div class="fb show ${it.rec.res==='x'?'x':it.rec.res==='s'?'h':'o'}">${it.rec.res==='s'?'건너뛴 문제예요.':it.rec.res==='x'?'틀린 문제예요.':'맞힌 문제예요.'} 정답: <b>${answerText(it.p)}</b></div><div class="sol">${it.p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div>`; return; }
+  if(!it.fr) pfNew(it); pfApply(it);
+  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
 function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true;
   if(rec.res==='o') r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
@@ -3856,9 +3936,9 @@ function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
     const days={}; A.forEach(x=>{ (days[x.d]=days[x.d]||[]).push(x); });
     const drows=Object.keys(days).sort().reverse().slice(0,14).map(d=>{ const a=days[d].filter(x=>x.mode==='solve'&&x.res!=='s'); const o=a.filter(x=>x.res==='o').length; const sec=days[d].reduce((s,x)=>s+(x.sec||0),0); const w=PROG.whys.filter(x=>x.d===d).flatMap(x=>x.why).map(k=>WHYL[k]||k);
       return `<tr><td>${d}</td><td>${a.length}</td><td>${a.length?Math.round(o/a.length*100)+'%':'–'}</td><td>${Math.round(sec/60)}분</td><td class="sm">${uniq(w).join(', ')||'–'}</td></tr>`; }).join('');
-    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||bookName(x.sk)} · ${LVM[x.lv]||'책'}${x.mode!=='solve'?` (${x.mode==='check'?'확인':'수업'})`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}${x.penAsk==='wrote'?' · 틀린 뒤 씀':''}<br>`:x.penAsk==='blank'?'✍️ 「생각이 안 나요」<br>':''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<details><summary>🧑‍🏫 AI 대화 ${x.tutor.turns.length}줄 (${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</summary>${x.tutor.read?`<div>읽은 식: ${x.tutor.read}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${t.text}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${x.tutor.mom.join(' / ')}</div>`:''}${x.tutor.shorter?`<div>💡 ${picEsc(x.tutor.shorter)}</div>${renderPic(x.tutor.pic)}`:''}${x.learn?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</details>`:''}${x.fixed?'<br>✏️ 스스로 고침':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
+    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||bookName(x.sk)} · ${LVM[x.lv]||'책'}${x.mode!=='solve'?` (${({check:'확인',lesson:'수업',review:'🖼 그림 복습',twin:'🔁 쌍둥이'})[x.mode]||x.mode})`:''}${x.frame?`<br>🖼 ${PF[x.frame.k]?PF[x.frame.k][0]:x.frame.k} · ${PF_STAGE[x.frame.stage]||''}${x.frame.stage===1?(x.frame.pickOk===1?' · 맞는 틀 고름':x.frame.pickOk===0?' · 다른 틀 고름('+(PF[x.frame.pick]||['?'])[0]+')':' · 직접 그림'):''}${x.frame.out?' · 틀 꺼냄':''}`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}${x.penAsk==='wrote'?' · 틀린 뒤 씀':''}<br>`:x.penAsk==='blank'?'✍️ 「생각이 안 나요」<br>':''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<details><summary>🧑‍🏫 AI 대화 ${x.tutor.turns.length}줄 (${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</summary>${x.tutor.read?`<div>읽은 식: ${x.tutor.read}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${t.text}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${x.tutor.mom.join(' / ')}</div>`:''}${x.tutor.shorter?`<div>💡 ${picEsc(x.tutor.shorter)}</div>${renderPic(x.tutor.pic)}`:''}${x.learn?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</details>`:''}${x.fixed?'<br>✏️ 스스로 고침':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
     body=`<div class="sec">기능별</div><div class="tw"><table class="ptab"><tr><th>기능</th><th>개념/확인</th><th>지금 단계</th><th>푼 문제</th><th>한 번에 정답</th><th>시간(중간값)</th><th>많이 나온 틀린 이유</th></tr>${rows}</table></div>
-     ${penSummaryHTML(A)}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
+     ${penSummaryHTML(A)}${pfMomHTML()}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
      <div class="sec">최근 30문제</div><div class="tw"><table class="ptab"><tr><th>시각</th><th>기능</th><th></th><th>문제</th><th>정답 / 쓴 답</th><th>손풀이 · 틀린 이유</th><th>시간</th></tr>${recent||'<tr><td colspan="7">아직 기록이 없어요</td></tr>'}</table></div>
      <p class="note">△ = 힌트를 보고 맞힘 (11/23부터 틀리면 다시 풀지 않고 바로 다음 문제로 가요). 저장 안 된 기록 ${UNSAVED.length}개 포함. 막힌 이유는 5일 이상 쌓인 뒤 판단해요.</p>`; }
   else { const si=parent.si||0, lv=parent.lv||0; const ps=[]; for(let k=0;k<4;k++) ps.push(makeProblem(si,lv));
