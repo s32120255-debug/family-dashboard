@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=47">
-<link rel="icon" href="icon-192.png?v=47">
-<link rel="apple-touch-icon" href="icon-192.png?v=47">
+<link rel="manifest" href="manifest.json?v=48">
+<link rel="icon" href="icon-192.png?v=48">
+<link rel="apple-touch-icon" href="icon-192.png?v=48">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -149,6 +149,13 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100%);max-height:85vh;overflow:auto;z-index:16;border-radius:22px 22px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 24px rgba(0,0,0,.18)}
 #wishList .item{flex-wrap:wrap}#wishList .item .t{flex:1 1 60%}
 .usebox{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.usesrc{font-size:.85rem;color:var(--muted);display:inline-flex;gap:4px;align-items:center}.usesrc select{border:1px solid var(--line);border-radius:8px;padding:4px 6px;background:var(--bg)}
+.shopgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.scard{border:2px solid #3a2a00;border-radius:16px;background:#fffbe8;padding:12px;display:grid;gap:6px;align-content:space-between;box-shadow:0 3px 0 #e0a800;color:#2b2414}
+.scard .st{font-family:var(--display);font-size:1.15rem;line-height:1.2;overflow-wrap:anywhere}
+.scard .sm{font-size:.8rem;color:#7a6f55}
+.scard .sp{font-family:var(--display);font-size:1.3rem}
+.scard button{border:2px solid #3a2a00;background:#ffc928;color:#3a2a00;border-radius:999px;padding:6px;font-weight:700;cursor:pointer}
+.scard button:disabled{background:#eee3c0;color:#9a8f78;border-color:#c9bfa8;cursor:not-allowed}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
 .item.skipped{opacity:.45}
 .item.skipped .t{text-decoration:line-through}
@@ -205,7 +212,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 47</p></div></div>
+<p style="font-size:.75rem">버전 48</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -293,6 +300,13 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="supplyList"></ul></div>
   </section>
 
+  <section class="card" data-tab="grow" id="c-shop">
+   <h2>🏪 상점 <small>도움 포인트로 사요</small></h2>
+   <div class="tabs" id="shopWho"></div>
+   <div class="pts" id="shopBal"></div>
+   <div class="shopgrid" id="shopGrid"></div>
+  </section>
+
   <section class="card" data-tab="grow" id="c-wish">
    <h2>받고 싶은 보상 <button class="btn small" id="wishAdd">＋</button></h2>
    <p class="status" style="margin:0">누구나 적을 수 있어요. 필요한 포인트는 관리자 모드에서 정해요.</p>
@@ -332,8 +346,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=47";
-import {SEED_SCHEDULE} from "./seed.js?v=47";
+import {firebaseConfig} from "./config.js?v=48";
+import {SEED_SCHEDULE} from "./seed.js?v=48";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -706,6 +720,15 @@ function wishGot(w){
 function openWish(w){const def={title:"받고 싶은 보상",f:[["who","누가 (받고 싶은 사람)","select",PEOPLE.map(p=>[p,p])],["to","누구에게 (해 줄 사람)","select",PEOPLE.map(p=>[p,p])],["title","받고 싶은 것","text"],...(admin?[["points","필요한 포인트 (관리자만)","number"]]:[])]};
  openForm("wishes",w,w?null:{who:me||"시훈",to:(me||"시훈")==="엄마"?"아빠":"엄마"},def,data=>{if(!data.title){toast("받고 싶은 것을 적어 주세요");return false}if(!admin)delete data.points;
   if(w)run(db.collection("wishes").doc(w.id).update(data),"저장했어요");else run(db.collection("wishes").add({...data,createdAt:Date.now()}),"적었어요")})}
+// 🏪 상점: 엄마·아빠가 자기 「받고 싶은 보상」(who=나, points 정해진 것)을 도움 포인트로 사기. 기록은 wishGot과 같은 형식
+let shopWho=null;
+function renderStore(){const who=shopWho||(me&&me!=="시훈"?me:"엄마");
+ $("shopWho").innerHTML=["엄마","아빠"].map(p=>`<button type="button" data-shopwho="${p}" aria-pressed="${p===who}">${p}</button>`).join("")+`<span class="meta" style="align-self:center;margin-left:6px">시훈이는 시훈이 대시보드 상점</span>`;
+ const hb=helpBal(),bal=(hb.tot[who]||0)-(hb.sp[who]||0);
+ $("shopBal").innerHTML=`<div class="pt main"><small>${who} 도움 포인트</small><b>⭐ ${bal}</b></div>`;
+ const l=S.wishes.filter(w=>w.who===who&&!w.got).sort((a,b)=>(Number(a.points)||1e9)-(Number(b.points)||1e9));
+ $("shopGrid").innerHTML=l.length?l.map(w=>{const pts=Number(w.points)||0;return`<div class="scard"><div class="st">${esc(w.title)}</div><div class="sm">${w.to?esc(w.to==="시훈"?"시훈이":w.to)+"가 해 줘요":""}</div><div class="sp">${pts?"⭐ "+pts:"<span class='sm'>포인트 미정</span>"}</div><button type="button" data-buy="${w.id}" ${!pts||bal<pts?"disabled":""}>${!pts?"가격을 정해 주세요":bal<pts?`${pts-bal}점 더 모아요`:"사기"}</button></div>`}).join("")
+  :`<p class="empty" style="margin:0">${who}가 받고 싶은 보상이 없어요. 아래 「받고 싶은 보상」에 적어 보세요.</p>`}
 let growMonth=new Date();
 function renderGrow(){
  const t=today(),ws=weekStart(),sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
@@ -778,7 +801,7 @@ function renderSupplies(){const need=S.supplies.filter(x=>x.status&&x.status!=="
 function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.filter(x=>!q||(x.name+" "+x.place).includes(q)).sort((a,b)=>String(a.name).localeCompare(b.name));
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
-function renderAll(){renderWish();renderGrow();renderTop();renderSched();renderTasks();renderNotes();renderFood();renderPantry();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
+function renderAll(){renderStore();renderWish();renderGrow();renderTop();renderSched();renderTasks();renderNotes();renderFood();renderPantry();renderChores();renderHelp();renderCal();renderMeals();renderShop();renderSupplies();renderLoc()}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -826,6 +849,12 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   const left=taskBal();
   if(left<1)return toast(`포인트가 모자라요 (남은 ${left})`);
   run(db.collection("rewards").add({title:USES[d.use],points:1,who:"시훈",use:d.use,date:today(),createdAt:Date.now()}),`${USES[d.use]} ⭐1 썼어요 (남은 ${left-1})`);return}
+ if(d.shopwho){shopWho=d.shopwho;renderStore();return}
+ if(d.buy){if(!db)return toast("저장소에 연결되지 않았어요");const w=S.wishes.find(x=>x.id===d.buy);if(!w||w.got)return;const pts=Number(w.points)||0,hb=helpBal(),bal=(hb.tot[w.who]||0)-(hb.sp[w.who]||0);
+  if(!pts||bal<pts)return toast("포인트가 모자라요");
+  const id="wish_"+w.id+"_"+Date.now();
+  run(db.collection("rewards").doc(id).set({title:w.title,points:pts,kind:"help",who:w.who,wishId:w.id,date:today(),createdAt:Date.now()}));
+  run(db.collection("wishes").doc(w.id).update({got:today(),rewardId:id}),`샀어요 🎉 ${w.to?w.to+"에게 말해요!":""}`);return}
  if(d.wishedit){const w=S.wishes.find(x=>x.id===d.wishedit);if(w)openWish(w);return}
  if(d.wishgot){const w=S.wishes.find(x=>x.id===d.wishgot);if(w)wishGot(w);return}
  if(d.help){const x=S.helpmom.find(y=>y.id===d.help);if(!x)return;const t=today(),on=x.doneDate===t,pts=Number(x.points)||1,lid=`${x.id}_${t}`;
@@ -887,7 +916,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=47;
+const VERSION=48;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
