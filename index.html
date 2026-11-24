@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=58">
-<link rel="icon" href="icon-192.png?v=58">
-<link rel="apple-touch-icon" href="icon-192.png?v=58">
+<link rel="manifest" href="manifest.json?v=59">
+<link rel="icon" href="icon-192.png?v=59">
+<link rel="apple-touch-icon" href="icon-192.png?v=59">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -127,7 +127,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .tt-slot:hover{background:var(--admin-soft)}
 .tt-area{position:absolute;left:64px;right:0;top:0;bottom:0;pointer-events:none}
 .tt-area>*{pointer-events:auto}
-.tt-gap{position:absolute;left:2px;right:2px;border:1.5px dashed #e6cf88;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:.78rem;pointer-events:none}
+.tt-gap{position:absolute;left:0;right:2px;border:2px dashed #c9a640;background:repeating-linear-gradient(-45deg,#fff8dc 0 8px,#fff2c4 8px 16px);border-radius:10px;display:grid;place-items:center;color:#7a5200;font-family:var(--display);font-size:1rem;pointer-events:none}
 .tt-b{position:absolute;border-radius:10px;border:2px solid #3a2a00;padding:3px 8px;display:flex;gap:4px;align-items:center;overflow:hidden;color:#2b2414;font-size:1rem;line-height:1.2}
 .tt-b b{font-family:var(--display);font-weight:400;line-height:1.1}
 .tt-b .tt-t{flex:1;min-width:0;text-align:center}
@@ -225,7 +225,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 58</p></div></div>
+<p style="font-size:.75rem">버전 59</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -363,8 +363,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=58";
-import {SEED_SCHEDULE} from "./seed.js?v=58";
+import {firebaseConfig} from "./config.js?v=59";
+import {SEED_SCHEDULE} from "./seed.js?v=59";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -549,7 +549,7 @@ function timetable(list,nm){
  let rows="";const lt=timed.filter(x=>!x.skipped);
  for(let h=lo;h<hi;h++)for(const half of [0,30]){const m=h*60+half,cov=lt.find(x=>x.s<m+30&&x.e>m),col=cov?schedColor(cov,TTC):"";
   rows+=`<div class="tt-row${half?" half":""}" style="top:${y(m)}px"><span class="tt-h${cov?" on":""}">${half?`${h%12||12}:30`:`${h<12?"오전":"오후"} ${h%12||12}시`}</span>${admin?`<button class="tt-slot" data-slot="${pad(h)}:${half?"30":"00"}" aria-label="${h}시 ${half?"30분":""}에 일정 넣기"></button>`:""}</div>`}
- let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>엄마와 시훈이가 상의해 보아요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
+ let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>0)gaps+=`<div class="tt-gap" style="top:${y(pe)+1}px;height:${y(x.s)-y(pe)-2}px"><span>${x.s-pe>=60?"상의 · 엄마와 시훈이가 정해요":"상의"}</span></div>`;pe=Math.max(pe??0,x.e)}
  const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
  const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.rs&&nm<x.re;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
@@ -570,7 +570,7 @@ function heroHTML(items,nm){
  const bolt=`<svg class="bolt" viewBox="0 0 12 20" aria-hidden="true"><path d="M6 0 L0 11 H5 L3 20 L11 7 H6 L9 0Z" fill="#fff"/></svg>`;
  let main;
  if(cur)main=`<div class="lbl">⚡ 지금 할 일</div><div class="now">${esc(cur.title)}</div><div class="tm">${fmtT(cur.start)} ~ ${fmtT(cur.end).replace(/^오[전후] /,"")}${cur.note?" · "+esc(cur.note):""}</div>`;
- else if(free)main=`<div class="lbl">⚡ 지금은</div><div class="now">빈 시간</div><div class="tm">엄마와 시훈이가 상의해 보아요</div>`;
+ else if(free)main=`<div class="lbl">⚡ 지금은</div><div class="now">상의</div><div class="tm">엄마와 시훈이가 정해요</div>`;
  else if(next)main=`<div class="lbl">⚡ 곧 시작</div><div class="now">${esc(next.title)}</div><div class="tm">${dur(next.s-nm)} 뒤 시작 (${fmtT(next.start)})</div>`;
  else main=`<div class="lbl">⚡ 오늘 일정</div><div class="now">${tl.length?"다 끝났어요!":"일정이 없어요"}</div><div class="tm">푹 쉬어요</div>`;
  const bar=span?`<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="지난 시간"><i style="width:${pct.toFixed(1)}%"></i></div><div class="left">${dur(left)} 남았어요</div>`:"";
@@ -955,7 +955,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=58;
+const VERSION=59;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
