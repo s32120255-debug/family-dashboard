@@ -631,11 +631,13 @@ function renderMust(){const t=today();
  const hh=ms.map(x=>{const on=x.doneDate===t;return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-msn="${x.id}" aria-label="${on?"안 했어요":"했어요"}">${on?"✓":""}</button><span class="t" style="font-size:1.15rem">${esc(x.title)}</span>${x.once?"":`<span class="pill info">매일</span>`}<span class="pill ok">💗${Number(x.points)||1}</span></li>`});
  $("mustList").innerHTML=[...mh,...hh].join("")||`<li class="empty">오늘 꼭 할 게 없어요. 챙길 게 있으면 적어 봐!</li>`}
 // 시훈이도 오늘 꼭 적기(엄마 11/24): 우리집 기지 musts와 같은 형식 {title,who:"시훈",date,done:false,createdAt,by}
-$("mustForm").onsubmit=async e=>{e.preventDefault();const v=$("mustIn").value.trim();if(!v)return;if(!fs){toast("저장소에 연결되지 않았어요");return}
- const data={title:v,who:"시훈",date:$("mustDate").value||today(),done:false,createdAt:Date.now(),by:myName()};
+async function addMust(v,date,extra={}){if(!fs){toast("저장소에 연결되지 않았어요");return false}
+ const data={title:v,who:"시훈",date:date||today(),done:false,createdAt:Date.now(),by:myName(),...extra};
  try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"musts"));b.set(ref,data);
   b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:ref.id,action:"오늘 꼭 적음",summary:`${data.date} ${v}`,before:null,after:data});
-  await b.commit();$("mustIn").value="";$("mustDate").value=today();if(!S.musts.some(m=>m.id===ref.id))S.musts.push({id:ref.id,...data});toast("적었어요 ✓");renderMust()}catch(err){toast("적지 못했어요: "+(err.code||""))}};
+  await b.commit();if(!S.musts.some(m=>m.id===ref.id))S.musts.push({id:ref.id,...data});renderAll();return true}catch(err){toast("적지 못했어요: "+(err.code||""));return false}}
+$("mustForm").onsubmit=async e=>{e.preventDefault();const v=$("mustIn").value.trim();if(!v)return;
+ if(await addMust(v,$("mustDate").value)){$("mustIn").value="";$("mustDate").value=today();toast("적었어요 ✓")}};
 $("mustList").addEventListener("click",async e=>{const b=e.target.closest("[data-must]");if(!b||!fs)return;const x=S.musts.find(m=>m.id===b.dataset.must);if(!x||x.who!=="시훈")return;
  const data=x.done?{done:false,doneDate:null,doneBy:null}:{done:true,doneDate:today(),doneBy:"시훈"};
  try{const bt=F.writeBatch(fs);bt.update(F.doc(fs,"musts",x.id),data);bt.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:x.id,action:x.done?"오늘 꼭 취소":"오늘 꼭 했어요",summary:x.title,before:null,after:data});
@@ -709,7 +711,7 @@ function renderMemory(){
  const q=$("memSearch").value.trim();const l=live("memory").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  const f=l.filter(x=>!q||String(x.text).includes(q));
  $("memCount").textContent=`${l.length}개`;
- $("memList").innerHTML=f.map(x=>`<li class="item" style="align-items:flex-start"><span class="t memo">${esc(x.text)}<br><span class="meta">${fmtAt(x.createdAt)}${x.updatedAt?" · 고침":""}</span></span><button class="icon" data-memedit="${x.id}" aria-label="고치기">✎</button><button class="icon" data-memdel="${x.id}" aria-label="지우기">✕</button></li>`).join("")||`<li class="empty">${q?"찾는 생각이 없어요.":"아직 저장한 게 없어요."}</li>`;
+ $("memList").innerHTML=f.map(x=>`<li class="item" style="align-items:flex-start"><span class="t memo">${esc(x.text)}<br><span class="meta">${fmtAt(x.createdAt)}${x.updatedAt?" · 고침":""}</span></span>${S.musts.some(m=>m.memId===x.id&&!m.done&&m.date<=today())?`<span class="pill ok" style="white-space:nowrap">📌 오늘 꼭</span>`:`<button class="btn small" data-mempin="${x.id}" style="white-space:nowrap">📌 오늘 꼭</button>`}<button class="icon" data-memedit="${x.id}" aria-label="고치기">✎</button><button class="icon" data-memdel="${x.id}" aria-label="지우기">✕</button></li>`).join("")||`<li class="empty">${q?"찾는 생각이 없어요.":"아직 저장한 게 없어요."}</li>`;
 }
 
 /* ---------- AI 질문: 지금은 질문만 저장 (AI 답은 엄마가 켠 뒤) ---------- */
@@ -887,6 +889,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
  if(d.money){openMoney(d.money);return}
  if(d.medit){const x=S.money.find(y=>y.id===d.medit);if(x)openMoney(x.kind,x);return}
  if(d.mdel){const x=S.money.find(y=>y.id===d.mdel);if(x)confirmBox(`「${x.what}」 지울까요?`,()=>write("money",x.id,{deleted:true},"지움","용돈 "+moneyText(x)).then(ok=>ok&&toast("지웠어요")));return}
+ if(d.mempin){const x=S.memory.find(y=>y.id===d.mempin);if(x){const t=String(x.text).replace(/\s+/g," ").trim();addMust(t.length>40?t.slice(0,40)+"…":t,today(),{memId:x.id}).then(ok=>ok&&toast("오늘 꼭에 올렸어요 📌"))}return}
  if(d.memedit){const x=S.memory.find(y=>y.id===d.memedit);if(x)form("생각 고치기",[["text","내용","textarea"]],x,async v=>{if(!v.text){toast("내용을 적어 주세요");return false}if(await write("memory",x.id,{text:v.text},"수정",v.text.slice(0,60)))toast("고쳤어요")});return}
  if(d.memdel){const x=S.memory.find(y=>y.id===d.memdel);if(x)confirmBox("이 생각을 지울까요?",()=>write("memory",x.id,{deleted:true},"지움",String(x.text).slice(0,60)).then(ok=>ok&&toast("지웠어요")));return}
  if(d.restore){const[col,id]=d.restore.split(":");const x=S[col].find(y=>y.id===id);if(x)write(col,id,{deleted:false},"되살림",col==="money"?"용돈 "+moneyText(x):String(x.text).slice(0,60)).then(ok=>ok&&toast("되살렸어요"));return}
@@ -905,7 +908,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=59;
+const VERSION=60;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -950,7 +953,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=59").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=60").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
