@@ -134,6 +134,11 @@ body.noscroll{overflow:hidden}
 .shopCard{border:2.5px solid var(--line);background:var(--bg);color:inherit;border-radius:16px;padding:14px 10px;display:grid;gap:6px;justify-items:center;text-align:center;cursor:pointer;font:inherit}
 .shopCard .e{font-size:2.4rem;line-height:1}.shopCard .n{font-family:var(--hand);font-size:1.3rem;overflow-wrap:anywhere}.shopCard .pr{font-family:var(--hand);font-size:1.25rem;color:var(--yellow)}
 .shopCard[aria-disabled="true"]{opacity:.5;cursor:default}.shopCard .why{font-size:.8rem;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;border:2px solid var(--line);border-radius:999px;padding:6px 14px;background:var(--bg);font-family:var(--hand);font-size:1.3rem;line-height:1.2}
+.chip small{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip.now{background:var(--yellow);color:#2b2414;box-shadow:0 3px 0 #e0a800}.chip.now small{color:#5a4a20}
+.chip.past{opacity:.45}.chip.past b{text-decoration:line-through}.chip b{font-weight:400}
 .x2{border:2px dashed #e0a800;border-radius:12px;padding:6px 10px;font-weight:700;color:#7a5200;background:#fff8d6;margin-bottom:6px;list-style:none}.x2.on{background:#ffc928;border-style:solid;color:#3a2a00}
 </style>
 </head>
@@ -155,8 +160,13 @@ body.noscroll{overflow:hidden}
  <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
+  <section data-tab="today" class="card wide" style="--tape:var(--yellow)">
+   <h2><span class="ttl">요약 오늘</span><small id="sumDate"></small></h2>
+   <div class="chips" id="sumChips"></div>
+   <p class="meta" style="margin:0">자세한 건 아래 「상세 오늘」에서 확인해요</p>
+  </section>
   <section data-tab="today" class="card wide" style="--tape:var(--mint)">
-   <h2><span class="ttl">시간표</span><small>엄마가 우리집 대시보드에서 정해요</small></h2>
+   <h2><span class="ttl">상세 오늘</span><small>엄마가 우리집 대시보드에서 정해요</small></h2>
    <div class="nav"><button class="btn small" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="btn small" id="sNext" aria-label="다음 날">▶</button><button class="btn small" id="sToday">오늘</button></div>
    <a href="#" class="item" id="taskChip" style="text-decoration:none;color:inherit"></a>
    <div id="schedList"></div>
@@ -331,7 +341,14 @@ function tickHands(){const d=new Date(),sec=d.getSeconds(),m=d.getMinutes()+sec/
  const set=(id,deg)=>{const el=document.getElementById(id);if(el)el.setAttribute("transform",`rotate(${deg.toFixed(2)} 170 170)`)};
  set("hHour",h*30);set("hMin",m*6);set("hSec",sec*6)}
 setInterval(tickHands,1000);
-function renderSched(){
+// 요약 오늘: 오늘 일정 이름만 시간 순서로 칩(지난 것 흐리게, 지금 것 노랑). 그림·이모지 없음 — 우리집 기지 NOW 탭과 같은 모양
+function renderSum(){const t=today(),pd=parse(t),now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ $("sumDate").textContent=`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}요일`;
+ const l=schedItems(t).filter(x=>!x.skipped);
+ $("sumChips").innerHTML=l.length?l.map(x=>{const s0=x.start?mins(x.start):null,e=x.end?mins(x.end):(s0!=null?s0+20:null);
+  const cls=s0==null?"":nm>=e?"past":nm>=s0?"now":"";return`<span class="chip ${cls}">${x.start?`<small>${fmtT(x.start).replace(/^오[전후] /,"")}</small>`:""}<b>${esc(x.title)}</b></span>`}).join("")
+  :`<p class="empty" style="margin:0">오늘 일정이 없어요.</p>`}
+function renderSched(){renderSum();
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
  $("sLabel").textContent=`${pd.getMonth()+1}월 ${pd.getDate()}일 ${DAYNAME[dayKey(pd)]}요일`;
  $("sToday").style.visibility=isToday?"hidden":"visible";
@@ -672,7 +689,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=30;
+const VERSION=31;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -716,7 +733,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=30").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=31").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:()=>{openShop();return false}, // 체스판 잠금 화면 버튼 → 상점으로
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
