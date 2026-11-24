@@ -361,11 +361,11 @@ function dayBonus(tasks){const by={};for(const x of tasks){if(!x.date)continue;(
 function bonusSum(tasks,from){return Object.entries(dayBonus(tasks)).reduce((a,[d,v])=>a+(!from||d>=from?v:0),0)}
 function lastOfDay(x){return x.date===today()&&!x.done&&S.tasks.filter(y=>y.date===x.date&&y.id!==x.id).every(y=>y.done&&y.doneDate===x.date)}
 function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"";const b=dayBonus(S.tasks)[t];
- return b?`<li class="x2 on">⚡ 오늘 과제 다 했어요! 포인트 2배 (+${b})</li>`:`<li class="x2">⚡ 오늘 과제를 오늘 다 하면 포인트 2배!</li>`}
+ return b?`<li class="x2 on">⚡ 오늘 과제 다 했어요! 과제 포인트 2배 (+${b})</li>`:`<li class="x2">⚡ 오늘 과제를 오늘 다 하면 과제 포인트 2배!</li>`}
 function renderTasks(){
  const t=today();const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=weekStart()))+bonusSum(S.tasks,weekStart());
- $("ptText").textContent=`쓸 수 있는 포인트 ⭐${earned-used}`;
+ $("ptText").textContent=`쓸 수 있는 과제 포인트 ⭐${earned-used}`;
  renderGrow(earned,used,week);
  const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span></li>`;
  const tl=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
@@ -379,7 +379,7 @@ function renderTasks(){
 let growMonth=new Date();
 function renderGrow(earned,used,week){
  const t=today(),ws=weekStart();
- $("ptBox").innerHTML=`<div><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div><div><small>쓴 포인트</small><b>${used}</b></div>`;
+ $("ptBox").innerHTML=`<div><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div><div><small>쓴 포인트</small><b>${used}</b></div>`;
  {let tot=0,wk=0;for(const g of [...S.helpLog,...S.choreLog]){if(g.who!=="시훈")continue;const v=Number(g.points)||0;tot+=v;if(g.date>=ws)wk+=v}
   $("helpBox").innerHTML=`<div><small>모은 도움 포인트</small><b>💗 ${tot}</b></div><div><small>이번 주</small><b>${wk}</b></div>`}
  const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
@@ -600,7 +600,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=20;
+const VERSION=21;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -644,7 +644,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=20").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=21").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
