@@ -4505,6 +4505,7 @@ function renderResult(){
   const bad=G.filter(g=>!g.ok);
   $('#rev').innerHTML=bad.length?bad.map(g=>qHTML(g.it,G.indexOf(g)+1)).join(''):'<div class="muted" style="margin-top:8px">틀린 문제 없음! 💯</div>';
   $('#rev').querySelectorAll('.q').forEach(qe=>{const g=G[+qe.dataset.num-1],it=g.it;
+    if(window.KOAI){const pk=[].concat(g.o==null?[]:g.o).map(i=>it.opts[i]);KOAI.btn(qe,{q:it.q,box:it.box,opts:it.opts,ans:[].concat(it.a).map(i=>it.opts[i]).join(', '),exp:it.exp,area:it.area,src:(it.w?it.w+'주차 ':'')+'누적 테스트',picks:pk})}
     qe.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{if(qe.dataset.done)return;qe.dataset.done=1;const i=+o.dataset.i;const ok=i===it.a;
       o.classList.add(ok?'right':'wrongpick');qe.querySelector(`.opt[data-i="${it.a}"]`).classList.add('right');
       qe.querySelector('.after').innerHTML=`<div class="orig">${ok?'⭕ 다시 풀면 맞음 → 개념은 OK, 답안지/집중 실수':'❌ 또 틀림 → 개념 다시 보기'}</div><div class="exp">${it.exp}</div>`;
@@ -6266,7 +6267,8 @@ function hwDraw(){const H=hwSet(HWS.id);const it=H.items[HWS.i];if(!HWS.ph)HWS.p
   }
   $('#main').innerHTML=hwHead(H)+(L?`<div class="hwsplit"><div class="card hwl">${L}</div><div class="card hwr">${Q}</div></div>`:`<div class="card">${Q}</div>`);
   hwBind(H,it)}
-function hwBad(el,msg){HWS.miss++;if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}const f=$('#hwfb');if(f&&msg)f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">${msg}</div>`}
+function hwBad(el,msg){HWS.miss++;if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}const f=$('#hwfb');if(f&&msg)f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">${msg}</div>`;
+  if(f&&HWS.miss>=2&&window.KOAI){const H=hwSet(HWS.id),it=H.items[HWS.i];const P=it.p&&HWP[it.p];KOAI.btn(f,()=>({q:it.q||(it.st?[].concat(it.st).join(' '):'')||'선지가 근거와 맞는지 판단하기',box:it.box||'',psg:P?P.title+': '+P.s.map(x=>[].concat(x).join(' ')).join(' '):'',area:H.area,src:`${H.w}주차 숙제${it.no?` 교재 ${it.pg}쪽 ${it.no}번`:''}`,picks:[el&&el.textContent?el.textContent.trim():''],ans:'',raw:JSON.stringify(it)}))}}
 function hwBind(H,it){
   document.querySelectorAll('[data-hn]').forEach(b=>b.onclick=()=>{const k=+b.dataset.hn;if(k<0||k>=H.items.length)return;if(!HWS.res[HWS.i])HWS.res[HWS.i]={no:it.no||null,k:it.k,skipped:true};HWS.i=k;hwReset();hwDraw();window.scrollTo(0,0)});
   document.querySelectorAll('[data-hj]').forEach(b=>b.onclick=()=>{const k=+b.dataset.hj;if(!HWS.res[HWS.i])HWS.res[HWS.i]={no:it.no||null,k:it.k,skipped:true};HWS.i=k;hwReset();hwDraw();window.scrollTo(0,0)});
@@ -6484,6 +6486,7 @@ document.getElementById('hubb').onclick=()=>{clearInterval(window._tm);HUB.back(
 return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode(true);resetAll();loadExtras().then(()=>openStep(firstOpen()),()=>openStep(firstOpen()));return}setPlanMode(false);if(v&&v!==KH){resetAll();KH=v}go(KH)},
   plan(){if(!KO_PLAN.steps.length)return [{k:'rest',label:'🛌 오늘은 국어 쉬는 날',sub:'일요일 수업 듣는 날',done:true}];return KO_PLAN.steps.map((s,i)=>({k:s.k,label:s.label,sub:s.sub,done:stepDone(i)}))},
   leave(){clearInterval(window._tm)},
+  essays(){return READS.filter(r=>r.essay&&r.essay.q).map(r=>({id:r.id,title:r.title,q:String(r.essay.q).replace(/<[^>]+>/g,'')+(r.essay.rule?' (규칙: '+String(r.essay.rule).replace(/<[^>]+>/g,'')+')':''),pg:r.essay.pg,no:r.essay.no,psg:(r.chunks||[]).map(c=>(c.paras||[]).map(pp=>pp.join(' ')).join('\n')).join('\n').replace(/<[^>]+>/g,'')}))},
   est(){return {daily:med(KS.sec.daily),test:med(KS.sec.test)}},
   stats(){const a=KS.today;const t=a.filter(x=>x.type==='test');return {n:a.length,ok:a.filter(x=>x.ok===true).length,daily:a.filter(x=>x.type==='daily').length,tests:t.length,score:t.length?t[t.length-1].score:null,types:[...new Set(a.map(x=>x.type))]}}};
 })(mountApp('host-ko','t-ko'));
@@ -6495,7 +6498,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     {k:'en',ic:'🇺🇸',name:'영어',sub:'단어 쓰기 40개 → 50문장 블록으로 만들고 따라 말하며 녹음'},
     {k:'ko',ic:'📖',name:'국어',sub:'수능 입문반 · 복습 · 누적 테스트'},
     {k:'math',ic:'🔢',name:'수학',sub:'큰 수 · 개념 확인'},
-    {k:'sp',ic:'⭐',name:'특별 학습',sub:'있는 날만 열려요',off:true}
+    {k:'write',ic:'✍️',name:'글쓰기 첨삭',sub:'서술형 · 학교 숙제 · 엄마가 낸 글쓰기를 AI 쌤과 함께'}
   ];
   const WHY=[['understand','📘 규칙을 잘 몰랐어'],['attention','🎯 처음엔 놓쳤는데 힌트 보고 알았어'],['retrieval','🗣️ 아는데 바로 안 나왔어'],
              ['fatigue','🔋 뒤로 갈수록 집중이 안 됐어'],['condition','🌊 오늘 좀 피곤했어'],['none','✨ 별로 안 막혔어']];
@@ -6511,16 +6514,17 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     if(!DB)return;clearTimeout(wT);const snap=JSON.parse(JSON.stringify(REC));wT=setTimeout(()=>{DB.doc('daily/'+snap.date).set(snap).catch(()=>{})},600)}
   HUB.db.then(async d=>{DB=d;if(!d)return;try{const s=await d.doc('daily/'+day).get();
     if(s.exists){const c=s.data();if((c.updated||'')>(REC.updated||'')){REC=JSON.parse(JSON.stringify(c));if(VIEW==='home')render()}}else if(Object.keys(REC.subjects).length)save()}catch(e){}});
-  function stats(k){try{if(k==='en')return APP_EN.stats();if(k==='math')return M32()?APP_M32.stats():APP_MATH.stats();if(k==='ko')return APP_KO.stats()}catch(e){}return {n:0,ok:0}}
+  function stats(k){try{if(k==='en')return APP_EN.stats();if(k==='math')return M32()?APP_M32.stats():APP_MATH.stats();if(k==='ko')return APP_KO.stats();if(k==='write')return APP_WRITE.stats()}catch(e){}return {n:0,ok:0}}
   function refresh(k){const st=stats(k);const s=S(k);s.actual=st;if(k==='math'){s.unit=M32()?'3-2':'4-1 큰 수';try{const T=(M32()?APP_M32:APP_MATH).time();s.time={conceptSec:T.concept,problemSec:T.problem}}catch(e){}}if(st.n)s.lastAt=new Date().toISOString();return st}
   // 수학 예상 시간: 시훈이 최근 기록(문제당 걸린 시간 중간값) 기준
   function mathEst(){let a=[];try{a=APP_MATH.att().filter(x=>x.lv>=0&&x.t>0).slice(-40).map(x=>x.t)}catch(e){}
     if(a.length<5)return {min:null,n:a.length};a.sort((x,y)=>x-y);const m=a[Math.floor(a.length/2)];return {min:Math.max(1,Math.round(m*MATH_N/60)),n:a.length}}
   function status(k){const st=stats(k);
     if(k==='en'){if(st.done)return `<span class="st done">오늘 50문장 끝 ✅ ${st.actualMin}분</span>`;if(st.main)return `<span class="st">오늘 ${st.main} / 50</span>`;return '<span class="st">아직 안 했어요</span>'}
+    if(k==='write')return st.n?`<span class="st done">오늘 글 ${st.n}개 저장 ✅</span>`:'<span class="st">쓸 글이 있을 때 열어요</span>';
     if(k==='ko')return st.n?`<span class="st done">오늘 ${st.n}개 저장 ✅${st.score!=null?` · 누테 ${st.score}점`:''}</span>`:'<span class="st">아직 안 했어요</span>';
     if(st.n&&M32())return `<span class="st done">오늘 ${st.n}문제 했어요 ✅</span>`;if(st.n)return `<span class="st ${st.n>=MATH_N?'done':''}">오늘 ${st.n} / ${MATH_N}문제${st.n>=MATH_N?' ✅':''}</span>`;return '<span class="st">아직 안 했어요</span>'}
-  function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/50':'—';if(k==='ko')return st.n?'✅ '+st.n:'—';if(M32())return st.n?'✅ '+st.n:'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
+  function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/50':'—';if(k==='ko'||k==='write')return st.n?'✅ '+st.n:'—';if(M32())return st.n?'✅ '+st.n:'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
   function dateLabel(){const d=new Date();return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+'일월화수목금토'[d.getDay()]+'요일'}
 
   function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why})[VIEW]()}
@@ -6528,12 +6532,12 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function home(){const s=SUBJ[F];let body;
     if(s.off)body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='ko'?'곧 열려요.':'오늘은 특별 학습이 없어요.'}</p><span class="st">준비 중</span></div>`;
     else{const st=stats(s.k);
-      const btn=s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
+      const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
         :(M32()?`<button class="go math" data-h="open" data-app="m32">▶ 3-2 이어서 하기</button><button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>`:`<button class="go math" data-h="plan">${st.n?'▶ 큰 수 이어서 하기':'▶ 시작'}</button><button class="go light" data-h="open" data-app="m32">3-2 복습 열기</button>`)+`<button class="go light" data-h="open" data-app="concept">개념 확인 열기</button>`;
       body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.sub}</p>${status(s.k)}${btn}</div>`}
     $h('#hub').innerHTML=`<div class="hh"><h1>오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
-      <p class="note">순서: 영어 → 국어 → 수학. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>`}
+      <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>`}
   function koPlan(st){let E={};try{E=APP_KO.est()}catch(x){}
     let P=[];try{P=APP_KO.plan()}catch(x){}const est=P.map(p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5);const nx=P.findIndex(p=>!p.done);
     const rows=P.map((p,i)=>[(p.done?'✅ ':(i+1)+'. ')+p.label,p.sub,est[i]||10]);const tot=rows.filter((r,i)=>!P[i].done).reduce((a,r)=>a+r[2],0);
@@ -6586,9 +6590,10 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <div class="nav" style="margin-top:12px"><button data-h="home">◀ 홈으로</button><span></span></div></div>`}
 
   function openApp(app,v){const k=(app==='concept'||app==='m32')?'math':app;const r=S(k);if(!r.startAt&&v!=='preview'){r.startAt=new Date().toISOString();save()}
-    document.getElementById('hub').hidden=true;['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=a!==app);
-    window.scrollTo(0,0);({en:APP_EN,math:APP_MATH,m32:APP_M32,concept:APP_CONCEPT,ko:APP_KO})[app].open(v)}
-  window.__hubBack=function(app){try{if(app==='math')APP_MATH.leave();if(app==='m32')APP_M32.leave();if(app==='ko')APP_KO.leave()}catch(e){}['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=true);document.getElementById('hub').hidden=false;
+    document.getElementById('hub').hidden=true;['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=a!==app);try{if(app!=='write'&&window.APP_WRITE)APP_WRITE.leave()}catch(e){}
+    window.scrollTo(0,0);({en:APP_EN,math:APP_MATH,m32:APP_M32,concept:APP_CONCEPT,ko:APP_KO,write:window.APP_WRITE})[app].open(v)}
+  window.__hubBack=function(app){try{if(app==='math')APP_MATH.leave();if(app==='m32')APP_M32.leave();if(app==='ko')APP_KO.leave();if(app==='write')APP_WRITE.leave()}catch(e){}['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=true);document.getElementById('hub').hidden=false;
+    if(app==='write'){VIEW='home';render();return}
     const k=(app==='concept'||app==='m32')?'math':app;const st=refresh(k);save();const r=S(k);CUR={k};
     const finished=k==='en'?st.done:st.n>0;VIEW=finished&&!r.whyAsked?'why':'home';render()};
 
@@ -6608,4 +6613,6 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
 
 </script>
 
+<script src="ko-ai.js"></script>
+<script src="write.js"></script>
 </body></html>
