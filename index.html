@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=80">
-<link rel="icon" href="icon-192.png?v=80">
-<link rel="apple-touch-icon" href="icon-192.png?v=80">
+<link rel="manifest" href="manifest.json?v=82">
+<link rel="icon" href="icon-192.png?v=82">
+<link rel="apple-touch-icon" href="icon-192.png?v=82">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -203,7 +203,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .brand{display:flex;align-items:center;gap:10px}
 .brand svg{width:52px;height:52px;flex:none}
 .brand h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1;white-space:nowrap}
-@media (max-width:420px){.brand{flex-wrap:wrap}.hbtns{flex-basis:100%;flex-wrap:nowrap}.brand h1{font-size:1.55rem}.brand svg{width:44px;height:44px}.missionbtn{font-size:.95rem;padding:5px 10px}}
+@media (max-width:420px){.brand{flex-wrap:wrap}.hbtns{flex-basis:100%;flex-wrap:wrap}.brand h1{font-size:1.55rem}.brand svg{width:44px;height:44px}.missionbtn{font-size:.85rem;padding:4px 8px}.hbtns{gap:5px}}
 .date{font-family:var(--display);font-size:1.1rem;line-height:1.2;color:var(--muted)}
 .clock{font-family:var(--display);font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1}
 .navtabs{position:sticky;top:0;z-index:10;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0 10px;margin:-4px 0 0;border-bottom:2px dashed var(--line)}
@@ -237,11 +237,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 80</p></div></div>
+<p style="font-size:.75rem">버전 82</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <b id="missionN"></b></button><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈이 대시보드 열기">🥷 시훈이</a></span></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <b id="missionN"></b></button><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈이 대시보드 열기">🥷 시훈이</a></span></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -319,11 +319,6 @@ a.missionbtn{text-decoration:none;display:inline-block}
   </section>
 
 
-  <section class="card" data-tab="food">
-   <h2>장보기 <button class="btn small" id="clearBought">산 것 지우기</button></h2>
-   <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
-   <ul class="list" id="shopList"></ul>
-  </section>
 
 
   <section class="card" data-tab="stuff">
@@ -367,6 +362,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <h3 class="shoploghead">🧾 산 기록 <small>누가 · 무엇을 · 언제</small></h3>
    <ul class="list" id="shopLog"></ul>
  </section>
+ <section class="card sheet" id="c-buy" role="dialog" aria-label="장보기" hidden>
+   <h2>🛒 장보기 <span style="display:inline-flex;gap:6px"><button class="btn small" id="clearBought">산 것 지우기</button><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
+   <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
+   <ul class="list" id="shopList"></ul>
+ </section>
  <section class="card sheet" id="c-help" role="dialog" aria-label="해결할 미션" hidden>
    <h2>해결할 미션 <small id="helpCount"></small><span style="display:inline-flex;gap:6px"><button class="btn small" data-add="helpmom">＋</button><button class="btn small" id="sheetClose" aria-label="닫기">닫기</button></span></h2>
    <ul class="list" id="helpList"></ul>
@@ -383,8 +383,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=80";
-import {SEED_SCHEDULE} from "./seed.js?v=80";
+import {firebaseConfig} from "./config.js?v=82";
+import {SEED_SCHEDULE} from "./seed.js?v=82";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -744,9 +744,13 @@ function renderPantry(){const t=today();
   if(x.empty)return`<li class="item done"><span class="check on">✓</span><span class="t">${esc(x.name)} <span class="meta">다 먹음</span></span>${inShop?'<span class="pill info">장보기에 있음</span>':`<button class="btn small" data-ptoshop="${x.id}">장보기에</button>`}<button class="btn small" data-prefill="${x.id}">채움</button>${admBtns("pantry",x.id,x.name)}</li>`;
   return`<li class="item"><button class="check" data-peat="${x.id}" aria-label="먹었어요(하나 줄이기)"></button><span class="t">${esc(x.name)}${x.qty?` <span class="meta">${esc(x.qty)}</span>`:""}</span>${ex}${admBtns("pantry",x.id,x.name)}</li>`}).join("")
   :`<li class="empty">${PLACES.find(p=>p[0]===pantryPlace)[1]}에 적어 둔 게 없어요.</li>`}
+// 먹고 싶은 것: wishfood{name,by,also:[나도 누른 사람],ate(먹은 날)}. 먹었어요 체크하면 목록에서 빠지고 아래 「최근 먹은 것」에만 남음
 function renderFood(){
- const l=S.wishfood.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
- $("foodList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t">${esc(x.name)}</span>${x.by?`<span class="meta">${esc(x.by)}</span>`:""}<button class="icon" data-del="wishfood" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></li>`).join(""):`<li class="empty">먹고 싶은 걸 적어 보세요.</li>`;
+ const l=S.wishfood.filter(x=>!x.ate).sort((a,b)=>((b.also||[]).length-(a.also||[]).length)||(b.createdAt||0)-(a.createdAt||0));
+ const done=S.wishfood.filter(x=>x.ate).sort((a,b)=>(b.ate||"").localeCompare(a.ate||"")).slice(0,5);
+ $("foodList").innerHTML=(l.length?l.map(x=>{const also=x.also||[],mine=me&&also.includes(me),own=me&&me===x.by;
+  return`<li class="item"><button class="check" data-ate="${x.id}" aria-label="먹었어요"></button><span class="t">${esc(x.name)} <span class="meta">${esc(x.by||"")}${also.length?` +${also.map(esc).join(" +")}`:""}</span></span>${own?"":`<button class="btn small${mine?" primary":""}" data-metoo="${x.id}" aria-pressed="${!!mine}">${mine?"나도 ✓":"나도"}</button>`}<button class="icon" data-del="wishfood" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></li>`}).join(""):`<li class="empty">먹고 싶은 걸 적어 보세요.</li>`)
+  +(done.length?`<li class="meta" style="list-style:none;font-size:.8rem;color:var(--muted)">최근 먹은 것: ${done.map(x=>`${esc(x.name)} <button class="linkbtn" data-unate="${x.id}" aria-label="${esc(x.name)} 다시 먹고 싶어요">↺</button>`).join(" · ")}</li>`:"");
 }
 
 function renderChores(){const t=today();const l=S.chores.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));const n=l.filter(x=>x.doneDate===t).length;
@@ -760,8 +764,8 @@ function renderChores(){const t=today();const l=S.chores.slice().sort((a,b)=>(a.
 function setMe(p,save){me=p;try{localStorage.setItem("me",p)}catch(_){}const f=$("noteFrom");if(f&&f.options.length)f.value=p;
  const em=save&&window.__email;if(em){const o={...(S.settings.find(d=>d.id==="owners")||{})};delete o.id;if(o[em]!==p){o[em]=p;run(db.collection("settings").doc("owners").set(o))}}
  renderChores();renderHelp()}
-function askWho(then){
- $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>누가 했어요?</h3><p class="status" style="margin:0">이 폰 주인으로 기억해 둘게요. 「서로에게 할 말」에서 바꿀 수 있어요.</p><div class="row" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button type="button" class="btn primary" data-whopick="${p}">${p}</button>`).join("")}<button type="button" class="btn" id="whoNo">취소</button></div></div></div>`;
+function askWho(then,q="누가 했어요?"){
+ $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>${q}</h3><p class="status" style="margin:0">이 폰 주인으로 기억해 둘게요. 「서로에게 할 말」에서 바꿀 수 있어요.</p><div class="row" style="flex-wrap:wrap">${PEOPLE.map(p=>`<button type="button" class="btn primary" data-whopick="${p}">${p}</button>`).join("")}<button type="button" class="btn" id="whoNo">취소</button></div></div></div>`;
  $("whoNo").onclick=closeForm;$("layer").querySelectorAll("[data-whopick]").forEach(x=>x.onclick=ev=>{ev.stopPropagation();closeForm();setMe(x.dataset.whopick,true);then&&then()})}
 function autoMe(){if(me||!window.__email)return;const o=S.settings.find(d=>d.id==="owners");const p=o&&o[window.__email];if(p&&PEOPLE.includes(p))setMe(p,false)}
 function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const t=today(),on=x.doneDate===t,pts=Number(x.points)||1,lid=`${id}_${t}`;
@@ -917,7 +921,7 @@ function renderMeals(){renderAte();const now=new Date();const mon=new Date(now);
 
 function renderShop(){const l=S.shopping.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.createdAt||0)-(b.createdAt||0));
  $("shopList").innerHTML=l.length?l.map(x=>`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-shop="${x.id}" aria-label="${x.done?"안 샀어요":"샀어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.name)}</span>${x.from?`<span class="pill low">${esc(x.from)}</span>`:""}<span style="display:inline-flex"><button class="icon" data-del="shopping" data-id="${x.id}" data-name="${esc(x.name)}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="empty">살 것이 없어요.</li>`;
- $("clearBought").hidden=!S.shopping.some(x=>x.done)}
+ $("clearBought").hidden=!S.shopping.some(x=>x.done);{const n=S.shopping.filter(x=>!x.done).length;$("buyN").textContent=n?String(n):""}}
 
 const ST={ok:["넉넉","ok"],low:["조금 남음","low"],out:["다 떨어짐","out"]};
 function renderSupplies(){const need=S.supplies.filter(x=>x.status&&x.status!=="ok").length;$("supBadge").textContent=need?`(${need})`:"";const order={out:0,low:1,ok:2};const l=S.supplies.slice().sort((a,b)=>(order[a.status]??3)-(order[b.status]??3)||String(a.name).localeCompare(b.name));
@@ -966,6 +970,10 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   else run(db.collection("pantry").doc(x.id).update({empty:true,qty:m?"0"+m[2]:x.qty}),`${x.name} 다 먹었어요`);return}
  if(d.prefill){const x=S.pantry.find(y=>y.id===d.prefill);if(x)openForm("pantry",{...x,qty:""},null,null,data=>{if(!data.name){toast("이름을 적어 주세요");return false}run(db.collection("pantry").doc(x.id).update({...data,empty:false}),"채웠어요")});return}
  if(d.ptoshop){const x=S.pantry.find(y=>y.id===d.ptoshop);if(x)run(db.collection("shopping").add({name:x.name,done:false,from:PLACES.find(p=>p[0]===x.place)[1],createdAt:Date.now()}),"장보기에 넣었어요");return}
+ if(d.metoo){const x=S.wishfood.find(y=>y.id===d.metoo);if(!x)return;if(!me)return askWho(()=>{const nb=document.querySelector(`[data-metoo="${x.id}"]`);if(nb)nb.click()},"누구예요?");
+  const also=(x.also||[]).filter(p=>p!==me),on=!(x.also||[]).includes(me);run(db.collection("wishfood").doc(x.id).update({also:on?[...also,me]:also}),on?`${me}도 먹고 싶어요 😋`:null);return}
+ if(d.ate){run(db.collection("wishfood").doc(d.ate).update({ate:today()}),"먹었어요 😋 목록에서 뺐어요");return}
+ if(d.unate){run(db.collection("wishfood").doc(d.unate).update({ate:null}),"다시 먹고 싶은 것에 넣었어요");return}
  if(d.must){const x=S.musts.find(y=>y.id===d.must);if(!x)return;const on=!x.done;run(db.collection("musts").doc(x.id).update({done:on,doneDate:on?today():null,doneBy:on?(me||null):null}),on?"챙겼어요 ✓":null);return}
  if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="musts"?{date:today()}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
@@ -1016,8 +1024,8 @@ $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]")
 if(location.hash==="#shop"){openSheet("c-shop");history.replaceState(null,"",location.pathname+location.search)}
 for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getItem("fold_"+id)}catch(e){}setFold(id,o)}
 let sheetId=null;
-function openSheet(id){for(const x of ["c-help","c-shop"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
-$("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
+function openSheet(id){for(const x of ["c-help","c-shop","c-buy"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
+$("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>openSheet(null));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheetId&&!document.querySelector(".overlay"))openSheet(null)});
 $("helpSpend").onclick=()=>{if(!db)return toast("저장소에 연결되지 않았어요");const hb=helpBal();
@@ -1053,7 +1061,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=80;
+const VERSION=82;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
