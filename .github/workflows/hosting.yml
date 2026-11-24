@@ -1,0 +1,27 @@
+name: 웹앱 올리기 (Firebase Hosting)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "android-lockscreen/**"
+      - "functions/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      HAS_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 열쇠가 아직 없으면 건너뛰기
+        if: env.HAS_KEY != 'true'
+        run: echo "FIREBASE_SERVICE_ACCOUNT 비밀값이 없어서 이번엔 건너뛰어요."
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        if: env.HAS_KEY == 'true'
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: kmsysh-fa740
+          channelId: live

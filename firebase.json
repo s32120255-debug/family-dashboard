@@ -1,3 +1,14 @@
 {
-  "functions": [{ "source": "functions", "codebase": "default", "runtime": "nodejs22" }]
+  "functions": [{ "source": "functions", "codebase": "default", "runtime": "nodejs22" }],
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "firebase.json", ".firebaserc", "firestore.rules", "README.md", "_config.yml",
+      "**/.*", "**/node_modules/**", "functions/**", "android-lockscreen/**"
+    ],
+    "headers": [
+      { "source": "**", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" }] },
+      { "source": "**/*.@(html|json|js)", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] }
+    ]
+  }
 }

@@ -432,7 +432,7 @@ function ensureTasks(){
    if(!have.has(id)){have.add(id);F.setDoc(F.doc(fs,"tasks",id),{title:tp.title,points:tp.points||1,link:tp.link||null,date:d,tplId:tp.id,done:false,createdAt:Date.now()}).catch(()=>{})}}}
 }
 // 「오늘의 공부」는 이 화면에서만 새 공부방(sihun/)으로 보냄. 우리집 대시보드의 주소는 그대로.
-const STUDY_URL="https://s32120255-debug.github.io/family-dashboard/sihun/";
+const STUDY_URL=new URL("../sihun/",location.href).href;
 function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=(tp&&tp.link)||x.link||"";
  if(x.tplId==="study-daily"||/1MTzG655j9K3nseEUp1kvB/.test(u))return STUDY_URL;
  return /^(https?:|intent:|market:)/i.test(u)?u:""}

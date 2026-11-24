@@ -633,7 +633,7 @@ const weekStart=()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7)
 function ensureTasks(){
  if(!db||!["tasks","taskTpls"].every(c=>loadedCols.has(c)))return;
  const t=today(),ws=weekStart(),have=new Set(S.tasks.map(x=>x.id));
- for(const c of ["taskTpls","tasks"])for(const x of S[c])if(x.link&&x.link.includes("claude.ai/artifact/1MTzG655j9K3nseEUp1kvB"))run(db.collection(c).doc(x.id).update({link:"https://s32120255-debug.github.io/family-dashboard/sihun/"}));
+ for(const c of ["taskTpls","tasks"])for(const x of S[c])if(x.link&&(x.link.includes("claude.ai/artifact/1MTzG655j9K3nseEUp1kvB")||(x.link.includes(".github.io/family-dashboard/sihun")&&!location.host.endsWith("github.io"))))run(db.collection(c).doc(x.id).update({link:new URL("sihun/",location.href).href}));
  for(const tp of S.taskTpls){const from=tp.from&&tp.from>ws?tp.from:ws;
   for(let d=from;d<=t;d=addDays(d,1)){if(!(tp.days||[]).includes(dayKey(parse(d))))continue;const id=`${tp.id}_${d}`;
    if(!have.has(id)){have.add(id);run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,link:tp.link||null,date:d,tplId:tp.id,done:false,createdAt:Date.now()}))}}}
@@ -1041,7 +1041,7 @@ function resetSchedOnce(){
 async function seedIfNeeded(){
  const ref=doc(fs,"settings","main");const snap=await getDoc(ref);
  if(!(snap.exists()&&snap.data().seededStudy)){const b2=writeBatch(fs);
-  b2.set(doc(fs,"taskTpls","study-daily"),{title:"오늘의 공부",points:1,kind:"daily",days:["mon","tue","wed","thu","fri","sat","sun"],link:"https://s32120255-debug.github.io/family-dashboard/sihun/",from:today(),createdAt:Date.now()});
+  b2.set(doc(fs,"taskTpls","study-daily"),{title:"오늘의 공부",points:1,kind:"daily",days:["mon","tue","wed","thu","fri","sat","sun"],link:new URL("sihun/",location.href).href,from:today(),createdAt:Date.now()});
   b2.set(ref,{seededStudy:true},{merge:true});await b2.commit();setTimeout(ensureTasks,800)}
  if(snap.exists()&&snap.data().seeded)return;
  const b=writeBatch(fs);
