@@ -1463,7 +1463,7 @@ function wireDic(){
   loaded=true;render();
 })();
 return {
-  open(){V={view:'home'};render()},
+  open(v){V=!BANK||!RLOG?{view:'home'}:v==='preview'?{view:'browse',mode:'w',pg:0}:v==='report'?{view:'report'}:{view:'home'};render()},
   stats(){if(!RLOG)return {n:0,ok:0};const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known}:null}}
 };
 
@@ -6462,11 +6462,11 @@ function pvTest(w){const its=BANK.filter(b=>b.w===w);let n=0,seen={};
     if(v)h+=`<details class="pvv"><summary>바뀐 버전 ${v.length}개 (시험에선 이 중 하나가 나올 수 있어요)</summary>${v.map((x,k)=>pvItem(Object.assign({},it,x,{wrong:null}),n+'-'+(k+1))).join('')}</details>`;
     return h}).join('')}</div>`).join('')}
 function viewPrev(){
-  if(!PV||!PV.ok){PV={ok:false,w:MAXW,tab:'log'};
+  if(!PV||!PV.ok){PV={ok:false,w:MAXW,tab:'log'};let hm=false;try{hm=sessionStorage.getItem('hub:mom')==='1'}catch(e){}if(hm)PV.ok=true;else{
     $('#main').innerHTML=`<div class="card" style="text-align:center"><h2>👩 엄마 보기</h2><div class="muted">기록·성적·답이 들어 있어요. 비밀번호를 넣어 주세요.</div>
     <div class="row" style="justify-content:center;margin-top:14px"><input id="pvpw" type="password" inputmode="numeric" autocomplete="off" style="font-size:20px;padding:10px;border:2px solid var(--line);border-radius:12px;width:180px;text-align:center"><button class="btn" id="pvgo">열기</button></div><div id="pvmsg" class="muted" style="margin-top:8px"></div></div>`;
     const tryPw=()=>{if($('#pvpw').value.trim()===PVPW){PV.ok=true;viewPrev()}else{$('#pvmsg').textContent='비밀번호가 달라요.';$('#pvpw').value=''}};
-    $('#pvgo').onclick=tryPw;$('#pvpw').onkeydown=e=>{if(e.key==='Enter')tryPw()};$('#pvpw').focus();return}
+    $('#pvgo').onclick=tryPw;$('#pvpw').onkeydown=e=>{if(e.key==='Enter')tryPw()};$('#pvpw').focus();return}}
   const ws=[...new Set(CARDS.map(c=>c.w).concat(BANK.map(b=>b.w)))].sort();
   $('#main').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">👩 엄마 보기</h2><button class="btn ghost sm" id="pvlock">🔒 잠그기</button></div>
    <div class="muted" style="margin-top:6px">시훈이 기록에는 아무것도 안 남아요. 주차 버튼은 「복습 카드 + 답」「누테 문항 + 답」에 써요.</div>
@@ -6506,7 +6506,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   // 수학 칸: 3-2(분수·들이와 무게·그림그래프)를 10개 기능 모두 최상위까지 통과하기 전엔 3-2, 다 통과하면 4학년 큰 수 (엄마 11/22)
   const M32=()=>{try{return !!APP_M32&&!APP_M32.done()}catch(e){return false}};
   const MSUB=()=>M32()?'3-2 · 분수 · 들이와 무게 · 그림그래프':'4-1 큰 수 · 개념 확인';
-  let day=HUB.today(), REC=load(day), F=0, VIEW='home', WHYSEL=[], CUR=null, DB=null;
+  let day=HUB.today(), REC=load(day), F=0, VIEW='home', WHYSEL=[], CUR=null, DB=null, RET=null;
   function load(d){try{return JSON.parse(localStorage.getItem(LSK+d))||{date:d,subjects:{}}}catch(e){return {date:d,subjects:{}}}}
   function S(k){REC.subjects[k]=REC.subjects[k]||{};return REC.subjects[k]}
   let wT=null;
@@ -6527,7 +6527,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/50':'—';if(k==='ko'||k==='write')return st.n?'✅ '+st.n:'—';if(M32())return st.n?'✅ '+st.n:'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
   function dateLabel(){const d=new Date();return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+'일월화수목금토'[d.getDay()]+'요일'}
 
-  function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why})[VIEW]()}
+  function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why,admin})[VIEW]()}
   function navHTML(){const n=SUBJ.length;return `<div class="nav"><button data-h="f" data-i="0" ${F?'':'disabled'}>⏮ 처음으로</button><button data-h="f" data-i="${F-1}" ${F?'':'disabled'}>◀ 이전</button><span>${F+1} / ${n}</span><button data-h="f" data-i="${F+1}" ${F<n-1?'':'disabled'}>다음 ▶</button></div>`}
   function home(){const s=SUBJ[F];let body;
     if(s.off)body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='ko'?'곧 열려요.':'오늘은 특별 학습이 없어요.'}</p><span class="st">준비 중</span></div>`;
@@ -6537,7 +6537,21 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.sub}</p>${status(s.k)}${btn}</div>`}
     $h('#hub').innerHTML=`<div class="hh"><h1>오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
-      <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>`}
+      <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
+      <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
+  // 관리자 모드 (엄마 11/24: 첫 화면에서 바로 · 비밀번호 한 번)
+  function admin(){const A=(ic,t,sub,attr)=>`<button class="go light" style="text-align:left;font:600 18px 'Noto Sans KR',sans-serif" ${attr}>${ic} ${t}<span style="display:block;font-size:13px;font-weight:400;color:var(--sub)">${sub}</span></button>`;
+    $h('#hub').innerHTML=`<div class="hh"><h1>👩 관리자 모드</h1><div class="d">${dateLabel()}</div></div>
+      <div class="nav"><button data-h="home">◀ 첫 화면</button><span></span><button data-h="lock">🔒 잠그기</button></div>
+      <div class="panel">
+      ${A('📋','하루 리포트','과목별 기록 · 틀린 문제 · AI 분석 · AI 사용량','data-h="report"')}
+      ${A('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
+      ${A('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
+      ${A('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
+      ${A('🔢','수학 3-2 미리보기','문제 · 정답 · 시훈이 결과','data-h="aopen" data-app="m32" data-v="preview"')}
+      ${A('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
+      ${A('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
+      </div>`}
   function koPlan(st){let E={};try{E=APP_KO.est()}catch(x){}
     let P=[];try{P=APP_KO.plan()}catch(x){}const est=P.map(p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5);const nx=P.findIndex(p=>!p.done);
     const rows=P.map((p,i)=>[(p.done?'✅ ':(i+1)+'. ')+p.label,p.sub,est[i]||10]);const tot=rows.filter((r,i)=>!P[i].done).reduce((a,r)=>a+r[2],0);
@@ -6589,10 +6603,11 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <button class="go" data-h="whydone">저장하고 다음으로</button>
       <div class="nav" style="margin-top:12px"><button data-h="home">◀ 홈으로</button><span></span></div></div>`}
 
-  function openApp(app,v){const k=(app==='concept'||app==='m32')?'math':app;const r=S(k);if(!r.startAt&&v!=='preview'){r.startAt=new Date().toISOString();save()}
+  function openApp(app,v){const k=(app==='concept'||app==='m32')?'math':app;const r=S(k);if(!r.startAt&&v!=='preview'&&!RET){r.startAt=new Date().toISOString();save()}
     document.getElementById('hub').hidden=true;['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=a!==app);try{if(app!=='write'&&window.APP_WRITE)APP_WRITE.leave()}catch(e){}
     window.scrollTo(0,0);({en:APP_EN,math:APP_MATH,m32:APP_M32,concept:APP_CONCEPT,ko:APP_KO,write:window.APP_WRITE})[app].open(v)}
   window.__hubBack=function(app){try{if(app==='math')APP_MATH.leave();if(app==='m32')APP_M32.leave();if(app==='ko')APP_KO.leave();if(app==='write')APP_WRITE.leave()}catch(e){}['en','math','m32','concept','ko'].forEach(a=>document.getElementById('host-'+a).hidden=true);document.getElementById('hub').hidden=false;
+    if(RET==='admin'){RET=null;VIEW='admin';render();return}
     if(app==='write'){VIEW='home';render();return}
     const k=(app==='concept'||app==='m32')?'math':app;const st=refresh(k);save();const r=S(k);CUR={k};
     const finished=k==='en'?st.done:st.n>0;VIEW=finished&&!r.whyAsked?'why':'home';render()};
@@ -6601,7 +6616,11 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     if(a==='f'){const i=+t.dataset.i;if(i>=0&&i<SUBJ.length){F=i;VIEW='home';render()}}
     else if(a==='home'){VIEW='home';render()}
     else if(a==='plan'){VIEW='plan';render()}
-    else if(a==='open'){VIEW='home';openApp(t.dataset.app,t.dataset.v)}
+    else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
+    else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
+    else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
+    else if(a==='report'){location.href='./report.html'}
+    else if(a==='lock'){try{sessionStorage.removeItem('hub:mom')}catch(e){}location.reload()}
     else if(a==='why'){const w=t.dataset.w;if(w==='none')WHYSEL=WHYSEL.includes('none')?[]:['none'];else{WHYSEL=WHYSEL.filter(x=>x!=='none');WHYSEL=WHYSEL.includes(w)?WHYSEL.filter(x=>x!==w):[...WHYSEL,w]}
       t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',WHYSEL.includes(b.dataset.w)))}
     else if(a==='whydone'){const r=S(CUR.k);refresh(CUR.k);r.why=WHYSEL.slice();r.whyAsked=true;r.whyAt=new Date().toISOString();save();
