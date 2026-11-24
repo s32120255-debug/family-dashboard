@@ -399,7 +399,7 @@ function timetable(list,nm,date){const CM=dayColors(date);
  // 우리집 기지 상세 오늘과 같은 모양: 30분 칸, 블록은 30분 단위로 맞춤(시작 내림·끝 올림), 맨 왼쪽 시각 칸까지 덮음
  let timed=list.filter(x=>x.start&&!x.allDay).map(x=>{const s0=mins(x.start),e0=x.end?Math.max(mins(x.end),s0+10):s0+20;return{...x,rs:s0,re:e0,s:Math.floor(s0/30)*30,e:Math.ceil(e0/30)*30}}).sort((a,b)=>a.s-b.s||a.e-b.e);
  const untimed=list.filter(x=>!x.start||x.allDay);
- let lo=Math.min(8,...timed.map(x=>Math.floor(x.s/60)));const hi=Math.max(22,...timed.map(x=>Math.ceil(x.e/60)));
+ let lo=Math.min(7,...timed.map(x=>Math.floor(x.s/60)));const hi=Math.max(22,...timed.map(x=>Math.ceil(x.e/60)));
  // 지난 시간 접기(오늘 볼 때 기본): 지금 시각의 정시부터 보여 줌. 진행 중인 긴 일정은 그 정시부터 잘라서 보여 줌(sy 11/24: 학교 중에도 접혀야)
  let fold="";if(nm!=null){const cut=Math.floor(nm/60)*60;
   const past=timed.filter(x=>x.e<=cut).length;
@@ -749,7 +749,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=41;
+const VERSION=42;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -793,7 +793,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=41").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=42").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:()=>{openShop();return false}, // 체스판 잠금 화면 버튼 → 상점으로
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
