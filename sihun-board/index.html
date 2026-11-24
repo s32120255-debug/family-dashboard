@@ -166,7 +166,7 @@ body.noscroll{overflow:hidden}
 <div class="wrap">
  <header class="top">
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
-  <div class="row" style="gap:8px"><button class="btn small primary" id="shopBtn" type="button">🏪 상점</button><span id="noticeSlot"></span><div class="who" id="who"></div></div>
+  <div class="row" style="gap:8px"><button class="btn small primary" id="shopBtn" type="button">🏪 상점</button><span id="noticeSlot"></span><a class="btn small" id="homeBtn" href="../" style="text-decoration:none">🏠 우리집</a><div class="who" id="who"></div></div>
  </header>
  <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="mail" id="mailTabBtn">✉ 편지</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
@@ -313,7 +313,7 @@ $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({to
 
 /* ---------- 데이터 ---------- */
 // 우리집 대시보드에서 그대로 읽는 것 (복사 아님, 같은 Firestore)
-const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog","wishes","notes"];
+const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog","wishes","notes","events"];
 // 시훈이 대시보드 전용 (sihunBoard/main/...)
 const MINE=["money","memory","ask","play","hb","chess","log"];
 const S=Object.fromEntries([...FAMILY,...MINE].map(c=>[c,[]]));
@@ -326,17 +326,20 @@ const SHOW_FREE=true; // 일정 사이 빈 시간 칸 — 엄마 11/24: "엄마�
 const SCOLORS=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0","#c9e4ff","#ffd8a8"];
 const okColor=c=>/^#[0-9a-f]{6}$/i.test(c||"");
 function dayColors(date){const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.date===date);
- const l=[...S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)).map(x=>({...x,src:"week"})),...ov.filter(o=>!o.skip).map(o=>({...o,src:"date"}))].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
+ const l=[...S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)).map(x=>({...x,src:"week"})),...ov.filter(o=>!o.skip).map(o=>({...o,src:"date"})),...calItems(date)].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
  const used=new Set(l.filter(x=>okColor(x.color)).map(x=>x.color.toLowerCase())),m={};let k=0;
  const free=SCOLORS.filter(c=>!used.has(c));const pool=free.length?free:SCOLORS;
  for(const x of l)m[x.src+":"+x.id]=okColor(x.color)?x.color:pool[k++%pool.length];return m}
-function schedColor(x,m){return okColor(x.color)?x.color:(m&&m[(x.date?"date":"week")+":"+x.id])||SCOLORS[0]}
+function schedColor(x,m){return okColor(x.color)?x.color:(m&&m[(x.src||(x.date?"date":"week"))+":"+x.id])||SCOLORS[0]}
+// 달력(우리집 기지 DAYS)에서 넣은 일정 = 특별 일정 ★ (시각 있으면 그 시각 시작, 없으면 종일)
+const calItems=date=>S.events.filter(e=>e.date===date&&e.title).map(e=>({id:e.id,title:e.title,start:e.time||null,end:null,allDay:e.time?"":"1",src:"cal",star:true}));
+const STAR=x=>x.star?'<span style="color:#e8590c">★</span>':"";
 function schedItems(date){
  const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.date===date);
  const hidden=new Set(ov.filter(o=>o.baseId).map(o=>o.baseId));
  const base=S.schedule.filter(x=>x.day===dk&&!hidden.has(x.id)&&(!x.from||x.from<=date)&&(!x.until||date<=x.until));
  const extra=ov.filter(o=>!o.skip);
- return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
+ return [...base,...extra,...calItems(date)].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
 function dialA(items,half){
  const C=170,f=n=>n.toFixed(1),lo=half==="am"?0:720,hi=lo+720,RO=116,RI=56;
@@ -376,7 +379,7 @@ function renderSum(){const t=today(),pd=parse(t),now=new Date(),nm=now.getHours(
  $("sumDate").textContent=`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}요일`;
  const l0=schedItems(t).filter(x=>!x.skipped),l=[...l0.filter(x=>x.allDay),...l0.filter(x=>!x.allDay)],CM=dayColors(t);
  $("sumChips").innerHTML=l.length?l.map(x=>{const s0=x.start?mins(x.start):null,e=x.end?mins(x.end):(s0!=null?s0+20:null);
-  const cls=s0==null?"":nm>=e?"past":nm>=s0?"now":"";return`<span class="chip ${cls}" style="background:${schedColor(x,CM)};color:#2b2414">${x.allDay?`<small>종일</small>`:x.start?`<small>${x.start}${x.end?"–"+x.end:""}</small>`:""}<b>${esc(x.title)}</b></span>`}).join("")
+  const cls=s0==null?"":nm>=e?"past":nm>=s0?"now":"";return`<span class="chip ${cls}" style="background:${schedColor(x,CM)};color:#2b2414">${x.allDay?`<small>종일</small>`:x.start?`<small>${x.start}${x.end?"–"+x.end:""}</small>`:""}<b>${STAR(x)}${esc(x.title)}</b></span>`}).join("")
   :`<p class="empty" style="margin:0">오늘 일정이 없어요.</p>`}
 function renderSched(){renderSum();
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
@@ -403,9 +406,9 @@ function timetable(list,nm,date){const CM=dayColors(date);
  let gaps="",pe=null;if(SHOW_FREE)for(const x of timed){if(pe!=null&&x.s-pe>0)gaps+=`<div class="tt-gap" style="top:${y(pe)+1}px;height:${y(x.s)-y(pe)-2}px"><span>${x.s-pe>=60?"상의 · 엄마와 시훈이가 정해요":"상의"}</span></div>`;pe=Math.max(pe??0,x.e)}
  const blocks=timed.map(x=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n,fs=Math.min(32,15+(Math.max(1,Math.round(hgt/32))-1)*5);const now=nm!=null&&nm>=x.rs&&nm<x.re,past=nm!=null&&nm>=x.re;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
-  return`<div class="tt-b${now?" now":""}${past?" past":""}" style="top:${y(x.s)+1}px;height:${hgt}px;${x.lane?`left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px)`:`left:-64px;width:calc(${w}% + 62px);padding-left:72px`};background:${schedColor(x,CM)}"><div class="tt-t"><b style="font-size:${fs}px">${esc(x.title)}</b>${hgt>40?"<br>":" "}<span>${time}</span>${x.note&&hgt>60?`<div class="tt-n">${esc(x.note)}</div>`:""}</div></div>`}).join("");
+  return`<div class="tt-b${now?" now":""}${past?" past":""}" style="top:${y(x.s)+1}px;height:${hgt}px;${x.lane?`left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px)`:`left:-64px;width:calc(${w}% + 62px);padding-left:72px`};background:${schedColor(x,CM)}"><div class="tt-t"><b style="font-size:${fs}px">${STAR(x)}${esc(x.title)}</b>${hgt>40?"<br>":" "}<span>${time}</span>${x.note&&hgt>60?`<div class="tt-n">${esc(x.note)}</div>`:""}</div></div>`}).join("");
  const nowLine=nm!=null&&nm>=lo*60&&nm<hi*60?`<div class="tt-nowl" style="top:${y(nm)}px"></div>`:"";
- const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item"><span class="meta">${x.allDay?"종일":"시간 미정"}</span><span class="t"><b>${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span></li>`).join("")}</ul>`:"";
+ const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item"><span class="meta">${x.allDay?"종일":"시간 미정"}</span><span class="t"><b>${STAR(x)}${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span></li>`).join("")}</ul>`:"";
  const empty=!list.length?`<p class="empty" style="margin:0 0 6px">이 날 일정이 없어요.</p>`:"";
  return`${empty}${un}<div class="tt" style="height:${(hi-lo)*HPX}px">${rows}<div class="tt-area">${gaps}${blocks}${nowLine}</div></div>`;
 }
@@ -739,7 +742,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=38;
+const VERSION=39;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -783,7 +786,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=38").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=39").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:()=>{openShop();return false}, // 체스판 잠금 화면 버튼 → 상점으로
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
