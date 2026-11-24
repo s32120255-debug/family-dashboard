@@ -124,9 +124,9 @@ object Renderer {
             y += 170 * u + 48 * u
 
             // 오늘 전체 목록(지난 건 흐리게, 지금은 빨간 테두리)
-            val bottom = h * 0.86f
+            val bottom = h * 0.875f
             val rowH = 92 * u; val gap = 14 * u
-            val room = ((bottom - y - (if (untimed.isNotEmpty()) 110 * u else 0f)) / (rowH + gap)).toInt().coerceAtLeast(1)
+            val room = ((bottom - y - (if (untimed.isNotEmpty()) 80 * u else 0f)) / (rowH + gap)).toInt().coerceAtLeast(1)
             var from = 0
             if (timed.size > room) {
                 val ci = timed.indexOfFirst { it.e!! > sc.nm }.let { if (it < 0) timed.size - 1 else it }
@@ -150,9 +150,11 @@ object Renderer {
                 text(it.title, nameP, L + 300 * u, y + 62 * u, R - L - 330 * u)
                 y += rowH + gap
             }
-            if (from + shown.size < timed.size) cv.drawText("… 아래로 ${timed.size - from - shown.size}개 더", L + 10 * u, y + 30 * u, tp(38f, C.MUTED))
+            if (from + shown.size < timed.size) {
+                cv.drawText("… 아래로 ${timed.size - from - shown.size}개 더", L + 10 * u, y + 30 * u, tp(38f, C.MUTED)); y += 40 * u
+            }
             if (untimed.isNotEmpty()) {
-                y += 24 * u
+                y += 8 * u
                 text("시간 미정: " + untimed.joinToString(", ") { it.title }, tp(44f, C.MUTED), L + 10 * u, y + 44 * u, R - L - 20 * u)
             }
         }
