@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=46">
-<link rel="icon" href="icon-192.png?v=46">
-<link rel="apple-touch-icon" href="icon-192.png?v=46">
+<link rel="manifest" href="manifest.json?v=47">
+<link rel="icon" href="icon-192.png?v=47">
+<link rel="apple-touch-icon" href="icon-192.png?v=47">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -205,7 +205,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 46</p></div></div>
+<p style="font-size:.75rem">버전 47</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -302,8 +302,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
   <section class="card" data-tab="grow" id="c-points">
    <h2>과제 포인트 <small>시훈이 과제로 모은 것</small></h2>
    <div class="pts" id="gPts"></div>
-   <p class="sub2">시훈이 포인트 쓰기 (시훈이 대시보드와 같은 기록)</p>
-   <div class="usebox"><button class="btn primary" data-use="snack">간식 1개 · ⭐1</button><span class="usesrc">과제 포인트에서 빠져요 · 체스는 시훈이 대시보드에서 1점 쓰고 열어요</span></div>
+   <p class="status" style="margin:0">시훈이는 시훈이 대시보드 🏪 상점에서 포인트를 써요. 여기서는 쓴 기록을 보고 ↺로 되돌릴 수 있어요.</p>
    <div class="meta" id="useToday"></div>
    <p class="sub2">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
    <p class="sub2">도움 포인트 (해결할 미션, 과제 포인트와 따로)</p><div class="pts" id="gHelp"></div>
@@ -333,8 +332,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=46";
-import {SEED_SCHEDULE} from "./seed.js?v=46";
+import {firebaseConfig} from "./config.js?v=47";
+import {SEED_SCHEDULE} from "./seed.js?v=47";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -888,7 +887,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=46;
+const VERSION=47;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
