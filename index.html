@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 대시보드</title>
-<link rel="manifest" href="manifest.json?v=33">
+<link rel="manifest" href="manifest.json?v=34">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#ffc928">
@@ -116,6 +116,23 @@ body.admin #tplBox{display:grid!important;gap:6px}
 #dial svg{width:100%;height:auto;max-width:340px;display:block;margin:0 auto}
 .dlegend{display:flex;gap:12px;justify-content:center;color:var(--muted);font-size:.8rem;margin-top:4px;flex-wrap:wrap}
 .dlegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.tt{position:relative;margin-top:4px}
+.tt-row{position:absolute;left:0;right:0;height:48px;border-top:1px dashed var(--line)}
+.tt-h{position:absolute;left:0;top:-9px;width:62px;font-size:.78rem;color:var(--muted);background:var(--card);font-variant-numeric:tabular-nums;padding-right:4px}
+.tt-slot{position:absolute;left:66px;right:0;top:0;bottom:0;border:none;background:transparent;cursor:pointer;border-radius:8px}
+.tt-slot:hover{background:var(--admin-soft)}
+.tt-area{position:absolute;left:66px;right:0;top:0;bottom:0;pointer-events:none}
+.tt-area>*{pointer-events:auto}
+.tt-gap{position:absolute;left:2px;right:2px;border:1.5px dashed #e6cf88;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:.78rem;pointer-events:none}
+.tt-b{position:absolute;border-radius:10px;border:2px solid #3a2a00;padding:3px 8px;display:flex;gap:4px;align-items:flex-start;overflow:hidden;color:#2b2414;font-size:.9rem;line-height:1.25}
+.tt-b .tt-t{flex:1;min-width:0}
+.tt-b .tt-t span{font-size:.75rem;opacity:.75;font-variant-numeric:tabular-nums}
+.tt-n{font-size:.75rem;opacity:.8}
+.tt-b.now{box-shadow:0 0 0 3px var(--info)}
+.tt-b.skipped{opacity:.4}.tt-b.skipped b{text-decoration:line-through}
+.tt-b .icon{color:#3a2a00;padding:0 3px}
+.tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid #e8590c;pointer-events:none}
+.tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:#e8590c}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
 .item.skipped{opacity:.45}
 .item.skipped .t{text-decoration:line-through}
@@ -171,7 +188,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 33</p></div></div>
+<p style="font-size:.75rem">버전 34</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -186,14 +203,14 @@ body.admin #tplBox{display:grid!important;gap:6px}
  </div>
 
  <nav class="navtabs" role="tablist" id="navtabs">
-  <button role="tab" data-nav="today" aria-selected="true">오늘</button><button role="tab" data-nav="cal" aria-selected="false">달력</button><button role="tab" data-nav="mail" aria-selected="false">편지</button><button role="tab" data-nav="food" aria-selected="false">먹거리</button><button role="tab" data-nav="stuff" aria-selected="false">물건</button>
+  <button role="tab" data-nav="today" aria-selected="true">NOW</button><button role="tab" data-nav="cal" aria-selected="false">DAYS</button><button role="tab" data-nav="mail" aria-selected="false">MAIL</button><button role="tab" data-nav="food" aria-selected="false">YUM</button><button role="tab" data-nav="stuff" aria-selected="false">FIND</button>
  </nav>
  <main class="grid" id="main">
   <section class="card full" data-tab="today" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div id="heroBox"></div>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <ul class="list" id="schedList"></ul>
+   <div id="schedList"></div>
   </section>
 
   <section class="card" data-tab="today" id="c-tasks">
@@ -280,8 +297,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=33";
-import {SEED_SCHEDULE} from "./seed.js?v=33";
+import {firebaseConfig} from "./config.js?v=34";
+import {SEED_SCHEDULE} from "./seed.js?v=34";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -443,20 +460,28 @@ function renderSched(){
  const all=schedItems(schedDate);const items=all.filter(x=>!x.skipped);
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
  $("heroBox").innerHTML=isToday?heroHTML(items,nm):"";
- let nextMarked=false,h="",prevEnd=null;
- const shown=admin?all:items;
- for(const it of shown){
-  if(!it.skipped&&it.start){const s0=mins(it.start);if(prevEnd!=null&&s0-prevEnd>=20)h+=`<li class="item free"><span class="meta" style="min-width:5.5em"></span><span class="t">집공부·자유 ${dur(s0-prevEnd)} <span class="meta">엄마가 정해요</span></span></li>`;
-   prevEnd=Math.max(prevEnd??0,it.end?mins(it.end):s0)}
-  let cls=it.skipped?"skipped":"";
-  if(!it.skipped&&isToday&&it.start){const s0=mins(it.start),e=it.end?mins(it.end):s0;
-   if(nm>=s0&&nm<e)cls="now";else if(nm>=e&&nm>s0)cls="past";else if(nm<s0&&!nextMarked){nextMarked=true;cls="next"}}
-  const time=it.start?fmtT(it.start)+(it.end?" ~ "+fmtT(it.end).replace(/^오[전후] /,""):""):"시간 미정";
-  const tag=it.skipped?'<span class="pill low">이 날 빠짐</span>':it.src==="date"?'<span class="pill info">이 날만</span>':"";
-  const ab=it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
+ $("schedList").innerHTML=timetable(admin?all:items,isToday?nm:null);
+}
+// 타임테이블: 세로 시간 줄(1시간=48px) 위에 일정 칸. 관리자 모드에서 빈 시간 줄을 누르면 그 시각으로 새 일정
+const HPX=48;
+function timetable(list,nm){
+ const timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start);return{...x,s:s0,e:x.end?Math.max(mins(x.end),s0+10):s0+20}}).sort((a,b)=>a.s-b.s||a.e-b.e);
+ const untimed=list.filter(x=>!x.start);
+ const lo=Math.min(8,...timed.map(x=>Math.floor(x.s/60))),hi=Math.max(21,...timed.map(x=>Math.ceil(x.e/60)));
+ const lanes=[];for(const x of timed){let k=lanes.findIndex(end=>end<=x.s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.e;x.lane=k}
+ for(const x of timed){x.n=Math.max(...timed.filter(y=>y.s<x.e&&x.s<y.e).map(y=>y.lane))+1}
+ const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
    :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
-  h+=`<li class="item ${cls}"><span class="meta" style="min-width:5.5em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${tag}${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}${ab}</li>`}
- $("schedList").innerHTML=h||`<li class="empty">이 날 일정이 없어요.</li>`;
+ let rows="";for(let h=lo;h<hi;h++)rows+=`<div class="tt-row" style="top:${(h-lo)*HPX}px"><span class="tt-h">${h<12?"오전":"오후"} ${h%12||12}시</span>${admin?`<button class="tt-slot" data-slot="${pad(h)}:00" aria-label="${h}시에 일정 넣기"></button>`:""}</div>`;
+ let gaps="",pe=null;for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>집공부·자유 · 엄마가 정해요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
+ const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
+ const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.s&&nm<x.e;
+  const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
+  return`<div class="tt-b${x.skipped?" skipped":""}${now?" now":""}" style="top:${y(x.s)+1}px;height:${hgt}px;left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px);background:${PAL[i%PAL.length]}"><div class="tt-t"><b>${esc(x.title)}</b> <span>${time}</span>${x.note&&hgt>40?`<div class="tt-n">${esc(x.note)}</div>`:""}</div>${x.skipped?'<span class="pill low">이 날 빠짐</span>':x.src==="date"?'<span class="pill info">이 날만</span>':""}${abtn(x)}</div>`}).join("");
+ const nowLine=nm!=null&&nm>=lo*60&&nm<hi*60?`<div class="tt-nowl" style="top:${y(nm)}px"></div>`:"";
+ const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item${x.skipped?" skipped":""}"><span class="meta">시간 미정</span><span class="t"><b>${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span>${abtn(x)}</li>`).join("")}</ul>`:"";
+ const empty=!list.length?`<p class="empty" style="margin:0 0 6px">이 날 일정이 없어요.${admin?" 시간 줄을 누르면 그 시각에 넣을 수 있어요.":" 관리자 모드에서 넣을 수 있어요."}</p>`:"";
+ return`${empty}${un}<div class="tt" style="height:${(hi-lo)*HPX}px">${rows}<div class="tt-area">${gaps}${blocks}${nowLine}</div></div>`;
 }
 function heroHTML(items,nm){
  const tl=items.filter(x=>x.start).map(x=>({...x,s:mins(x.start),e:x.end?mins(x.end):null})).sort((a,b)=>a.s-b.s);
@@ -477,10 +502,10 @@ function heroHTML(items,nm){
  return`<div class="hero">${bolt}${main}${bar}</div>${nx}`;
 }
 function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["note","메모","text"],...(scopeOpts?[["scope","어떻게 바꿀까요","select",scopeOpts]]:[]),]}}
-function openSched(item,src){
+function openSched(item,src,preset){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
  const pick=d=>({title:d.title,start:d.start,end:d.end,note:d.note});
- if(!item){openForm("schedule",null,{scope:"date"},schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`]]),data=>{
+ if(!item){openForm("schedule",null,{scope:"date",...(preset||{})},schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`]]),data=>{
    if(!data.title){toast("일정 이름을 적어 주세요");return false}const {scope,...f}=data;
    if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요`);
    else run(db.collection("schedOverrides").add({...f,date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
@@ -661,6 +686,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(!db){if(d.add||d.edit||d.del||d.chore||d.help||d.shop||d.sup||d.toshop||d.meal||d.task||d.sedit||d.sdel)toast("저장소에 연결되지 않았어요");return}
  if(d.half){dialHalf=d.half;renderSched();return}
  if(d.add==="schedule"){openSched(null);return}
+ if(d.slot){openSched(null,null,{start:d.slot,scope:"week"});return}
  if(d.sedit){const it=schedItems(schedDate).find(x=>x.id===d.sedit&&x.src===d.src);if(it)openSched(it,d.src);return}
  if(d.sdel){const it=schedItems(schedDate).find(x=>x.id===d.sdel&&x.src===d.src);if(it)delSched(it,d.src);return}
  if(d.sundo){const o=S.schedOverrides.find(o=>o.date===schedDate&&o.baseId===d.sundo);if(o)run(db.collection("schedOverrides").doc(o.id).delete(),"원래 일정으로 돌렸어요");return}
@@ -739,7 +765,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=33;
+const VERSION=34;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -796,6 +822,18 @@ function showErr(e){const code=(e&&e.code)||"unknown";$("gateErr").hidden=false;
 const doOut=()=>signOut(auth);
 $("gateOut").onclick=doOut;
 
+// 2026-11-24 sy 요청: 시훈이 일정 초기화(다시 입력). 이 시각 전에 만든 일정만 지우고, 지우기 전 settings/schedBackup_* 에 백업
+const SCHED_RESET_AT=Date.parse("2026-11-24T02:27:00Z");
+let schedResetDone=false;
+function resetSchedOnce(){
+ if(schedResetDone||!db||!["schedule","schedOverrides"].every(c=>loadedCols.has(c)))return;schedResetDone=true;
+ const old=c=>S[c].filter(x=>!(x.createdAt>SCHED_RESET_AT));const a=old("schedule"),b=old("schedOverrides");
+ if(!a.length&&!b.length)return;
+ const strip=x=>{const o={...x};delete o.src;return o};
+ setDoc(doc(fs,"settings","schedBackup_"+Date.now()),{at:Date.now(),schedule:a.map(strip),schedOverrides:b.map(strip)}).then(()=>{
+  for(const x of a)run(db.collection("schedule").doc(x.id).delete());
+  for(const x of b)run(db.collection("schedOverrides").doc(x.id).delete())}).catch(e=>{schedResetDone=false;console.error(e)});
+}
 async function seedIfNeeded(){
  const ref=doc(fs,"settings","main");const snap=await getDoc(ref);
  if(!(snap.exists()&&snap.data().seededStudy)){const b2=writeBatch(fs);
@@ -813,7 +851,7 @@ function startData(user){
  let loaded=0,denied=false;
  for(const c of COLS){let first=true;
   unsubs.push(db.collection(c).onSnapshot(snap=>{S[c]=snap.docs.map(d=>({id:d.id,...d.data()}));
-   if(first){first=false;loadedCols.add(c);if(c==="tasks"||c==="taskTpls")ensureTasks();if(++loaded===COLS.length){clearTimeout(timer);$("status").textContent="우리 가족만 보는 화면"}}
+   if(first){first=false;loadedCols.add(c);if(c==="tasks"||c==="taskTpls")ensureTasks();if(c==="schedule"||c==="schedOverrides")resetSchedOnce();if(++loaded===COLS.length){clearTimeout(timer);$("status").textContent="우리 가족만 보는 화면"}}
    renderAll()},err=>{clearTimeout(timer);
    if(err&&err.code==="permission-denied"){if(!denied){denied=true;stopData();gate(`${user.email} 계정은 아직 허용되지 않았어요. 가족 계정으로 다시 로그인해 주세요.`,false,true)}return}
    $("status").textContent="불러오지 못했어요: "+(err&&err.message||"")}))}
