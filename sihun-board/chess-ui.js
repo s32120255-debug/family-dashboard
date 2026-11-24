@@ -50,7 +50,7 @@ export function mountChess(el,{onEnd,gate,pay}){
   if(gt&&!ended&&(gt.lock||(!inProg()&&gt.used>=gt.limit))){
    el.innerHTML=`<div style="text-align:center;padding:24px 8px;display:grid;gap:8px"><b style="font-family:var(--hand);font-size:1.6rem">${gt.lock?"잠겨 있어요":"오늘 체스는 끝!"}</b><span class="meta">${gt.lock||`오늘 ${gt.limit}판 다 했어. 내일 또 하자.`}</span></div>`;return}
   if(pay&&!st.paid){
-   el.innerHTML=`<div style="text-align:center;padding:28px 8px;display:grid;gap:12px;justify-items:center"><b style="font-family:var(--hand);font-size:1.6rem">체스판이 잠겨 있어요</b><span class="meta">과제 포인트 1점을 쓰면 한 판 열려요.${gt?` 오늘 ${gt.used+1}/${gt.limit}판째`:""}</span><button class="btn primary" data-ch="open" style="font-size:1.3rem;padding:10px 20px">⭐1점 쓰고 체스 열기</button></div>`;
+   el.innerHTML=`<div style="text-align:center;padding:28px 8px;display:grid;gap:12px;justify-items:center"><b style="font-family:var(--hand);font-size:1.6rem">체스판이 잠겨 있어요</b><span class="meta">🏪 상점에서 체스 1판(⭐1)을 사면 열려요.${gt?` 오늘 ${gt.used+1}/${gt.limit}판째`:""}</span><button class="btn primary" data-ch="open" style="font-size:1.3rem;padding:10px 20px">🏪 상점에서 체스 사기</button></div>`;
    el.querySelector('[data-ch=open]').onclick=async()=>{if(paying)return;paying=true;const ok=await pay();paying=false;if(!ok)return;st.paid=true;save();render();cpu()};return}
   const flip=st.me==="b";const b=g.board();const legal=sel?g.moves({square:sel,verbose:true}).map(m=>m.to):[];
   let cells="";
@@ -79,5 +79,7 @@ export function mountChess(el,{onEnd,gate,pay}){
   box.querySelector("form").onsubmit=e=>{e.preventDefault();const fd=new FormData(e.target);
    if(inProg()&&!ended&&onEnd)onEnd({result:"quit",level:st.level,color:st.me,moves:g.history().length,pgn:g.pgn().slice(0,4000)});st.level=fd.get("lv");st.me=fd.get("me");g=new Chess();sel=null;last=null;ended=false;st.paid=false;box.remove();save();render();cpu()}}
  render();cpu();
- return {render:()=>{if(!thinking)render()}};
+ return {render:()=>{if(!thinking)render()},
+  isOpen:()=>!!st.paid&&!g.isGameOver(),
+  unlock:()=>{st.paid=true;save();render();cpu()}};
 }
