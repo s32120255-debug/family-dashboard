@@ -940,10 +940,10 @@ function mountApp(hostId,tplId){
 }
 
 const APP_EN=(function(document){
-// ===== 영어 50문장 =====
+// ===== 영어 (엄마 11/24: 단어 10 · 문장 5) =====
 const $=s=>document.querySelector(s);
 const esc=t=>String(t==null?'':t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const DAILY=50, REAPPEAR=4, MAXREVIEW=10, LOW=100;
+const DAILY=5, REAPPEAR=2, MAXREVIEW=10, LOW=100;
 const TAGS={'be+':'be 긍정 (지금)','be+past':'be 긍정 (과거)','be-':'be 부정 (지금)','be-past':'be 부정 (과거)','beQ':'be 의문 (지금)','beQpast':'be 의문 (과거)',
  'there+':'There 긍정 (지금)','there+past':'There 긍정 (과거)','there-':'There 부정','thereQ':'There 의문',
  'do+s':'일반동사 -s (지금)','do+past':'일반동사 과거','do-':"don't + 원형",'do-s':"doesn't + 원형",'do-past':"didn't + 원형",
@@ -1016,6 +1016,10 @@ function s3(v){if(v==='have')return 'has';if(v==='do')return 'does';if(v==='go')
 const BEF=['am','is','are','was','were'],AUXF=['do','does','did'],DETS=['the','my','our','your','his','her','their','this','that','these','those','a','an'];
 const PLUR_IRR=['children','people','men','women','teeth','feet','mice','geese'],SING_S=['news','bus','glass','class','boss','grass','dress','kiss','gas','lens','physics','math'];
 function blkToks(it){const s=it.en[0].replace(/[.?!]$/,'');const t=s.split(' ');if(t[0]!=='I')t[0]=t[0].toLowerCase();return t}
+// 엄마 11/24: 먼저 혼자 써 보기 — 대소문자·문장부호·줄임말(don't = do not)은 봐주고, 낱말·철자·순서는 정확히
+function tnorm(s){s=String(s||'').toLowerCase().replace(/[’‘`]/g,"'");CONTR.forEach(([r,x])=>s=s.replace(r,x));return s.replace(/[.,!?;:"]/g,' ').replace(/\s+/g,' ').trim().split(' ').map(w=>NUM[w]||w).join(' ')}
+function spellOnly(t,ens){const B=tnorm(t).split(' ');for(const e of ens){const A=tnorm(e).split(' ');if(A.length!==B.length)continue;const d=A.map((a,k)=>[a,B[k]]).filter(([a,b])=>a!==b);
+  if(d.length&&d.length<=2&&d.every(([a,b])=>!(STRUCT.has(a)&&STRUCT.has(b))&&a.length>=3&&b.length>=2&&lev(a,b)<=2&&!(PAST[a]===b||PAST[b]===a||s3(a)===b||s3(b)===a)&&a.replace(/(es|s|ed|d)$/,'')!==b.replace(/(es|s|ed|d)$/,'')))return {got:d.map(x=>x[1])}}return null}
 // 주어 사람·수: 'I' | 'S'(혼자: he/she/it/단수) | 'P'(you/we/they/여럿)
 function subjAt(t,i){const w=(t[i]||'').toLowerCase();if(w==='i')return 'I';if(['he','she','it','this','that'].includes(w))return 'S';if(['you','we','they','these','those'].includes(w))return 'P';
   let j=i;while(j<t.length&&DETS.includes(t[j].toLowerCase()))j++;
@@ -1087,25 +1091,29 @@ function capStep(it,ok){const C=RLOG.cap||(RLOG.cap={n:CAP0,w:[],log:[]});if(wle
   if(C.w.length>=15&&okN>=12&&C.n<CAPMAX){C.n++;C.w=[];C.log.push({d:today(),n:C.n,why:'up'})}
   else if(C.w.length>=10&&okN/C.w.length<0.4&&C.n>CAPMIN){C.n--;C.w=[];C.log.push({d:today(),n:C.n,why:'down'})}}
 function fKey(x){if(!x.vb)return 'x';const f=frameOf(x);return x.vb.k+'|'+f.pol+'|'+f.tense}
-function buildQueue(){const I=RLOG.items||{};
-  const review=BANK.items.filter(x=>I[x.id]&&I[x.id].seen&&I[x.id].last!=='ok').sort((a,b)=>(I[a.id].ts||'').localeCompare(I[b.id].ts||'')).slice(0,MAXREVIEW);
-  const cap=lenCap();const pool=BANK.items.filter(x=>!x.hold&&wlen(x)<=cap&&(!I[x.id]||!I[x.id].seen));
-  const nFresh=Math.min(pool.length,DAILY-review.length),target=Math.max(0,nFresh-MIXN);
-  const G=new Map();pool.forEach(x=>{const k=fKey(x);if(!G.has(k))G.set(k,[]);G.get(k).push(x)});for(const g of G.values())g.sort((a,b)=>wlen(a)-wlen(b));
-  const bundles=[],used=new Set();let sum=0;
-  for(const [k,g] of G){if(sum>=target)break;const take=Math.min(BMAX,g.length,target-sum);if(take<BMIN&&g.length>=BMIN)continue;if(take<BMIN)continue;bundles.push(g.slice(0,take).sort((a,b)=>wlen(a)-wlen(b)));g.slice(0,take).forEach(x=>used.add(x.id));sum+=take}
-  const rest=pool.filter(x=>!used.has(x.id));const mix=[],mk=new Set();
-  for(const x of rest){if(mix.length>=nFresh-sum)break;const k=fKey(x);if(!mk.has(k)){mk.add(k);mix.push(x)}}
-  for(const x of rest){if(mix.length>=nFresh-sum)break;if(!mix.includes(x))mix.push(x)}
-  let extra=[];if(review.length+sum+mix.length<DAILY){const u=new Set([...review.map(x=>x.id),...used,...mix.map(x=>x.id)]);extra=BANK.items.filter(x=>!x.hold&&wlen(x)<=cap&&!u.has(x.id)).sort((a,b)=>((I[a.id]||{}).ts||'').localeCompare((I[b.id]||{}).ts||'')).slice(0,DAILY-review.length-sum-mix.length)}
-  const q=[];bundles.forEach((b,g)=>b.forEach(x=>q.push({id:x.id,kind:'새 문장',g})));
-  review.forEach(x=>q.push({id:x.id,kind:'복습'}));shuffle(mix).forEach(x=>q.push({id:x.id,kind:'섞어서 확인'}));extra.forEach(x=>q.push({id:x.id,kind:'복습'}));return q}
+// 엄마 11/24: 하루 5문장, 그날 문법(같은 틀) 하나로 묶음. 막힌 문장이 있으면 그 틀부터(복습 최대 2 + 새 문장)
+function fLabel(k){if(!k||k==='x')return '';const [v,p,t]=k.split('|');return (v==='be'?'🧍 상태 문장 (be)':'🏃 행동 문장 (일반동사)')+' · '+p+' · '+t}
+function buildQueue(){const I=RLOG.items||{},cap=lenCap();
+  const rev=BANK.items.filter(x=>I[x.id]&&I[x.id].seen&&I[x.id].last!=='ok').sort((a,b)=>(I[a.id].ts||'').localeCompare(I[b.id].ts||''));
+  const fresh=BANK.items.filter(x=>!x.hold&&wlen(x)<=cap&&(!I[x.id]||!I[x.id].seen)).sort((a,b)=>wlen(a)-wlen(b));
+  const FL=RLOG.frameLast||{},cnt={};fresh.forEach(x=>{const k=fKey(x);cnt[k]=(cnt[k]||0)+1});
+  let K=rev.length?fKey(rev[0]):null;
+  if(!K){const ks=Object.keys(cnt).filter(k=>k!=='x');ks.sort((a,b)=>(FL[a]||'').localeCompare(FL[b]||'')||cnt[b]-cnt[a]);K=ks[0]||null}
+  const out=[],used=new Set();const add=(x,kind)=>{if(out.length<DAILY&&!used.has(x.id)){used.add(x.id);out.push({id:x.id,kind})}};
+  rev.filter(x=>fKey(x)===K).slice(0,2).forEach(x=>add(x,'복습'));
+  fresh.filter(x=>fKey(x)===K).forEach(x=>add(x,'새 문장'));
+  rev.filter(x=>fKey(x)===K).forEach(x=>add(x,'복습'));
+  if(K){const k2=K.split('|').slice(0,2).join('|')+'|';fresh.filter(x=>fKey(x).startsWith(k2)).forEach(x=>add(x,'새 문장'))}
+  fresh.forEach(x=>add(x,'새 문장'));
+  BANK.items.filter(x=>!x.hold&&wlen(x)<=cap).sort((a,b)=>((I[a.id]||{}).ts||'').localeCompare((I[b.id]||{}).ts||'')).forEach(x=>add(x,'복습'));
+  return out}
+function topicOf(s){const q=s&&s.queue&&s.queue.find(x=>x.kind!=='다시');const it=q&&item(q.id);return it?fKey(it):null}
 function SES(){const s=RLOG.session;return s&&s.date===today()?s:null}
 
 // ---------- 단어 체크 (vocab/words, vocab/check — 나중에 어휘앱에서도 씀) ----------
-// 엄마 11/22: 🙆 알아요 → 품사 + 빈칸 채우기(직접 쳐 보기) · 🤔 몰라요 → 품사 + 따라 쓰기 → 가리고 기억으로 쓰기.
+// 엄마 11/24: 하루 10개(새 7 + 전에 틀린 3, 철자가 헷갈리는 단어 섞기). 뜻 보고 단어 전체 쓰기 → 모르면 🔊 소리 → 그래도 모르면 💡 힌트(헷갈리는 글자만) → 그래도 틀리면 따라 쓰기 → 가리고 쓰기 → 품사 고르기.
 // 몰라요(또는 빈칸 틀림) 단어는 다음 날 빈칸 채우기로 다시 나옴. 맞히면 '알게 됨'.
-const VDAILY=40;let VW=null,VC=null,vc=null;
+const VDAILY=10,VNEW=7,VRE=3;let VW=null,VC=null,vc=null;
 const POS={n:'명사',v:'동사',a:'형용사',d:'부사',p:'대명사',q:'의문사',r:'전치사'};
 const POSHINT={n:'이름을 나타내는 말',v:'하는 일을 나타내는 말',a:'어떤지를 나타내는 말',d:'언제·어떻게·얼마나를 꾸며 주는 말',p:'이름 대신 쓰는 말',q:'물어볼 때 쓰는 말',r:'다른 말 앞에서 관계를 나타내는 말'};
 const VPOS={sleepy:'a',diary:'n',horror:'n',treasure:'n',spicy:'a',true:'a',interesting:'a',lock:'v',wolf:'n',forest:'n',classroom:'n',dinosaur:'n',invent:'v',telephone:'n',subway:'n',quiet:'a',break:'v',vase:'n',wallet:'n',lose:'v',huge:'a',usually:'d',early:'d',desert:'n',remember:'v',late:'a',map:'n',mine:'p',sell:'v',fresh:'a',tower:'n',island:'n',fridge:'n',difficult:'a',climb:'v',top:'n',meat:'n',medal:'n',castle:'n',build:'v',
@@ -1122,37 +1130,55 @@ function vLeft(){return VW&&VC?VW.words.filter(w=>!(VC.words||{})[w.w]).length:0
 function vDue(){if(!VW||!VC)return [];const K=VC.words||{};return VW.words.filter(w=>K[w.w]&&K[w.w].known===false&&HUB.dkey(K[w.w].ts)<today()).sort((a,b)=>(K[a.w].ts||'').localeCompare(K[b.w].ts||''))}
 function vday(){VC.days=VC.days||{};return VC.days[today()]||(VC.days[today()]={n:0,known:0})}
 function vNeedToday(){if(!VW||!VC)return false;const s=VS();if(s)return s.queue.some(w=>!s.res[w]);const D=(VC.days||{})[today()];if(D&&D.end&&!D.forced)return false;return vLeft()>0||vDue().length>0}
-function vStart(){let s=VS();if(!s){const re=vDue().map(w=>w.w);const fresh=VW.words.filter(w=>!(VC.words||{})[w.w]).sort((a,b)=>a.first-b.first).slice(0,Math.max(0,VDAILY-re.length)).map(w=>w.w);
-    s=VC.session={date:today(),queue:re.concat(fresh),re,i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
+function vTricky(w){return vNeed(w)>=2||/(gh|kn|wr|ph|ea|ou|ie|ei|ck|ture|tion)/.test(w.w)}
+function vPickQueue(){const due=vDue().map(w=>w.w),re=due.slice(0,VRE);const K=VC.words||{};
+  const pool=VW.words.filter(w=>!K[w.w]).sort((a,b)=>a.first-b.first);const tr=pool.slice(0,25).filter(vTricky).slice(0,3);
+  const fresh=tr.concat(pool.filter(w=>!tr.includes(w))).slice(0,VDAILY-re.length).map(w=>w.w);
+  let q=re.concat(fresh);if(q.length<VDAILY)q=q.concat(due.slice(VRE)).slice(0,VDAILY);return {queue:q,re:q.filter(w=>due.includes(w))}}
+function vStart(){let s=VS();
+  if(s&&s.v!==2){const done=s.queue.filter(w=>(s.res||{})[w]);if(done.length<VDAILY){const p=vPickQueue();s.queue=done.concat(p.queue.filter(w=>!done.includes(w))).slice(0,VDAILY);s.re=[...new Set((s.re||[]).concat(p.re))].filter(w=>s.queue.includes(w))}else s.queue=done;s.v=2;vsave()}
+  if(!s){const p=vPickQueue();s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
   const f=s.queue.findIndex(w=>!s.res[w]);vOpen(f>=0?f:Math.min(s.i,s.queue.length-1))}
 function vIsRe(w){const s=VS();return !!(s&&(s.re||[]).includes(w))}
 function vOpen(i){const s=VS();if(i<0)return;if(i>=s.queue.length)return vFinish();s.i=i;const w=VW.words.find(x=>x.w===s.queue[i]);const r=s.res[w.w];
-  vc={i,w,phase:r?'result':(vIsRe(w.w)?'fill':'ask'),pred:vIsRe(w.w)?'re':null,t0:Date.now(),fillTry:'',fillN:0,copyN:0,recallN:0,msg:''};V={view:'vocab'};vsave();render()}
-function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,fillTry:vc.fillTry||'',fillN:vc.fillN||0,listenN:vc.listenN||0,listenTry:vc.listenTry||'',copyN:vc.copyN,recallN:vc.recallN,mask:vMask(w),sec:Math.round((Date.now()-vc.t0)/100)/10};
-  VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'type',hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known}]).slice(-10)};
+  vc={i,w,phase:r?'result':'spell',pred:vIsRe(w.w)?'re':'new',t0:Date.now(),heard:false,tries:[],hintN:0,copyN:0,recallN:0,msg:''};V={view:'vocab'};vsave();render()}
+const VLV={self:'뜻만 보고 씀',sound:'소리 듣고 씀',hint:'힌트 보고 씀',copy:'따라 쓰고 기억해서 씀',gave:'두 번 틀려 정답 봄'};
+function vToPos(known){vc.known=known;if(posOf(vc.w)){vc.phase='pos';vc.msg='';render()}else vDone(known,vc.gave)}
+function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,lvl:vc.lvl||(known?'self':'gave'),heard:!!vc.heard,tries:vc.tries.join(' / '),hintN:vc.hintN||0,copyN:vc.copyN,recallN:vc.recallN,posPick:vc.posPick||null,posOk:vc.posOk==null?null:vc.posOk,mask:vMask(w),sec:Math.round((Date.now()-vc.t0)/100)/10};
+  VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
   const D=vday();const r=Object.values(s.res);D.n=r.length;D.known=r.filter(x=>x.known).length;D.re=r.filter(x=>x.pred==='re').length;D.reOk=r.filter(x=>x.pred==='re'&&x.known).length;D.gave=r.filter(x=>x.gave).length;
+  D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;
   vc.phase='result';vsave();render();say(w.w)}
 function vFinish(force){const s=VS(),D=vday();const left=s.queue.filter(w=>!s.res[w]).length;if(left&&!force){V={view:'vend'};render();return}D.skipped=left;if(force)D.forced=true;else delete D.forced;if(!D.end||force){D.end=new Date().toISOString();D.min=mins(Date.now()-s.start)}vsave();V={view:'home'};render()}
 function vend(){const s=VS();const left=s.queue.filter(w=>!s.res[w]);
-  $('#main').innerHTML=topbar('🔤 단어 체크',true)+`<div class="card"><h2>아직 안 한 단어가 ${left.length}개 있어요</h2><p class="tip">단어를 모두 쓰고 나면 단어 체크가 끝나요. 그다음 50문장으로 가요.</p>
+  $('#main').innerHTML=topbar('🔤 단어 체크',true)+`<div class="card"><h2>아직 안 한 단어가 ${left.length}개 있어요</h2><p class="tip">단어를 모두 쓰고 나면 단어가 끝나요. 그다음 5문장으로 가요.</p>
    <div class="row"><button class="btn big" data-act="vgo" data-i="${s.queue.indexOf(left[0])}">▶ 안 한 단어 하러 가기</button></div></div>`}
 function vBoxes(word,shown){return `<div style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:10px 0">${[...word].map(c=>c===' '?'<span style="width:14px"></span>':`<span style="width:30px;height:38px;border-bottom:3px solid #1f2330;display:inline-flex;align-items:flex-end;justify-content:center;font:800 24px 'Noto Sans KR'">${shown?esc(c):''}</span>`).join('')}</div>`}
-function vInput(act,label){return `<div class="row" style="justify-content:center"><input id="vin" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="${act}" style="font:800 24px 'Noto Sans KR';padding:10px 14px;border:2px solid #c3cbe0;border-radius:14px;width:min(100%,340px);text-align:center"><button class="btn" data-act="${act}">${label}</button></div>`}
+function vFullBoxes(word){return `<div class="vfull" style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:10px 0">${[...word].map(c=>c===' '?'<span style="width:14px"></span>':`<span data-f="1" style="width:30px;height:38px;border-bottom:3px solid #c3cbe0;display:inline-flex;align-items:flex-end;justify-content:center;font:800 24px 'Noto Sans KR';color:#3b6cf6"></span>`).join('')}</div>`}
+function vInput(act,label){return `<div class="row" style="justify-content:center"><input id="vin" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="${act}" data-full="1" style="font:800 24px 'Noto Sans KR';padding:10px 14px;border:2px solid #c3cbe0;border-radius:14px;width:min(100%,340px);text-align:center"><button class="btn" data-act="${act}">${label}</button></div>`}
+function vDup(w){return VW.words.filter(x=>x.ko===w.ko&&x.w!==w.w)}
+function vPosQ(){const k=posOf(vc.w);const o=['n','v','a','d'];if(!o.includes(k))o.push(k);
+  return `<div class="res ok" style="text-align:center"><div class="ans">${esc(vc.w.w)} = ${esc(vc.w.ko)} <button class="btn light sm" data-act="vsay">🔊</button></div></div>
+  <div class="tip" style="text-align:center;margin-top:12px">🏷️ 이 단어는 무슨 품사야?</div><div class="row" style="justify-content:center;align-items:stretch">${o.map(p=>`<button class="chip" data-act="vpos" data-v="${p}" style="flex:1;min-width:130px;max-width:200px;background:#eef1f7;color:#1f2330;padding:10px 8px;white-space:normal;line-height:1.4"><b style="font-size:18px">${POS[p]}</b><div style="font-size:12px;font-weight:400">${POSHINT[p]}</div></button>`).join('')}</div>`}
 function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
-  let h=topbar('🔤 단어 체크',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.res).length/n*100)}%"></i></div><div class="nav"><button data-act="vgo" data-i="0" ${vc.i?'':'disabled'}>⏮ 처음으로</button><button data-act="vgo" data-i="${vc.i-1}" ${vc.i?'':'disabled'}>◀ 이전</button><span>${vc.i+1} / ${n}${vIsRe(w.w)?' · 어제 몰랐던 단어':''}</span><button data-act="vgo" data-i="${vc.i+1}">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`;
+  let h=topbar('🔤 단어 10개',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.res).length/n*100)}%"></i></div><div class="nav"><button data-act="vgo" data-i="0" ${vc.i?'':'disabled'}>⏮ 처음으로</button><button data-act="vgo" data-i="${vc.i-1}" ${vc.i?'':'disabled'}>◀ 이전</button><span>${vc.i+1} / ${n}${vIsRe(w.w)?' · 전에 틀린 단어':''}</span><button data-act="vgo" data-i="${vc.i+1}">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`;
   h+=`<div class="card"><div class="tip" style="text-align:center">영어로 뭐지?</div><div class="prompt">${esc(w.ko)}</div>`;
-  if(vc.phase==='ask'){
-    h+=`<div class="row" style="justify-content:center"><button class="btn big" style="max-width:220px;background:var(--acc)" data-act="vpred" data-v="know">🙆 알아요</button><button class="btn big light" style="max-width:220px" data-act="vpred" data-v="dont">🤔 몰라요</button></div>`}
-  else if(vc.phase==='fill'){
-    h+=posHTML(w)+(vc.msg?`<div class="notice">${vc.msg}</div>`:'')+`<div class="tip" style="text-align:center;margin-top:10px">${vc.pred==='re'?'지난번에 몰랐던 단어예요. 이제 쓸 수 있는지 빈칸을 채워 봐요.':'예문의 빈칸을 채워 봐요.'}</div>`+vSentence(w,'')+vMaskInput('vfill')}
-  else if(vc.phase==='listen'){
-    h+=posHTML(w)+`<div class="tip" style="text-align:center;margin-top:10px">👂 먼저 소리를 듣고, 헷갈리는 글자를 채워 봐요</div><div style="text-align:center;margin-top:8px"><button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button></div><div style="text-align:center;margin:12px 0">${vMaskBoxes(w,'')}</div>`+vMaskInput('vlisten')}
+  const note=vc.msg?`<div class="notice">${vc.msg}</div>`:'';const dup=vDup(w);
+  if(dup.length&&vc.phase==='spell')h+=`<div class="tip" style="text-align:center">같은 뜻 단어가 또 있어요 · 여기선 <b>${esc(w.w[0])}</b>로 시작하는 <b>${w.w.replace(/ /g,'').length}글자</b> 단어</div>`;
+  if(vc.phase==='spell'){
+    h+=note+`<div class="tip" style="text-align:center;margin-top:10px">${vc.heard?'👂 들은 소리를 잘 생각하며 <b>단어 전체</b>를 써요':'✍️ 뜻을 보고 <b>영어 단어 전체</b>를 써요'}</div>`+vFullBoxes(w.w)+vInput('vspell','확인')+
+     `<div class="row" style="justify-content:center">${vc.heard?`<button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button><button class="btn light" data-act="vhint">💡 힌트</button>`:`<button class="btn light" data-act="vlisten2">🔊 모르겠으면 소리 듣기</button>`}</div>`}
+  else if(vc.phase==='hint'){
+    h+=note+`<div class="tip" style="text-align:center;margin-top:10px">💡 힌트: 헷갈리는 글자만 비워 놨어요</div><div style="text-align:center;margin-top:8px"><button class="btn light sm" data-act="vsay">🔊 듣기</button></div><div style="text-align:center;margin:12px 0">${vMaskBoxes(w,'')}</div>`+vMaskInput('vhintchk')}
   else if(vc.phase==='copy'){
-    h+=posHTML(w)+(vc.msg?`<div class="notice">${vc.msg}</div>`:'')+`<div class="tip" style="text-align:center;margin-top:10px">✍️ 보고 따라 써요 (단어 전체)</div>`+vBoxes(w.w,true)+`<div style="text-align:center"><button class="btn light sm" data-act="vsay">🔊 듣기</button></div>`+vInput('vcopy','다 썼어')}
+    h+=note+`<div class="tip" style="text-align:center;margin-top:10px">✍️ 보고 따라 써요 (단어 전체)</div>`+vBoxes(w.w,true)+`<div style="text-align:center"><button class="btn light sm" data-act="vsay">🔊 듣기</button></div>`+vInput('vcopy','다 썼어')}
   else if(vc.phase==='recall'){
-    h+=posHTML(w)+(vc.msg?`<div class="notice">${vc.msg}</div>`:'')+`<div class="tip" style="text-align:center;margin-top:10px">🙈 이제 가렸어요. 헷갈리는 글자를 기억해서 채워요</div><div style="text-align:center;margin:12px 0">${vMaskBoxes(w,'')}</div>`+vMaskInput('vrecall')}
-  else{const ok=r&&r.known;const msg=r.gave?'두 번 틀려서 정답을 알려 줄게요. 내일 빈칸으로 다시 나와요.':r.pred==='re'?(ok?'⭕ 지난번에 몰랐던 단어, 이제 쓸 수 있어요!':'아직 헷갈려요. 내일 빈칸으로 한 번 더 나와요.'):r.pred==='know'?(ok?'⭕ 알고 있었네요! 예측이 맞았어요.':'알아요라고 했는데 아직 정확히는 못 썼어요. 내일 빈칸으로 다시 나와요.'):(r.listenN&&!r.copyN?'⭕ 소리만 듣고 썼어요! 내일 빈칸으로 한 번 더 확인해요.':'따라 쓰고 기억해서 썼어요. 내일 빈칸으로 다시 나와요.');
-    h+=`<div class="res ${ok?'ok':'slow'}">${msg}<div class="ans" style="text-align:center">${esc(w.w)} = ${esc(w.ko)}${posOf(w)?` <span class="tip">(${POS[posOf(w)]})</span>`:''} <button class="btn light sm" data-act="vsay">🔊</button></div></div>
+    h+=note+`<div class="tip" style="text-align:center;margin-top:10px">🙈 이제 가렸어요. 기억해서 <b>단어 전체</b>를 써요</div>`+vFullBoxes(w.w)+vInput('vrecall','확인')}
+  else if(vc.phase==='pos'){h+=vPosQ()}
+  else{const ok=r&&r.known,k=posOf(w);const L=r.lvl;
+    const msg=L==='self'?(r.pred==='re'?'⭕ 전에 틀린 단어, 이제 뜻만 보고 썼어요!':'⭕ 뜻만 보고 썼어요!'):L==='sound'?'⭕ 소리 듣고 썼어요!':L==='hint'?'💡 힌트 보고 썼어요. 다음에 한 번 더 나와요.':L==='copy'?'따라 쓰고 기억해서 썼어요. 다음에 한 번 더 나와요.':L==='gave'?'아직 헷갈려요. 다음에 한 번 더 나와요.':(ok?'⭕ 맞았어요!':'다음에 한 번 더 나와요.');
+    const pm=r.posOk==null?'':r.posOk?`<div class="tip" style="margin-top:4px">🏷️ 품사도 맞았어요: <b>${POS[k]}</b></div>`:`<div class="tip" style="margin-top:4px">🏷️ 품사는 <b>${POS[k]}</b>예요 · ${POSHINT[k]}</div>`;
+    h+=`<div class="res ${ok?'ok':'slow'}">${msg}<div class="ans" style="text-align:center">${esc(w.w)} = ${esc(w.ko)}${k?` <span class="tip">(${POS[k]})</span>`:''} <button class="btn light sm" data-act="vsay">🔊</button></div>${pm}</div>
      <div class="tip" style="text-align:center;margin-top:10px">🗣️ 들은 대로 소리 내어 따라 말해 봐요</div><div class="row" style="justify-content:center"><button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button><button class="btn" data-act="vgo" data-i="${vc.i+1}">🗣️ 따라 말했어 · ${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>';const inp=$('#vin');if(inp)setTimeout(()=>{try{inp.focus()}catch(e){}},30)}
 function vVal(){const i=$('#vin');return i?i.value:''}
@@ -1169,7 +1195,7 @@ function vSentence(w,t){const d=VDATA[w.w];if(!d)return `<div style="text-align:
   return `<div style="text-align:center;font-size:21px;font-weight:700;line-height:2.2;margin:12px 0 2px">${esc(ex.slice(0,a))}${vMaskBoxes(w,t,cap)}${esc(ex.slice(a+mm[0].length))}</div><div class="tip" style="text-align:center">${esc(d[3])}</div>`}
 function vMaskInput(act){const n=vNeed(vc.w);return `<div class="tip" style="text-align:center;margin-top:8px">파란 빈칸에 들어갈 글자 <b>${n}개</b>만 쳐요</div><div class="row" style="justify-content:center"><input id="vin" type="text" maxlength="${n}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="${act}" data-live="1" style="font:800 24px 'Noto Sans KR';padding:10px 14px;border:2px solid #c3cbe0;border-radius:14px;width:min(100%,200px);text-align:center;letter-spacing:4px"><button class="btn" data-act="${act}">확인</button></div>`}
 function vFill(t){const m=vMask(vc.w),typed=[...(t||'').replace(/\s/g,'')];let k=0;return [...m].map(c=>c==='_'?(typed[k++]||''):c).join('')}
-function vShowLive(){const i=$('#vin');if(!i||!i.dataset.live)return;const typed=[...i.value.replace(/\s/g,'')];let k=0;document.querySelectorAll('.vmask [data-b]').forEach(b=>{b.textContent=typed[k++]||''})}
+function vShowLive(){const i=$('#vin');if(i&&i.dataset.full){const typed=[...i.value.replace(/\s/g,'')];let k=0;document.querySelectorAll('.vfull [data-f]').forEach(b=>{b.textContent=typed[k++]||''});return}if(!i||!i.dataset.live)return;const typed=[...i.value.replace(/\s/g,'')];let k=0;document.querySelectorAll('.vmask [data-b]').forEach(b=>{b.textContent=typed[k++]||''})}
 // 틀린 첫 글자 위치 알려주기 (따라 쓰기)
 function vDiffMsg(typed,ans){const a=vnorm(ans),t=vnorm(typed);let k=0;while(k<a.length&&t[k]===a[k])k++;return k>=a.length?`글자가 더 있어요. <b>${esc(ans)}</b> 까지만 써요.`:`<b>${k+1}번째 글자</b>부터 달라요. 다시 보고 써요.`}
 function vMatch(heard,w){const a=words(heard).join(' '),b=words(w).join(' ');return !!b&&(' '+a+' ').includes(' '+b+' ')}
@@ -1181,11 +1207,11 @@ function wordTip(it){if(rc.phase==='result')return '';const out=[];const K=(VC&&
 
 // ---------- 엄마용 미리보기 (보기만, 기록 안 남음) ----------
 function browse(){const m=V.mode||'w',pg=V.pg||0;const K=(VC&&VC.words)||{},I=RLOG.items||{};
-  const list=m==='w'?(VW?VW.words.slice().sort((a,b)=>a.first-b.first):[]):BANK.items;const per=m==='w'?VDAILY:DAILY;const n=Math.max(1,Math.ceil(list.length/per));const P=Math.min(pg,n-1);
+  const list=m==='w'?(VW?VW.words.slice().sort((a,b)=>a.first-b.first):[]):BANK.items;const per=m==='w'?40:50;const n=Math.max(1,Math.ceil(list.length/per));const P=Math.min(pg,n-1);
   const rows=list.slice(P*per,P*per+per);
   let h=topbar('👀 미리보기 (엄마용)',true)+`<div class="card"><div class="row" style="margin-top:0"><button class="btn ${m==='w'?'':'light'}" data-act="bmode" data-m="w">🔤 단어 ${VW?VW.words.length:0}개</button><button class="btn ${m==='s'?'':'light'}" data-act="bmode" data-m="s">🗣️ 문장 ${BANK.items.length}개</button></div>
    <p class="tip">보기만 하는 화면이에요. 여기서 넘겨도 시훈이 기록에는 아무것도 안 남아요.</p></div>
-   <div class="nav"><button data-act="bpg" data-i="0" ${P?'':'disabled'}>⏮ 처음으로</button><button data-act="bpg" data-i="${P-1}" ${P?'':'disabled'}>◀ 이전</button><span>${P+1}일차 분량 (${P*per+1}~${Math.min(list.length,P*per+per)}) · ${P+1} / ${n}</span><button data-act="bpg" data-i="${P+1}" ${P<n-1?'':'disabled'}>다음 ▶</button></div><div class="card"><div class="scroll"><table class="grid">`;
+   <div class="nav"><button data-act="bpg" data-i="0" ${P?'':'disabled'}>⏮ 처음으로</button><button data-act="bpg" data-i="${P-1}" ${P?'':'disabled'}>◀ 이전</button><span>${P+1}쪽 (${P*per+1}~${Math.min(list.length,P*per+per)}) · ${P+1} / ${n}</span><button data-act="bpg" data-i="${P+1}" ${P<n-1?'':'disabled'}>다음 ▶</button></div><div class="card"><div class="scroll"><table class="grid">`;
   if(m==='w')h+=`<tr><th>#</th><th>한국어</th><th>영어</th><th>체크 결과</th></tr>`+rows.map((w,k)=>{const r=K[w.w];return `<tr><td>${P*per+k+1}</td><td>${esc(w.ko)}</td><td><b>${esc(w.w)}</b></td><td>${!r?'<span class="tip">아직</span>':r.known?'⭕ 알았음':'❌ 몰랐음'}</td></tr>`}).join('');
   else h+=`<tr><th>#</th><th>한국어 / 영어</th><th>구조 · 함정 블록</th><th>시훈</th></tr>`+rows.map((x,k)=>{const r=I[x.id];return `<tr><td>${P*per+k+1}</td><td>${esc(x.ko)}<div><b>${esc(x.en[0])}</b>${x.en.length>1?`<span class="tip"> (또는 ${x.en.slice(1).map(esc).join(' / ')})</span>`:''}</div>${x.word?`<div class="tip">단어: ${esc(x.word)}</div>`:''}${x.hold?`<div class="tip" style="color:#b91c1c">⏸ 지금은 안 나와요 (모르는 개념)</div>`:''}${x.nc?`<div class="tip" style="color:#b45309">🆕 ${x.nc.map(c=>esc(c[0])).join(' · ')}</div>`:''}</td><td class="tip">${TAGS[x.tag]}<br>${x.vb?`문장 종류: <b>${x.vb.k==='do'?'🏃 행동':'🧍 상태'}</b> · <b>${frameOf(x).pol} · ${frameOf(x).tense}</b>${x.vb.en?` (${esc(x.vb.en)} = ${esc(x.vb.ko)})`:''}<br>`:''}함정: ${trapCands(x).slice(0,TRAPMAX).map((t,j)=>`<b>${esc(t.w)}</b> <span style="font-size:11px">(${TRAPCAT[t.cat]}${j>=TRAP0?' · 레벨 오르면':''})</span>`).join(', ')||'-'}</td><td style="white-space:nowrap">${r&&r.seen?CLS[r.last]:'<span class="tip">아직</span>'}</td></tr>`}).join('');
   $('#main').innerHTML=h+'</table></div></div>'}
@@ -1196,26 +1222,27 @@ function topbar(title,back){return `<div class="top"><h1>${title}</h1><button cl
 function mins(ms){return Math.max(1,Math.round(ms/60000))}
 function lastActual(){const ds=Object.keys(RLOG.days||{}).sort().reverse();for(const d of ds){const D=RLOG.days[d];if(D.actualMin&&d!==today())return {d,m:D.actualMin}}return null}
 function home(){const s=SES(),D=(RLOG.days||{})[today()];
-  if(!BANK||!BANK.items.length){$('#main').innerHTML=topbar('🗣️ 영어 50문장')+'<div class="card">문장이 아직 없어요.</div>';return}
-  let h=topbar('🗣️ 영어 50문장');
+  if(!BANK||!BANK.items.length){$('#main').innerHTML=topbar('🗣️ 영어 5문장')+'<div class="card">문장이 아직 없어요.</div>';return}
+  let h=topbar('🗣️ 영어 5문장');
 
-  if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 50문장 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
+  if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
     <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`}
   else{const doneN=s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0;
-    h+=`<div class="card"><h2>오늘의 50문장</h2><p>한국어를 보고 <b>블록으로 영어 문장을 만들어요.</b> 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 틀리면 틀린 곳 힌트를 보고 한 번 더 고쳐요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요. 틀린 문장은 몇 문장 뒤에 다시 나와요.</p>
-    ${s&&s.carried?'<div class="notice" style="background:#eef3ff">지난번에 멈춘 곳부터 이어서 해요.</div>':''}${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어 체크</b> ${VS()?`(${Object.keys(VS().res).length} / ${VS().queue.length})`:`${Math.min(VDAILY,vLeft()+vDue().length)}개`} → ② 50문장</div>`:''}<div class="row"><button class="btn big" data-act="start">${vNeedToday()?'▶ 단어 체크 시작':s?`▶ 이어서 하기 (${doneN} / ${DAILY})`:'▶ 시작'}</button></div></div>`}
+    h+=`<div class="card"><h2>오늘의 5문장</h2>${(()=>{const k=s?topicOf(s):(buildQueue()[0]?fKey(item(buildQueue()[0].id)):null);return k?`<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${fLabel(k)}</b></div>`:''})()}<p>한국어를 보고 <b>먼저 혼자 영어로 써요.</b> 틀리면 <b>블록으로 고쳐요</b>. 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요.</p>
+    ${s&&s.carried?'<div class="notice" style="background:#eef3ff">지난번에 멈춘 곳부터 이어서 해요.</div>':''}${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> ${VS()?`(${Object.keys(VS().res).length} / ${VS().queue.length})`:`${Math.min(VDAILY,vLeft()+vDue().length)}개`} → ② 5문장</div>`:''}<div class="row"><button class="btn big" data-act="start">${vNeedToday()?'▶ 단어 시작':s?`▶ 이어서 하기 (${doneN} / ${DAILY})`:'▶ 시작'}</button></div></div>`}
   const left=freshLeft();
   h+=`<div class="row"><button class="btn light" data-act="report" style="background:rgba(255,255,255,.14);color:#fff">📊 기록 (엄마용)</button><button class="btn light" data-act="browse" style="background:rgba(255,255,255,.14);color:#fff">👀 미리보기 (엄마용)</button><span class="tip" style="color:#c9d3ea">${lenCap()}단어 이하 새 문장 ${left}개 남음${left<LOW?' · <b style="color:#ffb4b4">문장 추가 필요</b>':''}</span></div>`;
   $('#main').innerHTML=h}
 function predict(){const la=lastActual();const D=dayRec(today());
-  $('#main').innerHTML=topbar('먼저 예측!',true)+`<div class="card"><h2>50문장, 몇 분 만에 끝날 것 같아?</h2>
+  $('#main').innerHTML=topbar('먼저 예측!',true)+`<div class="card"><h2>5문장, 몇 분 만에 끝날 것 같아?</h2>
    ${la?`<p class="tip">지난번(${la.d.slice(5).replace('-','/')}): <b>${la.m}분</b> 걸렸어요</p>`:'<p class="tip">처음이니까 감으로 골라 봐요.</p>'}
-   <div class="mins">${[10,15,20,25,30,35,40,45,50,60].map(m=>`<button class="chip ${D.predMin===m?'sel':''}" data-act="pred" data-m="${m}">${m}분</button>`).join('')}</div>
+   <div class="mins">${[3,5,7,10,12,15,20,25,30,40].map(m=>`<button class="chip ${D.predMin===m?'sel':''}" data-act="pred" data-m="${m}">${m}분</button>`).join('')}</div>
    <p class="tip" style="margin-top:12px">끝나면 실제로 걸린 시간이랑 비교해요. 내 속도를 정확히 아는 게 진짜 똑똑한 거예요.</p></div>`}
-function startSession(){let s=SES();if(s&&(s.qv||0)<3){const done=s.queue.filter(q=>q.res);const ids=new Set(done.map(q=>q.id));const need=DAILY-done.filter(q=>q.kind!=='다시').length;
-    let rest=buildQueue().filter(q=>!ids.has(q.id));let k=0;rest=rest.filter(q=>q.kind==='다시'||k++<need);s.queue=done.concat(rest);s.i=Math.min(done.length,s.queue.length-1);s.qv=3;save()}if(!s){s=RLOG.session={date:today(),queue:buildQueue(),i:0,qv:3,start:Date.now()};const D=dayRec(today());D.start=D.start||new Date().toISOString();save()}openR(Math.min(s.i,s.queue.length-1))}
+function startSession(){let s=SES();
+  if(s&&(s.qv||0)<4){if(s.carried){RLOG.session=null;s=null}else{const done=s.queue.filter(q=>q.res&&q.kind!=='다시').slice(0,DAILY);const ids=new Set(done.map(q=>q.id));s.queue=done.concat(buildQueue().filter(q=>!ids.has(q.id)).slice(0,Math.max(0,DAILY-done.length)));s.i=Math.min(done.length,s.queue.length-1);s.qv=4;save()}}
+  if(!s){s=RLOG.session={date:today(),queue:buildQueue(),i:0,qv:4,start:Date.now()};const D=dayRec(today());D.start=D.start||new Date().toISOString();D.topic=topicOf(s);const FL=RLOG.frameLast||(RLOG.frameLast={});if(D.topic)FL[D.topic]=today();save()}openR(Math.min(s.i,s.queue.length-1))}
 function mkRC(i,again){const s=SES(),q=s.queue[i],it=item(q.id);const traps=again?trapCands(it).slice(0,TRAPMAX):trapsFor(it,trapN(it));
-  rc={i,q,id:q.id,it,phase:'build',again:!!again,t0:Date.now(),tSub:null,tries:0,hk:[],preH:0,traps,end:(it.en[0].match(/[.?!]$/)||[''])[0],
+  rc={i,q,id:q.id,it,phase:again?'build':'type',typeN:0,typed:[],typedOk:false,typeErr:null,again:!!again,t0:Date.now(),tSub:null,tries:0,hk:[],preH:0,traps,end:(it.en[0].match(/[.?!]$/)||[''])[0],
     pool:shuffle(blkToks(it).map(w=>({w})).concat(traps.map(t=>({w:t.w,trap:true,cat:t.cat})))),built:[],hitAll:[],attempts:[],note:''};
   if(!again&&q.res&&q.recNeed&&!q.rec&&DIC){rc.phase=q.res==='unknown'?'answer':'result';rc.cls=q.res}}
 // 블록으로 문장 만들기(엄마 11/22: 문법 먼저, 🎤 말하기 없음). 문장 블록 + 문법 함정 블록(be↔do 우선)
@@ -1273,11 +1300,15 @@ function diagPts(it,heard){if(!it.vb)return [];const A=words(it.en[0]),H=words(h
 function hintBox(){const it=rc.it;return (rc.hk||[]).map(k=>`<div class="hint">💡 ${trapHintHTML(it,k)}</div>`).join('')}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
 function navHTML(){const s=SES(),i=s.i,n=s.queue.length;const doneN=s.queue.filter(q=>q.kind!=='다시'&&q.res).length;
-  return `<div class="bar"><i style="width:${Math.round(doneN/DAILY*100)}%"></i></div><div class="nav"><button data-act="go" data-i="0" ${i?'':'disabled'}>⏮ 처음으로</button><button data-act="go" data-i="${i-1}" ${i?'':'disabled'}>◀ 이전</button><span>${doneN} / ${DAILY}${s.queue[i].g!=null?` · 묶음 ${s.queue[i].g+1}/${1+Math.max(...s.queue.map(x=>x.g!=null?x.g:-1))}`:s.queue[i].kind!=='새 문장'?' · '+esc(s.queue[i].kind):''}</span><button data-act="go" data-i="${i+1}">${i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
-function sent(){const it=rc.it,q=rc.q;let h=topbar('영어 50문장',true)+navHTML()+`<div class="card"><div class="prompt">${esc(it.ko)}</div>`;
-  if(q.res&&!rc.again&&rc.phase==='build'&&!rc.tries&&!rc.built.length){h+=`<div class="res ${q.res==='ok'?'ok':'slow'}">이미 한 문장이에요 (${CLS[q.res]})<div class="ans">${esc(it.en[0])} <button class="btn light sm" data-act="sayAns">🔊</button></div></div><div class="row"><button class="btn light" data-act="again">🔁 다시 만들어 보기</button><button class="btn" data-act="next">다음 ▶</button></div>`;$('#main').innerHTML=h+'</div>';return}
+  return `<div class="bar"><i style="width:${Math.round(doneN/DAILY*100)}%"></i></div><div class="nav"><button data-act="go" data-i="0" ${i?'':'disabled'}>⏮ 처음으로</button><button data-act="go" data-i="${i-1}" ${i?'':'disabled'}>◀ 이전</button><span>${doneN} / ${DAILY}${s.queue[i].kind!=='새 문장'?' · '+esc(s.queue[i].kind):''}</span><button data-act="go" data-i="${i+1}">${i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
+function sent(){const it=rc.it,q=rc.q;let h=topbar('영어 5문장',true)+navHTML()+`<div class="card"><div class="prompt">${esc(it.ko)}</div>`;
+  if(q.res&&!rc.again&&(rc.phase==='build'||rc.phase==='type')&&!rc.typeN&&!rc.tries&&!rc.built.length){h+=`<div class="res ${q.res==='ok'?'ok':'slow'}">이미 한 문장이에요 (${CLS[q.res]})<div class="ans">${esc(it.en[0])} <button class="btn light sm" data-act="sayAns">🔊</button></div></div><div class="row"><button class="btn light" data-act="again">🔁 다시 만들어 보기</button><button class="btn" data-act="next">다음 ▶</button></div>`;$('#main').innerHTML=h+'</div>';return}
   h+=wordTip(it);
-  if(rc.phase==='build'){
+  if(rc.phase==='type'){
+    h+=(rc.note?`<div class="notice">${rc.note}</div>`:'')+`<div class="tip" style="text-align:center;margin-top:10px">⌨️ 먼저 <b>혼자 영어로</b> 써 봐요. 틀리면 블록으로 고쳐요.</div>
+    <div class="row"><input id="tin" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="typeChk" value="${esc(rc.typed[rc.typed.length-1]||'')}" style="flex:1;min-width:0;font:700 20px 'Noto Sans KR';padding:12px 14px;border:2px solid #c3cbe0;border-radius:14px"></div>
+    <div class="row" style="justify-content:center"><button class="btn" data-act="typeChk">✔ 다 썼어</button></div>`}
+  else if(rc.phase==='build'){
     h+=hintBox();
     if(rc.note)h+=`<div class="notice">${rc.note}</div>`;
     h+=`<div class="tip" style="text-align:center;margin-top:10px">블록을 순서대로 눌러 문장을 만들어요. <b>쓰지 않는 블록도 섞여 있어요!</b></div>`+blockHTML();
@@ -1286,10 +1317,10 @@ function sent(){const it=rc.it,q=rc.q;let h=topbar('영어 50문장',true)+navHT
   else if(rc.phase==='answer'){h+=`<div class="res no">이 문장은 몇 문장 뒤에 다시 나와요${rc.lastBuilt?`<div class="tip">내가 만든 문장: ${esc(rc.lastBuilt)}</div>`:''}<div class="tip" style="margin-top:6px">정답</div><div class="ans">${esc(it.en[0])} <button class="btn light sm" data-act="sayAns">🔊</button></div></div>${hintBox()}`;
     if(it.word)h+=`<div class="tip" style="margin-top:6px">단어: ${esc(it.word)}</div>`;
     h+=recHTML()}
-  else if(rc.phase==='result'){const c=rc.cls;h+=`<div class="res ${c==='ok'||rc.again?'ok':'slow'}">${rc.again?'⭕ 맞았어요!':c==='ok'?'⭕ 한 번에 완성!':'⭕ 힌트 보고 고쳐서 완성했어요!'}<div class="ans">${esc(it.en[0])} <button class="btn light sm" data-act="sayAns">🔊</button></div></div>`;
+  else if(rc.phase==='result'){const c=rc.cls;h+=`<div class="res ${c==='ok'||rc.again?'ok':'slow'}">${rc.again?'⭕ 맞았어요!':rc.typedOk?(c==='ok'?'⭕ 혼자 써서 한 번에 맞혔어요!':'⭕ 철자 고쳐서 혼자 썼어요!'):c==='ok'?'⭕ 한 번에 완성!':'⭕ 블록으로 고쳐서 완성했어요!'}<div class="ans">${esc(it.en[0])} <button class="btn light sm" data-act="sayAns">🔊</button></div></div>`;
     if(it.word)h+=`<div class="tip" style="margin-top:6px">단어: ${esc(it.word)}</div>`;
     h+=recHTML()}
-  $('#main').innerHTML=h+'</div>'}
+  $('#main').innerHTML=h+'</div>';const ti=$('#tin');if(ti)setTimeout(()=>{try{ti.focus();ti.setSelectionRange(ti.value.length,ti.value.length)}catch(e){}},30)}
 function recOK(){const R=rc&&rc.rec;return !DIC||!!rc.recFail||!!(R&&(R.heard||R.n>=2))}
 function recHTML(){const R=rc.rec;let h=`<div class="tip" style="text-align:center;margin-top:12px">🗣️ 들은 대로 따라 말하며 녹음해요</div>${rc.note2&&!recOK()?'<div class="notice" style="text-align:center">먼저 🎙️ 녹음하고 넘어가요</div>':''}`;
   if(rc.phase2==='rec')return h+`<button class="mic live" data-act="recStop">⏹</button><div class="live-text" id="live">말하고 나서 ⏹를 눌러요</div>`;
@@ -1321,15 +1352,15 @@ function finishBuild(ok,diag){const s=SES(),r=st(rc.id),it=rc.it;
     const add=(diag.cats||[]).filter(k=>!(rc.hk||[]).includes(k));rc.hk=(rc.hk||[]).concat(add);
     if(rc.tries<2){rc.note='❌ 아직 달라요. 💡 힌트를 보고 고쳐 봐요.';save();render();return}}
   const lat=rc.tSub!=null?rc.tSub:Math.round((Date.now()-rc.t0)/100)/10;
-  const pre=(rc.preH||0)>0;rc.cls=ok?(rc.tries===0&&!pre?'ok':'access'):'unknown';
+  const pre=(rc.preH||0)>0;const first=rc.typedOk?rc.typeN===1:(rc.tries===0&&!pre&&!rc.typeN);rc.cls=ok?(first?'ok':'access'):'unknown';
   capStep(it,rc.cls==='ok');
   // 함정 레벨(같은 틀별): 한 번에 2번 연속 완성 → 함정 +1(최대 3), 처음에 틀리면 -1(최소 1)
   const fk=fKey(it),TL=RLOG.trapLv||(RLOG.trapLv={});const tl=TL[fk]||(TL[fk]={n:TRAP0,w:0});
   if(rc.cls==='ok'){tl.w++;if(tl.w>=2&&tl.n<TRAPMAX){tl.n++;tl.w=0}}else{tl.w=0;if(rc.tries>0&&tl.n>TRAPMIN)tl.n--}
   const ts=new Date().toISOString();r.seen++;r.last=rc.cls;r.ts=ts;r.okStreak=rc.cls==='ok'?r.okStreak+1:0;
   const pos=s.queue.slice(0,rc.i).filter(x=>x.res).length+1;
-  r.hist.push({d:today(),cls:rc.cls,mode:'block',buildLat:lat,tries:rc.tries,traps:rc.traps.map(t=>t.w+'/'+t.cat),hit:rc.hitAll.slice(),built:rc.attempts.slice(),preHints:(rc.hk||[]).slice(),tag:it.tag,len:it.len,pos,kind:rc.q.kind,diag:rc.hitAll.length?rc.hitAll.map(c=>TRAPCAT[c]||c).join(', '):null});if(r.hist.length>20)r.hist.shift();
-  const D=dayRec(today());D.mode='block';D.n++;D.cls[rc.cls]=(D.cls[rc.cls]||0)+1;D.buildLat=D.buildLat||[];D.buildLat.push(lat);
+  r.hist.push({d:today(),cls:rc.cls,mode:rc.typedOk?'type':'block',typed:rc.typed.slice(),typeErr:rc.typeErr,buildLat:lat,tries:rc.tries,traps:rc.traps.map(t=>t.w+'/'+t.cat),hit:rc.hitAll.slice(),built:rc.attempts.slice(),preHints:(rc.hk||[]).slice(),tag:it.tag,len:it.len,pos,kind:rc.q.kind,diag:rc.hitAll.length?rc.hitAll.map(c=>TRAPCAT[c]||c).join(', '):null});if(r.hist.length>20)r.hist.shift();
+  const D=dayRec(today());D.mode='type';if(rc.typedOk)D.typeOk=(D.typeOk||0)+1;if(rc.typeErr){const E=D.typeErr||(D.typeErr={});E[rc.typeErr]=(E[rc.typeErr]||0)+1}D.n++;D.cls[rc.cls]=(D.cls[rc.cls]||0)+1;D.buildLat=D.buildLat||[];D.buildLat.push(lat);
   const TS=D.trapShown||(D.trapShown={});rc.traps.forEach(t=>TS[t.cat]=(TS[t.cat]||0)+1);const TH=D.trapHit||(D.trapHit={});[...new Set(rc.hitAll)].forEach(c=>TH[c]=(TH[c]||0)+1);
   if(it.vb&&rc.traps.some(t=>t.cat==='kind')){const C=D.concept||(D.concept={be:{n:0,ok:0},do:{n:0,ok:0}});C[it.vb.k].n++;if(!rc.hitAll.includes('kind'))C[it.vb.k].ok++}
   if(rc.hk&&rc.hk.length){const HB=D.hintBy||(D.hintBy={});rc.hk.forEach(k=>HB[k]=(HB[k]||0)+1)}
@@ -1342,14 +1373,14 @@ function finishSession(force){const s=SES();const D=dayRec(today());const left=s
   if(left&&!force){V={view:'send'};render();return}
   if(!D.end||force||D.skipped){D.end=new Date().toISOString();D.actualMin=mins(Date.now()-s.start);D.skipped=left;save()}V={view:'done'};render()}
 function send(){const s=SES();const k=s.queue.findIndex(q=>q.kind!=='다시'&&!q.res);const left=s.queue.filter(q=>q.kind!=='다시'&&!q.res).length;
-  $('#main').innerHTML=topbar('영어 50문장',true)+`<div class="card"><h2>아직 안 한 문장이 ${left}개 있어요</h2><p class="tip">50문장을 모두 해야 오늘 영어가 끝나요.</p>
+  $('#main').innerHTML=topbar('영어 5문장',true)+`<div class="card"><h2>아직 안 한 문장이 ${left}개 있어요</h2><p class="tip">5문장을 모두 해야 오늘 영어가 끝나요.</p>
    <div class="row"><button class="btn big" data-act="go" data-i="${k}">▶ 안 한 문장 하러 가기</button></div></div>`}
 function done(){const D=dayRec(today());const diff=D.predMin?D.actualMin-D.predMin:null;
   let v='';if(diff!=null)v=Math.abs(diff)<=2?`<div class="res ok">🎯 예측 적중! 차이 ${Math.abs(diff)}분. 내 속도를 정확히 알고 있었어요.</div>`:`<div class="res slow">예측보다 ${Math.abs(diff)}분 ${diff>0?'더 걸렸어요':'빨리 끝났어요'}. 다음엔 차이를 2분 안으로 줄여 보자.</div>`;
   const c=k=>(D.cls||{})[k]||0;
-  $('#main').innerHTML=topbar('오늘 끝! 🎉',true)+`<div class="card"><h2>${D.skipped?`오늘은 여기까지 (건너뛴 문장 ${D.skipped}개)`:'50문장 끝!'}</h2>
+  $('#main').innerHTML=topbar('오늘 끝! 🎉',true)+`<div class="card"><h2>${D.skipped?`오늘은 여기까지 (건너뛴 문장 ${D.skipped}개)`:'5문장 끝!'}</h2>${D.topic?`<p class="tip">오늘의 문법: ${fLabel(D.topic)}</p>`:''}
    <div class="stat" style="grid-template-columns:repeat(2,1fr)"><div><b>${D.predMin?D.predMin+'분':'-'}</b>내 예측</div><div><b>${D.actualMin}분</b>실제</div></div>${v}
-   <p class="tip">한 번에 완성 ${c('ok')}문장 · 힌트 보고 완성 ${c('access')}문장 · 다시 나온 문장 포함 모두 ${D.n}번 만들었어요</p>
+   <p class="tip">혼자 써서 맞힘 ${D.typeOk||0}문장 · 블록으로 고쳐 완성 ${c('access')}문장 · 다시 나온 문장 포함 모두 ${D.n}번 했어요</p>
    <div class="row"><button class="btn" data-act="savehub">💾 저장하고 오늘의 공부로</button></div></div>`}
 function med(a){if(!a||!a.length)return null;const b=a.slice().sort((x,y)=>x-y);return b[Math.floor(b.length/2)]}
 function report(){const I=RLOG.items||{},days=Object.keys(RLOG.days||{}).sort(),last=days.slice(-7),left=freshLeft();
@@ -1364,16 +1395,16 @@ function report(){const I=RLOG.items||{},days=Object.keys(RLOG.days||{}).sort(),
    ${tags.map(t=>{const T=tot[t];return `<tr><td>${TAGS[t]}</td>${last.map(d=>cell((RLOG.days[d].byTag||{})[t])).join('')}${cell(T)}<td class="tip">${T.n?`🎯${T.access} 🗣️${T.speak} 📘${T.unknown}`:''}</td><td class="tip">${bankCount[t]||0}</td></tr>`}).join('')}</table></div>
    <p class="tip">🎯 힌트 보고 완성 · 📘 두 번 틀려서 정답 봄 · 🗣️ 11/22 이전 말하기 방식 기록</p></div>`;
   {const cats=['kind','plural','form','num','tense','order'];const ds=last.filter(d=>RLOG.days[d].trapShown||RLOG.days[d].trapHit);
-   h+=`<div class="card"><h2>걸린 함정 (블록 방식, 11/22부터)</h2><p class="tip" style="margin-top:0">칸 = 그 함정에 걸린 문장 / 그 함정이 나온 문장. be↔do는 모든 문장에 하나씩 넣어요.</p><div class="scroll"><table class="grid"><tr><th>함정</th>${ds.map(d=>`<th>${d.slice(5).replace('-','/')}</th>`).join('')}</tr>
+   h+=`<div class="card"><h2>걸린 함정 (블록 방식, 11/22부터)</h2><p class="tip" style="margin-top:0">칸 = 그 함정에 걸린 문장 / 그 함정이 나온 문장. be↔do는 모든 문장에 하나씩 넣어요. 11/24부터는 혼자 써서 틀린 문장만 블록으로 고쳐요.</p><div class="scroll"><table class="grid"><tr><th>함정</th>${ds.map(d=>`<th>${d.slice(5).replace('-','/')}</th>`).join('')}</tr>
    ${cats.map(c=>`<tr><td>${TRAPCAT[c]}</td>${ds.map(d=>{const D=RLOG.days[d],n=(D.trapShown||{})[c]||0,x=(D.trapHit||{})[c]||0;if(c==='order')return `<td class="${x?'c1':'c0'}">${x||'·'}</td>`;if(!n)return '<td class="c0">·</td>';const r=1-x/n;return `<td class="${r>=.8?'c3':r>=.5?'c2':'c1'}">${x}/${n}</td>`}).join('')}</tr>`).join('')}</table></div>
    <p class="tip">함정 개수는 같은 틀을 2번 연속 한 번에 맞히면 하나 늘고(최대 3), 처음에 틀리면 하나 줄어요(최소 1). 지금: ${Object.entries(RLOG.trapLv||{}).map(([k,v])=>esc(k.replace(/\|/g,' '))+' '+v.n+'개').join(' · ')||'모두 2개'}</p></div>`}
   if(VC&&VC.days){const vds=Object.keys(VC.days).sort().reverse().slice(0,10);const K=VC.words||{};const notyet=Object.keys(K).filter(k=>K[k]&&K[k].known===false);
-   h+=`<div class="card"><h2>🔤 단어 (11/22부터 쓰기 방식)</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>한 단어</th><th>쓸 수 있음</th><th>두 번 틀려 정답 봄</th><th>복습 빈칸 맞힘</th></tr>
-   ${vds.map(d=>{const D=VC.days[d];return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n||0}</td><td>${D.known||0}</td><td>${D.gave||0}</td><td>${D.re?(D.reOk||0)+' / '+D.re:'-'}</td></tr>`}).join('')}</table></div>
-   <p class="tip">다음 날 빈칸으로 다시 나올 단어 ${notyet.length}개: ${notyet.map(esc).join(', ')||'없음'}</p></div>`}
-  h+=`<div class="card"><h2>날짜별</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>만든 횟수</th><th>한 번에 완성</th><th>시간 (예측/실제)</th><th>블록 완성 시간</th><th>🎙️ 녹음</th><th>(예전) 말 시작</th><th>앞 25 / 뒤 25</th></tr>
+   h+=`<div class="card"><h2>🔤 단어 (11/24부터 하루 10개 · 뜻 보고 전체 쓰기)</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>한 단어</th><th>뜻만 보고</th><th>소리 듣고</th><th>💡 힌트</th><th>따라 쓰기</th><th>정답 봄</th><th>품사 맞힘</th><th>복습 맞힘</th></tr>
+   ${vds.map(d=>{const D=VC.days[d],L=D.lv;return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n||0}</td>${L?`<td>${L.self||0}</td><td>${L.sound||0}</td><td>${L.hint||0}</td><td>${L.copy||0}</td><td>${L.gave||0}</td><td>${D.posN?D.posOk+' / '+D.posN:'-'}</td>`:`<td colspan="6" class="tip">예전 방식 · 쓸 수 있음 ${D.known||0}</td>`}<td>${D.re?(D.reOk||0)+' / '+D.re:'-'}</td></tr>`}).join('')}</table></div>
+   <p class="tip">뜻만 보고·소리 듣고 쓴 단어는 끝. 힌트·따라 쓰기·정답 본 단어는 다음 날부터 하루 3개씩 다시 나와요. 다시 나올 단어 ${notyet.length}개: ${notyet.map(esc).join(', ')||'없음'}</p></div>`}
+  h+=`<div class="card"><h2>날짜별</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>만든 횟수</th><th>한 번에 완성</th><th>혼자 써서 맞힘</th><th>철자 / 문법 틀림</th><th>시간 (예측/실제)</th><th>완성 시간</th><th>🎙️ 녹음</th><th>(예전) 말 시작</th><th>앞 25 / 뒤 25</th></tr>
    ${days.slice().reverse().map(d=>{const D=RLOG.days[d];const sq=D.seq||'';const a=sq.slice(0,25),b=sq.slice(25);const pr=x=>x.length?Math.round((x.split('o').length-1)/x.length*100)+'%':'-';
-     return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n}</td><td>${(D.cls||{}).ok||0}</td><td>${D.predMin||'-'} / ${D.actualMin||'-'}분</td><td>${med(D.buildLat)!=null?med(D.buildLat)+'초':med(D.pickLat)!=null?'('+med(D.pickLat)+'초)':'-'}</td><td>${D.rec||'-'}</td><td>${med(D.speakLat)!=null?med(D.speakLat)+'초':'-'}</td><td>${pr(a)} / ${pr(b)}</td></tr>`}).join('')}</table></div>
+     return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n}</td><td>${(D.cls||{}).ok||0}</td><td>${D.typeOk!=null?D.typeOk:'-'}</td><td>${D.typeErr?(D.typeErr.spell||0)+' / '+(D.typeErr.grammar||0):'-'}</td><td>${D.predMin||'-'} / ${D.actualMin||'-'}분</td><td>${med(D.buildLat)!=null?med(D.buildLat)+'초':med(D.pickLat)!=null?'('+med(D.pickLat)+'초)':'-'}</td><td>${D.rec||'-'}</td><td>${med(D.speakLat)!=null?med(D.speakLat)+'초':'-'}</td><td>${pr(a)} / ${pr(b)}</td></tr>`}).join('')}</table></div>
    <p class="tip">시간은 기준값 없이 시훈이 자기 기록끼리만 비교해요. 앞/뒤 25는 세션 후반 집중 저하를 보는 칸이에요.</p></div>`;
   const wrong=BANK.items.filter(x=>I[x.id]&&I[x.id].last&&I[x.id].last!=='ok').slice(0,40);
   h+=`<div class="card"><h2>지금 막혀 있는 문장 ${wrong.length}개</h2><table class="grid">${wrong.map(x=>{const r=I[x.id],l=r.hist[r.hist.length-1]||{};return `<tr><td>${esc(x.en[0])}<div class="tip">${TAGS[x.tag]}${l.diag?' · '+esc(l.diag):''}${l.heard?' · 들린 말: '+esc(l.heard):''}</div></td><td>${CLS[r.last]}</td></tr>`}).join('')||'<tr><td class="tip">아직 없어요</td></tr>'}</table></div>`;
@@ -1414,6 +1445,10 @@ const ACT={
     rc.claim=true;save();rc.phase='result';render()},
   pickB:t=>{const c=rc.pool.splice(+t.dataset.k,1)[0];rc.built.push(c);rc.note='';render()},
   unpickB:t=>{const c=rc.built.splice(+t.dataset.k,1)[0];rc.pool.push(c);render()},
+  typeChk:()=>{if(rc.phase!=='type')return;const i=$('#tin');const t=i?i.value.trim():'';if(!tnorm(t))return;rc.typeN++;rc.typed.push(t);if(rc.typeLat==null)rc.typeLat=Math.round((Date.now()-rc.t0)/100)/10;
+    if(rc.it.en.some(e=>tnorm(e)===tnorm(t))){rc.typedOk=true;rc.traps=[];rc.tSub=rc.typeLat;finishBuild(true);return}
+    const sp=spellOnly(t,rc.it.en);if(sp&&rc.typeN<2){rc.typeErr='spell';rc.note=`✏️ 거의 맞았어요! <b>${sp.got.map(esc).join(', ')}</b> 철자만 달라요. 고쳐서 다시 써 봐요.`;save();render();return}
+    if(!rc.typeErr)rc.typeErr=sp?'spell':'grammar';rc.note=`❌ 내가 쓴 문장: <b>${esc(t)}</b><br>아직 달라요. 이제 <b>블록으로 고쳐</b> 봐요.`;rc.phase='build';rc.t0b=Date.now();save();render()},
   check:()=>{if(!rc.built.length)return;if(rc.tSub==null)rc.tSub=Math.round((Date.now()-rc.t0)/100)/10;const B=rc.built.map(c=>c.w.toLowerCase());
     const ok=rc.it.en.some(e=>{const A=blkToks({en:[e]}).map(w=>w.toLowerCase());return A.length===B.length&&A.every((w,k)=>w===B[k])});
     if(ok){finishBuild(true);return}const d=blockDiag(rc.it,rc.built);if(d.short){rc.note='아직 안 쓴 블록이 있어요. 문장을 끝까지 만들어 봐요.';render();return}finishBuild(false,d)},
@@ -1425,14 +1460,17 @@ const ACT={
   bpg:t=>{V.pg=+t.dataset.i;render()},
   vend:()=>vFinish(true),
   send:()=>finishSession(true),
-  vpred:t=>{vc.pred=t.dataset.v;vc.msg='';if(vc.pred==='know'){vc.phase='fill';render()}else{vc.phase='listen';vc.listenN=0;render();say(vc.w.w)}},
-  vlisten:()=>{const t=vVal();if(!vnorm(t))return;const v=vFill(t);vc.listenN++;vc.listenTry=v;if(vnorm(v)===vnorm(vc.w.w)){vDone(false);return}
+  vlisten2:()=>{vc.heard=true;vc.msg='';render();say(vc.w.w)},
+  vspell:()=>{const v=vVal();if(!vnorm(v))return;if(vDup(vc.w).some(x=>vnorm(x.w)===vnorm(v))){vc.msg=`⭕ <b>${esc(v)}</b>도 같은 뜻이에요! 그런데 여기선 칸 수에 맞는 다른 단어를 써요.`;render();return}vc.tries.push(v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl=vc.heard?'sound':'self';vToPos(true);return}
+    if(!vc.heard){vc.heard=true;vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 🔊 소리를 듣고 다시 써 봐요.`;render();say(vc.w.w);return}
+    vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 💡 힌트를 줄게요.`;vc.phase='hint';render()},
+  vhint:()=>{vc.heard=true;vc.msg='';vc.phase='hint';render()},
+  vhintchk:()=>{const t=vVal();if(!vnorm(t))return;const v=vFill(t);vc.hintN++;vc.tries.push('💡'+v);if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='hint';vToPos(false);return}
     vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 이제 단어 전체를 보여 줄게요. 보고 따라 써요.`;vc.phase='copy';render();say(vc.w.w)},
-  vfill:()=>{const t=vVal();if(!vnorm(t))return;const v=vFill(t);vc.fillN++;vc.fillTry=(vc.fillTry?vc.fillTry+' / ':'')+v;if(vnorm(v)===vnorm(vc.w.w)){vDone(vc.pred!=='dont');return}
-    if(vc.fillN<2){vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 한 번 더 해 봐요.`;render();return}vDone(false,true)},
   vcopy:()=>{const v=vVal();if(!vnorm(v))return;vc.copyN++;if(vnorm(v)===vnorm(vc.w.w)){vc.msg='';vc.phase='recall';vc.recallN=0;render()}else{vc.msg=vDiffMsg(v,vc.w.w);render()}},
-  vrecall:()=>{const t=vVal();if(!vnorm(t))return;const v=vFill(t);vc.recallN++;if(vnorm(v)===vnorm(vc.w.w)){vDone(false);return}
-    if(vc.recallN<2){vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 한 번 더 기억해 봐요.`;render();return}vDone(false,true)},
+  vrecall:()=>{const v=vVal();if(!vnorm(v))return;vc.recallN++;vc.tries.push('🙈'+v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='copy';vToPos(false);return}
+    if(vc.recallN<2){vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 한 번 더 기억해 봐요.`;render();return}vc.lvl='gave';vc.gave=true;vToPos(false)},
+  vpos:t=>{if(vc.phase!=='pos')return;vc.posPick=t.dataset.v;vc.posOk=vc.posPick===posOf(vc.w);vDone(vc.known,vc.gave)},
   vsay:()=>say(vc.w.w),
   sayAns:()=>{if(rc.phase2==='rec')return;say(rc.it.en[0])},
   recGo:()=>{if(!DIC)return;try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}rc.recHeard='';rc.recT0=Date.now();rc.phase2='rec';
@@ -1467,15 +1505,15 @@ function wireDic(){
     if(vs&&vs.res){Object.keys(vs.res).forEach(k=>{if(!vs.res[k]||!vs.res[k].known)delete vs.res[k]});const D=(VC.days||{})[vs.date];if(D){const r=Object.values(vs.res);D.n=r.length;D.known=r.filter(x=>x.known).length;delete D.end;delete D.forced;delete D.skipped;delete D.min}}
     VC.mig1122=1;VC.updated=new Date().toISOString();LS.set('vcheck',VC);if(DB)DB.doc('vocab/check').set(JSON.parse(JSON.stringify(VC))).catch(()=>{})}
   // 엄마 11/22: 중간에 그만둔 단어 체크도 다음 날 남은 단어부터 (어제 몰랐던 단어 빈칸 복습을 맨 앞에)
-  {const s=VC.session;if(s&&s.date&&s.date<today()&&Array.isArray(s.queue)&&s.queue.some(w=>!(s.res||{})[w])){s.res=s.res||{};const done=s.queue.filter(w=>s.res[w]),rest=s.queue.filter(w=>!s.res[w]);
-    const due=vDue().map(w=>w.w).filter(w=>!rest.includes(w));VC.session={date:today(),queue:due.concat(rest),re:due,i:0,res:{},start:Date.now(),carried:true,from:(s.from||[]).concat([s.date])};VC.updated=new Date().toISOString()}}
-  // 엄마 11/22: 중간에 그만둔 50문장은 다음 날 그 자리부터 이어서
-  {const s=RLOG.session;if(s&&s.date&&s.date<today()&&Array.isArray(s.queue)&&s.queue.some(q=>q.kind!=='다시'&&!q.res)){(s.from=s.from||[]).push(s.date);s.date=today();s.start=Date.now();s.carried=true}}
+  {const s=VC.session;if(s&&s.v===2&&s.date&&s.date<today()&&Array.isArray(s.queue)&&s.queue.some(w=>!(s.res||{})[w])){s.res=s.res||{};const rest=s.queue.filter(w=>!s.res[w]);
+    const due=vDue().map(w=>w.w).filter(w=>!rest.includes(w)).slice(0,VRE);const q=due.concat(rest).slice(0,VDAILY);VC.session={date:today(),v:2,queue:q,re:q.filter(w=>due.includes(w)||(s.re||[]).includes(w)),i:0,res:{},start:Date.now(),carried:true,from:(s.from||[]).concat([s.date])};VC.updated=new Date().toISOString()}}
+  // 엄마 11/22: 중간에 그만둔 문장은 다음 날 그 자리부터 이어서 (11/24 5문장 방식 세션만)
+  {const s=RLOG.session;if(s&&s.qv>=4&&s.date&&s.date<today()&&Array.isArray(s.queue)&&s.queue.some(q=>q.kind!=='다시'&&!q.res)){(s.from=s.from||[]).push(s.date);s.date=today();s.start=Date.now();s.carried=true}}
   loaded=true;render();
 })();
 return {
   open(v){V=!BANK||!RLOG?{view:'home'}:v==='preview'?{view:'browse',mode:'w',pg:0}:v==='report'?{view:'report'}:{view:'home'};render()},
-  stats(){if(!RLOG)return {n:0,ok:0};const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known}:null}}
+  stats(){if(!RLOG)return {n:0,ok:0};const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known,lv:VC.days[today()].lv||null}:null,daily:DAILY,typeOk:D&&D.typeOk||0,topic:D&&D.topic||null}}
 };
 
 })(mountApp('host-en','t-en'));
@@ -6709,7 +6747,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   const $h=s=>document.querySelector(s);
   const MATH_N=12;
   const SUBJ=[
-    {k:'en',ic:'🇺🇸',name:'영어',sub:'단어 쓰기 40개 → 50문장 블록으로 만들고 따라 말하며 녹음'},
+    {k:'en',ic:'🇺🇸',name:'영어',sub:'단어 10개 쓰기 → 5문장 혼자 쓰고 블록으로 고치고 따라 말하며 녹음'},
     {k:'ko',ic:'📖',name:'국어',sub:'수능 입문반 · 복습 · 누적 테스트'},
     {k:'math',ic:'🔢',name:'수학',sub:'큰 수 · 개념 확인'},
     {k:'write',ic:'✍️',name:'글쓰기 첨삭',sub:'서술형 · 학교 숙제 · 엄마가 낸 글쓰기를 AI 쌤과 함께'}
@@ -6734,7 +6772,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function mathEst(){let a=[];try{a=APP_MATH.att().filter(x=>x.lv>=0&&x.t>0).slice(-40).map(x=>x.t)}catch(e){}
     if(a.length<5)return {min:null,n:a.length};a.sort((x,y)=>x-y);const m=a[Math.floor(a.length/2)];return {min:Math.max(1,Math.round(m*MATH_N/60)),n:a.length}}
   function status(k){const st=stats(k);
-    if(k==='en'){if(st.done)return `<span class="st done">오늘 50문장 끝 ✅ ${st.actualMin}분</span>`;if(st.main)return `<span class="st">오늘 ${st.main} / 50</span>`;return '<span class="st">아직 안 했어요</span>'}
+    if(k==='en'){if(st.done)return `<span class="st done">오늘 영어 끝 ✅ ${st.actualMin}분</span>`;if(st.main)return `<span class="st">오늘 ${st.main} / ${st.daily||5}</span>`;return '<span class="st">아직 안 했어요</span>'}
     if(k==='write')return st.n?`<span class="st done">오늘 글 ${st.n}개 저장 ✅</span>`:'<span class="st">쓸 글이 있을 때 열어요</span>';
     if(k==='ko')return st.n?`<span class="st done">오늘 ${st.n}개 저장 ✅${st.score!=null?` · 누테 ${st.score}점`:''}</span>`:'<span class="st">아직 안 했어요</span>';
     if(st.n&&M32())return `<span class="st done">오늘 ${st.n}문제 했어요 ✅</span>`;if(st.n)return `<span class="st ${st.n>=MATH_N?'done':''}">오늘 ${st.n} / ${MATH_N}문제${st.n>=MATH_N?' ✅':''}</span>`;return '<span class="st">아직 안 했어요</span>'}
