@@ -167,6 +167,7 @@ body.noscroll{overflow:hidden}
   <section data-tab="grow" class="card wide" style="--tape:var(--yellow)">
    <h2><span class="ttl">과제 포인트</span><small>우리집 기지와 같은 포인트</small></h2>
    <div class="sum" id="ptBox" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+   <div class="row"><button class="btn primary" id="snackBtn" type="button">🍪 간식 1개 먹기 (1점)</button><span class="meta">체스는 한 판 시작할 때 1점</span></div>
    <p class="meta" style="margin:0">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--pink)">
@@ -260,6 +261,7 @@ function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`)
  try{localStorage.setItem("sbTab",t)}catch(e){}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 showTab(curTab);
+$("snackBtn").onclick=()=>confirmBox("간식 1개 먹을까요?",async()=>{if(await spendPoint("간식 1개","snack"))toast("맛있게 먹어! ⭐ -1");renderAll()},"과제 포인트 1점을 써요. 엄마 기록에 남아요.");
 $("chessBig").onclick=()=>{const c=$("chessBig").closest("section"),on=!c.classList.contains("chessbig");c.classList.toggle("chessbig",on);document.body.classList.toggle("noscroll",on);$("chessBig").textContent=on?"✕ 작게 보기":"⛶ 크게 보기";window.scrollTo({top:0})};
 $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({top:0})};
 
@@ -409,6 +411,19 @@ function renderGrow(earned,used,week){
 $("gPrev").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()-1,1);renderTasks()};
 $("gNext").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()+1,1);renderTasks()};
 
+/* ---------- 포인트 쓰기: 간식 1개 = 1점, 체스 한 판 = 1점 (sy 2026-11-24) ----------
+   우리집 기지와 같은 rewards 컬렉션에 {title,points,who:"시훈",date,createdAt} 로 차감 기록. kind:"help" 면 도움 포인트에서 뺌. */
+const PAY_FROM="task"; // "task" = 과제 포인트, "help" = 도움 포인트
+function ptBalance(from){const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
+ if(from==="help"){const tot=sum([...S.helpLog,...S.choreLog].filter(g=>g.who==="시훈"));return tot-sum(S.rewards.filter(r=>r.kind==="help"&&r.who==="시훈"))}
+ return sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks)-sum(S.rewards.filter(x=>x.kind!=="help"))}
+async function spendPoint(title,use,n=1){
+ if(!fs)return false;if(ptBalance(PAY_FROM)<n){toast(`포인트가 모자라요. ${PAY_FROM==="help"?"도움":"과제"} 포인트 ${n}점이 필요해요`);return false}
+ const data={title,points:n,who:"시훈",use,date:today(),createdAt:Date.now(),by:myName(),...(PAY_FROM==="help"?{kind:"help"}:{})};
+ try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"rewards"));b.set(ref,data);
+  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"rewards",docId:ref.id,action:"포인트 씀",summary:`${title} -${n}점`,before:null,after:data});
+  await b.commit();S.rewards.push({id:ref.id,...data});return true}catch(e){toast("포인트를 쓰지 못했어요: "+(e.code||""));return false}}
+
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT="https://sites.google.com/view/maean35/"; // 학교 알림장 기본 주소(설정에 넣으면 그 주소가 먼저)
 function renderNotice(){
@@ -440,8 +455,8 @@ function form(title,fields,pre,onSave){
  $("mf").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const data={};for(const[k,,t]of fields){let v=String(fd.get(k)??"").trim();if(t==="number")v=v===""?null:Number(v);data[k]=v}
   const r=await onSave(data);if(r!==false)$("layer").innerHTML=""};
 }
-function confirmBox(msg,onYes){
- $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>${esc(msg)}</h3><p class="meta" style="margin:0">지워도 엄마 기록에는 남아요.</p><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">아니요</button><button class="btn primary">네</button></div></form></div>`;
+function confirmBox(msg,onYes,sub="지워도 엄마 기록에는 남아요."){
+ $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>${esc(msg)}</h3><p class="meta" style="margin:0">${esc(sub)}</p><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">아니요</button><button class="btn primary">네</button></div></form></div>`;
  $("mc").onclick=()=>$("layer").innerHTML="";$("mf").onsubmit=e=>{e.preventDefault();$("layer").innerHTML="";onYes()};
 }
 
@@ -606,7 +621,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=26;
+const VERSION=27;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -650,8 +665,9 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=26").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=27").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
+ pay:()=>spendPoint("체스 1판","chess"),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
 </body>
