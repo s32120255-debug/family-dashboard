@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=82">
-<link rel="icon" href="icon-192.png?v=82">
-<link rel="apple-touch-icon" href="icon-192.png?v=82">
+<link rel="manifest" href="manifest.json?v=83">
+<link rel="icon" href="icon-192.png?v=83">
+<link rel="apple-touch-icon" href="icon-192.png?v=83">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -155,6 +155,10 @@ body.admin #tplBox{display:grid!important;gap:6px}
 a.missionbtn{text-decoration:none;display:inline-block}
 .missionbtn b{background:#3a2a00;color:#ffc928;border-radius:999px;padding:0 7px;margin-left:2px;font-family:var(--body);font-size:.85rem}
 .missionbtn b:empty{display:none}
+.missionbtn.mini{padding:6px 9px}.missionbtn.mini b{background:#e03131;color:#fff}
+.ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
+@keyframes laddraw{to{stroke-dashoffset:0}}
+.ladin{display:grid;gap:8px}.ladin label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
 #wishWait:empty{display:none}
 .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:#e03131;color:#fff;font-family:var(--body);font-size:.72rem;font-weight:700;vertical-align:middle;text-align:center}.nbadge:empty{display:none}
 #navtabs button{position:relative}#navtabs .nbadge{position:absolute;top:-6px;right:-4px;margin:0}.missionbtn b.nbadge{background:#e03131;color:#fff}
@@ -237,11 +241,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 82</p></div></div>
+<p style="font-size:.75rem">버전 83</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <b id="missionN"></b></button><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈이 대시보드 열기">🥷 시훈이</a></span></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <b id="missionN"></b></button><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button><button class="missionbtn mini" id="ladderBtn" aria-label="사다리타기" title="사다리타기">🪜<b id="ladderN"></b></button><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈이 대시보드 열기">🥷 시훈이</a></span></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -367,6 +371,10 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
    <ul class="list" id="shopList"></ul>
  </section>
+ <section class="card sheet" id="c-ladder" role="dialog" aria-label="사다리타기" hidden>
+   <h2>🪜 사다리타기 <span style="display:inline-flex;gap:6px"><span class="adm"><button class="btn small" id="ladderOpen"></button></span><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
+   <div id="ladderBox"></div>
+ </section>
  <section class="card sheet" id="c-help" role="dialog" aria-label="해결할 미션" hidden>
    <h2>해결할 미션 <small id="helpCount"></small><span style="display:inline-flex;gap:6px"><button class="btn small" data-add="helpmom">＋</button><button class="btn small" id="sheetClose" aria-label="닫기">닫기</button></span></h2>
    <ul class="list" id="helpList"></ul>
@@ -383,8 +391,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=82";
-import {SEED_SCHEDULE} from "./seed.js?v=82";
+import {firebaseConfig} from "./config.js?v=83";
+import {SEED_SCHEDULE} from "./seed.js?v=83";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -803,6 +811,32 @@ function renderMust(){const t=today();
   return`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-must="${x.id}" aria-label="${x.done?"취소":"했어요"}">${x.done?"✓":""}</button><span class="t">${x.who?`<span class="pill info">${esc(x.who)}</span> `:""}${esc(x.title)}${old?` <span class="pill warn">${pd.getMonth()+1}/${pd.getDate()}부터</span>`:""}${x.done&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="musts" data-id="${x.id}" aria-label="수정">✎</button><button class="icon" data-del="musts" data-id="${x.id}" data-name="${esc(x.title)}" aria-label="삭제">✕</button></span></li>`}).join("")
   :`<li class="empty">오늘 꼭 챙길 게 없어요. ＋로 준비물·약속을 적어요.</li>`;
  const n=S.musts.filter(x=>!x.done&&x.date&&x.date>addDays(t,0)).length;if(n)$("mustList").insertAdjacentHTML("beforeend",`<li class="meta" style="list-style:none;font-size:.8rem;color:var(--muted)">다음에 챙길 것 ${n}개 (그날 되면 보여요)</li>`)}
+// 사다리타기: settings/ladder{open(관리자가 열면 한 판), last:{names,results,rungs,at,by}}. 한 판 하면 다시 닫힘(sy 11/24)
+const LAD_ROWS=9,LAD_COL=["#e8590c","#2f6fd6","#2b8a3e","#ae3ec9","#c2255c","#1098ad"];
+function ladMap(n,rungs){const m=[];for(let c=0;c<n;c++){let x=c;for(let r=0;r<LAD_ROWS;r++){if(rungs.includes(r*10+x))x++;else if(x>0&&rungs.includes(r*10+x-1))x--}m.push(x)}return m}
+function ladSvg(names,results,rungs){const n=names.length,W=60*n,H=40+LAD_ROWS*26+40,X=c=>30+c*60,Y=r=>40+r*26+13;
+ let g="";for(let c=0;c<n;c++)g+=`<line x1="${X(c)}" y1="30" x2="${X(c)}" y2="${H-30}" stroke="#c9b88a" stroke-width="3"/><text x="${X(c)}" y="20" text-anchor="middle" font-size="14" fill="currentColor">${esc(names[c])}</text><text x="${X(c)}" y="${H-10}" text-anchor="middle" font-size="13" fill="currentColor">${esc(results[c])}</text>`;
+ for(const k of rungs){const r=Math.floor(k/10),c=k%10;g+=`<line x1="${X(c)}" y1="${Y(r)}" x2="${X(c+1)}" y2="${Y(r)}" stroke="#c9b88a" stroke-width="3"/>`}
+ for(let c=0;c<n;c++){let x=c,d=`M${X(x)} 30`;for(let r=0;r<LAD_ROWS;r++){d+=` L${X(x)} ${Y(r)}`;if(rungs.includes(r*10+x)){x++;d+=` L${X(x)} ${Y(r)}`}else if(x>0&&rungs.includes(r*10+x-1)){x--;d+=` L${X(x)} ${Y(r)}`}}d+=` L${X(x)} ${H-30}`;
+  g+=`<path class="path" d="${d}" stroke="${LAD_COL[c%6]}" style="animation-delay:${c*0.5}s;opacity:.85"/>`}
+ return`<svg class="ladsvg" viewBox="0 0 ${W} ${H}" role="img" aria-label="사다리">${g}</svg>`}
+let ladNames="엄마, 아빠, 시훈",ladRes="",ladFresh=false;
+function renderLadder(){const L=S.settings.find(d=>d.id==="ladder")||{},open=!!L.open;
+ $("ladderN").textContent=open?"!":"";$("ladderOpen").textContent=open?"닫기(취소)":"사다리 열기";
+ let h="";
+ if(open)h+=`<form class="ladin" id="ladForm"><label>참가자 (쉼표로, 2~6명)<input id="ladNames" value="${esc(ladNames)}"></label><label>결과 칸 (쉼표로, 참가자 수만큼)<input id="ladRes" value="${esc(ladRes)}" placeholder="예: 설거지, 꽝, 간식"></label><button class="btn primary">사다리 타기!</button></form>`;
+ else h+=`<p class="status" style="margin:0 0 8px">엄마(관리자)가 「사다리 열기」를 눌러야 한 판 할 수 있어요.</p>`;
+ const last=L.last;
+ if(last&&last.names){const m=ladMap(last.names.length,last.rungs||[]),d=new Date(last.at||0);
+  h+=`<h3 style="margin:12px 0 4px;font-size:1rem">${open?"지난 판":"결과"} <span class="meta">${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}</span></h3>`+(ladFresh||!open?ladSvg(last.names,last.results,last.rungs||[]):"")+`<ul class="list">${last.names.map((nm,i)=>`<li class="item"><span class="t"><b style="color:${LAD_COL[i%6]}">${esc(nm)}</b> → ${esc(last.results[m[i]])}</span></li>`).join("")}</ul>`}
+ $("ladderBox").innerHTML=h;
+ if(open)$("ladForm").onsubmit=e=>{e.preventDefault();ladNames=$("ladNames").value;ladRes=$("ladRes").value;
+  const names=ladNames.split(/[,，]/).map(x=>x.trim()).filter(Boolean),results=ladRes.split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+  if(names.length<2||names.length>6)return toast("참가자는 2~6명이에요");if(results.length!==names.length)return toast(`결과 칸을 ${names.length}개 적어 주세요`);
+  const rungs=[];for(let r=0;r<LAD_ROWS;r++)for(let c=0;c<names.length-1;c++){if(rungs.includes(r*10+c-1))continue;if(Math.random()<.45)rungs.push(r*10+c)}
+  for(let c=0;c<names.length-1;c++)if(!rungs.some(k=>k%10===c)){const r=Math.floor(Math.random()*LAD_ROWS);if(!rungs.includes(r*10+c-1)&&!rungs.includes(r*10+c+1))rungs.push(r*10+c)}
+  ladFresh=true;const {id,...rest}=L;run(db.collection("settings").doc("ladder").set({...rest,open:false,last:{names,results,rungs,at:Date.now(),by:me||null}}))};
+}
 function renderWish(){const l=S.wishes.slice().sort((a,b)=>(!!a.got-!!b.got)||(!!b.req-!!a.req)||(a.createdAt||0)-(b.createdAt||0));
  const mine=S.wishes.filter(w=>w.req&&!w.got&&me&&w.to===me).length;$("wishWait").textContent=mine?`승인할 것 ${mine}개`:"";for(const id of ["pointBadge","shopBadge"]){const e=$(id);if(e)e.textContent=mine?String(mine):""}
  $("wishList").innerHTML=l.length?l.map(w=>`<li class="item ${w.got?"done":""}"><span class="pill info">${esc(w.who||"")}${w.to?` → ${esc(w.to)}`:""}</span><span class="t">${esc(w.title)}${w.got?` <span class="meta">${parse(w.got).getMonth()+1}/${parse(w.got).getDate()} 받음</span>`:w.req?` <span class="pill warn">승인 대기 · ${esc(w.to||"")}</span>`:""}</span>${w.points?`<span class="pill ok">⭐${Number(w.points)}</span>`:`<span class="meta">포인트 미정</span>`}${wishBtns(w)}<button class="icon" data-wishedit="${w.id}" aria-label="수정">✎</button><button class="icon" data-del="wishes" data-id="${w.id}" aria-label="삭제">✕</button></li>`).join(""):`<li class="empty">받고 싶은 보상을 적어 보세요. 예: 시훈 → 아빠 · 자전거 타기</li>`}
@@ -932,7 +966,7 @@ function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.fil
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
 // 한 칸에서 오류가 나도 나머지 칸(포인트 등)은 계속 새로 그리기
-function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
+function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderLadder,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -974,6 +1008,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   const also=(x.also||[]).filter(p=>p!==me),on=!(x.also||[]).includes(me);run(db.collection("wishfood").doc(x.id).update({also:on?[...also,me]:also}),on?`${me}도 먹고 싶어요 😋`:null);return}
  if(d.ate){run(db.collection("wishfood").doc(d.ate).update({ate:today()}),"먹었어요 😋 목록에서 뺐어요");return}
  if(d.unate){run(db.collection("wishfood").doc(d.unate).update({ate:null}),"다시 먹고 싶은 것에 넣었어요");return}
+ if(b.id==="ladderOpen"){if(!admin)return;const L=S.settings.find(x=>x.id==="ladder")||{};const {id,...rest}=L;ladFresh=false;run(db.collection("settings").doc("ladder").set({...rest,open:!L.open}),L.open?"사다리를 닫았어요":"사다리를 열었어요. 한 판 할 수 있어요 🪜");return}
  if(d.must){const x=S.musts.find(y=>y.id===d.must);if(!x)return;const on=!x.done;run(db.collection("musts").doc(x.id).update({done:on,doneDate:on?today():null,doneBy:on?(me||null):null}),on?"챙겼어요 ✓":null);return}
  if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="musts"?{date:today()}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
@@ -1024,8 +1059,8 @@ $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]")
 if(location.hash==="#shop"){openSheet("c-shop");history.replaceState(null,"",location.pathname+location.search)}
 for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getItem("fold_"+id)}catch(e){}setFold(id,o)}
 let sheetId=null;
-function openSheet(id){for(const x of ["c-help","c-shop","c-buy"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
-$("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
+function openSheet(id){for(const x of ["c-help","c-shop","c-buy","c-ladder"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
+$("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>openSheet(null));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheetId&&!document.querySelector(".overlay"))openSheet(null)});
 $("helpSpend").onclick=()=>{if(!db)return toast("저장소에 연결되지 않았어요");const hb=helpBal();
@@ -1061,7 +1096,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=82;
+const VERSION=83;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
