@@ -1,0 +1,41 @@
+name: 시훈 잠금화면 APK
+
+on:
+  push:
+    paths:
+      - "android-lockscreen/**"
+      - ".github/workflows/android-lockscreen.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android-lockscreen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: 시험 + 미리보기 그림(가짜 일정)
+        run: ./gradlew --no-daemon testDebugUnitTest
+      - name: APK 만들기
+        run: ./gradlew --no-daemon assembleRelease
+      - name: 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk sihun-lock.apk
+          ls previews || true
+          if [ "${GITHUB_REF_NAME}" = "main" ]; then TAG=lockscreen-latest; PRE=""; else TAG=lockscreen-preview; PRE="--prerelease"; fi
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" --target "$GITHUB_SHA" $PRE --title "시훈 잠금화면 ($TAG)" \
+            --notes "빌드 ${GITHUB_RUN_NUMBER} · ${GITHUB_REF_NAME} · ${GITHUB_SHA::7}" \
+            sihun-lock.apk previews/*.png

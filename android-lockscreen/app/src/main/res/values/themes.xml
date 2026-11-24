@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.SihunLock" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#14141c</item>
+        <item name="android:statusBarColor">#14141c</item>
+        <item name="android:navigationBarColor">#14141c</item>
+        <item name="colorAccent">#ff4d5e</item>
+    </style>
+</resources>
