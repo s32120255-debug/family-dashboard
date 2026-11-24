@@ -145,6 +145,11 @@ body.noscroll{overflow:hidden}
 .chip small{font-size:.85rem;color:#5a4a20;font-variant-numeric:tabular-nums}
 .chip.now{box-shadow:0 0 0 3px #6fa8ff;font-weight:700}
 .chip.past{opacity:.45}.chip.past b{text-decoration:line-through}.chip b{font-weight:400}
+.mail{background:var(--bg);border-radius:14px;padding:10px 12px;display:grid;gap:4px;border-left:5px solid var(--mint)}
+.mail.me{border-left-color:var(--yellow)}.mail.new{box-shadow:0 0 0 2px var(--yellow)}
+.mail .h{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;color:var(--muted)}
+.mail .b{font-size:1.15rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.nbadge{display:inline-block;min-width:1.3em;padding:0 5px;margin-left:4px;border-radius:999px;background:var(--red);color:#fff;font-size:.8rem;line-height:1.3em;text-align:center;font-family:var(--body)}
 .x2{border:2px dashed #e0a800;border-radius:12px;padding:6px 10px;font-weight:700;color:#7a5200;background:#fff8d6;margin-bottom:6px;list-style:none}.x2.on{background:#ffc928;border-style:solid;color:#3a2a00}
 </style>
 </head>
@@ -163,7 +168,7 @@ body.noscroll{overflow:hidden}
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
   <div class="row" style="gap:8px"><button class="btn small primary" id="shopBtn" type="button">🏪 상점</button><span id="noticeSlot"></span><div class="who" id="who"></div></div>
  </header>
- <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
+ <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="mail" id="mailTabBtn">✉ 편지</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
   <section data-tab="today" class="card wide" style="--tape:var(--yellow)">
@@ -215,6 +220,15 @@ body.noscroll{overflow:hidden}
    <div class="nav"><button class="btn small" id="mPrev" aria-label="전 달">◀</button><b id="mLabel"></b><button class="btn small" id="mNext" aria-label="다음 달">▶</button></div>
    <div class="sum" id="moneySum"></div>
    <ul class="list" id="moneyList"></ul>
+  </section>
+
+  <section data-tab="mail" class="card wide" style="--tape:var(--mint)">
+   <h2><span class="ttl">편지</span><small>우리집 기지 MAIL과 같은 편지함</small></h2>
+   <form id="mailForm" style="display:grid;gap:8px">
+    <div class="row" style="gap:6px;align-items:center"><span>시훈이가</span><select id="mailTo" aria-label="받는 사람"><option>엄마</option><option>아빠</option><option>모두</option></select><span>에게</span></div>
+    <div class="row" style="gap:6px"><input id="mailInput" placeholder="하고 싶은 말" aria-label="하고 싶은 말" maxlength="200" style="flex:1;min-width:0"><button class="btn primary">보내기</button></div>
+   </form>
+   <ul class="list" id="mailList"></ul>
   </section>
 
   <section data-tab="memo" class="card wide" style="--tape:var(--pink)">
@@ -287,7 +301,8 @@ let backTab="today";
 function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`);if(t!=="shop"&&(!b||b.hidden))t="today";if(t==="shop"&&curTab!=="shop")backTab=curTab;curTab=t;
  document.querySelectorAll("#navtabs [data-nav]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.nav===t)));
  document.querySelectorAll("main [data-tab]").forEach(c=>c.style.display=c.dataset.tab===t?"":"none");
- if(t==="shop")renderShop();else try{localStorage.setItem("sbTab",t)}catch(e){}}
+ if(t==="shop")renderShop();else try{localStorage.setItem("sbTab",t)}catch(e){}
+ if(t==="mail"&&window.mailReady){renderMail();mailSeenNow()}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 showTab(curTab);
 const openShop=()=>{showTab("shop");window.scrollTo({top:0})};
@@ -298,7 +313,7 @@ $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({to
 
 /* ---------- 데이터 ---------- */
 // 우리집 대시보드에서 그대로 읽는 것 (복사 아님, 같은 Firestore)
-const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog","wishes"];
+const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog","wishes","notes"];
 // 시훈이 대시보드 전용 (sihunBoard/main/...)
 const MINE=["money","memory","ask","play","hb","chess","log"];
 const S=Object.fromEntries([...FAMILY,...MINE].map(c=>[c,[]]));
@@ -508,6 +523,25 @@ async function buyWish(w,from="task"){if(!fs)return;const pts=Number(w.points)||
   await b.commit();S.rewards.push({id,...data});w.got=today();w.rewardId=id;toast(`받았다! 🎉 -${pts}점`)}catch(e){toast("포인트를 쓰지 못했어요: "+(e.code||""))}
  renderAll()}
 
+/* ---------- ✉ 편지: 우리집 기지 notes{text,from,to("모두"|이름),createdAt} 그대로 ---------- */
+// 시훈이 화면엔 시훈이에게 온 것(시훈·모두)과 시훈이가 보낸 것만
+const ME="시훈";let mailSeen=0;try{mailSeen=Number(localStorage.getItem("sbMailSeen")||0)}catch(e){}
+const myMail=()=>S.notes.filter(n=>n.from===ME||n.to===ME||!n.to||n.to==="모두").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,40);
+const mailNew=()=>myMail().filter(n=>n.from!==ME&&(n.createdAt||0)>mailSeen).length;
+function mailSeenNow(){const l=myMail();const top=l.length?Math.max(...l.map(n=>n.createdAt||0)):0;if(top>mailSeen){setTimeout(()=>{mailSeen=top;try{localStorage.setItem("sbMailSeen",String(top))}catch(e){}renderMail()},4000)}}
+function renderMail(){const n=mailNew();$("mailTabBtn").innerHTML=`✉ 편지${n?`<span class="nbadge">${n}</span>`:""}`;
+ const ago=ms=>{const m=Math.round((Date.now()-ms)/60000);if(m<1)return"방금";if(m<60)return m+"분 전";const h=Math.round(m/60);if(h<24)return h+"시간 전";const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()}`};
+ const l=myMail();
+ $("mailList").innerHTML=l.length?l.map(x=>`<li class="mail${x.from===ME?" me":""}${x.from!==ME&&(x.createdAt||0)>mailSeen?" new":""}"><div class="h"><span><b>${esc(x.from||"")}</b> → ${esc(x.to||"모두")}</span><span>${ago(x.createdAt||0)}</span></div><div class="b">${esc(x.text||"")}</div></li>`).join("")
+  :`<li class="empty">아직 편지가 없어요. 엄마 아빠에게 한마디 보내 볼까?</li>`}
+$("mailForm").onsubmit=async e=>{e.preventDefault();const v=$("mailInput").value.trim();if(!v)return;if(!fs){toast("저장소에 연결되지 않았어요");return}
+ const data={text:v,from:ME,to:$("mailTo").value,createdAt:Date.now()};
+ try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"notes"));b.set(ref,data);
+  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"notes",docId:ref.id,action:"편지",summary:`→${data.to}: ${v.slice(0,40)}`,before:null,after:data});
+  await b.commit();$("mailInput").value="";S.notes.push({id:ref.id,...data});toast("보냈어요 ✉");renderMail()}catch(e){toast("보내지 못했어요: "+(e.code||""))}};
+
+window.mailReady=true;
+
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT="https://sites.google.com/view/maean35/"; // 학교 알림장 기본 주소(설정에 넣으면 그 주소가 먼저)
 function renderNotice(){
@@ -666,7 +700,7 @@ function renderMom(){
 
 function renderAll(){
  const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYNAME[dayKey(d)]}요일`;
- renderSched();renderTasks();renderNotice();renderMoney();renderMemory();renderAsk();renderPlay();renderHb();renderMom();renderShop();if(chessApi)chessApi.render();
+ renderSched();renderTasks();renderNotice();renderMoney();renderMemory();renderAsk();renderPlay();renderHb();renderMom();renderShop();renderMail();if(curTab==="mail")mailSeenNow();if(chessApi)chessApi.render();
 }
 
 /* ---------- 버튼 ---------- */
@@ -705,7 +739,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=36;
+const VERSION=37;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -749,7 +783,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=36").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=37").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:()=>{openShop();return false}, // 체스판 잠금 화면 버튼 → 상점으로
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
