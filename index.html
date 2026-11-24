@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=62">
-<link rel="icon" href="icon-192.png?v=62">
-<link rel="apple-touch-icon" href="icon-192.png?v=62">
+<link rel="manifest" href="manifest.json?v=63">
+<link rel="icon" href="icon-192.png?v=63">
+<link rel="apple-touch-icon" href="icon-192.png?v=63">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -227,7 +227,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 62</p></div></div>
+<p style="font-size:.75rem">버전 63</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -365,8 +365,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=62";
-import {SEED_SCHEDULE} from "./seed.js?v=62";
+import {firebaseConfig} from "./config.js?v=63";
+import {SEED_SCHEDULE} from "./seed.js?v=63";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -537,15 +537,20 @@ function renderSched(){renderSum();
  const all=schedItems(schedDate);const items=all.filter(x=>!x.skipped);
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
  $("heroBox").innerHTML=isToday?heroHTML(items,nm):"";
- TTC=dayColors(schedDate);$("schedList").innerHTML=timetable(admin?all:items,isToday?nm:null);
+ TTC=dayColors(schedDate);$("schedList").innerHTML=timetable(admin?all:items,isToday?nm:null);if($("ttFold"))$("ttFold").onclick=()=>{ttOpen=!ttOpen;renderSched()};
 }
 // 타임테이블: 세로 시간 줄(1시간=48px) 위에 일정 칸. 관리자 모드에서 빈 시간 줄을 누르면 그 시각으로 새 일정
-const HPX=64;let TTC={};
+const HPX=64;let TTC={},ttOpen=false;
 const SHOW_FREE=true; // 일정 사이 빈 시간 칸 — 엄마 11/24: "엄마와 시훈이가 상의해 보아요"로 표시. 끄려면 false
 function timetable(list,nm){
- const timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start),e0=x.end?Math.max(mins(x.end),s0+10):s0+20;return{...x,rs:s0,re:e0,s:Math.floor(s0/30)*30,e:Math.ceil(e0/30)*30}}).sort((a,b)=>a.s-b.s||a.e-b.e);
+ let timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start),e0=x.end?Math.max(mins(x.end),s0+10):s0+20;return{...x,rs:s0,re:e0,s:Math.floor(s0/30)*30,e:Math.ceil(e0/30)*30}}).sort((a,b)=>a.s-b.s||a.e-b.e);
  const untimed=list.filter(x=>!x.start);
- const lo=Math.min(8,...timed.map(x=>Math.floor(x.s/60))),hi=Math.max(22,...timed.map(x=>Math.ceil(x.e/60)));
+ let lo=Math.min(8,...timed.map(x=>Math.floor(x.s/60)));const hi=Math.max(22,...timed.map(x=>Math.ceil(x.e/60)));
+ // 지난 일정 접기(오늘 볼 때 기본): 지금 하는 일정의 시작(없으면 지금) 시각의 정시부터 보여 줌
+ let fold="";if(nm!=null){const cut=Math.floor(Math.min(nm,...timed.filter(x=>!x.skipped&&x.s<=nm&&x.e>nm).map(x=>x.s))/60)*60;
+  const past=timed.filter(x=>x.e<=cut&&!x.skipped).length;
+  if(cut/60>lo&&(past||cut/60-lo>=2)){fold=`<button type="button" class="btn small" id="ttFold" style="margin-bottom:6px">${ttOpen?"지난 일정 접기":`지난 일정 펼치기${past?` (${past}개)`:""}`}</button>`;
+   if(!ttOpen){lo=cut/60;timed=timed.filter(x=>x.e>cut)}}}
  const lanes=[];for(const x of timed){let k=lanes.findIndex(end=>end<=x.s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.e;x.lane=k}
  for(const x of timed){x.n=Math.max(...timed.filter(y=>y.s<x.e&&x.s<y.e).map(y=>y.lane))+1}
  const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.src==="cal"?`<span class="pill info">달력</span>`:it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
@@ -561,7 +566,7 @@ function timetable(list,nm){
  const nowLine=nm!=null&&nm>=lo*60&&nm<hi*60?`<div class="tt-nowl" style="top:${y(nm)}px"></div>`:"";
  const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item${x.skipped?" skipped":""}"><span class="meta">${x.allDay?"종일":"시간 미정"}</span><span class="t"><b>${x.star?'<i class="star">★</i>':""}${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span>${abtn(x)}</li>`).join("")}</ul>`:"";
  const empty=!list.length?`<p class="empty" style="margin:0 0 6px">이 날 일정이 없어요.${admin?" 시간 줄을 누르면 그 시각에 넣을 수 있어요.":" 관리자 모드에서 넣을 수 있어요."}</p>`:"";
- return`${empty}${un}<div class="tt" style="height:${(hi-lo)*HPX}px">${rows}<div class="tt-area">${gaps}${blocks}${nowLine}</div></div>`;
+ return`${empty}${un}${fold}<div class="tt" style="height:${(hi-lo)*HPX}px">${rows}<div class="tt-area">${gaps}${blocks}${nowLine}</div></div>`;
 }
 function heroHTML(items,nm){
  const tl=items.filter(x=>x.start).map(x=>({...x,s:mins(x.start),e:x.end?mins(x.end):null})).sort((a,b)=>a.s-b.s);
@@ -961,7 +966,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=62;
+const VERSION=63;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
