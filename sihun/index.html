@@ -6256,7 +6256,7 @@ function biKwBind(){document.querySelectorAll('[data-kw]').forEach(b=>b.onclick=
 /* 비문학 쪼개 읽기 + 근거 찾기 화면 (엄마 11/24) */
 const esc1=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/&lt;(\/?b)>/g,'<$1>');
 function biOn(H,it){return H&&H.area==='비문학'&&it&&it.p&&HWP[it.p]&&!HWP[it.p].poem}
-function biNeedRead(H,it){if(!biOn(H,it)||!HWREAD[it.p])return false;const r=HWS.res[HWS.i];if(r&&!r.skipped)return false;const st=HWS.rd[it.p];return !(st&&(st.done||st.skip))}
+function biNeedRead(H,it){if(!biOn(H,it)||!HWREAD[it.p])return false;if(H.items.findIndex(x=>x.p===it.p)!==HWS.i)return false; /* 쪼개 읽기는 그 지문의 첫 문항 자리에만 (번호·다음 ▶으로 다른 문항은 바로 감) */const r=HWS.res[HWS.i];if(r&&!r.skipped)return false;const st=HWS.rd[it.p];return !(st&&(st.done||st.skip))}
 function biBad(it){return it.k==='ox'?(it.bad!=null?it.bad:it.a==='X'?1:-1):null}
 function biOpBad(op){return op.bad!=null?op.bad:op.ok?-1:1}
 function biMap(p,open){const R=HWREAD[p],P=HWP[p];if(!R)return '';
