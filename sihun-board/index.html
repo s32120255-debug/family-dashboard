@@ -73,6 +73,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tabs{display:flex;gap:6px;flex-wrap:wrap}
 .tabs button{border:2px solid var(--line);background:var(--card);border-radius:10px;padding:4px 12px;cursor:pointer;font-family:var(--hand);font-size:1.15rem;font-weight:700}
 .tabs button[aria-pressed="true"]{background:var(--yellow);color:#2e3f38}
+#mustForm [data-mday][aria-pressed="true"]{background:var(--yellow);color:#2e3f38;border-color:var(--yellow)}
 .navtabs{position:sticky;top:0;z-index:10;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:var(--bg);padding:8px 0 10px;border-bottom:2px solid var(--line)}
 .navtabs::-webkit-scrollbar{display:none}
 .navtabs button{min-width:0;white-space:nowrap;position:relative;border:2px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;cursor:pointer;font-family:"Yeon Sung",var(--body);font-weight:400;font-size:1.35rem;color:var(--muted)}
@@ -179,7 +180,7 @@ body.noscroll{overflow:hidden}
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
   <div class="row" style="gap:8px"><button class="btn small primary" id="shopBtn" type="button">🏪 상점</button><span id="noticeSlot"></span><a class="btn small" id="homeBtn" href="../" style="text-decoration:none">🏠 우리집</a><div class="who" id="who"></div></div>
  </header>
- <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">📅 오늘</button><button role="tab" data-nav="task">📚 공부</button><button role="tab" data-nav="money">👛 용돈</button><button role="tab" data-nav="play">🎮 게임</button><button role="tab" data-nav="mail" id="mailTabBtn">💬 톡톡</button><button role="tab" data-nav="memo" style="font-size:.9em;letter-spacing:-.03em">💡 생각저장</button><button role="tab" data-nav="grow">⭐ 포인트</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
+ <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">📅 오늘</button><button role="tab" data-nav="task">📚 과제</button><button role="tab" data-nav="money">👛 용돈</button><button role="tab" data-nav="play">🎮 게임</button><button role="tab" data-nav="mail" id="mailTabBtn">💬 톡톡</button><button role="tab" data-nav="memo" style="font-size:.9em;letter-spacing:-.03em">💡 생각저장</button><button role="tab" data-nav="grow">⭐ 포인트</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
   <section data-tab="shop" class="card wide" style="--tape:var(--yellow)">
@@ -192,7 +193,7 @@ body.noscroll{overflow:hidden}
   <section data-tab="today" class="card wide" style="--tape:var(--red)" id="mustCard">
    <h2><span class="ttl">오늘 꼭</span><button class="btn small" id="mustAdd" type="button" aria-label="학교 준비물·숙제 적기">＋ 🏫</button></h2>
    <div class="mchips" id="mustList"></div>
-   <form id="mustForm" style="display:grid;gap:6px" hidden><input id="mustIn" type="text" maxlength="40" autocomplete="off" placeholder="학교 준비물·숙제 적기" aria-label="오늘 꼭 할 것" style="min-width:0;font-size:1.1rem"><div class="row" style="gap:6px"><input id="mustDate" type="date" aria-label="날짜" style="flex:1;min-width:0"><button class="btn primary">추가</button></div></form>
+   <form id="mustForm" style="display:grid;gap:6px" hidden><input id="mustIn" type="text" maxlength="40" autocomplete="off" placeholder="학교 준비물·숙제 적기" aria-label="오늘 꼭 할 것" style="min-width:0;font-size:1.1rem"><div class="row" style="gap:6px"><button type="button" class="btn small" data-mday="0" aria-pressed="true">오늘</button><button type="button" class="btn small" data-mday="1">내일</button><input id="mustDate" type="date" aria-label="날짜 고르기" style="flex:1;min-width:0"><button class="btn primary">추가</button></div><div class="mchips" id="mustSoon"></div></form>
   </section>
   <!-- 요약 오늘: 엄마 11/24 「시훈이꺼엔 요약오늘은 없애자」 → 숨김(코드는 둠) -->
   <section data-tab="today" class="card wide" style="--tape:var(--yellow)" hidden>
@@ -664,8 +665,15 @@ async function addMust(v,date,extra={}){if(!fs){toast("저장소에 연결되지
  try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"musts"));b.set(ref,data);
   b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:ref.id,action:"오늘 꼭 적음",summary:`${data.date} ${v}`,before:null,after:data});
   await b.commit();if(!S.musts.some(m=>m.id===ref.id))S.musts.push({id:ref.id,...data});renderAll();return true}catch(err){toast("적지 못했어요: "+(err.code||""));return false}}
-$("mustForm").onsubmit=async e=>{e.preventDefault();const v=$("mustIn").value.trim();if(!v)return;
- if(await addMust(v,$("mustDate").value,{school:true})){$("mustIn").value="";$("mustDate").value=today();$("mustForm").hidden=true;$("mustAdd").textContent="＋ 🏫";toast("적었어요 ✓")}};
+// 날짜 고르기(엄마 11/25): 오늘·내일 버튼 또는 날짜 칸. 미래 날짜로 넣으면 그날 「오늘 꼭」에 떠요. 아래에 앞으로 올 것 보여 줌
+const mdayMark=()=>{const v=$("mustDate").value,t=today();document.querySelectorAll("[data-mday]").forEach(b=>b.setAttribute("aria-pressed",String(v===addDays(t,Number(b.dataset.mday)))));
+ const up=S.musts.filter(m=>(m.who==="시훈"||!m.who)&&!m.done&&m.date>t).sort((a,b)=>String(a.date).localeCompare(b.date));
+ $("mustSoon").innerHTML=up.length?`<span class="meta" style="font-size:.85rem">미리 넣은 것</span>`+up.map(m=>{const d=parse(m.date);return`<span class="mchip all"><small>${m.date===addDays(t,1)?"내일":`${d.getMonth()+1}/${d.getDate()}`}</small>${m.school?"🏫":""}${esc(m.title)}</span>`}).join(""):""};
+document.querySelectorAll("[data-mday]").forEach(b=>b.onclick=()=>{$("mustDate").value=addDays(today(),Number(b.dataset.mday));mdayMark()});
+$("mustDate").addEventListener("change",mdayMark);$("mustAdd").addEventListener("click",mdayMark);
+$("mustForm").onsubmit=async e=>{e.preventDefault();const v=$("mustIn").value.trim();if(!v)return;const dt=$("mustDate").value||today(),t=today();
+ if(dt<t){toast("지난 날짜는 고를 수 없어요");return}
+ if(await addMust(v,dt,{school:true})){$("mustIn").value="";$("mustDate").value=t;$("mustForm").hidden=true;$("mustAdd").textContent="＋ 🏫";const d=parse(dt);toast(dt===t?"적었어요 ✓":dt===addDays(t,1)?"내일 「오늘 꼭」에 떠요 ✓":`${d.getMonth()+1}/${d.getDate()} 「오늘 꼭」에 떠요 ✓`);mdayMark()}};
 $("mustList").addEventListener("click",async e=>{const b=e.target.closest("[data-must]");if(!b||!fs)return;const x=S.musts.find(m=>m.id===b.dataset.must);if(!x||x.who!=="시훈")return;
  const data=x.done?{done:false,doneDate:null,doneBy:null}:{done:true,doneDate:today(),doneBy:"시훈"};
  try{const bt=F.writeBatch(fs);bt.update(F.doc(fs,"musts",x.id),data);bt.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:x.id,action:x.done?"오늘 꼭 취소":"오늘 꼭 했어요",summary:x.title,before:null,after:data});
@@ -948,7 +956,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=68;
+const VERSION=69;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -993,7 +1001,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=68").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=69").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
