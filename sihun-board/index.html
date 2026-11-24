@@ -111,9 +111,10 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .q{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid;gap:4px}
 .q .a{border-left:4px solid var(--mint);padding-left:10px}
 .bub{max-width:85%;padding:8px 12px;border-radius:14px;background:var(--bg);overflow-wrap:anywhere}.bub.me{justify-self:end;background:var(--yellow);color:#2e3f38}.bub.ai{justify-self:start;border:2px solid var(--soft)}
-.board{container-type:inline-size;display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;width:100%;max-width:460px;margin:0 auto;border:3px solid var(--line);border-radius:10px;overflow:hidden}
+.board{container-type:inline-size;display:grid;grid-template-columns:repeat(8,1fr);aspect-ratio:1;width:100%;max-width:min(720px,calc(100vh - 170px));margin:0 auto;border:3px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:560px){#chessBox .board{width:calc(100% + 28px);max-width:none;margin:0 -14px;border-radius:6px}}
 .cq{border:none;padding:0;position:relative;display:grid;place-items:center;cursor:pointer;aspect-ratio:1}
-.pc{font-size:10cqi;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",serif}.pc.w{color:#fffdf7;text-shadow:0 0 2px #2e3f38,0 0 2px #2e3f38,0 0 1px #2e3f38}.pc.b{color:#2e3f38}
+.pc{font-size:11cqi;line-height:1;font-family:"Segoe UI Symbol","Noto Sans Symbols 2","DejaVu Sans",serif}.pc.w{color:#fffdf7;text-shadow:0 0 2px #2e3f38,0 0 2px #2e3f38,0 0 1px #2e3f38}.pc.b{color:#2e3f38}
 .dot{position:absolute;width:28%;height:28%;border-radius:50%;background:rgba(63,91,79,.45)}.dot.cap{width:86%;height:86%;background:transparent;border:4px solid rgba(196,86,63,.6)}
 .del{opacity:.6}.del .t{text-decoration:line-through}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--accent);color:#fff;padding:10px 18px;border-radius:12px;z-index:60;font-weight:500;max-width:90vw;text-align:center}
@@ -601,7 +602,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=24;
+const VERSION=25;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -645,7 +646,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=24").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=25").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
