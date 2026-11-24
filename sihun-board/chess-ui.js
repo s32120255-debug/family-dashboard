@@ -46,7 +46,9 @@ export function mountChess(el,{onEnd,gate,pay,payInfo}){
   onEnd&&onEnd({result:res,level:st.level,color:st.me,moves:g.history().length,pgn:g.pgn().slice(0,4000)})}
  const inProg=()=>g.history().length>0&&!g.isGameOver();
  function render(){
-  const gt=gate?gate():null;
+  const gt0=gate?gate():null;
+  // 표를 내고 연 판은 끝날 때(승패·비김·새 판)까지 잠그지 않음(엄마 11/24 「한 판 시작하면 끝날 때까지」)
+  const gt=gt0&&!(pay&&st.paid&&!g.isGameOver())?gt0:null,gtInfo=gt0;
   if(gt&&!ended&&(gt.lock||(!inProg()&&gt.used>=gt.limit))){
    el.innerHTML=`<div style="text-align:center;padding:24px 8px;display:grid;gap:8px"><b style="font-family:var(--hand);font-size:1.6rem">${gt.lock?"잠겨 있어요":"오늘 체스는 끝!"}</b><span class="meta">${gt.lock||`오늘 ${gt.limit}판 다 했어. 내일 또 하자.`}</span></div>`;return}
   if(pay&&!st.paid){const pi=payInfo?payInfo():{label:"열기",note:""};
@@ -58,7 +60,7 @@ export function mountChess(el,{onEnd,gate,pay,payInfo}){
    const dark=(r+c)%2===1;const isSel=sel===sq,isLeg=legal.includes(sq),isLast=last&&(last.from===sq||last.to===sq);
    cells+=`<button class="cq" data-sq="${sq}" style="background:${isSel?"#f7c873":isLast?"#f3d9a4":dark?"#8fcfb8":"#fbf5e8"}" aria-label="${sq}">${p?`<span class="pc ${p.color}">${GLYPH[p.type]}</span>`:""}${isLeg?`<span class="dot ${p?"cap":""}"></span>`:""}</button>`}
   el.innerHTML=`<div class="row between"><span class="meta">난이도</span><div class="tabs">${Object.entries(LV).map(([k,v])=>`<button data-lv="${k}" aria-pressed="${k===st.level}">${v}</button>`).join("")}</div></div>
-  <div class="row between"><b id="chStatus">${status()}</b><span class="meta">${gt?(gt.used+1>=gt.limit?"오늘 마지막 판 · ":`오늘 ${gt.used+1}/${gt.limit}판째 · `):""}시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
+  <div class="row between"><b id="chStatus">${status()}</b><span class="meta">${gtInfo&&!g.isGameOver()?(gtInfo.used+1>=gtInfo.limit?"오늘 마지막 판 · ":`오늘 ${gtInfo.used+1}/${gtInfo.limit}판째 · `):""}시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
   <div class="board">${cells}</div>
   <div class="row"><button class="btn small" data-ch="undo">한 수 무르기</button><button class="btn small" data-ch="new">새 판</button></div>`;
   el.querySelectorAll(".cq").forEach(x=>x.onclick=()=>tap(x.dataset.sq));
