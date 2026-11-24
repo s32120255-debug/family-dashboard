@@ -243,8 +243,13 @@ body.noscroll{overflow:hidden}
    <h2><span class="ttl">AI랑 이야기</span><small id="playLeft"></small></h2>
    <p class="meta" id="playNote" style="margin:0"></p>
    <div class="list" id="playList" style="max-height:360px;overflow:auto"></div>
-   <form id="playForm" class="row"><input type="text" id="playInput" placeholder="예: 끝말잇기 하자 / 지동설이 뭐야?" maxlength="100" style="flex:1"><button class="btn primary">보내기</button></form>
+   <form id="playForm" class="row"><input type="text" id="playInput" placeholder="예: 스무고개 하자 / 지동설이 뭐야?" maxlength="100" style="flex:1"><button class="btn primary">보내기</button></form>
    <div><button class="btn small" id="playNew" type="button">새 이야기 시작</button></div>
+  </section>
+
+  <section data-tab="play" class="card" style="--tape:var(--pink)">
+   <h2><span class="ttl">끝말잇기</span><small id="wcScore"></small></h2>
+   <div id="wcBox" style="display:grid;gap:10px"></div>
   </section>
 
   <section data-tab="play" class="card" style="--tape:var(--green)">
@@ -260,7 +265,7 @@ body.noscroll{overflow:hidden}
 
   <section data-tab="mom" class="card wide" id="momCard" style="--tape:var(--purple)" hidden>
    <h2><span class="ttl">엄마 확인</span><small>관리자만 보여요</small></h2>
-   <div class="tabs"><button data-mt="log">바뀐 기록</button><button data-mt="deleted">지운 것</button><button data-mt="ask">질문</button><button data-mt="play">AI 이야기</button><button data-mt="hb">한방단어</button><button data-mt="chess">체스</button><button data-mt="set">설정</button></div>
+   <div class="tabs"><button data-mt="log">바뀐 기록</button><button data-mt="deleted">지운 것</button><button data-mt="ask">질문</button><button data-mt="play">AI 이야기</button><button data-mt="hb">한방단어</button><button data-mt="wc">끝말잇기</button><button data-mt="chess">체스</button><button data-mt="set">설정</button></div>
    <div id="momBox"></div>
   </section>
  </main>
@@ -316,7 +321,7 @@ $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({to
 // 우리집 대시보드에서 그대로 읽는 것 (복사 아님, 같은 Firestore)
 const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog","wishes","notes","events"];
 // 시훈이 대시보드 전용 (sihunBoard/main/...)
-const MINE=["money","memory","ask","play","hb","chess","log"];
+const MINE=["money","memory","ask","play","hb","chess","log","wc"];
 const S=Object.fromEntries([...FAMILY,...MINE].map(c=>[c,[]]));
 let board={};const loaded=new Set();
 let schedDate=today(),dialHalf="pm",moneyMonth=today().slice(0,7),lastDay=today();
@@ -641,7 +646,7 @@ function renderPlay(){
  $("playNote").textContent=board.aiOn?"끝말잇기 같은 놀이도 하고, 궁금한 것도 물어봐요. 엄마도 볼 수 있어요.":"AI는 엄마가 켜면 이야기할 수 있어요.";
  const lock=funLock();
  $("playInput").disabled=left===0||!board.aiOn||!!lock;$("playForm").querySelector("button").disabled=$("playInput").disabled;
- $("playInput").placeholder=lock?"과제를 다 하면 열려요":left===0?"오늘 이야기는 끝! 내일 또 하자":"예: 끝말잇기 하자 / 지동설이 뭐야?";
+ $("playInput").placeholder=lock?"과제를 다 하면 열려요":left===0?"오늘 이야기는 끝! 내일 또 하자":"예: 스무고개 하자 / 지동설이 뭐야?";
  if(lock)$("playNote").textContent=lock;
  const sid=curSid();const l=sid?S.play.filter(m=>m.sid===sid).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)):[];
  const waiting=l.length&&l[l.length-1].role==="user"&&board.aiOn;
@@ -678,6 +683,49 @@ function renderHb(){
 async function hbAnswer(ans){if(!hbCur||hbShown||!fs)return;const c=hbCur;const correct=(ans==="none")===c.isHan;hbShown={correct};renderHb();
  try{await F.addDoc(sub("hb"),{word:c.word,end:c.end,isHan:c.isHan,answer:ans,correct,date:today(),createdAt:Date.now(),by:myName()})}catch(e){toast("기록하지 못했어요: "+(e.code||""))}}
 
+/* ---------- 끝말잇기 (AI 없이 낱말 목록으로 바로 대답) ----------
+   sy 11/24: AI 끝말잇기는 느리고 어설펐음 → 목록(words.js) 기반으로 즉시. 두음법칙(ㄹ→ㄴ/ㅇ, ㄴ→ㅇ) 허용.
+   시훈이 낱말이 목록에 없으면 받아 주되 ❓ 표시하고 엄마 기록(wc)에 남김. */
+let WC=null,wcWords=null;
+const wcDec=c=>{const o=c.charCodeAt(0)-0xAC00;return[Math.floor(o/588),Math.floor(o%588/28),o%28]};
+const wcComp=(i,v,f)=>String.fromCharCode(0xAC00+i*588+v*28+f);
+const isHan=w=>/^[가-힣]{2,8}$/.test(w);
+function wcStarts(c){const[i,v,f]=wcDec(c),s=[c];if(i===5)s.push(wcComp([2,6,7,12,17,20].includes(v)?11:2,v,f));if(i===2&&[6,12,17,20].includes(v))s.push(wcComp(11,v,f));return s}
+async function wcLoad(){if(!wcWords){const m=await import("./words.js?v=43");wcWords=m.WORDS;wcWords.byStart={};for(const w of wcWords)(wcWords.byStart[w[0]]=wcWords.byStart[w[0]]||[]).push(w)}return wcWords}
+const wcCands=(c,used)=>wcStarts(c).flatMap(k=>wcWords.byStart[k]||[]).filter(w=>!used.has(w));
+function wcPick(last,used){const l=wcCands(last,used);if(!l.length)return null;
+ // 시훈이가 이어 갈 수 있는 낱말을 주로 고름(가끔 어려운 것도)
+ const easy=l.filter(w=>wcCands(w.slice(-1),new Set([...used,w])).length>=2);const pool=easy.length&&Math.random()<.85?easy:l;return pool[Math.floor(Math.random()*pool.length)]}
+async function wcStart(first){await wcLoad();WC={chain:[],used:new Set(),turn:first,over:null,msg:"",hint:null};
+ if(first==="cpu"){const w=wcWords[Math.floor(Math.random()*wcWords.length)];wcAdd(w,"cpu");WC.turn="me"}renderWc();setTimeout(()=>{const i=$("wcIn");if(i)i.focus()},50)}
+function wcAdd(w,by,unk){WC.chain.push({w,by,...(unk?{unk:true}:{})});WC.used.add(w)}
+function wcEnd(result,msg){WC.over=result;WC.msg=msg;renderWc();if(!fs)return;
+ F.addDoc(sub("wc"),{words:WC.chain,result,n:WC.chain.filter(x=>x.by==="me").length,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{})}
+function wcMine(raw){if(!WC||WC.over||WC.turn!=="me")return;const w=raw.trim().replace(/\s/g,"");
+ if(!isHan(w)){WC.msg="한글 두 글자 이상 낱말로 써 줘.";renderWc();return}
+ const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
+ if(last&&!wcStarts(last).includes(w[0])){WC.msg=`「${wcStarts(last).join("」이나 「")}」(으)로 시작해야 해.`;renderWc();return}
+ if(WC.used.has(w)){WC.msg=`「${w}」 벌써 나왔어. 다른 낱말!`;renderWc();return}
+ const unk=!wcWords.includes(w);wcAdd(w,"me",unk);WC.msg=unk?`「${w}」 내 낱말 목록엔 없지만 받아 줄게. 엄마가 나중에 확인해!`:"";WC.hint=null;WC.turn="cpu";renderWc();
+ setTimeout(()=>{if(!WC||WC.over)return;const c=wcPick(w.slice(-1),WC.used);
+  if(!c){wcEnd("win",`으… 「${wcStarts(w.slice(-1)).join("/")}」(으)로 시작하는 낱말이 생각 안 나! 시훈이가 이겼어! 🎉`);return}
+  wcAdd(c,"cpu");WC.turn="me";const next=wcCands(c.slice(-1),WC.used);renderWc();const i=$("wcIn");if(i)i.focus()},350)}
+function renderWc(){const g=S.wc.filter(x=>x.date===today());$("wcScore").textContent=g.length?`오늘 ${g.filter(x=>x.result==="win").length}승 ${g.filter(x=>x.result!=="win").length}패`:"";
+ if(!WC){$("wcBox").innerHTML=`<p class="meta" style="margin:0">컴퓨터가 바로 대답해요. 두음법칙(력→역, 녀→여)도 돼요.</p><div class="row"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`;return}
+ const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
+ const chips=WC.chain.map((x,i)=>`<span class="bub ${x.by==="me"?"me":"ai"}" style="font-family:var(--hand);font-size:1.3rem">${esc(x.w.slice(0,-1))}<b style="${i===WC.chain.length-1?"background:var(--yellow);color:#2e3f38;border-radius:6px;padding:0 4px":""}">${esc(x.w.slice(-1))}</b>${x.unk?" ❓":""}</span>`).join("");
+ const end=WC.over?`<p style="margin:0;text-align:center"><b>${esc(WC.msg)}</b></p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">새 판 (내가 먼저)</button><button class="btn" data-wc="cpu">새 판 (컴퓨터 먼저)</button></div>`
+  :`${WC.msg?`<p class="meta" style="margin:0">${esc(WC.msg)}</p>`:""}${last?`<p style="margin:0">「<b>${esc(wcStarts(last).join("」 「"))}</b>」(으)로 시작하는 낱말!</p>`:"<p style=\"margin:0\">아무 낱말이나 먼저 말해 봐!</p>"}
+  <form id="wcForm" class="row"><input id="wcIn" type="text" maxlength="10" autocomplete="off" placeholder="낱말 쓰기" style="flex:1;min-width:0;font-size:1.2rem"${WC.turn!=="me"?" disabled":""}><button class="btn primary"${WC.turn!=="me"?" disabled":""}>내기</button></form>
+  <div class="row">${last?`<button class="btn small" type="button" data-wc="hint">힌트</button>`:""}<button class="btn small" type="button" data-wc="give">못 하겠어</button></div>${WC.hint?`<p class="meta" style="margin:0">힌트: ${esc(WC.hint)}</p>`:""}`;
+ $("wcBox").innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px">${chips||""}</div>${WC.turn==="cpu"&&!WC.over?`<p class="meta" style="margin:0">컴퓨터 차례…</p>`:""}`+end;
+ const f=$("wcForm");if(f)f.onsubmit=e=>{e.preventDefault();wcMine($("wcIn").value)}}
+$("wcBox").addEventListener("click",e=>{const b=e.target.closest("[data-wc]");if(!b)return;const k=b.dataset.wc;
+ if(k==="me"||k==="cpu")return wcStart(k);
+ if(!WC||WC.over)return;const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
+ if(k==="hint"&&last){const l=wcCands(last,WC.used);const hw=l.length?l[Math.floor(Math.random()*l.length)]:"";WC.hint=l.length?`${hw.length>2?hw.slice(0,2)+"○".repeat(hw.length-2):"○"+hw.slice(1)} 같은 낱말이 있어 (내가 아는 것 ${l.length}개)`:"음… 나도 잘 모르겠어!";renderWc();return}
+ if(k==="give"){const l=last?wcCands(last,WC.used):[];wcEnd("lose",l.length?`괜찮아! 예를 들면 「${l[Math.floor(Math.random()*l.length)]}」! 다시 해 보자!`:"사실 이어지는 낱말이 없었어. 무승부로 치자!")}});
+
 /* ---------- 엄마 확인 ---------- */
 let momTab="log";
 const COLNAME={money:"용돈",memory:"기억",ask:"질문",play:"놀이",main:"설정"};
@@ -694,6 +742,8 @@ function renderMom(){
   h=n?`<p style="margin:0">지난 AI 질문 기록이 ${S.ask.length}개 있어요. 질문 칸은 없앴어요.</p><div><button class="btn primary" data-askwipe>질문 기록 모두 지우기</button></div>`:`<p class="empty">질문 기록이 없어요.</p>`}
  else if(momTab==="chess"){const RS={win:"이김",lose:"짐",draw:"비김",quit:"그만둠"},LVN={easy:"쉬움",normal:"보통",hard:"어려움"};const l=S.chess.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
   h=`<p class="meta" style="margin:0">끝난 판 ${l.length}개 · 이김 ${l.filter(x=>x.result==="win").length} · 짐 ${l.filter(x=>x.result==="lose").length} · 비김 ${l.filter(x=>x.result==="draw").length}</p><ul class="list">${l.map(x=>`<li class="item"><span class="meta">${fmtAt(x.createdAt)}</span><span class="t">${LVN[x.level]||""} · ${x.color==="w"?"흰색":"검은색"} · ${x.moves}수</span><span class="pill ${x.result==="win"?"ok":x.result==="lose"?"warn":""}">${RS[x.result]||""}</span></li>`).join("")||`<li class="empty">끝난 판이 없어요.</li>`}</ul>`}
+ else if(momTab==="wc"){const l=S.wc.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,100);const RS={win:"시훈 이김",lose:"그만둠"};
+  h=`<p class="meta" style="margin:0">❓ = 낱말 목록에 없던 시훈이 낱말(있는 말인지 확인)</p><ul class="list">${l.map(x=>`<li class="item"><span class="meta">${fmtAt(x.createdAt)}</span><span class="t">${(x.words||[]).map(y=>`${y.by==="me"?"<b>":""}${esc(y.w)}${y.unk?" ❓":""}${y.by==="me"?"</b>":""}`).join(" → ")}</span><span class="pill ${x.result==="win"?"ok":"warn"}">${RS[x.result]||x.result}</span></li>`).join("")||`<li class="empty">아직 기록이 없어요.</li>`}</ul>`}
  else if(momTab==="hb"){const l=S.hb.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,200);const ok=l.filter(x=>x.correct).length;
   h=`<p class="meta" style="margin:0">최근 ${l.length}번 중 ${ok}번 맞힘 · 모은 한방단어 ${hbFoundWords().length}개</p><ul class="list">${l.map(x=>`<li class="item"><span class="meta">${fmtAt(x.createdAt)}</span><span class="t">${esc(x.word)} → 「${esc(x.end)}」 ${x.isHan?"한방단어":"이어지는 낱말"} · 시훈 답: ${x.answer==="none"?"없다":"있다"}</span><span class="pill ${x.correct?"ok":"warn"}">${x.correct?"맞음":"틀림"}</span></li>`).join("")}</ul>`}
  else if(momTab==="play"){const g={};for(const m of S.play)(g[m.sid]=g[m.sid]||[]).push(m);
@@ -711,7 +761,7 @@ function renderMom(){
 
 function renderAll(){
  const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYNAME[dayKey(d)]}요일`;
- renderSched();renderTasks();renderNotice();renderMoney();renderMemory();renderAsk();renderPlay();renderHb();renderMom();renderShop();renderMail();if(curTab==="mail")mailSeenNow();if(chessApi)chessApi.render();
+ renderSched();renderTasks();renderNotice();renderMoney();renderMemory();renderAsk();renderPlay();renderHb();renderWc();renderMom();renderShop();renderMail();if(curTab==="mail")mailSeenNow();if(chessApi)chessApi.render();
 }
 
 /* ---------- 버튼 ---------- */
@@ -750,7 +800,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=42;
+const VERSION=43;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -794,7 +844,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=42").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=43").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:()=>{openShop();return false}, // 체스판 잠금 화면 버튼 → 상점으로
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
