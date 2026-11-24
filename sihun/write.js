@@ -159,7 +159,7 @@ textarea,input[type=text]{width:100%;font:600 18px 'Noto Sans KR';padding:10px;b
     if(a==='fin'){W.img=padImg()||W.img;if(!W.img&&!W.photo){toast('원고지에 쓰거나 종이 사진을 올려요');return}const ok=await save(true);if(ok){LS.del('w:'+W.id);PAD=null}return}
   }
   window.APP_WRITE={
-    open(){mount();host.hidden=false;loadStat();if(!W)V='list';render()},
+    open(v){mount();host.hidden=false;loadStat();if(v==='mom'){W=null;V='mom'}else if(!W)V='list';render()},
     leave(){try{speechSynthesis.cancel()}catch(e){}if(W)keep();if(host)host.hidden=true},
     stats(){return {n:STAT.n,ok:STAT.n}},
     host:()=>{mount();return host}
