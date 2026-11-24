@@ -159,16 +159,16 @@ async function koFill(KR){
       h+=`<li><b>누적 테스트${r.mode==='weak'?' (약점)':''}</b>${r.area?' · '+esc(r.area):''}${r.range?` · ${esc([].concat(r.range).join('~'))}주차`:''} — <span class="${ok===it.length?'ok':''}">${ok}/${it.length}</span> · ${r.score}점${time}${r.shift&&r.shift.length?' <span class="bad">· 답안 밀려 쓴 흔적 있음</span>':''}</li>`;
       wr.forEach(x=>wrongAll.push({src:'누테 '+x.n+'번',id:x.id,w:x.w,area:x.area,pick:x.omrText,ans:x.ansText,q:x.q,box:x.box,variant:x.variant})); }
     else if(r.type==='daily'){ const c=r.cards||[]; const ok=c.filter(x=>x.ok&&!x.miss).length; const miss=c.filter(x=>x.miss).length;
-      h+=`<li><b>복습 카드</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 한 번에 ${ok}/${c.length}${miss?` · <span class="bad">헤맨 카드 ${miss}</span>`:''}${time}</li>`; }
+      h+=`<li><b>복습 카드</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 한 번에 ${ok}/${c.length}${miss?` · <span class="bad">헤맨 카드 ${miss}</span>`:''}${time}${r.partial?' <span class="muted">(🔄 처음부터 다시 하기 전 첫 시도)</span>':''}${r.try>1?` <span class="muted">(${r.try}번째 시도)</span>`:''}</li>`; }
     else if(r.type==='hw'){ const H=src.hw[r.set]; const it=r.items||[];
       const nSt=it.filter(x=>x&&!x.skipped&&!x.ok).length;
-      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${nSt?` · 헤맸지만 결국 맞힘 ${nSt}`:''}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}${biLine(r)}</li>`;
+      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${nSt?` · 헤맸지만 결국 맞힘 ${nSt}`:''}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?(r.restart?' <span class="muted">(🔄 처음부터 다시 하기 전 첫 시도)</span>':'')+' <span class="muted">(중간 저장)</span>':''}${time}${biLine(r)}</li>`;
       it.filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).forEach(x=>{const q=H&&H.items[x.i]; const ans=q?(q.k==='ox'?q.a:q.k==='mc'?`${q.a+1}번`:q.k==='multi'?(q.words||[]).filter(w=>w.y).map(w=>w.w).join(', '):q.o?strip(q.o[q.a]):q.bl?q.bl.map(b=>b.a).join(' / '):strip(q.copy||'')):'';
         // 숙제 기록은 맞혀야 남아요 → 결국 맞힌 문제(오답 아님). 헤맨 곳만 따로 보여 줌 (엄마 11/24)
         const ev=x.ev||{}, cm=x.cmp||{}; const how=[ev.miss?`근거 문장 잘못 누름 ${ev.miss}`:'',cm.miss?`같아/달라 헤맴 ${cm.miss}`:'',(x.miss||0)-(ev.miss||0)-(cm.miss||0)>0?(x.ev?`O·X 헤맴 ${(x.miss||0)-(ev.miss||0)-(cm.miss||0)}`:x.k==='ox'?`헤맴 ${x.miss}번 (근거 찾기 + O·X 합친 수)`:`헤맴 ${x.miss}번`):'',x.hint?'💡 힌트 봄':''].filter(Boolean).join(' · ');
         strug.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?(q.q||(q.st?q.st.join(' / '):'')):'',how,ans,chk:q&&q.chk,sec:x.sec}); }); }
     else if(r.type==='write'){
-      h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
+      h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.restart?' <span class="muted">(🔄 처음부터 다시 하기 전 첫 시도)</span>':''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
         ${r.ev&&r.ev.length?`<br><span class="muted">고른 근거:</span> ${r.ev.map(e=>'“'+esc(e)+'”').join(' ')}`:''}
         ${r.parts&&Object.keys(r.parts).length?`<br><span class="muted">시훈이가 쓴 말:</span> ${Object.values(r.parts).map(v=>'「'+esc(v)+'」').join(' ')}`:''}
         ${r.text?`<br><span class="muted">완성 문장:</span> <b>${esc(r.text)}</b>`:''}${r.img?`<div class="pen"><img src="${r.img}" alt="원고지"></div>`:''}</li>`; }
