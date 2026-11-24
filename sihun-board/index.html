@@ -199,7 +199,7 @@ body.noscroll{overflow:hidden}
    <p class="meta" style="margin:0">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--pink)">
-   <h2><span class="ttl">도움 포인트</span><small>집안일·엄마 도와주기, 과제 포인트와 따로</small></h2>
+   <h2><span class="ttl">가족 도움 포인트</span><small>집안일·엄마 도와주기, 과제 포인트와 따로</small></h2>
    <div class="sum" id="helpBox" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--mint)">
@@ -306,7 +306,7 @@ function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`)
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 showTab(curTab);
 // 상점은 우리집 기지에만(엄마 11/24: 누가 뭘 샀는지 한곳에서). 같은 창으로 우리집 기지 POINT 탭 열기
-const openShop=()=>{try{sessionStorage.setItem("tab","grow")}catch(e){}location.href="../index.html"};
+const openShop=()=>{try{sessionStorage.setItem("tab","grow")}catch(e){}location.href="../index.html#shop"};
 $("snackBtn").onclick=openShop;$("shopBtn").onclick=openShop;
 $("chessBig").onclick=()=>{const c=$("chessBig").closest("section"),on=!c.classList.contains("chessbig");c.classList.toggle("chessbig",on);document.body.classList.toggle("noscroll",on);$("chessBig").textContent=on?"✕ 작게 보기":"⛶ 크게 보기";window.scrollTo({top:0})};
 $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({top:0})};
@@ -332,7 +332,7 @@ function dayColors(date){const dk=dayKey(parse(date));const ov=S.schedOverrides.
  for(const x of l)m[x.src+":"+x.id]=okColor(x.color)?x.color:pool[k++%pool.length];return m}
 function schedColor(x,m){return okColor(x.color)?x.color:(m&&m[(x.src||(x.date?"date":"week"))+":"+x.id])||SCOLORS[0]}
 // 달력(우리집 기지 DAYS)에서 넣은 일정 = 특별 일정 ★ (시각 있으면 그 시각 시작, 없으면 종일)
-const calItems=date=>S.events.filter(e=>e.date===date&&e.title).map(e=>({id:e.id,title:e.title,start:e.time||null,end:null,allDay:e.time?"":"1",src:"cal",star:true}));
+const calItems=date=>S.events.filter(e=>e.date===date&&e.title).map(e=>{const all=e.allDay==="1"||!e.time;return{id:e.id,title:e.title,start:all?null:e.time,end:all?null:(e.end||null),allDay:all?"1":"",src:"cal",star:true}});
 const STAR=x=>x.star?'<span style="color:#e8590c">★</span>':"";
 function schedItems(date){
  const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.date===date);
@@ -462,7 +462,7 @@ function renderGrow(earned,used,week){
  $("ptBox").innerHTML=`<div><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div><div><small>쓴 포인트</small><b>${used}</b></div>`;
  {let tot=0,wk=0;for(const g of [...S.helpLog,...S.choreLog]){if(g.who!=="시훈")continue;const v=Number(g.points)||0;tot+=v;if(g.date>=ws)wk+=v}
   const hu=S.rewards.filter(r=>r.kind==="help"&&r.who==="시훈").reduce((a,r)=>a+(Number(r.points)||0),0);
-  $("helpBox").innerHTML=`<div><small>쓸 수 있는 도움 포인트</small><b>💗 ${tot-hu}</b></div><div><small>이번 주 모은</small><b>${wk}</b></div><div><small>지금까지 모은</small><b>${tot}</b></div><div><small>쓴 도움 포인트</small><b>${hu}</b></div>`}
+  $("helpBox").innerHTML=`<div><small>쓸 수 있는 가족 도움 포인트</small><b>💗 ${tot-hu}</b></div><div><small>이번 주 모은</small><b>${wk}</b></div><div><small>지금까지 모은</small><b>${tot}</b></div><div><small>쓴 가족 도움 포인트</small><b>${hu}</b></div>`}
  const rw=S.rewards.filter(x=>x.kind!=="help"||x.who==="시훈").slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">${r.kind==="help"?"💗":"⭐"}-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
  const by={};for(const x of S.tasks){if(!x.date)continue;const o=by[x.date]||(by[x.date]={n:0,d:0});o.n++;if(x.done)o.d++}
@@ -486,7 +486,7 @@ $("gNext").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.get
 
 /* ---------- 포인트 쓰기: 간식 1개 = 1점, 체스 한 판 = 1점 (sy 2026-11-24) ----------
    우리집 기지와 같은 rewards 컬렉션에 {title,points,who:"시훈",date,createdAt} 로 차감 기록. kind:"help" 면 도움 포인트에서 뺌. */
-const PT_NAME={task:"과제",help:"도움"}; // 시훈이는 둘 다 쓸 수 있음(엄마 11/24). 도움 포인트로 내면 rewards에 kind:"help"
+const PT_NAME={task:"과제",help:"가족 도움"}; // 시훈이는 둘 다 쓸 수 있음(엄마 11/24). 도움 포인트로 내면 rewards에 kind:"help"
 function ptBalance(from){const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  if(from==="help"){const tot=sum([...S.helpLog,...S.choreLog].filter(g=>g.who==="시훈"));return tot-sum(S.rewards.filter(r=>r.kind==="help"&&r.who==="시훈"))}
  return sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks)-sum(S.rewards.filter(x=>x.kind!=="help"))}
@@ -803,7 +803,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=44;
+const VERSION=45;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -847,7 +847,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=44").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=45").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:useChessCoupon, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 열기 (${n}장)`,note:"우리집 기지 상점에서 산 체스권이 있어요."}:{label:"🏪 우리집 기지 상점 가기",note:"우리집 기지 상점에서 「체스 1판」(1점)을 사면 열려요."}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
