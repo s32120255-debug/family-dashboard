@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=49">
-<link rel="icon" href="icon-192.png?v=49">
-<link rel="apple-touch-icon" href="icon-192.png?v=49">
+<link rel="manifest" href="manifest.json?v=50">
+<link rel="icon" href="icon-192.png?v=50">
+<link rel="apple-touch-icon" href="icon-192.png?v=50">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -157,6 +157,12 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .scard .sp{font-family:var(--display);font-size:1.3rem}
 .scard button{border:2px solid #3a2a00;background:#ffc928;color:#3a2a00;border-radius:999px;padding:6px;font-weight:700;cursor:pointer}
 .scard button:disabled{background:#eee3c0;color:#9a8f78;border-color:#c9bfa8;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;border:2px solid #3a2a00;border-radius:999px;padding:6px 14px;background:#fffbe8;color:#2b2414;font-family:var(--display);font-size:1.2rem;line-height:1.2}
+.chip small{font-family:var(--body);font-size:.8rem;color:#7a6f55;font-variant-numeric:tabular-nums}
+.chip.now{background:#ffc928;box-shadow:0 3px 0 #e0a800}
+.chip.past{opacity:.45}.chip.past b{text-decoration:line-through}
+.chip b{font-weight:400}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
 .item.skipped{opacity:.45}
 .item.skipped .t{text-decoration:line-through}
@@ -213,7 +219,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 49</p></div></div>
+<p style="font-size:.75rem">버전 50</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -231,6 +237,11 @@ body.admin #tplBox{display:grid!important;gap:6px}
   <button role="tab" data-nav="today" aria-selected="true">NOW</button><button role="tab" data-nav="cal" aria-selected="false">DAYS</button><button role="tab" data-nav="mail" aria-selected="false">MAIL</button><button role="tab" data-nav="food" aria-selected="false">YUM</button><button role="tab" data-nav="stuff" aria-selected="false">FIND</button><button role="tab" data-nav="grow" aria-selected="false">POINT</button>
  </nav>
  <main class="grid" id="main">
+  <section class="card full sumcard" data-tab="today" id="c-sum">
+   <h2>시훈이 오늘 <small id="sumDate"></small></h2>
+   <div class="chips" id="sumChips"></div>
+  </section>
+
   <section class="card full" data-tab="today" id="c-sched">
    <h2>시훈이 일정 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
    <div id="heroBox"></div>
@@ -346,8 +357,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=49";
-import {SEED_SCHEDULE} from "./seed.js?v=49";
+import {firebaseConfig} from "./config.js?v=50";
+import {SEED_SCHEDULE} from "./seed.js?v=50";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -502,7 +513,14 @@ function renderDial(items,isToday){
  $("dial").innerHTML=`<div class="tabs" style="justify-content:center;margin-bottom:6px"><button data-half="am" aria-pressed="${half==="am"}">오전</button><button data-half="pm" aria-pressed="${half==="pm"}">오후</button></div>`+dialA(items,half,nm,true);
  tickHands();
 }
-function renderSched(){
+// 시훈이 오늘 요약: 오늘 일정 이름만 시간 순서로 칩(지난 것 흐리게, 지금 것 노랑). 그림·이모지는 넣지 않음(sy 규칙)
+function renderSum(){const t=today(),pd=parse(t),now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ $("sumDate").textContent=`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}요일`;
+ const l=schedItems(t).filter(x=>!x.skipped);
+ $("sumChips").innerHTML=l.length?l.map(x=>{const s0=x.start?mins(x.start):null,e=x.end?mins(x.end):(s0!=null?s0+20:null);
+  const cls=s0==null?"":nm>=e?"past":nm>=s0?"now":"";return`<span class="chip ${cls}">${x.start?`<small>${fmtT(x.start).replace(/^오[전후] /,"")}</small>`:""}<b>${esc(x.title)}</b></span>`}).join("")
+  :`<p class="empty" style="margin:0">오늘 일정이 없어요.</p>`}
+function renderSched(){renderSum();
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
  $("sLabel").textContent=`${pd.getMonth()+1}월 ${pd.getDate()}일 ${DAYNAME[dayKey(pd)]}요일${isToday?" (오늘)":""}`;
  $("sToday").hidden=isToday;
@@ -918,7 +936,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=49;
+const VERSION=50;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
