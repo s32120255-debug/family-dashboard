@@ -144,7 +144,7 @@ const KOAREA={'비문학':'비문학','문학':'문학','문법':'문법','스�
 async function koFill(KR){
   const el=document.getElementById('kobody'); if(!el) return; const src=await koSrc();
   const tsum=KR.reduce((a,r)=>a+(+r.sec||0),0);
-  const tests=KR.filter(r=>r.type==='test'); const wrongAll=[];
+  const tests=KR.filter(r=>r.type==='test'); const wrongAll=[], strug=[];
   let h=`<div class="row">${stat(KR.length+'개','한 활동')}${tsum?stat(mmss(tsum),'걸린 시간 합'):''}${tests.map(t=>stat(t.score+'점',`누테 ${t.mode==='weak'?'(약점)':''}${t.area?' '+esc(t.area):''}`)).join('')}</div><ul>`;
   for(const r of KR){
     const time=r.sec?` <span class="muted">· ${mmss(+r.sec)}</span>`:'';
@@ -154,9 +154,12 @@ async function koFill(KR){
     else if(r.type==='daily'){ const c=r.cards||[]; const ok=c.filter(x=>x.ok&&!x.miss).length; const miss=c.filter(x=>x.miss).length;
       h+=`<li><b>복습 카드</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 한 번에 ${ok}/${c.length}${miss?` · <span class="bad">헤맨 카드 ${miss}</span>`:''}${time}</li>`; }
     else if(r.type==='hw'){ const H=src.hw[r.set]; const it=r.items||[];
-      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}${biLine(r)}</li>`;
-      it.filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).forEach(x=>{const q=H&&H.items[x.i]; const ans=q?(q.o?strip(q.o[q.a]):q.bl?q.bl.map(b=>b.a).join(' / '):''):'';
-        wrongAll.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?q.q:'',pick:x.pickText||x.pick||(x.miss?`헤맴 ${x.miss}번`:''),ans,chk:q&&q.chk}); }); }
+      const nSt=it.filter(x=>x&&!x.skipped&&!x.ok).length;
+      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${nSt?` · 헤맸지만 결국 맞힘 ${nSt}`:''}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}${biLine(r)}</li>`;
+      it.filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).forEach(x=>{const q=H&&H.items[x.i]; const ans=q?(q.k==='ox'?q.a:q.k==='mc'?`${q.a+1}번`:q.k==='multi'?(q.words||[]).filter(w=>w.y).map(w=>w.w).join(', '):q.o?strip(q.o[q.a]):q.bl?q.bl.map(b=>b.a).join(' / '):strip(q.copy||'')):'';
+        // 숙제 기록은 맞혀야 남아요 → 결국 맞힌 문제(오답 아님). 헤맨 곳만 따로 보여 줌 (엄마 11/24)
+        const ev=x.ev||{}, cm=x.cmp||{}; const how=[ev.miss?`근거 문장 잘못 누름 ${ev.miss}`:'',cm.miss?`같아/달라 헤맴 ${cm.miss}`:'',(x.miss||0)-(ev.miss||0)-(cm.miss||0)>0?(x.ev?`O·X 헤맴 ${(x.miss||0)-(ev.miss||0)-(cm.miss||0)}`:x.k==='ox'?`헤맴 ${x.miss}번 (근거 찾기 + O·X 합친 수)`:`헤맴 ${x.miss}번`):'',x.hint?'💡 힌트 봄':''].filter(Boolean).join(' · ');
+        strug.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?(q.q||(q.st?q.st.join(' / '):'')):'',how,ans,chk:q&&q.chk,sec:x.sec}); }); }
     else if(r.type==='write'){
       h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
         ${r.ev&&r.ev.length?`<br><span class="muted">고른 근거:</span> ${r.ev.map(e=>'“'+esc(e)+'”').join(' ')}`:''}
@@ -177,6 +180,12 @@ async function koFill(KR){
         <div class="kocmp"><div><span>시훈 답</span><b class="bad">${esc(strip(x.pick))||'(안 고름)'}</b></div><div><span>정답</span><b class="ok">${esc(strip(x.ans))}</b></div></div>
         ${b&&b.exp?`<details><summary class="muted" style="font-size:13px">해설</summary><div style="font-size:14px">${b.exp}</div></details>`:''}</div>`}).join('');
   }
+  if(strug.length){
+    h+=`<h3 style="font-size:16px;margin:12px 0 4px">🟡 헤맸지만 결국 스스로 맞힌 문제 (오답 아님)</h3><p class="muted" style="font-size:13px;margin:0 0 6px">한 번에 못 맞혀서 '한 번에' 수에서는 빠졌지만, 끝까지 풀어서 맞혔어요.</p>`;
+    h+=strug.map(x=>`<div class="kowr"><div class="muted" style="font-size:13px">${esc(x.src)}${x.area?' · '+esc(x.area):''}${x.chk?' · ⚠️ 정답 확인 필요':''}${x.sec?' · '+mmss(+x.sec):''}</div>
+        <div>${esc(strip(x.q))||'<span class="muted">(문제 글 없음)</span>'}</div>
+        <div class="kocmp"><div><span>헤맨 곳</span><b>${esc(x.how)||'-'}</b></div><div><span>정답 (시훈이도 결국 이 답)</span><b class="ok">${esc(strip(x.ans))}</b></div></div></div>`).join('');
+  }
   // 영역별 (누테 문제 + 복습 카드)
   const AR={}; const addA=(a,ok)=>{a=a||'기타';AR[a]=AR[a]||{n:0,ok:0};AR[a].n++;if(ok)AR[a].ok++};
   KR.forEach(r=>{ if(r.type==='test')(r.items||[]).forEach(x=>addA(x.area||r.area,x.ok)); else if(r.type==='daily')(r.cards||[]).forEach(x=>addA(r.area,x.ok&&!x.miss)); });
@@ -191,7 +200,7 @@ function koItems(R,src,tut,wr){ const out=[];
     if(r.type==='test'){ const it=r.items||[]; out.push({...b,score:r.score,n:it.length,ok:it.filter(x=>x.ok).length,shift:!!(r.shift&&r.shift.length),
       wrong:it.filter(x=>!x.ok).map(x=>{const k=x.id&&src.bank[x.id];return {area:x.area,q:strip(x.q||(k&&k.q)||'').slice(0,300),box:strip(x.box||(k&&k.box)||'').slice(0,300),pick:strip(x.omrText),ans:strip(x.ansText),exp:strip(k&&k.exp||'').slice(0,300)}})}); }
     else if(r.type==='daily'){ const c=r.cards||[]; out.push({...b,n:c.length,first:c.filter(x=>x.ok&&!x.miss).length,miss:c.filter(x=>x.miss).length}); }
-    else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,bi:(r.reads||(r.items||[]).some(x=>x&&x.ev))?biSum(r):undefined,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&q.q||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0}})}); }
+    else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,bi:(r.reads||(r.items||[]).some(x=>x&&x.ev))?biSum(r):undefined,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&(q.q||(q.st?q.st.join(' / '):''))||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0,evMiss:x.ev?x.ev.miss||0:undefined,hint:!!x.hint,solved:true}})}); }
     else if(r.type==='write') out.push({...b,title:r.title,qok:r.qok,qn:r.qn,miss:r.miss,emiss:r.emiss,asked:r.asked,ev:r.ev,parts:r.parts,text:r.text});
     else out.push({...b,ok:r.ok,miss:r.miss,q:strip(r.q||'').slice(0,150)});
   }
