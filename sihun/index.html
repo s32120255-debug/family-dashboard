@@ -3799,13 +3799,19 @@ function bookNext(){ const g=BOOK.units[BS.ui].groups[BS.gi]; if(BS.ii<g.items.l
 function bookMomHTML(){ if(!BOOK) return `<div class="note" id="bkm">📘 최상위 문제집이 잠겨 있어요. 보통은 자동으로 열려요. 안 열리면 Claude가 알려 준 <b>12자리 코드</b>를 넣어 주세요.<div class="acts" style="margin-top:8px"><button class="ok" id="bku" style="flex:0 0 auto">🔑 코드 넣기</button></div></div>`;
   const D=bookDone(); const A=allAtt();
   return BOOK.units.map(u=>`<div class="sec">${u.title}</div>`+u.groups.map(g=>`<div class="day">${g.title}</div>`+g.items.map(it=>{ const p=bookProb(u,it); const rs=A.filter(x=>x.sk==='book:'+u.id+'/'+it.id);
-    return `<div class="pcard" style="margin-top:8px">${p.text}${p.svg?`<div class="picwrap">${p.svg}</div>`:''}<div class="ans">정답: <b>${answerText(p)}</b> ${rs.length?' · 시훈: '+rs.map(x=>({o:'⭕',h:'△',x:'❌',s:'⏭'})[x.res]+(x.hints?`(힌트 ${x.hints})`:'')+(x.guide?'🧭':'')+(x.twin?`→🔁${({o:'⭕',h:'△',x:'❌'})[x.twin.res]||''}`:'')).join(' '):''}</div><div class="sol">${p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div><div class="sm">힌트: ${p.hints.map((h,k)=>`${k+1}) ${h}`).join(' / ')}</div>${it.twin?`<div class="sm">🔁 쌍둥이: ${bookTxt(it.twin.text)} → 정답 <b>${answerText(bookProb(u,it.twin))}</b></div>`:''}${it.guide?`<div class="sm">🧭 길잡이${it.gfirst?'(처음부터)':'(틀리면)'}: ${it.guide.map(st=>`${(GTAG[st.tag]||'').slice(0,1)} ${bookTxt(st.q)} → <b>${bookTxt(String(st.ans))}</b>`).join(' / ')}</div>`:''}</div>`; }).join('')+(g.note?`<p class="note">${g.note}</p>`:'')).join('')).join(''); }
-function bookMomBind(){ const b=document.getElementById('bku'); if(!b) return; b.onclick=()=>{
+    return `<div class="pcard" style="margin-top:8px">${p.text}${p.svg?`<div class="picwrap">${p.svg}</div>`:''}<div class="ans">정답: <b>${answerText(p)}</b> ${rs.length?' · 시훈: '+rs.map(x=>({o:'⭕',h:'△',x:'❌',s:'⏭'})[x.res]+(x.hints?`(힌트 ${x.hints})`:'')+(x.guide?'🧭':'')+(x.twin?`→🔁${({o:'⭕',h:'△',x:'❌'})[x.twin.res]||''}`:'')).join(' '):''}</div><div class="sol">${p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div><div class="sm">힌트: ${p.hints.map((h,k)=>`${k+1}) ${h}`).join(' / ')}</div>${it.twin?`<div class="sm">🔁 쌍둥이: ${bookTxt(it.twin.text)} → 정답 <b>${answerText(bookProb(u,it.twin))}</b></div>`:''}${it.guide?`<div class="sm">🧭 길잡이${it.gfirst?'(처음부터)':'(틀리면)'}: ${it.guide.map(st=>`${(GTAG[st.tag]||'').slice(0,1)} ${bookTxt(st.q)} → <b>${bookTxt(String(st.ans))}</b>`).join(' / ')}</div><div class="acts" style="margin-top:6px"><button class="ok gtry" style="flex:0 0 auto" data-u="${u.id}" data-it="${it.id}">🧭 길잡이 직접 해 보기</button></div><div class="gbox"></div>`:''}</div>`; }).join('')+(g.note?`<p class="note">${g.note}</p>`:'')).join('')).join(''); }
+function bookMomBind(){
+  // 🧭 길잡이 직접 해 보기(엄마 11/24): 시훈이 화면 그대로, 기록은 안 남김
+  document.querySelectorAll('.gtry').forEach(bt=>bt.onclick=()=>{ if(!BOOK) return; const u=BOOK.units.find(x=>x.id===bt.dataset.u); if(!u) return;
+    let it=null; u.groups.forEach(g=>g.items.forEach(x=>{ if(x.id===bt.dataset.it) it=x; })); if(!it||!it.guide) return;
+    document.querySelectorAll('.gbox').forEach(x=>x.innerHTML=''); const box=bt.parentNode.nextElementSibling; const p=bookProb(u,it);
+    bookGuide(box,p,it.guide,()=>{ box.insertAdjacentHTML('beforeend',`<div class="gds5">⑤ 처음 문제의 정답: <b>${answerText(p)}</b> <span class="sm">(미리보기라 기록은 안 남아요)</span></div>`); }); box.scrollIntoView({block:'start'}); });
+  const b=document.getElementById('bku'); if(!b) return; b.onclick=()=>{
   const m=modal(`<h2>🔑 최상위 문제집 코드</h2><p>12자리 숫자</p><div class="disp"><span class="fld on" id="bc" style="min-width:220px;letter-spacing:3px"></span></div><div class="keys">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-d="${d}">${d}</button>`).join('')}<button class="fn" data-d="x">닫기</button><button data-d="0">0</button><button class="fn" data-d="b">⌫</button></div><div class="fb" id="bcf"></div>`);
   let s=''; m.querySelectorAll('.keys button').forEach(k=>k.onclick=async()=>{ const d=k.dataset.d; if(d==='x'){ m.remove(); return; } if(d==='b') s=s.slice(0,-1); else if(s.length<12) s+=d; m.querySelector('#bc').textContent=s;
     if(s.length===12){ const f=m.querySelector('#bcf'); f.className='fb show h'; f.textContent='여는 중…'; if(await bookUnlock(s)){ m.remove(); toast('📘 최상위 문제집이 열렸어요!'); parent('book'); } else { s=''; m.querySelector('#bc').textContent=''; f.className='fb show x'; f.textContent='코드가 달라요.'; } } }); }; }
 if(typeof document!=='undefined') setTimeout(()=>{ const w=setInterval(()=>{ if(DB_STATE!=='loading'){ clearInterval(w); bookLoad().then(ok=>{ if(ok&&CUR==='home') home(); }); } },500); },0);
-return { open(v){ home(); if(v==='preview') parentGate('prev'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
+return { open(v){ home(); if(v==='preview') parentGate('prev'); else if(v==='book') parentGate('book'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
 })(mountApp('host-m32','t-m32'));}catch(e){console.error('수학 3-2 불러오기 실패',e);return null}})();
 
 const APP_CONCEPT=(function(document){
@@ -6724,6 +6730,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${A('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
       ${A('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
       ${A('🔢','수학 3-2 미리보기','문제 · 정답 · 시훈이 결과','data-h="aopen" data-app="m32" data-v="preview"')}
+      ${A('📘','최상위 문제집 미리보기','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
       ${A('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
       ${A('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
       </div>`}
