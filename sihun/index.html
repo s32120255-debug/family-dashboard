@@ -1137,15 +1137,31 @@ function vLeft(){return VW&&VC?VW.words.filter(w=>!(VC.words||{})[w.w]).length:0
 // 다시 볼 단어: 몰랐던 단어 중 오늘 전에 본 것
 function vDue(){if(!VW||!VC)return [];const K=VC.words||{};return VW.words.filter(w=>K[w.w]&&K[w.w].known===false&&HUB.dkey(K[w.w].ts)<today()).sort((a,b)=>(K[a.w].ts||'').localeCompare(K[b.w].ts||''))}
 function vday(){VC.days=VC.days||{};return VC.days[today()]||(VC.days[today()]={n:0,known:0})}
-function vNeedToday(){if(!VW||!VC)return false;const s=VS();if(s)return s.queue.some(w=>!s.res[w]);const D=(VC.days||{})[today()];if(D&&D.end&&!D.forced)return false;return vLeft()>0||vDue().length>0}
+function vNeedToday(){if(!VW||!VC)return false;const s=VS();if(s)return s.queue.some(w=>!s.res[w])||(s.rev||[]).some(w=>!(s.revRes||{})[w]);const D=(VC.days||{})[today()];if(D&&D.end&&!D.forced)return false;return vLeft()>0||vDue().length>0}
 function vTricky(w){return vNeed(w)>=2||/(gh|kn|wr|ph|ea|ou|ie|ei|ck|ture|tion)/.test(w.w)}
 function vPickQueue(){const due=vDue().map(w=>w.w),re=due.slice(0,VRE);const K=VC.words||{};
   const pool=VW.words.filter(w=>!K[w.w]).sort((a,b)=>a.first-b.first);const tr=pool.slice(0,25).filter(vTricky).slice(0,3);
   const fresh=tr.concat(pool.filter(w=>!tr.includes(w))).slice(0,VDAILY-re.length).map(w=>w.w);
   let q=re.concat(fresh);if(q.length<VDAILY)q=q.concat(due.slice(VRE)).slice(0,VDAILY);return {queue:q,re:q.filter(w=>due.includes(w))}}
+// 엄마 11/24 저녁: 시작할 때 복습할 단어 스펠링 보고 뜻 고르기 → 그다음 오늘 단어. 망각곡선 간격 1·3·7·14·30일, 틀리면 처음(1일)부터 + 다시 쓰기 복습. 하루 최대 15개
+const SRI=[1,3,7,14,30],SRMAX=15;
+function addDays(d,n){const t=new Date(d+'T12:00:00');t.setDate(t.getDate()+n);return HUB.dkey(t)}
+function srOf(w){const K=(VC.words||{})[w];if(!K)return null;if(!K.sr){let ld='';(K.hist||[]).forEach(h=>{if(h.d>ld)ld=h.d});if(!ld)ld=HUB.dkey(K.ts);K.sr={st:0,due:addDays(ld,1)}}return K.sr}
+function vPrevWords(){const K=VC.words||{};return Object.keys(K).filter(w=>VW.words.some(v=>v.w===w)).map(w=>[w,srOf(w)]).filter(([w,r])=>r&&!r.done&&r.due<=today()).sort((a,b)=>a[1].due.localeCompare(b[1].due)).slice(0,SRMAX).map(x=>x[0])}
+let vr=null;
+function vRevOpen(i){const s=VS(),w=VW.words.find(x=>x.w===s.rev[i]);const others=shuffle([...new Set(VW.words.filter(x=>x.ko!==w.ko).map(x=>x.ko))]).slice(0,3);
+  vr={i,w,opts:shuffle([w.ko].concat(others)),pick:null};V={view:'vrev'};render();say(w.w)}
+function vrev(){const s=VS(),w=vr.w,n=s.rev.length,r=(s.revRes||{})[w.w];
+  let h=topbar('🔤 복습 단어 뜻 확인',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.revRes||{}).length/n*100)}%"></i></div><div class="nav"><span>${vr.i+1} / ${n} · 다 하면 오늘 단어로 가요</span></div>`;
+  h+=`<div class="card"><div class="tip" style="text-align:center">이 단어 뜻은?</div><div class="prompt" style="font-size:32px">${esc(w.w)} <button class="btn light sm" data-act="vrsay">🔊</button></div>
+   <div class="row" style="justify-content:center">${vr.opts.map(o=>{const on=r&&(o===w.ko||o===r.pick);return `<button class="chip" data-act="vrpick" data-v="${esc(o)}" ${r?'disabled':''} style="flex:1;min-width:130px;max-width:220px;padding:12px 8px;${on?(o===w.ko?'background:var(--ok)':'background:var(--no)'):'background:#eef1f7;color:#1f2330'}">${esc(o)}</button>`}).join('')}</div>`;
+  if(r)h+=`<div class="res ${r.ok?'ok':'slow'}">${r.ok?'⭕ 맞았어요!':'❌ 정답: <b>'+esc(w.ko)+'</b> · 다시 써 보는 단어로 나오고, 내일 뜻도 다시 확인해요.'}</div><div class="row" style="justify-content:center"><button class="btn" data-act="vrnext">다음 ▶</button></div>`;
+  $('#main').innerHTML=h+'</div>'}
 function vStart(){let s=VS();
   if(s&&s.v!==2){const done=s.queue.filter(w=>(s.res||{})[w]);if(done.length<VDAILY){const p=vPickQueue();s.queue=done.concat(p.queue.filter(w=>!done.includes(w))).slice(0,VDAILY);s.re=[...new Set((s.re||[]).concat(p.re))].filter(w=>s.queue.includes(w))}else s.queue=done;s.v=2;vsave()}
   if(!s){const p=vPickQueue();s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
+  if(s.rev===undefined&&!Object.keys(s.res||{}).length){s.rev=vPrevWords();s.revRes={};vsave()}
+  const ri=(s.rev||[]).findIndex(w=>!(s.revRes||{})[w]);if(ri>=0)return vRevOpen(ri);
   const f=s.queue.findIndex(w=>!s.res[w]);vOpen(f>=0?f:Math.min(s.i,s.queue.length-1))}
 function vIsRe(w){const s=VS();return !!(s&&(s.re||[]).includes(w))}
 function vOpen(i){const s=VS();if(i<0)return;if(i>=s.queue.length)return vFinish();s.i=i;const w=VW.words.find(x=>x.w===s.queue[i]);const r=s.res[w.w];
@@ -1153,7 +1169,7 @@ function vOpen(i){const s=VS();if(i<0)return;if(i>=s.queue.length)return vFinish
 const VLV={self:'뜻만 보고 씀',sound:'소리 듣고 씀',hint:'힌트 보고 씀',copy:'따라 쓰고 기억해서 씀',gave:'두 번 틀려 정답 봄'};
 function vToPos(known){vc.known=known;if(posOf(vc.w)){vc.phase='pos';vc.msg='';render()}else vDone(known,vc.gave)}
 function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,lvl:vc.lvl||(known?'self':'gave'),heard:!!vc.heard,tries:vc.tries.join(' / '),hintN:vc.hintN||0,copyN:vc.copyN,recallN:vc.recallN,posPick:vc.posPick||null,posOk:vc.posOk==null?null:vc.posOk,mask:vMask(w),sec:Math.round((Date.now()-vc.t0)/100)/10};
-  VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
+  VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={sr:{st:0,due:addDays(today(),1)},mc:(prev&&prev.mc)||[],known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
   const D=vday();const r=Object.values(s.res);D.n=r.length;D.known=r.filter(x=>x.known).length;D.re=r.filter(x=>x.pred==='re').length;D.reOk=r.filter(x=>x.pred==='re'&&x.known).length;D.gave=r.filter(x=>x.gave).length;
   D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;
   vc.phase='result';vsave();render();say(w.w)}
@@ -1225,7 +1241,7 @@ function browse(){const m=V.mode||'w',pg=V.pg||0;const K=(VC&&VC.words)||{},I=RL
   $('#main').innerHTML=h+'</table></div></div>'}
 
 // ---------- 화면 ----------
-function render(){window.scrollTo&&window.scrollTo(0,0);if(!loaded){$('#main').innerHTML='<div class="card tip">불러오는 중…</div>';return}({home,predict,sent,done,report,vocab,vend,send,browse})[V.view]()}
+function render(){window.scrollTo&&window.scrollTo(0,0);if(!loaded){$('#main').innerHTML='<div class="card tip">불러오는 중…</div>';return}({home,predict,sent,done,report,vocab,vend,send,browse,vrev})[V.view]()}
 function topbar(title,back){return `<div class="top"><h1>${title}</h1><button class="savebtn ${DIRTY?'dirty':''}" data-act="commit">${sbLabel()}</button>${back?'<button data-act="home">🏠 처음으로</button>':'<button data-act="hub">← 오늘의 공부</button>'}</div>`}
 function mins(ms){return Math.max(1,Math.round(ms/60000))}
 function lastActual(){const ds=Object.keys(RLOG.days||{}).sort().reverse();for(const d of ds){const D=RLOG.days[d];if(D.actualMin&&d!==today())return {d,m:D.actualMin}}return null}
@@ -1407,9 +1423,9 @@ function report(){const I=RLOG.items||{},days=Object.keys(RLOG.days||{}).sort(),
    ${cats.map(c=>`<tr><td>${TRAPCAT[c]}</td>${ds.map(d=>{const D=RLOG.days[d],n=(D.trapShown||{})[c]||0,x=(D.trapHit||{})[c]||0;if(c==='order')return `<td class="${x?'c1':'c0'}">${x||'·'}</td>`;if(!n)return '<td class="c0">·</td>';const r=1-x/n;return `<td class="${r>=.8?'c3':r>=.5?'c2':'c1'}">${x}/${n}</td>`}).join('')}</tr>`).join('')}</table></div>
    <p class="tip">함정 개수는 같은 틀을 2번 연속 한 번에 맞히면 하나 늘고(최대 3), 처음에 틀리면 하나 줄어요(최소 1). 지금: ${Object.entries(RLOG.trapLv||{}).map(([k,v])=>esc(k.replace(/\|/g,' '))+' '+v.n+'개').join(' · ')||'모두 2개'}</p></div>`}
   if(VC&&VC.days){const vds=Object.keys(VC.days).sort().reverse().slice(0,10);const K=VC.words||{};const notyet=Object.keys(K).filter(k=>K[k]&&K[k].known===false);
-   h+=`<div class="card"><h2>🔤 단어 (11/24부터 하루 10개 · 뜻 보고 전체 쓰기)</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>한 단어</th><th>뜻만 보고</th><th>소리 듣고</th><th>💡 힌트</th><th>따라 쓰기</th><th>정답 봄</th><th>품사 맞힘</th><th>복습 맞힘</th></tr>
-   ${vds.map(d=>{const D=VC.days[d],L=D.lv;return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n||0}</td>${L?`<td>${L.self||0}</td><td>${L.sound||0}</td><td>${L.hint||0}</td><td>${L.copy||0}</td><td>${L.gave||0}</td><td>${D.posN?D.posOk+' / '+D.posN:'-'}</td>`:`<td colspan="6" class="tip">예전 방식 · 쓸 수 있음 ${D.known||0}</td>`}<td>${D.re?(D.reOk||0)+' / '+D.re:'-'}</td></tr>`}).join('')}</table></div>
-   <p class="tip">뜻만 보고·소리 듣고 쓴 단어는 끝. 힌트·따라 쓰기·정답 본 단어는 다음 날부터 하루 3개씩 다시 나와요. 다시 나올 단어 ${notyet.length}개: ${notyet.map(esc).join(', ')||'없음'}</p></div>`}
+   h+=`<div class="card"><h2>🔤 단어 (11/24부터 하루 10개 · 뜻 보고 전체 쓰기)</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>한 단어</th><th>뜻만 보고</th><th>소리 듣고</th><th>💡 힌트</th><th>따라 쓰기</th><th>정답 봄</th><th>품사 맞힘</th><th>복습 맞힘</th><th>복습 뜻 고르기</th></tr>
+   ${vds.map(d=>{const D=VC.days[d],L=D.lv;return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n||0}</td>${L?`<td>${L.self||0}</td><td>${L.sound||0}</td><td>${L.hint||0}</td><td>${L.copy||0}</td><td>${L.gave||0}</td><td>${D.posN?D.posOk+' / '+D.posN:'-'}</td>`:`<td colspan="6" class="tip">예전 방식 · 쓸 수 있음 ${D.known||0}</td>`}<td>${D.re?(D.reOk||0)+' / '+D.re:'-'}</td><td>${D.revN?(D.revOk||0)+' / '+D.revN:'-'}</td></tr>`}).join('')}</table></div>
+   <p class="tip">매일 시작할 때 복습 단어 뜻을 먼저 골라요: 쓴 다음 날 → 3일 → 7일 → 14일 → 30일 뒤(망각곡선), 틀리면 다음 날부터 다시, 하루 최대 15개. 뜻만 보고·소리 듣고 쓴 단어는 끝. 힌트·따라 쓰기·정답 본 단어는 다음 날부터 하루 3개씩 다시 나와요. 다시 나올 단어 ${notyet.length}개: ${notyet.map(esc).join(', ')||'없음'}</p></div>`}
   h+=`<div class="card"><h2>날짜별</h2><div class="scroll"><table class="grid"><tr><th>날짜</th><th>만든 횟수</th><th>한 번에 완성</th><th>혼자 써서 맞힘</th><th>철자 / 문법 틀림</th><th>시간 (예측/실제)</th><th>완성 시간</th><th>🎙️ 녹음</th><th>(예전) 말 시작</th><th>앞 25 / 뒤 25</th></tr>
    ${days.slice().reverse().map(d=>{const D=RLOG.days[d];const sq=D.seq||'';const a=sq.slice(0,25),b=sq.slice(25);const pr=x=>x.length?Math.round((x.split('o').length-1)/x.length*100)+'%':'-';
      return `<tr><td>${d.slice(5).replace('-','/')}</td><td>${D.n}</td><td>${(D.cls||{}).ok||0}</td><td>${D.typeOk!=null?D.typeOk:'-'}</td><td>${D.typeErr?(D.typeErr.spell||0)+' / '+(D.typeErr.grammar||0):'-'}</td><td>${D.predMin||'-'} / ${D.actualMin||'-'}분</td><td>${med(D.buildLat)!=null?med(D.buildLat)+'초':med(D.pickLat)!=null?'('+med(D.pickLat)+'초)':'-'}</td><td>${D.rec||'-'}</td><td>${med(D.speakLat)!=null?med(D.speakLat)+'초':'-'}</td><td>${pr(a)} / ${pr(b)}</td></tr>`}).join('')}</table></div>
@@ -1480,6 +1496,11 @@ const ACT={
     if(vc.recallN<2){vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 한 번 더 기억해 봐요.`;render();return}vc.lvl='gave';vc.gave=true;vToPos(false)},
   vpos:t=>{if(vc.phase!=='pos')return;vc.posPick=t.dataset.v;vc.posOk=vc.posPick===posOf(vc.w);vDone(vc.known,vc.gave)},
   vsay:()=>say(vc.w.w),
+  vrsay:()=>say(vr.w.w),
+  vrpick:t=>{const s=VS();if(!vr||(s.revRes||{})[vr.w.w])return;const v=t.dataset.v,ok=v===vr.w.ko;s.revRes=s.revRes||{};s.revRes[vr.w.w]={ok,pick:v};
+    const K=(VC.words||{})[vr.w.w];if(K){K.mc=(K.mc||[]).concat([{d:today(),ok}]).slice(-10);const r=srOf(vr.w.w);if(ok){r.st++;if(r.st>=SRI.length){r.done=today()}else r.due=addDays(today(),SRI[r.st])}else{r.st=0;r.due=addDays(today(),1);K.known=false;K.ts=new Date().toISOString()}}
+    const D=vday(),R=Object.values(s.revRes);D.revN=R.length;D.revOk=R.filter(x=>x.ok).length;vsave();render();say(vr.w.w)},
+  vrnext:()=>vStart(),
   sayAns:()=>{if(rc.phase2==='rec')return;say(rc.it.en[0])},
   recGo:()=>{if(!DIC)return;try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}rc.recHeard='';rc.recT0=Date.now();rc.phase2='rec';
     DIC.start().catch(e=>{rc.phase2=null;rc.recFail=(e&&e.code)||'x';render()});render();clearTimeout(rc.recMax);rc.recMax=setTimeout(()=>{if(rc&&rc.phase2==='rec')DIC.stop().catch(()=>{})},12000)},
