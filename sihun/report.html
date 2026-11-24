@@ -51,7 +51,7 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;',
 const unpack=v=>(v&&typeof v._j==='string')?JSON.parse(v._j):v;
 const P=['sihun','data'];
 const getD=async p=>{const s=await getDoc(doc(fs,...P,...p.split('/')));return s.exists()?unpack(s.data()):null};
-const getC=async (c,...cons)=>(await getDocs(query(collection(fs,...P,c),...cons))).docs.map(d=>({id:d.id,...unpack(d.data())}));
+const getC=async (c,...cons)=>(await getDocs(query(collection(fs,...P,c),...cons))).docs.map(d=>({id:d.id,...unpack(d.data())})).filter(d=>!d.trial); // 👀 관리자 직접 해 보기로 생긴 AI 기록은 빼요
 const pack=d=>({_j:JSON.stringify(d),at:d&&d.at!=null?d.at:null,_t:Date.now()});
 const setD=(p,d)=>setDoc(doc(fs,...P,...p.split('/')),pack(d));
 const pad=n=>String(n).padStart(2,'0');
