@@ -75,6 +75,18 @@ textarea{width:100%;resize:vertical;min-height:70px}
 @media (max-width:420px){.navtabs{gap:4px}.navtabs button{padding:6px 6px;font-size:.9rem}}
 .who .btn.small{font-size:.85rem}
 #noticeBtn{background:var(--yellow);border-color:var(--yellow);color:#14141c;font-weight:700}
+.tt{position:relative;margin-top:4px}
+.tt-row{position:absolute;left:0;right:0;height:48px;border-top:1px dashed var(--line)}
+.tt-h{position:absolute;left:0;top:-9px;width:62px;font-size:.78rem;color:var(--muted);background:var(--card);font-variant-numeric:tabular-nums;padding-right:4px}
+.tt-area{position:absolute;left:66px;right:0;top:0;bottom:0}
+.tt-gap{position:absolute;left:2px;right:2px;border:1.5px dashed #4a4a60;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:.8rem}
+.tt-b{position:absolute;border-radius:10px;border:2px solid #000;padding:3px 8px;overflow:hidden;color:#14141c;font-size:.95rem;line-height:1.25}
+.tt-b span{font-size:.78rem;opacity:.75;font-variant-numeric:tabular-nums}
+.tt-b.now{box-shadow:0 0 0 3px var(--red)}
+.tt-b.past{opacity:.45}
+.tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid var(--red);pointer-events:none}
+.tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:var(--red)}
+#taskChip{border:2px solid var(--line)}
 .dial{max-width:420px;width:100%;margin:0 auto}
 .dial svg{width:100%;height:auto;display:block}
 .nav{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -119,20 +131,19 @@ textarea{width:100%;resize:vertical;min-height:70px}
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
   <div class="row" style="gap:8px"><span id="noticeSlot"></span><div class="who" id="who"></div></div>
  </header>
- <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">TODAY</button><button role="tab" data-nav="money">MONEY</button><button role="tab" data-nav="memo">MEMO</button><button role="tab" data-nav="talk">TALK</button><button role="tab" data-nav="word">WORD</button><button role="tab" data-nav="chess">CHESS</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>MOM</button></nav>
+ <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">TODAY</button><button role="tab" data-nav="task">TASK</button><button role="tab" data-nav="money">MONEY</button><button role="tab" data-nav="play">PLAY</button><button role="tab" data-nav="memo">MEMO</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>MOM</button></nav>
 
  <main class="grid">
   <section data-tab="today" class="card wide" style="--tape:var(--mint)">
    <h2><span class="ttl">시간표</span><small>엄마가 우리집 대시보드에서 정해요</small></h2>
    <div class="nav"><button class="btn small" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="btn small" id="sNext" aria-label="다음 날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <div class="grid" style="gap:14px">
-    <div><div class="tabs" style="justify-content:center;margin-bottom:6px"><button data-half="am">오전</button><button data-half="pm">오후</button></div><div class="dial" id="dial"></div></div>
-    <ul class="list" id="schedList"></ul>
-   </div>
+   <a href="#" class="item" id="taskChip" style="text-decoration:none;color:inherit"></a>
+   <div id="schedList"></div>
   </section>
 
-  <section data-tab="today" class="card" style="--tape:var(--yellow)">
-   <h2><span class="ttl">오늘 과제</span><small id="ptText"></small></h2>
+  <section data-tab="task" class="card wide" style="--tape:var(--yellow)">
+   <h2><span class="ttl">오늘 과제</span><small>우리집 기지와 같은 과제·포인트</small></h2>
+   <div class="sum" id="ptBox"></div>
    <ul class="list" id="taskList"></ul>
    <div id="lateBox"></div>
   </section>
@@ -153,7 +164,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
   </section>
 
 
-  <section data-tab="talk" class="card wide" style="--tape:var(--yellow)">
+  <section data-tab="play" class="card" style="--tape:var(--yellow)">
    <h2><span class="ttl">AI랑 이야기</span><small id="playLeft"></small></h2>
    <p class="meta" id="playNote" style="margin:0"></p>
    <div class="list" id="playList" style="max-height:360px;overflow:auto"></div>
@@ -161,13 +172,13 @@ textarea{width:100%;resize:vertical;min-height:70px}
    <div><button class="btn small" id="playNew" type="button">새 이야기 시작</button></div>
   </section>
 
-  <section data-tab="word" class="card wide" style="--tape:var(--green)">
+  <section data-tab="play" class="card" style="--tape:var(--green)">
    <h2><span class="ttl">한방단어 코너</span><small id="hbCount"></small></h2>
    <div id="hbBox" style="display:grid;gap:10px"></div>
    <details><summary class="meta" style="cursor:pointer">내가 모은 한방단어</summary><div class="row" id="hbFound" style="margin-top:8px"></div></details>
   </section>
 
-  <section data-tab="chess" class="card wide" style="--tape:var(--blue)">
+  <section data-tab="play" class="card wide" style="--tape:var(--blue)">
    <h2><span class="ttl">체스</span><small>컴퓨터랑 두기</small></h2>
    <div id="chessBox" style="display:grid;gap:8px"><p class="meta">불러오는 중…</p></div>
   </section>
@@ -218,6 +229,7 @@ function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`)
  try{localStorage.setItem("sbTab",t)}catch(e){}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 showTab(curTab);
+$("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({top:0})};
 
 /* ---------- 데이터 ---------- */
 // 우리집 대시보드에서 그대로 읽는 것 (복사 아님, 같은 Firestore)
@@ -273,20 +285,31 @@ function renderSched(){
  const t=today(),isToday=schedDate===t,pd=parse(schedDate);
  $("sLabel").textContent=`${pd.getMonth()+1}월 ${pd.getDate()}일 ${DAYNAME[dayKey(pd)]}요일`;
  $("sToday").style.visibility=isToday?"hidden":"visible";
- document.querySelectorAll("[data-half]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.half===dialHalf)));
- const items=schedItems(schedDate);
- $("dial").innerHTML=dialA(items,dialHalf);tickHands();
  const now=new Date(),nm=now.getHours()*60+now.getMinutes();
- let nextMarked=false,h="",prevEnd=null;
- for(const it of items){
-  if(it.start){const s0=mins(it.start);if(prevEnd!=null&&s0-prevEnd>=20)h+=`<li class="item free"><span class="meta" style="min-width:5.8em"></span><span class="t">집공부·자유 ${dur(s0-prevEnd)} <span class="meta">엄마가 정해요</span></span></li>`;
-   prevEnd=Math.max(prevEnd??0,it.end?mins(it.end):s0)}
-  let cls="";
-  if(isToday&&it.start){const s0=mins(it.start),e=it.end?mins(it.end):s0;
-   if(nm>=s0&&nm<e)cls="now";else if(nm>=e&&nm>s0)cls="past";else if(nm<s0&&!nextMarked){nextMarked=true;cls="next"}}
-  const time=it.start?fmtT(it.start)+(it.end?" ~ "+fmtT(it.end).replace(/^오[전후] /,""):""):"시간 미정";
-  h+=`<li class="item ${cls}"><span class="meta" style="min-width:5.8em">${time}</span><span class="t"><b>${esc(it.title)}</b>${it.note?` <span class="meta">${esc(it.note)}</span>`:""}</span>${cls==="now"?'<span class="pill ok">지금</span>':cls==="next"?'<span class="pill info">다음</span>':""}</li>`}
- $("schedList").innerHTML=h||`<li class="empty">이 날 시간표가 없어요.</li>`;
+ $("schedList").innerHTML=timetable(schedItems(schedDate),isToday?nm:null);
+ // 과제 연동: 이 날 과제가 몇 개 남았는지, 누르면 TASK 탭
+ const tl=S.tasks.filter(x=>x.date===schedDate),left=tl.filter(x=>!x.done).length;
+ $("taskChip").innerHTML=tl.length?`<span class="t"><b>${isToday?"오늘":"이 날"} 과제</b> ${tl.length}개 중 ${tl.length-left}개 했어요</span><span class="pill ${left?"warn":"ok"}">${left?left+"개 남음":"다 했어요"}</span><span class="meta">TASK ▶</span>`:`<span class="t meta">${isToday?"오늘":"이 날"} 과제가 없어요</span>`;
+}
+// 타임테이블(우리집 기지와 같은 모양, 읽기만): 1시간=48px
+const HPX=48;
+function timetable(list,nm){
+ const timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start);return{...x,s:s0,e:x.end?Math.max(mins(x.end),s0+10):s0+20}}).sort((a,b)=>a.s-b.s||a.e-b.e);
+ const untimed=list.filter(x=>!x.start);
+ const lo=Math.min(8,...timed.map(x=>Math.floor(x.s/60))),hi=Math.max(21,...timed.map(x=>Math.ceil(x.e/60)));
+ const lanes=[];for(const x of timed){let k=lanes.findIndex(end=>end<=x.s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.e;x.lane=k}
+ for(const x of timed){x.n=Math.max(...timed.filter(y=>y.s<x.e&&x.s<y.e).map(y=>y.lane))+1}
+ const y=m=>(m-lo*60)/60*HPX;
+ let rows="";for(let h=lo;h<hi;h++)rows+=`<div class="tt-row" style="top:${(h-lo)*HPX}px"><span class="tt-h">${h<12?"오전":"오후"} ${h%12||12}시</span></div>`;
+ let gaps="",pe=null;for(const x of timed){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>집공부·자유 · 엄마가 정해요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
+ const PAL=["#ffd34d","#6fa8ff","#ff7a8a","#3dd9a8","#b48cff","#8fd14f"];
+ const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&nm>=x.s&&nm<x.e,past=nm!=null&&nm>=x.e;
+  const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
+  return`<div class="tt-b${now?" now":""}${past?" past":""}" style="top:${y(x.s)+1}px;height:${hgt}px;left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px);background:${PAL[i%PAL.length]}"><b>${esc(x.title)}</b> <span>${time}</span>${x.note&&hgt>40?`<div><span>${esc(x.note)}</span></div>`:""}</div>`}).join("");
+ const nowLine=nm!=null&&nm>=lo*60&&nm<hi*60?`<div class="tt-nowl" style="top:${y(nm)}px"></div>`:"";
+ const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item"><span class="meta">시간 미정</span><span class="t"><b>${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span></li>`).join("")}</ul>`:"";
+ const empty=!list.length?`<p class="empty" style="margin:0 0 6px">이 날 일정이 없어요.</p>`:"";
+ return`${empty}${un}<div class="tt" style="height:${(hi-lo)*HPX}px">${rows}<div class="tt-area">${gaps}${blocks}${nowLine}</div></div>`;
 }
 
 /* ---------- 오늘 과제 (우리집 대시보드와 같은 tasks) ---------- */
@@ -306,7 +329,8 @@ function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const 
  return /^(https?:|intent:|market:)/i.test(u)?u:""}
 function renderTasks(){
  const t=today();const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
- $("ptText").textContent=`쓸 수 있는 포인트 ⭐${sum(S.tasks.filter(x=>x.done))-sum(S.rewards)}`;
+ const earned=sum(S.tasks.filter(x=>x.done)),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=weekStart()));
+ $("ptBox").innerHTML=`<div><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div>`;
  const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span></li>`;
  const tl=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const dn=tl.filter(x=>x.done).length;
@@ -512,7 +536,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=15;
+const VERSION=16;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -556,7 +580,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=15").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=16").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
