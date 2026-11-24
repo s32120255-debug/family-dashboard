@@ -555,11 +555,18 @@ window.mailReady=true;
 /* ---------- 체스권: 우리집 기지 상점에서 산 「체스 1판」(rewards use:"chess", who 시훈) 중 아직 안 연 것 ----------
    체스판을 열 때 그 문서에 usedAt(시각)을 적어 한 번만 쓰게 함. 이 규칙 이전(시훈이 대시보드 상점) 기록은 이미 연 것으로 봄 */
 const CHESS_CUTOFF=Date.parse("2026-11-24T04:35:00Z");
+const couponsOf=use=>S.rewards.filter(r=>r.use===use&&r.who==="시훈"&&!r.usedAt&&(r.createdAt||0)>=CHESS_CUTOFF).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 const chessCoupons=()=>S.rewards.filter(r=>r.use==="chess"&&r.who==="시훈"&&!r.usedAt&&(r.createdAt||0)>=CHESS_CUTOFF).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 async function useChessCoupon(){const c=chessCoupons()[0];if(!c){openShop();return false}if(!fs)return false;
  try{const at=Date.now();const b=F.writeBatch(fs);b.update(F.doc(fs,"rewards",c.id),{usedAt:at});
   b.set(F.doc(sub("log")),{at,by:myName(),uid:user.uid,col:"rewards",docId:c.id,action:"체스권 씀",summary:"체스 1판 열기",before:null,after:{usedAt:at}});
   await b.commit();c.usedAt=at;toast("체스판이 열렸어! ♟");renderShop();return true}catch(e){toast("체스판을 열지 못했어요: "+(e.code||""));return false}}
+
+// 끝말잇기권: 우리집 기지 상점 「끝말잇기 1판」(rewards use:"wordchain") — 체스권과 같은 방식(엄마 11/24 「끝말잇기도 보상 걸자」)
+async function useWcCoupon(){const c=couponsOf("wordchain")[0];if(!c){openShop();return false}if(!fs)return false;
+ try{const at=Date.now();const b=F.writeBatch(fs);b.update(F.doc(fs,"rewards",c.id),{usedAt:at});
+  b.set(F.doc(sub("log")),{at,by:myName(),uid:user.uid,col:"rewards",docId:c.id,action:"끝말잇기권 씀",summary:"끝말잇기 1판 열기",before:null,after:{usedAt:at}});
+  await b.commit();c.usedAt=at;return true}catch(e){toast("열지 못했어요: "+(e.code||""));return false}}
 
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT=atob("aHR0cHM6Ly9zaXRlcy5nb29nbGUuY29tL3ZpZXcvbWFlYW4zNS8="); // 학교 알림장 기본 주소(검색에 학교 이름이 안 걸리게 감춰 둠)(설정에 넣으면 그 주소가 먼저)
@@ -699,7 +706,7 @@ const wcCands=(c,used)=>wcStarts(c).flatMap(k=>wcWords.byStart[k]||[]).filter(w=
 function wcPick(last,used){const l=wcCands(last,used);if(!l.length)return null;
  // 시훈이가 이어 갈 수 있는 낱말을 주로 고름(가끔 어려운 것도)
  const easy=l.filter(w=>wcCands(w.slice(-1),new Set([...used,w])).length>=2);const pool=easy.length&&Math.random()<.85?easy:l;return pool[Math.floor(Math.random()*pool.length)]}
-async function wcStart(first){await wcLoad();WC={chain:[],used:new Set(),turn:first,over:null,msg:"",hint:null};
+async function wcStart(first){if(!(await useWcCoupon()))return;await wcLoad();WC={chain:[],used:new Set(),turn:first,over:null,msg:"",hint:null};
  if(first==="cpu"){const w=wcWords[Math.floor(Math.random()*wcWords.length)];wcAdd(w,"cpu");WC.turn="me"}renderWc();setTimeout(()=>{const i=$("wcIn");if(i)i.focus()},50)}
 function wcAdd(w,by,unk){WC.chain.push({w,by,...(unk?{unk:true}:{})});WC.used.add(w)}
 function wcEnd(result,msg){WC.over=result;WC.msg=msg;renderWc();if(!fs)return;
@@ -714,16 +721,20 @@ function wcMine(raw){if(!WC||WC.over||WC.turn!=="me")return;const w=raw.trim().r
   if(!c){wcEnd("win",`으… 「${wcStarts(w.slice(-1)).join("/")}」(으)로 시작하는 낱말이 생각 안 나! 시훈이가 이겼어! 🎉`);return}
   wcAdd(c,"cpu");WC.turn="me";const next=wcCands(c.slice(-1),WC.used);renderWc();const i=$("wcIn");if(i)i.focus()},350)}
 function renderWc(){const g=S.wc.filter(x=>x.date===today());$("wcScore").textContent=g.length?`오늘 ${g.filter(x=>x.result==="win").length}승 ${g.filter(x=>x.result!=="win").length}패`:"";
- if(!WC){$("wcBox").innerHTML=`<p class="meta" style="margin:0">컴퓨터가 바로 대답해요. 두음법칙(력→역, 녀→여)도 돼요.</p><div class="row"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`;return}
+ const wn=couponsOf("wordchain").length;
+ const startBtns=wn?`<p class="meta" style="margin:0">🎟 끝말잇기권 ${wn}장 · 한 판에 1장 써요.</p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`
+  :`<p class="meta" style="margin:0">우리집 기지 상점에서 「끝말잇기 1판」(1점)을 사면 열려요.</p><div><button class="btn primary" data-wc="shop">🏪 우리집 기지 상점 가기</button></div>`;
+ if(!WC){$("wcBox").innerHTML=`<p class="meta" style="margin:0">컴퓨터가 바로 대답해요. 두음법칙(력→역, 녀→여)도 돼요.</p>`+startBtns;return}
  const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
  const chips=WC.chain.map((x,i)=>`<span class="bub ${x.by==="me"?"me":"ai"}" style="font-family:var(--hand);font-size:1.3rem">${esc(x.w.slice(0,-1))}<b style="${i===WC.chain.length-1?"background:var(--yellow);color:#2e3f38;border-radius:6px;padding:0 4px":""}">${esc(x.w.slice(-1))}</b>${x.unk?" ❓":""}</span>`).join("");
- const end=WC.over?`<p style="margin:0;text-align:center"><b>${esc(WC.msg)}</b></p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">새 판 (내가 먼저)</button><button class="btn" data-wc="cpu">새 판 (컴퓨터 먼저)</button></div>`
+ const end=WC.over?`<p style="margin:0;text-align:center"><b>${esc(WC.msg)}</b></p>`+startBtns
   :`${WC.msg?`<p class="meta" style="margin:0">${esc(WC.msg)}</p>`:""}${last?`<p style="margin:0">「<b>${esc(wcStarts(last).join("」 「"))}</b>」(으)로 시작하는 낱말!</p>`:"<p style=\"margin:0\">아무 낱말이나 먼저 말해 봐!</p>"}
   <form id="wcForm" class="row"><input id="wcIn" type="text" maxlength="10" autocomplete="off" placeholder="낱말 쓰기" style="flex:1;min-width:0;font-size:1.2rem"${WC.turn!=="me"?" disabled":""}><button class="btn primary"${WC.turn!=="me"?" disabled":""}>내기</button></form>
   <div class="row">${last?`<button class="btn small" type="button" data-wc="hint">힌트</button>`:""}<button class="btn small" type="button" data-wc="give">못 하겠어</button></div>${WC.hint?`<p class="meta" style="margin:0">힌트: ${esc(WC.hint)}</p>`:""}`;
  $("wcBox").innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px">${chips||""}</div>${WC.turn==="cpu"&&!WC.over?`<p class="meta" style="margin:0">컴퓨터 차례…</p>`:""}`+end;
  const f=$("wcForm");if(f)f.onsubmit=e=>{e.preventDefault();wcMine($("wcIn").value)}}
 $("wcBox").addEventListener("click",e=>{const b=e.target.closest("[data-wc]");if(!b)return;const k=b.dataset.wc;
+ if(k==="shop")return openShop();
  if(k==="me"||k==="cpu")return wcStart(k);
  if(!WC||WC.over)return;const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
  if(k==="hint"&&last){const l=wcCands(last,WC.used);const hw=l.length?l[Math.floor(Math.random()*l.length)]:"";WC.hint=l.length?`${hw.length>2?hw.slice(0,2)+"○".repeat(hw.length-2):"○"+hw.slice(1)} 같은 낱말이 있어 (내가 아는 것 ${l.length}개)`:"음… 나도 잘 모르겠어!";renderWc();return}
@@ -796,14 +807,15 @@ if($("askForm"))$("askForm").onsubmit=async e=>{e.preventDefault();const v=$("as
  const t=today();if(S.ask.filter(x=>x.date===t).length>=askLimit())return toast("오늘 질문은 다 썼어요");
  if(await write("ask",null,{q:v,a:null,date:t},"추가",v.slice(0,60))){$("askInput").value="";toast("질문을 저장했어요")}};
 
-$("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value.trim();if(!v)return;if(funLock())return toast(funLock());
+$("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value.trim();if(!v)return;
+ if(/끝\s*말\s*잇\s*기|끝말/.test(v)){toast("끝말잇기는 아래 「끝말잇기」 칸에서 해요!");const c=$("wcBox");if(c)c.scrollIntoView({behavior:"smooth",block:"center"});return}if(funLock())return toast(funLock());
  const t=today();if(S.play.filter(m=>m.date===t&&m.role==="user").length>=playLimit())return toast("오늘 이야기는 끝! 내일 또 하자");
  const sid=curSid()||("p"+Date.now());playSid=sid;
  if(await write("play",null,{sid,role:"user",text:v,date:t},"추가",v.slice(0,60))){$("playInput").value=""}};
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=45;
+const VERSION=46;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -847,7 +859,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=45").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=46").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:useChessCoupon, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 열기 (${n}장)`,note:"우리집 기지 상점에서 산 체스권이 있어요."}:{label:"🏪 우리집 기지 상점 가기",note:"우리집 기지 상점에서 「체스 1판」(1점)을 사면 열려요."}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
