@@ -6,9 +6,9 @@
 /* ✍️ S펜 칸 크기(엄마 11/24): 줄 간격·모눈·원고지 칸을 모두 13mm로. 기기마다 화면 1mm가 달라서 관리자 모드 「📏 S펜 칸 크기 맞추기」로 자로 재서 맞춤(이 기기에 저장) */
 /* 🎤 말로 대답(엄마 11/24): 말을 멈춰도 끊지 않고 계속 들어요(「보내기」·「그만 듣기」까지). 들리는 글자는 바로바로 글 칸에 보이고, 멈춘 뒤 손으로 고칠 수 있어요.
    안드로이드 크롬은 연속 모드에서 글자가 겹쳐 나와서, 한 번씩 듣고 끝나면 바로 다시 듣는 방식으로 이어 붙여요. */
-window.liveMic=function(ta,onState){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!ta)return null;
+window.liveMic=function(ta,onState,lang){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!ta)return null;
   var on=true,cur=null,idle=0;
-  function go(){var base=(ta.value||'').trim(),txt='',r=new SR();cur=r;r.lang='ko-KR';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  function go(){var base=(ta.value||'').trim(),txt='',r=new SR();cur=r;r.lang=lang||'ko-KR';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
     r.onresult=function(e){var s='';for(var i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;txt=s.trim();idle=0;
       ta.value=(base+' '+txt).trim();try{ta.dispatchEvent(new Event('input',{bubbles:true}))}catch(x){}};
     r.onerror=function(e){if(/not-allowed|service-not-allowed|audio-capture/.test(e.error||''))on=false};
@@ -88,7 +88,7 @@ const wrap = s => ({ id: s.id, exists: s.exists(), data: () => s.exists() ? unpa
 
 // 👀 직접 해 보기(엄마 11/25): 관리자 모드에서 시훈이 화면 그대로 열고, 아무것도 저장하지 않음.
 // AI 요청 칸(과외·가르치기·첨삭)만 써야 AI가 답하므로 trial 표시를 붙여 저장 → 리포트에서 뺌.
-const TRY_AI = ['m32tutor','m32teachai','kotutor','writecoach','m32ana','koana'];
+const TRY_AI = ['m32tutor','m32teachai','kotutor','writecoach','m32ana','koana','enchat'];
 function docRef(path){
   const ref = () => doc(fs, ...segs(path));
   const top = String(path).split('/').filter(Boolean)[0];
@@ -1098,6 +1098,44 @@ function lesson(){const d=g2day(),L=lessonOf(d.k);let h=topbar('📌 오늘의 �
     if(pk)h+=`<div class="res ${pk.ok?'ok':'slow'}">${pk.ok?'⭕ 맞았어요!':'❌ 정답은 <b>'+esc(q.a)+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="lnext">${LZ.qn<d.qi.length-1?'다음 문제 ▶':'5문장 시작 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>'}
 function lessonDone(){const d=g2day();d.lessonAt=new Date().toISOString();save();startSession(true)}
+// ===== 🧩 틈새 코너 (엄마 11/25): 덩어리 표현 하루 1개 · 듣고 따라 말하기 → 뜻 (혼자 만들기 없음) =====
+const NOOK=[{p:'my turn',s:'It is my turn.',ko:'내 차례야.',g:'my turn = 내 차례'},{p:'Me too',s:'Me too.',ko:'나도.',g:'통째로: 나도 그래'},{p:"Let's go",s:"Let's go!",ko:'가자!',g:"Let's = 우리 ~하자"},
+ {p:'Good job',s:'Good job!',ko:'잘했어!',g:'통째로: 잘했어'},{p:'Nice shot',s:'Nice shot!',ko:'잘 넣었다!',g:'농구·축구에서 골 넣었을 때'},{p:'Pass the ball',s:'Pass the ball!',ko:'공 패스해!',g:'pass = 넘겨주다'},
+ {p:'not my fault',s:'It is not my fault.',ko:'내 잘못 아니야.',g:'fault = 잘못'},{p:'not fair',s:'This is not fair.',ko:'이건 불공평해.',g:'fair = 공평한'},{p:'What time is it',s:'What time is it?',ko:'몇 시야?',g:'통째로: 몇 시야?'},
+ {p:'How was',s:'How was school?',ko:'학교 어땠어?',g:'How was ~? = ~ 어땠어?'},{p:'Hold on',s:'Hold on.',ko:'잠깐만.',g:'통째로: 잠깐 기다려'},{p:'Here you go',s:'Here you go.',ko:'여기 있어.',g:'물건을 건네줄 때'},
+ {p:'Watch out',s:'Watch out!',ko:'조심해!',g:'통째로: 조심해'},{p:'Good game',s:'Good game.',ko:'좋은 경기였어.',g:'경기 끝나고 하는 인사'},{p:'Can I try',s:'Can I try?',ko:'나 해 봐도 돼?',g:'Can I ~? = 나 ~해도 돼?'},
+ {p:'have to',s:'I have to go.',ko:'나 가야 해.',g:'have to = ~해야 해'},{p:'want to',s:'I want to play.',ko:'나 놀고 싶어.',g:'want to = ~하고 싶어'},{p:'Do you want to',s:'Do you want to play?',ko:'같이 놀래?',g:'Do you want to ~? = ~할래?'},
+ {p:'What does it mean',s:'What does it mean?',ko:'그거 무슨 뜻이야?',g:'mean = 뜻하다'},{p:'How do you spell',s:'How do you spell it?',ko:'그거 철자가 어떻게 돼?',g:'spell = 철자를 말하다'},{p:'Take your time',s:'Take your time.',ko:'천천히 해.',g:'통째로: 서두르지 마'},
+ {p:'No way',s:'No way!',ko:'말도 안 돼!',g:'통째로: 말도 안 돼'},{p:'I got it',s:'I got it!',ko:'알겠어! / 내가 잡을게!',g:'got = 잡았다, 알아들었다'},{p:"What's wrong",s:"What's wrong?",ko:'무슨 일이야?',g:'wrong = 잘못된'},
+ {p:'Excuse me',s:'Excuse me.',ko:'실례합니다.',g:'지나갈 때, 부를 때'},{p:'on purpose',s:'I did not do it on purpose.',ko:'일부러 그런 거 아니야.',g:'on purpose = 일부러'},{p:'How much',s:'How much is it?',ko:'그거 얼마야?',g:'How much = 얼마'},
+ {p:'for dinner',s:'What is for dinner?',ko:'저녁 뭐야?',g:'for dinner = 저녁으로'},{p:'good at',s:'I am good at defense.',ko:'나 수비 잘해.',g:'good at ~ = ~을 잘해'},{p:'up to you',s:'It is up to you.',ko:'너한테 달렸어.',g:'up to you = 네가 정해'}];
+let NK=null;
+function nookToday(){const D=dayRec(today());if(D.nook&&D.nook.i!=null)return D.nook.i;const n=RLOG.nookN||0;return n%NOOK.length}
+function nookOpen(){NK={i:nookToday(),step:'listen'};V={view:'nook'};render();setTimeout(()=>say(NOOK[NK.i].s),300)}
+function nookHL(x){const i=x.s.toLowerCase().indexOf(x.p.toLowerCase());if(i<0)return esc(x.s);return esc(x.s.slice(0,i))+`<span style="background:#fff3b0;border-radius:6px;padding:0 4px">${esc(x.s.slice(i,i+x.p.length))}</span>`+esc(x.s.slice(i+x.p.length))}
+function nook(){const x=NOOK[NK.i];let h=topbar('🧩 틈새 코너',true)+`<div class="card"><div class="tip">오늘의 덩어리 표현 · 문법으로 따지지 말고 <b>통째로</b> 익혀요</div>
+  <div class="ans" style="text-align:center;font-size:30px;margin:16px 0">${nookHL(x)}</div>
+  <div class="row" style="justify-content:center"><button class="btn light" data-act="nsay">🔊 다시 듣기</button><button class="btn light" data-act="nslow">🐢 천천히</button></div>`;
+  if(NK.step==='listen')h+=`<div class="tip" style="text-align:center;margin-top:12px">🗣️ 들은 대로 <b>소리 내어 따라 말해</b> 봐요 (두 번!)</div><div class="row" style="justify-content:center"><button class="btn big" data-act="nsaid">따라 말했어 ▶</button></div>`;
+  else h+=`<div class="res ok" style="text-align:center"><div style="font-size:22px;font-weight:800">${esc(x.ko)}</div><div class="tip" style="margin-top:6px">💡 ${esc(x.g)}</div></div><div class="row" style="justify-content:center"><button class="btn big" data-act="ndone">알겠어 ▶</button></div>`;
+  $('#main').innerHTML=h+'</div>'}
+// ===== ⚡ 카츄랑 말하기 (엄마 11/25): 오늘 문장을 대화에서 꺼내 쓰기 =====
+function chatSents(){const s=SES();const out=[],seen=new Set();(s?s.queue:[]).filter(q=>q.kind!=='다시').forEach(q=>{const it=item(q.id);if(it&&!seen.has(it.id)){seen.add(it.id);out.push({en:it.en[0],ko:it.ko})}});
+  if(!out.length){const k=todayStage();poolOf(k).slice(0,5).forEach(it=>out.push({en:it.en[0],ko:it.ko}))}return out}
+function chatVocab(){const W=new Set();const add=t=>String(t||'').toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).forEach(w=>{if(w)W.add(w)});
+  const I=RLOG.items||{},G=(RLOG.g2&&RLOG.g2.seen)||{};BANK.items.forEach(x=>{if((I[x.id]&&I[x.id].seen)||G[x.id])add(x.en[0])});
+  Object.keys((VC&&VC.words)||{}).forEach(add);chatSents().forEach(x=>add(x.en));const D=(RLOG.days||{})[today()];if(D&&D.nook)add(NOOK[D.nook.i].s);return [...W].sort()}
+function chatDone(D){return !!(D&&D.chat&&(D.chat.done||D.chat.err))}
+function chat(){$('#main').innerHTML=topbar('⚡ 카츄랑 말하기',true)+'<div id="chatHost"></div>';
+  if(!window.EN_CHAT){$('#chatHost').innerHTML='<div class="card">카츄를 불러오지 못했어요. 새로고침해 주세요.</div>';return}
+  window.EN_CHAT.open($('#chatHost'),{sents:chatSents(),vocab:chatVocab(),
+    onSave:sm=>{const D=dayRec(today());D.chat=Object.assign({},D.chat||{},sm,{done:!!(D.chat&&D.chat.done)||false});save()},
+    onDone:sm=>{const D=dayRec(today());D.chat=Object.assign({},sm,{done:true});save();V={view:'done'};render()}})}
+// 문장 끝난 뒤 다음 할 것: 틈새 → 카츄
+function afterHTML(){const D=(RLOG.days||{})[today()];if(!D||!D.end)return '';
+  if(!D.nook)return `<div class="card" style="text-align:center"><div class="tip">다음 할 것</div><button class="btn big" data-act="nook">🧩 틈새 코너 (덩어리 표현 1개) ▶</button></div>`;
+  if(!chatDone(D))return `<div class="card" style="text-align:center"><div class="tip">마지막!</div><button class="btn big" data-act="chat">⚡ 카츄랑 말하기 ▶</button><div class="tip" style="margin-top:6px">오늘 배운 문장을 카츄한테 써 봐요</div></div>`;
+  return `<div class="card" style="text-align:center"><div class="res ok">✅ 오늘 영어 다 했어요! 틈새 코너 · 카츄랑 말하기${D.chat.used!=null?` (오늘 문장 ${D.chat.used} / ${D.chat.of} 씀)`:''}</div></div>`}
 let DB=null,TTS=null,DIC=null,BANK=null,RLOG=null,V={view:'home'},rc=null,loaded=false;
 const LS={get(k,d){try{const v=localStorage.getItem('en50:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('en50:'+k,JSON.stringify(v))}catch(e){}}};
 let chain=Promise.resolve();
@@ -1411,7 +1449,7 @@ function browse(){const m=V.mode||'w',pg=V.pg||0;const K=(VC&&VC.words)||{},I=RL
   $('#main').innerHTML=h+'</table></div></div>'}
 
 // ---------- 화면 ----------
-function render(){window.scrollTo&&window.scrollTo(0,0);if(!loaded){$('#main').innerHTML='<div class="card tip">불러오는 중…</div>';return}({home,predict,sent,done,report,vocab,vend,send,browse,vrev,lesson})[V.view]()}
+function render(){window.scrollTo&&window.scrollTo(0,0);if(!loaded){$('#main').innerHTML='<div class="card tip">불러오는 중…</div>';return}({home,predict,sent,done,report,vocab,vend,send,browse,vrev,lesson,nook,chat})[V.view]()}
 function topbar(title,back){return `<div class="top"><h1>${title}</h1><button class="savebtn ${DIRTY?'dirty':''}" data-act="commit">${sbLabel()}</button>${back?'<button data-act="home">🏠 처음으로</button>':'<button data-act="hub">← 오늘의 공부</button>'}</div>`}
 function mins(ms){return Math.max(1,Math.round(ms/60000))}
 function lastActual(){const ds=Object.keys(RLOG.days||{}).sort().reverse();for(const d of ds){const D=RLOG.days[d];if(D.actualMin&&d!==today())return {d,m:D.actualMin}}return null}
@@ -1420,7 +1458,7 @@ function home(){const s=SES(),D=(RLOG.days||{})[today()];
   let h=topbar('🗣️ 영어 5문장');
 
   if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
-    <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`}
+    <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`+afterHTML()}
   else{const doneN=s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0;
     h+=`<div class="card"><h2>오늘의 5문장</h2>${(()=>{const k=s&&s.stage?s.stage:(!s?todayStage():null);if(k)return `<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${esc(stageName(k))}</b>${g2().back===k?' · 🔁 다시 다지는 날':''}</div>`;const f=s?topicOf(s):null;return f?`<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${fLabel(f)}</b></div>`:''})()}<p>먼저 <b>📌 오늘의 문법</b>을 1~2분 배워요. 그다음 한국어를 보고 <b>먼저 혼자 영어로 써요.</b> <b>블록 없이, 철자까지 정확히</b> 써야 "알고 있다"로 쳐요. 틀리면 <b>블록으로 고쳐요</b>. 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요.</p>
     ${s&&s.carried?'<div class="notice" style="background:#eef3ff">지난번에 멈춘 곳부터 이어서 해요.</div>':''}${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> ${VS()?`(${Object.keys(VS().res).length} / ${VS().queue.length})`:`${Math.min(VDAILY,vLeft()+vDue().length)}개`} → ② 5문장</div>`:''}<div class="row"><button class="btn big" data-act="start">${vNeedToday()?'▶ 단어 시작':s?`▶ 이어서 하기 (${doneN} / ${s.queue.filter(q=>q.kind!=='다시').length})`:'▶ 시작'}</button></div></div>`}
@@ -1580,7 +1618,7 @@ function done(){const D=dayRec(today());const diff=D.predMin?D.actualMin-D.predM
   $('#main').innerHTML=topbar('오늘 끝! 🎉',true)+`<div class="card"><h2>${D.skipped?`오늘은 여기까지 (건너뛴 문장 ${D.skipped}개)`:'5문장 끝!'}</h2>${D.stage?g2DoneHTML():D.topic?`<p class="tip">오늘의 문법: ${fLabel(D.topic)}</p>`:''}
    <div class="stat" style="grid-template-columns:repeat(2,1fr)"><div><b>${D.predMin?D.predMin+'분':'-'}</b>내 예측</div><div><b>${D.actualMin}분</b>실제</div></div>${v}
    <p class="tip">혼자 써서 맞힘 ${D.typeOk||0}문장 · 블록으로 고쳐 완성 ${c('access')}문장 · 다시 나온 문장 포함 모두 ${D.n}번 했어요</p>
-   <div class="row"><button class="btn" data-act="savehub">💾 저장하고 오늘의 공부로</button></div></div>`}
+   <div class="row"><button class="btn ${afterHTML()&&!chatDone(D)?'light':''}" data-act="savehub">💾 저장하고 오늘의 공부로</button></div></div>`+afterHTML()}
 function g2DoneHTML(){const d=(g2().days||{})[today()];if(!d)return '';const nx=STAGES[Math.min(g2().si,STAGES.length-1)];
   let m=d.pass?`<div class="res ok">🎉 <b>${esc(stageName(d.k))}</b> 통과!${d.fast?' (빠른 통과)':''} 다음엔 <b>${esc(nx.n)}</b>을 배워요.</div>`
     :d.back?`<div class="res ok">🔁 다시 다지기 끝. 다음엔 원래 하던 문법으로 돌아가요.</div>`
@@ -1627,6 +1665,12 @@ const ACT={
   go:t=>{const s=SES(),i=+t.dataset.i;if(i<0)return;if(i>rc.i&&(rc.phase==='result'||rc.phase==='answer')&&!recOK()){rc.note2=1;render();return}if(i>=s.queue.length){finishSession();return}openR(i)},
   next:()=>{if(rc&&(rc.phase==='result'||rc.phase==='answer')&&!recOK())return;const s=SES();if(rc.i>=s.queue.length-1){finishSession();return}openR(rc.i+1)},
   again:()=>{mkRC(rc.i,true);render()},
+  nsay:()=>say(NOOK[NK.i].s),
+  nslow:()=>{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(NOOK[NK.i].s);u.lang='en-US';u.rate=.6;speechSynthesis.speak(u)}catch(e){}},
+  nsaid:()=>{NK.step='mean';render()},
+  ndone:()=>{const D=dayRec(today());if(!D.nook){D.nook={i:NK.i,at:new Date().toISOString(),p:NOOK[NK.i].p};RLOG.nookN=(RLOG.nookN||0)+1;save()}V={view:'done'};render()},
+  nook:()=>nookOpen(),
+  chat:()=>{V={view:'chat'};render()},
   lsay:t=>{const L=lessonOf(g2day().k);say(L.ex[+t.dataset.i][0])},
   lgo:()=>{const d=g2day();if(d.qi&&d.qi.length){LZ.step='q';LZ.qn=0;render()}else lessonDone()},
   lpick:t=>{const d=g2day(),L=lessonOf(d.k),q=L.qs[d.qi[LZ.qn]];if(d.quiz.picks[LZ.qn])return;const v=t.dataset.v,ok=v===q.a;d.quiz.picks[LZ.qn]={v,ok};if(ok)d.quiz.ok++;save();render()},
@@ -1741,7 +1785,7 @@ function wireDic(){
 })();
 return {
   open(v){V=!BANK||!RLOG?{view:'home'}:v==='preview'?{view:'browse',mode:'w',pg:0}:v==='report'?{view:'report'}:{view:'home'};render()},
-  stats(){if(!RLOG)return {n:0,ok:0};const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known,lv:VC.days[today()].lv||null}:null,daily:s?s.queue.filter(q=>q.kind!=='다시').length:DAILY,typeOk:D&&D.typeOk||0,topic:D&&D.topic||null,stage:(RLOG.g2&&RLOG.g2.days&&RLOG.g2.days[today()])||null}}
+  stats(){if(!RLOG)return {n:0,ok:0};const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end&&(!D.stage||(D.nook&&chatDone(D)))),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known,lv:VC.days[today()].lv||null}:null,daily:s?s.queue.filter(q=>q.kind!=='다시').length:DAILY,typeOk:D&&D.typeOk||0,topic:D&&D.topic||null,stage:(RLOG.g2&&RLOG.g2.days&&RLOG.g2.days[today()])||null}}
 };
 
 })(mountApp('host-en','t-en'));
@@ -7246,7 +7290,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
       <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
   // 관리자 모드 (엄마 11/24: 첫 화면에서 바로 · 비밀번호 한 번 / 11/25: 과목별 말고 한 화면에 — 💰 AI 비용 · 오늘 한눈에 · 하는 일별 버튼)
-  const AIN={m32tutor:'🔢 수학 과외',m32teachai:'🧑‍🏫 수학 가르치기',m32ana:'🔢 수학 AI 분석',kotutor:'📖 국어 과외',koana:'📖 국어 AI 분석',writecoach:'✍️ 글쓰기 첨삭'};
+  const AIN={enchat:'⚡ 영어 카츄랑 말하기',m32tutor:'🔢 수학 과외',m32teachai:'🧑‍🏫 수학 가르치기',m32ana:'🔢 수학 AI 분석',kotutor:'📖 국어 과외',koana:'📖 국어 AI 분석',writecoach:'✍️ 글쓰기 첨삭'};
   const aiUsd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당) — report.html 과 같은 값
   const aiWon=d=>Math.round(d*1450).toLocaleString('ko-KR')+'원';
   async function adminAI(){const el=document.getElementById('admAI');if(!el)return;const t=HUB.today(),ym=t.slice(0,7);let M=null;
@@ -7403,5 +7447,6 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
 </script>
 
 <script src="ko-ai.js"></script>
+<script src="en-chat.js"></script>
 <script src="write.js"></script>
 </body></html>
