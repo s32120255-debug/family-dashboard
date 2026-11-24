@@ -857,7 +857,16 @@ table.lmap th small{font-weight:500;color:var(--muted)}
 .hwcut .c1{background:#e8f0fb;border-radius:10px;padding:6px 10px}
 .hwcut .c2{background:#fff3e0;border-radius:10px;padding:6px 10px}
 .hwcut .cbar{font-size:28px;font-weight:900;color:var(--bad)}
-.hwev{margin-top:10px;background:#eefaf2;border-left:4px solid var(--ok);border-radius:8px;padding:8px 12px;font-size:17px;line-height:1.7}
+.pno{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:11px;background:var(--navy);color:#fff;font-size:13px;margin-right:4px;vertical-align:2px}
+ .hwp p.phint{background:#fff8d6;border-radius:10px;box-shadow:0 0 0 3px #ffd54a;padding:4px 6px}
+ .bw{border-bottom:2px dotted #e08a00;cursor:pointer} .bw.on{background:#fff1b8}
+ .bicur{font-size:20px!important;line-height:2.1!important} .biprev{margin-bottom:10px}
+ .bimap{margin:6px 0 12px;background:#f4f7fc;border-radius:10px;padding:6px 10px} .bimap summary{cursor:pointer;font-weight:800;color:var(--navy)}
+ .bimr{display:flex;gap:8px;align-items:flex-start;margin:8px 0;font-size:16px;line-height:1.6;word-break:keep-all} .bimr.done{opacity:.75;font-size:14px} .bimrole{font-weight:800;color:var(--navy);font-size:14px} .bimnote{margin-top:8px;font-weight:700}
+ .bicmp{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:18px;font-weight:700;line-height:1.6;word-break:keep-all}
+ .bicmp .c1{background:#e8f0fb;border-radius:10px;padding:6px 10px} .bicmp .c2{background:#fff3e0;border-radius:10px;padding:6px 10px}
+ .bibtn{display:flex;gap:6px} .bibtn .blk{padding:6px 16px;font-size:17px;min-width:0} .bisame{color:var(--ok)} .bidiff{color:var(--bad)}
+ .hwev{margin-top:10px;background:#eefaf2;border-left:4px solid var(--ok);border-radius:8px;padding:8px 12px;font-size:17px;line-height:1.7}
 .hwcopy{margin-top:14px;background:#fff8d6;border:3px solid #f2c94c;border-radius:16px;padding:16px;text-align:center}
 .hwcl{font-weight:900;color:#8a6400;font-size:16px}
 .hwcw{font-size:20px;margin-top:6px}
@@ -6184,19 +6193,113 @@ const HW=[
   opts:[{t:['나는 너와 같이','가지 않을 거야.'],ok:true,why:'같이 → [가치]'},{t:['모든 사실을 낱낱이','밝히도록 해라.'],ok:true,why:'낱낱이 → [난나치]'},{t:['홑이불을 덮고 잤더니','감기에 걸렸다.'],ok:false,why:'\'이불\'은 뜻이 있는 <b>실질 형태소</b> → [혼니불]. 구개음화가 아니에요. 밭이랑[반니랑]과 같은 경우!'},{t:['거기를 굳이 가겠다는','이유가 무엇이냐?'],ok:true,why:'굳이 → [구지]'},{t:['이제는 맏이인 네가','아버지 역할을 해야 해.'],ok:true,why:'맏이 → [마지]'}],a:2}
 ]}
 ];
-let HWS=null; // {id,i,res[],ph,t0,...}
+/* 📖 비문학 쪼개 읽기 (엄마 11/24): 지문이 처음 나오는 문항 앞에서 문단 하나씩 읽고 "이 문단은 무슨 말?" 고르기 → 🗺️ 글 지도.
+   문단마다 {role:문단 이름, key:핵심 문장 번호, o:[요약 3개, 첫 번째가 정답(화면에선 섞임)], w:[[지문 속 낱말, 쉬운 뜻],...]}
+   새 비문학 지문을 HWP에 넣을 때 여기에도 같은 이름으로 넣으면 자동으로 쪼개 읽기가 붙어요. map = 글 지도 아래 한 줄. */
+const HWREAD={
+music:{map:'⏳ 시대 순서대로 따라가는 글: 르네상스 → 바로크 → 고전',paras:[
+ {role:'도입 · 왜 반복이 필요할까',key:3,o:['음악은 소리가 곧 사라져서, 기억을 돕는 \'반복\'이 필요하다.','그림과 조각은 음악보다 더 오래 남는 훌륭한 예술이다.','동요 「비행기」는 같은 가락이 계속 나와서 지루한 노래다.'],
+  w:[['시간 예술','시간이 흐르면서 펼쳐지는 예술'],['조각','돌이나 나무를 깎아 만든 작품'],['작곡가','음악을 만드는 사람'],['가락','음이 높고 낮게 이어지는 줄 (멜로디)'],['되풀이','같은 것을 다시 함']]},
+ {role:'르네상스 · 모방',key:1,o:['르네상스 시대에는 한 목소리를 다른 목소리가 같은 가락으로 따라 부르는 \'모방\'으로 반복했다.','르네상스 시대에는 화음 반주에 맞춰 한 가락을 노래하는 방식을 좋아했다.','르네상스 시대에는 알토가 언제나 소프라노보다 먼저 노래를 시작했다.'],
+  w:[['르네상스','약 500~600년 전 유럽의 시대 이름'],['입체적','여러 방향에서 들리는 것처럼 풍부하게'],['모방','흉내 내어 따라 함'],['소프라노','가장 높은 목소리'],['알토','소프라노보다 낮은 목소리']]},
+ {role:'바로크 · 장식적 변주',key:2,o:['바로크 시대에는 아래 반주는 반복하고 위 가락은 조금씩 바꾸는 \'장식적 변주\'를 썼다.','바로크 시대에도 모방이 가장 쓸모 있는 방법이었다.','바로크 시대에는 반복을 버리고 변화만 썼다.'],
+  w:[['바로크','르네상스 다음 시대'],['화음','여러 음이 함께 어울려 나는 소리'],['반주','노래를 뒤에서 받쳐 주는 연주'],['무늬','되풀이되는 모양'],['장식적 변주','가락을 꾸미며 조금씩 바꾸어 연주하기'],['조화','서로 잘 어울림']]},
+ {role:'고전 · 론도 형식',key:0,o:['고전 시대에는 중심 주제를 여러 번 되풀이하는 \'론도 형식\'처럼, 반복이 곡의 짜임을 정했다.','고전 시대 소나타는 마지막 악장이 가장 무겁고 어렵다.','론도 형식은 새로운 주제만 계속 이어 붙이는 방식이다.'],
+  w:[['고전 시대','바로크 다음 시대'],['형식','곡의 짜임 (틀)'],['소나타','여러 악장으로 된 악기 곡'],['악장','큰 곡을 이루는 한 부분'],['주제','곡의 중심이 되는 가락']]},
+ {role:'정리',key:1,o:['시대마다 방법(모방·변주·론도)은 달랐지만, 음악은 언제나 반복을 기본 원리로 삼았다.','시대가 바뀌면서 음악에서 반복은 점점 사라졌다.','고전 시대 작곡가들이 가장 뛰어났다.'],
+  w:[['형식적','형식(곡의 짜임)과 관련된'],['원리','모든 것의 바탕이 되는 규칙']]}]},
+ppl:{map:'🔎 개념 → 방식 → 제도 ① → 제도 ② → 결론 순서로 설명하는 글',paras:[
+ {role:'개념 · 직접 광고와 간접 광고',key:2,o:['프로그램 앞뒤에 따로 나오면 직접 광고, 프로그램 안에 넣으면 간접 광고이고, 간접 광고는 피하기 어렵다.','직접 광고는 채널을 돌려도 피할 수 없다.','간접 광고는 프로그램이 끝난 뒤에만 나온다.'],
+  w:[['시청자','방송을 보는 사람'],['간접','바로가 아니라 돌려서'],['직접','바로'],['PPL','간접 광고를 부르는 다른 이름'],['가능성','그렇게 될 수 있는 정도']]},
+ {role:'방식 · 주류적 배치와 주변적 배치',key:1,o:['간접 광고에는 출연자가 직접 쓰는 \'주류적 배치\'와 배경에 두는 \'주변적 배치\'가 있고, 내용에 잘 어울리면 효과가 커진다.','시청자는 출연자가 쓰는 상품보다 배경에 있는 상품에 더 눈길을 준다.','상품이 프로그램 내용과 어색할수록 광고 효과가 커진다.'],
+  w:[['배치','알맞은 자리에 놓음'],['주류적','가운데 중심이 되는'],['주변적','가장자리에 있는'],['대사','배우가 하는 말'],['맥락','앞뒤 이야기의 흐름']]},
+ {role:'제도 ① · 협찬 제도',key:3,o:['협찬 제도는 업체 도움을 받고 끝날 때 이름만 알려 주며, 방송 중에 상품·회사 이름을 보여 주면 안 된다.','협찬 제도에서는 방송 중에 상품 이름을 마음껏 보여 줄 수 있다.','협찬 제도는 2010년에 처음 생겼다.'],
+  w:[['협찬','돈이나 물건으로 도와줌'],['제도','나라가 정한 규칙'],['업체','회사'],['상표','상품에 붙은 이름표 (마크)']]},
+ {role:'제도 ② · 간접 광고 제도 (2010년)',key:4,o:['2010년 간접 광고 제도로 상품 이름을 보여 주는 건 괜찮아졌지만, 출연자가 이름을 말하거나 사라고 권하는 건 여전히 금지다.','간접 광고 제도가 생기면서 협찬 제도는 없어졌다.','이제 뉴스 프로그램에서도 간접 광고를 할 수 있다.'],
+  w:[['광고주','광고를 하는 회사'],['허용','해도 된다고 함'],['규제','규칙으로 막음'],['산업','돈을 버는 일의 분야'],['구매','물건을 삼'],['객관적','내 생각 말고 사실 그대로인'],['공정','어느 한쪽 편을 들지 않음'],['비판','잘못된 점을 따져 말함'],['억지스러운','자연스럽지 않고 무리한']]},
+ {role:'결론 · 따져 보며 보자',key:3,o:['간접 광고는 모르게 마음에 파고들기 때문에, 시청자는 따져 보며 봐야 하고 미디어 교육이 필요하다.','간접 광고는 시청자에게 아무 효과가 없다.','사람들은 방송 내용을 언제나 그대로 믿는다.'],
+  w:[['미디어','방송·신문·인터넷처럼 소식을 전하는 것'],['해석','뜻을 풀어 이해함'],['비판적','따져 보며'],['분석','나누어 자세히 살핌']]}]}
+};
+/* 비문학 쪼개 읽기 + 근거 찾기 화면 (엄마 11/24) */
+const esc1=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/&lt;(\/?b)>/g,'<$1>');
+function biOn(H,it){return H&&H.area==='비문학'&&it&&it.p&&HWP[it.p]&&!HWP[it.p].poem}
+function biNeedRead(H,it){if(!biOn(H,it)||!HWREAD[it.p])return false;const r=HWS.res[HWS.i];if(r&&!r.skipped)return false;const st=HWS.rd[it.p];return !(st&&(st.done||st.skip))}
+function biBad(it){return it.k==='ox'?(it.bad!=null?it.bad:it.a==='X'?1:-1):null}
+function biOpBad(op){return op.bad!=null?op.bad:op.ok?-1:1}
+function biMap(p,open){const R=HWREAD[p],P=HWP[p];if(!R)return '';
+  return `<details class="bimap" ${open?'open':''}><summary>🗺️ 글 지도 · ${P.title}</summary>${R.paras.map((x,i)=>`<div class="bimr"><b class="pno">${i+1}</b><div><div class="bimrole">${x.role}</div><div>${esc1(x.o[0])}</div></div></div>`).join('')}<div class="bimnote">${R.map}</div></details>`}
+function biWords(p,pi){const R=HWREAD[p];const P=HWP[p];const W=(R&&R.paras[pi].w||[]).map((x,k)=>({w:x[0],m:x[1],k})).sort((a,b)=>b.w.length-a.w.length);const used=new Set();
+  return P.s[pi].map((t,si)=>{let s=t;W.forEach(x=>{if(used.has(x.k))return;const j=s.indexOf(x.w);if(j<0)return;used.add(x.k);s=s.slice(0,j)+'\u0001'+x.k+'\u0002'+s.slice(j+x.w.length)});
+    s=esc1(s).replace(/\u0001(\d+)\u0002/g,(_,k)=>`<span class="bw" data-bw="${k}">${esc1(R.paras[pi].w[+k][0])}</span>`);
+    return `<span class="hs" data-hs="${pi}.${si}">${s}</span>`}).join(' ')}
+function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=HWS.rd[p]||{i:0,miss:[],sec:0};st.t0=st.t0||Date.now();const n=R.paras.length;
+  const tag=`<div class="row" style="gap:6px;margin-bottom:6px"><span class="chip">${H.area}</span><span class="chip ok">📖 쪼개 읽기</span><span class="muted">${P.title} · 교재 ${P.pg}쪽</span></div>`;
+  if(st.i>=n){
+    $('#main').innerHTML=hwHead(H)+`<div class="card">${tag}<h2 style="margin:6px 0">🗺️ 글 지도 완성!</h2><div class="muted">문단마다 고른 말이 모여서 글 전체가 한눈에 보여요. 문제 풀 때 지문 위 「🗺️ 글 지도」를 누르면 다시 볼 수 있어요.</div>${biMap(p,true)}
+      <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="bigo">문제 풀러 가기 →</button></div></div>`;
+    hwBind(H,it);$('#bigo').onclick=()=>{st.done=true;st.sec=(st.sec||0)+Math.round((Date.now()-st.t0)/1000);st.t0=null;HWS.q0=Date.now();hwDraw();window.scrollTo(0,0)};return}
+  const x=R.paras[st.i];st._o=st._o||{};const ord=st._o[st.i]=st._o[st.i]||shuffle(x.o.map((_,k)=>k));const ok=st.okNow;
+  const prev=R.paras.slice(0,st.i).map((y,k)=>`<div class="bimr done"><b class="pno">${k+1}</b><div><div class="bimrole">${y.role}</div><div>${esc1(y.o[0])}</div></div></div>`).join('');
+  const L=`<div class="hwp"><div class="hwpt">📖 ${P.title} <span class="muted">· ${st.i+1}번째 문단 / ${n}</span></div>${prev?`<div class="biprev">${prev}</div>`:''}<p class="bicur"><b class="pno">${st.i+1}</b> ${biWords(p,st.i)}</p><div id="bwm" class="muted" style="font-size:15px">밑줄 친 낱말을 누르면 쉬운 뜻이 나와요.</div></div>`;
+  let Q=tag+`<div class="qt">${st.i+1}번째 문단은 무슨 말을 하고 있을까?</div><div class="muted" style="margin-bottom:6px">왼쪽 문단만 천천히 읽고 골라요.</div>`;
+  if(!ok)Q+=`<div class="blocks" style="flex-direction:column;align-items:stretch">${ord.map(k=>`<button class="blk" style="text-align:left" data-bs="${k}">${esc1(x.o[k])}</button>`).join('')}</div><div id="hwfb"></div>`;
+  else Q+=`<div class="exp" style="margin-left:0">✅ <b>${x.role}</b><br>${esc1(x.o[0])}</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="binx">${st.i<n-1?'다음 문단 →':'🗺️ 글 지도 보기 →'}</button></div>`;
+  Q+=`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="biskip">문제 먼저 볼래요</button></div>`;
+  $('#main').innerHTML=hwHead(H)+`<div class="hwsplit"><div class="card hwl">${L}</div><div class="card hwr">${Q}</div></div>`;
+  hwBind(H,it);
+  document.querySelectorAll('[data-bw]').forEach(b=>b.onclick=()=>{const w=x.w[+b.dataset.bw];document.querySelectorAll('.bw.on').forEach(y=>y.classList.remove('on'));b.classList.add('on');$('#bwm').innerHTML=`<div class="cgloss">📖 <b>${esc1(w[0])}</b> = ${esc1(w[1])}</div>`;st.words=(st.words||0)+1});
+  const sk=$('#biskip');if(sk)sk.onclick=()=>{st.skip=true;st.sec=(st.sec||0)+Math.round((Date.now()-st.t0)/1000);st.t0=null;HWS.q0=Date.now();hwDraw()};
+  const nx=$('#binx');if(nx)nx.onclick=()=>{st.okNow=false;st.i++;hwDraw();window.scrollTo(0,0)};
+  document.querySelectorAll('[data-bs]').forEach(b=>b.onclick=()=>{const k=+b.dataset.bs;
+    if(k===0){st.miss[st.i]=st.miss[st.i]||0;st.okNow=true;hwDraw();return}
+    const m=st.miss[st.i]=(st.miss[st.i]||0)+1;b.classList.add('bad');b.disabled=true;
+    const f=$('#hwfb');const keyEl=document.querySelector(`.hs[data-hs="${st.i}.${x.key}"]`);
+    if(m===1)f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">다시! 이 문단에서 <b>가장 중요한 문장</b>이 어디일지 찾아 읽어 봐요. 첫 문장이나 '이처럼, 그래서, 하지만' 뒤를 잘 봐요.</div>`;
+    else{if(keyEl)keyEl.classList.add('hint');f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">노랗게 빛나는 문장이 이 문단의 중심이에요. 그 문장과 뜻이 같은 걸 골라요.</div>`;
+      if(m>=2&&window.KOAI)KOAI.btn(f,()=>({q:`${st.i+1}번째 문단은 무슨 말을 하고 있을까? (문단 요약 고르기)`,box:'',psg:P.title+' '+(st.i+1)+'번째 문단: '+P.s[st.i].join(' '),opts:x.o.slice(),ans:x.o[0],exp:'핵심 문장: '+P.s[st.i][x.key],area:H.area,src:`${H.w}주차 숙제 쪼개 읽기 · ${P.title} ${st.i+1}문단`,picks:[x.o[k]]}))}})}
+/* 근거 찾기 → 조각마다 같아/달라 → 판단. ox 문항과 mc 선지(지문 있는 비문학) 모두 */
+function biEvSents(p,keys){const P=HWP[p];return keys.map(k=>{const [a,b]=k.split('.').map(Number);return P.s[a]&&P.s[a][b]}).filter(Boolean)}
+function biStepHTML(it,st,ev,bad,box){const sp=HWS.sp;
+  let h=hwCut(st);
+  if(sp==='ev')return h+`<div class="alert" style="margin-top:10px">👆 이 선지가 맞는지 확인하려면 글의 어디를 봐야 할까? 왼쪽 글에서 <b>근거 문장</b>을 눌러요.</div><div class="row"><button class="btn ghost sm" id="hwhint">💡 근거가 어디 있는지 모르겠어</button></div><div id="hwfb"></div>`;
+  const got=HWS.got[0];const keys=[got].concat(ev.filter(k=>k!==got));
+  h+=`<div class="hwev">📌 근거: ${biEvSents(it.p,keys).map(t=>'“'+esc1(t)+'”').join(' ')}</div>${box?`<div class="muted" style="font-size:14px;margin-top:4px">&lt;보기&gt;도 같이 봐요.</div>`:''}`;
+  h+=`<div class="qt" style="margin-top:12px">조각마다 근거와 비교해요. 낱말이 달라도 <b>뜻이 같으면</b> 같아요.</div>`;
+  h+=[0,1].map(j=>{const c=j?'c2':'c1';const a=HWS.cj[j];
+    return `<div class="bicmp"><span class="${c}">${st[j]}</span>${a!=null?`<b class="${a?'bisame':'bidiff'}">${a?'✅ 같아':'❌ 달라'}</b>`:j===HWS.ci&&sp==='cmp'?`<span class="bibtn"><button class="blk sm" data-cm="1">같아</button><button class="blk sm" data-cm="0">달라</button></span>`:'<span class="muted">…</span>'}</div>`}).join('');
+  if(sp==='vd'){const allSame=HWS.cj[0]&&HWS.cj[1];
+    h+=`<div class="alert" style="margin-top:10px">${allSame?'두 조각 모두 근거와 같아요.':'근거와 <b>다른 조각</b>이 있어요.'} 그럼 이 선지는?</div>`}
+  return h}
+function biCmpBind(it,st,bad,why,onVd){
+  document.querySelectorAll('[data-cm]').forEach(b=>b.onclick=()=>{const j=HWS.ci;const same=b.dataset.cm==='1';const right=(j!==bad);
+    HWS.cmpN+=HWS.ct===0?1:0;
+    if(same===right){if(HWS.ct===0)HWS.cmpFirst++;HWS.cj[j]=same;HWS.ci++;HWS.ct=0;if(HWS.ci>=2)HWS.sp='vd';hwDraw();return}
+    HWS.ct++;HWS.cmpMiss++;
+    hwBad(b,same?(HWS.ct>=2?`이 조각은 근거와 달라요. 💡 ${why}`:'근거를 한 낱말씩 맞대 봐요. 이 조각이 말하는 것과 근거가 말하는 것이 <b>정말 같은 내용</b>이야?'):(HWS.ct>=2?`이 조각은 근거와 같은 뜻이에요. 💡 ${why}`:'근거에 이 조각과 <b>같은 뜻</b>이 있어요. 낱말이 달라도 뜻이 같으면 같아요.'))})}
+function biEvBind(it,ev){const hh=$('#hwhint');const pOf=()=>+ev[0].split('.')[0];
+  const lv1=()=>{if(HWS.phint<1)HWS.phN++;HWS.phint=Math.max(HWS.phint,1);const pe=document.querySelector(`.hwp p[data-pp="${pOf()}"]`);if(pe){pe.classList.add('phint');pe.scrollIntoView({block:'center',behavior:'smooth'})}};
+  const lv2=()=>{HWS.phint=2;document.querySelectorAll('.hs').forEach(s=>{if(ev.includes(s.dataset.hs))s.classList.add('hint')})};
+  if(hh)hh.onclick=()=>{HWS.hint=true;if(HWS.phint<1){lv1();$('#hwfb').innerHTML=`<div class="cgloss">💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.</div>`}else{lv2();$('#hwfb').innerHTML='<div class="cgloss">노랗게 빛나는 문장 중에서 골라 눌러요.</div>'}};
+  document.querySelectorAll('.hs.tap').forEach(s=>s.onclick=()=>{const k=s.dataset.hs;
+    if(ev.includes(k)){HWS.evN++;if(HWS.et===0)HWS.evFirst++;HWS.got=[k];HWS.sp='cmp';HWS.ci=0;HWS.cj=[];HWS.ct=0;hwDraw();return}
+    HWS.et++;HWS.evMiss++;
+    if(HWS.et===1)hwBad(s,'다른 문장이에요. 선지 <b>앞 조각</b>에 나온 낱말이 들어 있는 문장을 찾아봐요.',3);
+    else if(HWS.et===2){hwBad(s,`💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.`,3);lv1()}
+    else{hwBad(s,'노랗게 빛나는 문장 중에서 골라 눌러요. 그래도 어려우면 🤖 쌤이랑 같이 생각해 봐요.',3);lv2()}})}
+let HWS=null; // {id,i,res[],ph,t0,rd{},...}
 const HWK=id=>'sihun_ko_hw_'+id;
 function hwSet(id){return HW.find(h=>h.id===id)}
 function hwPsg(p,mark,hot){const P=HWP[p];if(!P)return '';const sel=mark||[];
-  return `<div class="hwp ${P.poem?'poem':''}"><div class="hwpt">📖 ${P.title} <span class="muted">· 교재 ${P.pg}쪽</span></div>${P.s.map((para,pi)=>`<p>${para.map((t,si)=>{const k=pi+'.'+si;return `<span class="hs ${hot?'tap':''} ${sel.includes(k)?'got':''}" data-hs="${k}">${t.replace(/</g,'&lt;').replace(/&lt;(\/?b)>/g,'<$1>')}</span>`}).join(P.poem?'<br>':' ')}</p>`).join('')}</div>`}
+  const rdDone=HWREAD[p]&&HWS&&HWS.rd&&HWS.rd[p]&&HWS.rd[p].done;
+  return `<div class="hwp ${P.poem?'poem':''}"><div class="hwpt">📖 ${P.title} <span class="muted">· 교재 ${P.pg}쪽</span></div>${rdDone?biMap(p,false):''}${P.s.map((para,pi)=>`<p data-pp="${pi}">${P.poem?'':`<b class="pno">${pi+1}</b> `}${para.map((t,si)=>{const k=pi+'.'+si;return `<span class="hs ${hot?'tap':''} ${sel.includes(k)?'got':''}" data-hs="${k}">${t.replace(/</g,'&lt;').replace(/&lt;(\/?b)>/g,'<$1>')}</span>`}).join(P.poem?'<br>':' ')}</p>`).join('')}</div>`}
 function hwCut(st){return `<div class="hwcut"><span class="c1">${st[0]}</span><span class="cbar">/</span><span class="c2">${st[1]}</span></div>`}
 function viewHW(id){
   if(!id){$('#main').innerHTML=`<div class="card"><h2>📒 워크지 숙제</h2><div class="muted">판서자료에서 필기가 안 된 칸이 숙제예요. 앱에서 생각하고, 종이에는 옮겨 적기만 해요.</div></div>`+HW.map(h=>`<div class="card"><div class="row" style="justify-content:space-between"><div><b style="color:var(--navy);font-size:18px">${h.w}주차 ${h.title}</b><div class="muted">${h.sub} · ${h.items.length}문항</div></div><button class="btn" data-hw="${h.id}">열기</button></div></div>`).join('');
     document.querySelectorAll('[data-hw]').forEach(b=>b.onclick=()=>{HWS=null;viewHW(b.dataset.hw)});return}
   const H=hwSet(id);if(!H){$('#main').innerHTML='<div class="card">숙제가 없어요.</div>';return}
-  if(!HWS||HWS.id!==id){const sv=store(HWK(id));HWS=sv&&sv.res?{id,i:Math.min(sv.i||0,H.items.length-1),res:sv.res,t0:Date.now(),sec0:sv.sec||0}:{id,i:0,res:[],t0:Date.now(),sec0:0};HWS.fresh=!sv;hwReset()}
+  if(!HWS||HWS.id!==id){const sv=store(HWK(id));HWS=sv&&sv.res?{id,i:Math.min(sv.i||0,H.items.length-1),res:sv.res,rd:sv.rd||{},t0:Date.now(),sec0:sv.sec||0}:{id,i:0,res:[],rd:{},t0:Date.now(),sec0:0};HWS.fresh=!sv;hwReset()}
   hwDraw()}
-function hwReset(){Object.assign(HWS,{ph:null,miss:0,hint:false,got:[],oi:0,bi:0,fill:[],wi:0,si:0,step1:false,q0:Date.now(),done:false})}
+function hwReset(){Object.assign(HWS,{ph:null,miss:0,hint:false,got:[],oi:0,bi:0,fill:[],wi:0,si:0,step1:false,q0:Date.now(),done:false,sp:'ev',et:0,ci:0,cj:[],ct:0,phint:0,phN:0,evN:0,evFirst:0,evMiss:0,cmpN:0,cmpFirst:0,cmpMiss:0});if(!HWS.rd)HWS.rd={}}
 function hwDone(){return HWS.res.filter(r=>r&&!r.skipped).length}
 function hwHead(H){const n=H.items.length;const dots=H.items.map((_,i)=>{const r=HWS.res[i];return `<button class="hwdot ${i===HWS.i?'cur':''} ${r?(r.skipped?'sk':r.miss?'mi':'ok'):''}" data-hj="${i}">${i+1}</button>`}).join('');
   return `<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">📒 ${H.w}주차 ${H.title}</h2><span class="muted">${hwDone()} / ${n} · 약 ${H.min}분</span></div>
@@ -6204,26 +6307,40 @@ function hwHead(H){const n=H.items.length;const dots=H.items.map((_,i)=>{const r
    <div class="kpnav"><button data-hn="0" ${HWS.i?'':'disabled'}>⏮ 처음으로</button><button data-hn="${HWS.i-1}" ${HWS.i?'':'disabled'}>◀ 이전</button><span></span><button data-hn="${HWS.i+1}" ${HWS.i<n-1?'':'disabled'}>다음 ▶</button></div>
    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" id="hwsv">💾 여기까지 저장</button><span class="muted" id="hwsvm"></span></div></div>`}
 function hwMark(ok){const it=hwSet(HWS.id).items[HWS.i];if(HWS.res[HWS.i]&&!HWS.res[HWS.i].skipped)return;
-  HWS.res[HWS.i]={no:it.no||null,k:it.k,ok:HWS.miss===0&&!HWS.hint,miss:HWS.miss,hint:HWS.hint,sec:Math.round((Date.now()-HWS.q0)/1000)}}
+  HWS.res[HWS.i]={no:it.no||null,k:it.k,ok:HWS.miss===0&&!HWS.hint,miss:HWS.miss,hint:HWS.hint,sec:Math.round((Date.now()-HWS.q0)/1000)};
+  if(HWS.evN)Object.assign(HWS.res[HWS.i],{ev:{n:HWS.evN,first:HWS.evFirst,miss:HWS.evMiss,ph:HWS.phN},cmp:{n:HWS.cmpN,first:HWS.cmpFirst,miss:HWS.cmpMiss}})}
 function hwCopyCard(it){const val=it.copy||(it.k==='ox'?`[ ${it.a} ]`:it.k==='mc'||it.k==='pick'?(it.copy||N[it.a]):it.k==='pron'?it.o[it.a]:'');
   return `<div class="hwcopy"><div class="hwcl">📝 종이에 옮겨 적기</div><div class="hwcw">교재 <b>${it.pg}쪽</b> · <b>${it.no}번</b></div><div class="hwcv">${val}</div>
   <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="hwcp">✏️ 종이에 적었어요 ✓</button></div></div>`}
 function hwWhy(it,extra){return `<div class="exp" style="margin-left:0">${extra||''}${it.why||''}</div>`}
 function hwNext(){const H=hwSet(HWS.id);if(HWS.i<H.items.length-1){HWS.i++;hwReset();hwDraw();window.scrollTo(0,0)}else hwFinish()}
 function hwAfterOk(it){hwMark(true);if(it.k==='think'||!it.pg){HWS.ph='copied';hwDraw();return}HWS.ph='copy';hwDraw()}
-function hwDraw(){const H=hwSet(HWS.id);const it=H.items[HWS.i];if(!HWS.ph)HWS.ph={ox:'ev',mc:'judge',blank:'fill',pron:it.pre?'pre':'rule',multi:'judge',pick:it.steps?'steps':'pick',think:'pick'}[it.k];
+function hwDraw(){const H=hwSet(HWS.id);const it=H.items[HWS.i];if(biNeedRead(H,it)){biReadDraw(H,it);return}if(!HWS.ph)HWS.ph={ox:'ev',mc:'judge',blank:'fill',pron:it.pre?'pre':'rule',multi:'judge',pick:it.steps?'steps':'pick',think:'pick'}[it.k];
   const already=HWS.res[HWS.i]&&!HWS.res[HWS.i].skipped&&HWS.ph!=='copy'&&HWS.ph!=='copied';
   let L='',Q='';const ph=HWS.ph;
   const tag=`<div class="row" style="gap:6px;margin-bottom:6px"><span class="chip">${H.area}</span>${it.no?`<span class="chip warn">교재 ${it.pg}쪽 · ${it.no}번</span>`:'<span class="chip ok">🧠 생각 준비</span>'}</div>`;
   const nextBtn=`<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="hwnx">${HWS.i<H.items.length-1?'다음 문항 →':'숙제 끝내기 →'}</button></div>`;
   if(already&&ph!=='copy'){HWS.ph=(it.k==='think'||!it.pg)?'copied':'copy'}
   const P=HWS.ph;
-  if(it.k==='ox'){
+  if(it.k==='ox'&&biOn(H,it)&&P==='ev'){const sp=HWS.sp;
+    L=hwPsg(it.p,HWS.got,sp==='ev');
+    Q=tag+`<div class="qt">이 선지를 선생님처럼 <b>/</b>로 끊었어요.</div>${it.gl?`<div class="cgloss" style="margin:8px 0">📖 ${it.gl}</div>`:''}`+biStepHTML(it,it.st,it.ev,biBad(it),false);
+    if(sp==='vd')Q+=`<div class="blocks"><button class="blk" data-bv="O">⭕ 맞아</button><button class="blk" data-bv="X">❌ 틀려</button></div>`;
+    if(sp!=='ev')Q+='<div id="hwfb"></div>';
+  }
+  else if(it.k==='ox'){
     L=hwPsg(it.p,P==='ev'?HWS.got:it.ev,P==='ev');
     Q=tag+`<div class="qt">이 선지를 선생님처럼 <b>/</b>로 끊었어요.</div>${hwCut(it.st)}${it.gl?`<div class="cgloss" style="margin:8px 0">📖 ${it.gl}</div>`:''}`;
     if(P==='ev')Q+=`<div class="alert" style="margin-top:10px">👆 글에서 이 선지의 <b>근거 문장</b>을 눌러요.</div><div class="row"><button class="btn ghost sm" id="hwhint">💡 근거가 어디 있는지 모르겠어</button></div><div id="hwfb"></div>`;
     else if(P==='ox')Q+=`<div class="hwev">근거: ${it.ev.filter(k=>HWS.got.includes(k)||HWS.hint).map(k=>{const [a,b]=k.split('.').map(Number);return '“'+HWP[it.p].s[a][b]+'”'}).join(' ')||'“'+it.ev.map(k=>{const [a,b]=k.split('.').map(Number);return HWP[it.p].s[a][b]}).join(' ')+'”'}</div><div class="qt" style="margin-top:12px">근거와 비교하면 이 선지는?</div><div class="blocks"><button class="blk" data-ox="O">⭕ 맞아</button><button class="blk" data-ox="X">❌ 틀려</button></div><div id="hwfb"></div>`;
     else Q+=hwWhy(it,`<b>정답 ${it.a}</b> · `)+(P==='copy'?hwCopyCard(it):nextBtn);
+  }
+  else if(it.k==='mc'&&biOn(H,it)&&P==='judge'&&(it.opts[HWS.oi]||{}).ev){const op=it.opts[HWS.oi];const sp=HWS.sp;
+    L=hwPsg(it.p,HWS.got,sp==='ev');
+    Q=tag+`<div class="qt">${it.q}</div>${it.box?`<div class="box" style="margin-left:0">${it.box}</div>`:''}<div class="hwol">${it.opts.map((o,k)=>`<div class="hwo ${k===HWS.oi?'cur':''} ${k<HWS.oi?'done':''}">${N[k]} ${k<HWS.oi?(it.opts[k].ok?'⭕':'❌'):''} ${k===HWS.oi?'':o.t.join(' ')}</div>`).join('')}</div>
+      <div class="qt" style="margin-top:10px">${N[HWS.oi]} 선지를 끊어서 판단해요.</div>${op.gl?`<div class="cgloss" style="margin:8px 0">📖 ${op.gl}</div>`:''}`+biStepHTML(it,op.t,op.ev,biOpBad(op),!!it.box);
+    if(sp==='vd')Q+=`<div class="blocks"><button class="blk" data-bj="1">${it.jl[0]}</button><button class="blk" data-bj="0">${it.jl[1]}</button></div>`;
+    if(sp!=='ev')Q+='<div id="hwfb"></div>';
   }
   else if(it.k==='mc'){
     const op=it.opts[HWS.oi]||it.opts[0];
@@ -6267,8 +6384,8 @@ function hwDraw(){const H=hwSet(HWS.id);const it=H.items[HWS.i];if(!HWS.ph)HWS.p
   }
   $('#main').innerHTML=hwHead(H)+(L?`<div class="hwsplit"><div class="card hwl">${L}</div><div class="card hwr">${Q}</div></div>`:`<div class="card">${Q}</div>`);
   hwBind(H,it)}
-function hwBad(el,msg){HWS.miss++;if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}const f=$('#hwfb');if(f&&msg)f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">${msg}</div>`;
-  if(f&&HWS.miss>=2&&window.KOAI){const H=hwSet(HWS.id),it=H.items[HWS.i];const P=it.p&&HWP[it.p];KOAI.btn(f,()=>({q:it.q||(it.st?[].concat(it.st).join(' '):'')||'선지가 근거와 맞는지 판단하기',box:it.box||'',psg:P?P.title+': '+P.s.map(x=>[].concat(x).join(' ')).join(' '):'',area:H.area,src:`${H.w}주차 숙제${it.no?` 교재 ${it.pg}쪽 ${it.no}번`:''}`,picks:[el&&el.textContent?el.textContent.trim():''],ans:'',raw:JSON.stringify(it)}))}}
+function hwBad(el,msg,aiAt){aiAt=aiAt||2;HWS.miss++;if(el){el.classList.add('bad');setTimeout(()=>el.classList.remove('bad'),450)}const f=$('#hwfb');if(f&&msg)f.innerHTML=`<div class="alert alertbad" style="margin-top:10px">${msg}</div>`;
+  if(f&&HWS.miss>=aiAt&&window.KOAI){const H=hwSet(HWS.id),it=H.items[HWS.i];const P=it.p&&HWP[it.p];const op=it.k==='mc'&&it.opts&&it.opts[HWS.oi];KOAI.btn(f,()=>({q:(it.q||(it.st?[].concat(it.st).join(' '):'')||'선지가 근거와 맞는지 판단하기')+(op?` · 지금 보는 선지 ${N[HWS.oi]}: ${op.t.join(' ')}`:''),box:it.box||'',psg:P?P.title+': '+P.s.map(x=>[].concat(x).join(' ')).join(' '):'',area:H.area,src:`${H.w}주차 숙제${it.no?` 교재 ${it.pg}쪽 ${it.no}번`:''}`,picks:[el&&el.textContent?el.textContent.trim():''],ans:'',raw:JSON.stringify(it)}))}}
 function hwBind(H,it){
   document.querySelectorAll('[data-hn]').forEach(b=>b.onclick=()=>{const k=+b.dataset.hn;if(k<0||k>=H.items.length)return;if(!HWS.res[HWS.i])HWS.res[HWS.i]={no:it.no||null,k:it.k,skipped:true};HWS.i=k;hwReset();hwDraw();window.scrollTo(0,0)});
   document.querySelectorAll('[data-hj]').forEach(b=>b.onclick=()=>{const k=+b.dataset.hj;if(!HWS.res[HWS.i])HWS.res[HWS.i]={no:it.no||null,k:it.k,skipped:true};HWS.i=k;hwReset();hwDraw();window.scrollTo(0,0)});
@@ -6276,10 +6393,21 @@ function hwBind(H,it){
   const nx=$('#hwnx');if(nx)nx.onclick=hwNext;
   const cp=$('#hwcp');if(cp)cp.onclick=()=>{const r=HWS.res[HWS.i];if(r)r.copied=true;hwNext()};
   const hh=$('#hwhint');
-  if(it.k==='ox'){
+  if(it.k==='ox'&&biOn(H,it)&&HWS.ph==='ev'){
+    if(HWS.sp==='ev')biEvBind(it,it.ev);
+    else if(HWS.sp==='cmp')biCmpBind(it,it.st,biBad(it),it.why||'');
+    document.querySelectorAll('[data-bv]').forEach(b=>b.onclick=()=>{if(b.dataset.bv===it.a)hwAfterOk(it);else hwBad(b,'방금 비교한 걸 봐요. 두 조각이 <b>다 같으면 ⭕</b>, 하나라도 <b>다르면 ❌</b>.')})}
+  else if(it.k==='ox'){
     if(hh)hh.onclick=()=>{HWS.hint=true;document.querySelectorAll('.hs').forEach(s=>{if(it.ev.includes(s.dataset.hs))s.classList.add('hint')});$('#hwfb').innerHTML='<div class="cgloss">노랗게 빛나는 문장 중에서 골라 눌러요.</div>'};
     document.querySelectorAll('.hs.tap').forEach(s=>s.onclick=()=>{const k=s.dataset.hs;if(it.ev.includes(k)){HWS.got=[k];HWS.ph='ox';hwDraw()}else{hwBad(s,HWS.miss>=1?'선지의 앞 조각에 나온 말이 들어 있는 문장을 찾아봐요.':'다른 문장! 선지의 낱말이 나오는 곳을 찾아봐요.');if(HWS.miss>=2&&hh)hh.click()}});
     document.querySelectorAll('[data-ox]').forEach(b=>b.onclick=()=>{if(b.dataset.ox===it.a){hwAfterOk(it)}else hwBad(b,'근거를 다시 읽어 봐요. 선지의 <b>뒤 조각</b>까지 근거와 똑같아?')})}
+  else if(it.k==='mc'&&biOn(H,it)&&HWS.ph==='judge'&&(it.opts[HWS.oi]||{}).ev){const op=it.opts[HWS.oi];
+    if(HWS.sp==='ev')biEvBind(it,op.ev);
+    else if(HWS.sp==='cmp')biCmpBind(it,op.t,biOpBad(op),op.why||'');
+    document.querySelectorAll('[data-bj]').forEach(b=>b.onclick=()=>{const say=b.dataset.bj==='1';
+      if(say===op.ok){const f=$('#hwfb');f.innerHTML=`<div class="exp" style="margin-left:0">${op.ok?'⭕':'❌'} ${op.why}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="hwj">${HWS.oi<it.opts.length-1?'다음 선지 →':'답 고르기 →'}</button></div>`;document.querySelectorAll('[data-bj]').forEach(x=>x.disabled=true);
+        $('#hwj').onclick=()=>{Object.assign(HWS,{sp:'ev',got:[],ci:0,cj:[],ct:0,et:0,phint:0});if(HWS.oi<it.opts.length-1)HWS.oi++;else HWS.ph='final';hwDraw()}}
+      else hwBad(b,`방금 비교한 걸 봐요. 두 조각이 <b>다 같으면</b> 「${it.jl[0]}」, 하나라도 <b>다르면</b> 「${it.jl[1]}」.`)})}
   else if(it.k==='mc'){
     if(hh)hh.onclick=()=>{HWS.hint=true;const op=it.opts[HWS.oi];document.querySelectorAll('.hs').forEach(s=>{if((op.ev||[]).includes(s.dataset.hs)){s.classList.add('hint');s.scrollIntoView({block:'center',behavior:'smooth'})}})};
     document.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{const op=it.opts[HWS.oi];const say=b.dataset.jg==='1';
@@ -6305,7 +6433,8 @@ function hwBind(H,it){
 }
 async function hwSave(fin){const H=hwSet(HWS.id);const n=H.items.length;const r=HWS.res;const sec=HWS.sec0+Math.round((Date.now()-HWS.t0)/1000);
   const rec={type:'hw',set:H.id,w:H.w,area:H.area,title:H.title,n,done:fin,answered:r.filter(x=>x&&!x.skipped).length,first:r.filter(x=>x&&x.ok).length,copied:r.filter(x=>x&&x.copied).length,items:r.map((x,i)=>x?Object.assign({i},x):{i,skipped:true}),sec};
-  store(HWK(H.id),fin?null:{i:HWS.i,res:r,sec});HWS.sec0=sec;HWS.t0=Date.now();
+  store(HWK(H.id),fin?null:{i:HWS.i,res:r,rd:HWS.rd,sec});
+  const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
   push(rec);await flushPend()}
 function hwFinish(){const H=hwSet(HWS.id);const r=HWS.res;const sk=H.items.map((_,i)=>i).filter(i=>!r[i]||r[i].skipped);
   const first=r.filter(x=>x&&x.ok).length,ans=r.filter(x=>x&&!x.skipped).length;
