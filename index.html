@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=75">
-<link rel="icon" href="icon-192.png?v=75">
-<link rel="apple-touch-icon" href="icon-192.png?v=75">
+<link rel="manifest" href="manifest.json?v=76">
+<link rel="icon" href="icon-192.png?v=76">
+<link rel="apple-touch-icon" href="icon-192.png?v=76">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -237,7 +237,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 75</p></div></div>
+<p style="font-size:.75rem">버전 76</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -378,8 +378,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=75";
-import {SEED_SCHEDULE} from "./seed.js?v=75";
+import {firebaseConfig} from "./config.js?v=76";
+import {SEED_SCHEDULE} from "./seed.js?v=76";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -406,7 +406,7 @@ const FIELDS={
  pantry:{title:"우리집 먹을거리",f:[["name","이름","text"],["place","어디","select",[["fridge","냉장고"],["snack","간식"],["storage","부식창고"]]],["qty","양 (예: 2개, 반 통)","text"],["expiry","유통기한 (선택)","date"]]},
  rewards:{title:"보상으로 포인트 쓰기",f:[["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},
  schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
- events:{title:"달력 일정",f:[["date","날짜","date"],["time","시각 (선택)","time"],["title","내용","text"]]},
+ events:{title:"달력 일정",f:[["date","날짜","date"],["title","내용","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["time","시작","time"],["end","끝 (모르면 비우기)","time"]]},
  locations:{title:"물건 위치",f:[["name","물건","text"],["place","있는 곳","text"]]},
  supplies:{title:"소모품",f:[["name","이름","text"],["status","상태","select",[["ok","넉넉"],["low","조금 남음"],["out","다 떨어짐"]]],["note","메모 (예: 사는 곳)","text"]]},
  chores:{title:"살림",f:[["title","할 일","text"]]},
@@ -436,6 +436,7 @@ function openForm(col,doc,preset,defOv,onSave){
    let x=e.target.elements[k].value.trim();data[k]=x===""?null:x;if(type==="number")data[k]=x===""?null:Number(x)}
   if(onSave){if(onSave(data,more)!==false)closeForm();return}
   
+  if(col==="events"){if(data.allDay){data.time=null;data.end=null}else if(!data.time)data.allDay="1";if(data.time&&data.end&&data.end<=data.time){toast("끝 시간이 시작보다 늦어야 해요");return}}
   if(col==="schedule"&&!data.title){toast("일정 이름을 적어 주세요");return}
   if((col==="events"&&(!data.date||!data.title))||((col==="locations"||col==="pantry")&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
   closeForm();
@@ -474,7 +475,7 @@ function schedItems(date){
  const base=S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
  const extra=ov.filter(o=>!o.skip).map(o=>({...o,src:"date"}));
  // 달력(DAYS)에서 넣은 일정 = 특별 일정 ★ (고치기·지우기는 달력에서)
- const cal=S.events.filter(e=>e.date===date&&e.title).map(e=>({id:e.id,title:e.title,start:e.time||null,end:null,allDay:e.time?"":"1",src:"cal",star:true}));
+ const cal=S.events.filter(e=>e.date===date&&e.title).map(e=>({id:e.id,title:e.title,start:e.allDay?null:e.time||null,end:e.allDay?null:e.end||null,allDay:(e.allDay||!e.time)?"1":"",src:"cal",star:true}));
  return [...base,...extra,...cal].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
 const dur=m=>{const h=Math.floor(m/60),r=m%60;return(h?h+"시간 ":"")+(r?r+"분":"")||"0분"};
@@ -875,7 +876,7 @@ function renderCal(){
  // 「오늘 일정」의 시훈이 일정(매주 반복 + 그날만)도 같이 보여 줌. 그날만 뺀 일정은 안 보임. 달력에선 보기만.
  const sc=schedItems(selDate).filter(x=>!x.skipped).map(x=>({k:"sc",t:x.start||"",x}));
  const all=[...ev,...sc].sort((a,b)=>(a.t||"").localeCompare(b.t||""));
- const row=r=>r.k==="ev"?`<li class="item"><span class="meta">${r.e.time?fmtT(r.e.time):"하루 종일"}</span><span class="t">${esc(r.e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${r.e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${r.e.id}" data-name="${esc(r.e.title)}" aria-label="삭제">✕</button></span></li>`
+ const row=r=>r.k==="ev"?`<li class="item"><span class="meta">${r.e.time&&!r.e.allDay?fmtT(r.e.time)+(r.e.end?"~"+fmtT(r.e.end).replace(/^오[전후] /,""):""):"하루 종일"}</span><span class="t">${esc(r.e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${r.e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${r.e.id}" data-name="${esc(r.e.title)}" aria-label="삭제">✕</button></span></li>`
   :`<li class="item"><span class="meta">${r.x.start?fmtT(r.x.start)+(r.x.end?"~"+fmtT(r.x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${r.x.src==="week"?"🔁":"📌"} ${esc(r.x.title)}${r.x.src==="week"&&r.x.until?` <span class="meta">~${+r.x.until.slice(5,7)}/${+r.x.until.slice(8)}</span>`:""}${r.x.note?` <span class="meta">${esc(r.x.note)}</span>`:""}</span></li>`;
  $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(all.length?all.map(row).join(""):`<li class="empty">일정 없음</li>`)+(sc.length?`<li class="meta" style="list-style:none;font-size:.8rem">🔁 매주 · 📌 그날만 — 시훈이 일정은 「오늘 일정」에서 고쳐요</li>`:"");
 }
@@ -1031,7 +1032,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=75;
+const VERSION=76;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
