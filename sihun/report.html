@@ -133,6 +133,13 @@ async function koSrc(){ if(KOSRC) return KOSRC; KOSRC={bank:{},hw:{}};
   }catch(e){ console.warn('koSrc',e); } return KOSRC; }
 const strip=x=>String(x==null?'':x).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').trim();
 const mmss=s=>s==null?'':s>=60?`${Math.floor(s/60)}분 ${s%60}초`:`${s}초`;
+// 비문학 쪼개 읽기·근거 찾기 (엄마 11/24)
+function biSum(r){const it=(r.items||[]).filter(x=>x&&x.ev);const S=k=>it.reduce((a,x)=>a+((x.ev||{})[k]||0),0),C=k=>it.reduce((a,x)=>a+((x.cmp||{})[k]||0),0);
+  return {reads:Object.values(r.reads||{}).map(x=>({title:x.title,n:x.n,read:x.read,first:x.first,missParas:x.missParas,words:x.words,skip:x.skip,sec:x.sec})),ev:{n:S('n'),first:S('first'),miss:S('miss'),paraHint:S('ph')},cmp:{n:C('n'),first:C('first'),miss:C('miss')}}}
+function biLine(r){const b=biSum(r);let h='';
+  b.reads.forEach(x=>{h+=`<br>📖 쪼개 읽기 · ${esc(x.title||'')}: ${x.skip&&!x.read?'<span class="muted">건너뜀(문제 먼저)</span>':`문단 요약 한 번에 ${x.first}/${x.n}${x.read<x.n?` (${x.read}문단까지)`:''}${x.missParas&&x.missParas.length?` · <span class="bad">헤맨 문단 ${x.missParas.join(', ')}</span>`:''}${x.words?` · 낱말 뜻 본 횟수 ${x.words}`:''}${x.sec?` · ${mmss(x.sec)}`:''}`}`});
+  if(b.ev.n)h+=`<br>📌 근거 문장 찾기: 한 번에 ${b.ev.first}/${b.ev.n}${b.ev.miss?` · 잘못 누름 ${b.ev.miss}`:''}${b.ev.paraHint?` · 문단 힌트 ${b.ev.paraHint}번`:''} · 같아/달라 한 번에 ${b.cmp.first}/${b.cmp.n}`;
+  return h}
 const KOAREA={'비문학':'비문학','문학':'문학','문법':'문법','스키마':'스키마'};
 async function koFill(KR){
   const el=document.getElementById('kobody'); if(!el) return; const src=await koSrc();
@@ -147,7 +154,7 @@ async function koFill(KR){
     else if(r.type==='daily'){ const c=r.cards||[]; const ok=c.filter(x=>x.ok&&!x.miss).length; const miss=c.filter(x=>x.miss).length;
       h+=`<li><b>복습 카드</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 한 번에 ${ok}/${c.length}${miss?` · <span class="bad">헤맨 카드 ${miss}</span>`:''}${time}</li>`; }
     else if(r.type==='hw'){ const H=src.hw[r.set]; const it=r.items||[];
-      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}</li>`;
+      h+=`<li><b>숙제</b> · ${esc(r.title||r.set)} — 한 번에 ${r.first}/${r.n}${r.answered<r.n?` · 안 한 것 ${r.n-r.answered}`:''}${r.copied?` · 종이에 옮김 ${r.copied}`:''}${r.done===false?' <span class="muted">(중간 저장)</span>':''}${time}${biLine(r)}</li>`;
       it.filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).forEach(x=>{const q=H&&H.items[x.i]; const ans=q?(q.o?strip(q.o[q.a]):q.bl?q.bl.map(b=>b.a).join(' / '):''):'';
         wrongAll.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?q.q:'',pick:x.pickText||x.pick||(x.miss?`헤맴 ${x.miss}번`:''),ans,chk:q&&q.chk}); }); }
     else if(r.type==='write'){
@@ -184,7 +191,7 @@ function koItems(R,src,tut,wr){ const out=[];
     if(r.type==='test'){ const it=r.items||[]; out.push({...b,score:r.score,n:it.length,ok:it.filter(x=>x.ok).length,shift:!!(r.shift&&r.shift.length),
       wrong:it.filter(x=>!x.ok).map(x=>{const k=x.id&&src.bank[x.id];return {area:x.area,q:strip(x.q||(k&&k.q)||'').slice(0,300),box:strip(x.box||(k&&k.box)||'').slice(0,300),pick:strip(x.omrText),ans:strip(x.ansText),exp:strip(k&&k.exp||'').slice(0,300)}})}); }
     else if(r.type==='daily'){ const c=r.cards||[]; out.push({...b,n:c.length,first:c.filter(x=>x.ok&&!x.miss).length,miss:c.filter(x=>x.miss).length}); }
-    else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&q.q||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0}})}); }
+    else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,bi:(r.reads||(r.items||[]).some(x=>x&&x.ev))?biSum(r):undefined,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&q.q||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0}})}); }
     else if(r.type==='write') out.push({...b,title:r.title,qok:r.qok,qn:r.qn,miss:r.miss,emiss:r.emiss,asked:r.asked,ev:r.ev,parts:r.parts,text:r.text});
     else out.push({...b,ok:r.ok,miss:r.miss,q:strip(r.q||'').slice(0,150)});
   }
