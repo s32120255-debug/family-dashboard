@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=38">
-<link rel="icon" href="icon-192.png?v=38">
-<link rel="apple-touch-icon" href="icon-192.png?v=38">
+<link rel="manifest" href="manifest.json?v=39">
+<link rel="icon" href="icon-192.png?v=39">
+<link rel="apple-touch-icon" href="icon-192.png?v=39">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -197,7 +197,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 38</p></div></div>
+<p style="font-size:.75rem">버전 39</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -286,10 +286,10 @@ body.admin #tplBox{display:grid!important;gap:6px}
   </section>
 
   <section class="card" data-tab="grow" id="c-points">
-   <h2>포인트</h2>
+   <h2>과제 포인트 <small>시훈이 과제로 모은 것</small></h2>
    <div class="pts" id="gPts"></div>
    <p class="sub2">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
-   <p class="sub2">미션 포인트</p><div class="pts" id="gHelp"></div>
+   <p class="sub2">도움 포인트 (해결할 미션, 과제 포인트와 따로)</p><div class="pts" id="gHelp"></div>
   </section>
 
   <section class="card" data-tab="grow" id="c-grow">
@@ -591,7 +591,7 @@ function dayBonus(tasks){const by={};for(const x of tasks){if(!x.date)continue;(
 function bonusSum(tasks,from){return Object.entries(dayBonus(tasks)).reduce((a,[d,v])=>a+(!from||d>=from?v:0),0)}
 function lastOfDay(x){return x.date===today()&&!x.done&&S.tasks.filter(y=>y.date===x.date&&y.id!==x.id).every(y=>y.done&&y.doneDate===x.date)}
 function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"";const b=dayBonus(S.tasks)[t];
- return b?`<li class="x2 on">⚡ 오늘 과제 다 했어요! 포인트 2배 (+${b})</li>`:`<li class="x2">⚡ 오늘 과제를 오늘 다 하면 포인트 2배!</li>`}
+ return b?`<li class="x2 on">⚡ 오늘 과제 다 했어요! 과제 포인트 2배 (+${b})</li>`:`<li class="x2">⚡ 오늘 과제를 오늘 다 하면 과제 포인트 2배!</li>`}
 function renderTasks(){
  const t=today(),ws=weekStart();
  const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
@@ -601,7 +601,7 @@ function renderTasks(){
  const todayT=S.tasks.filter(x=>x.date===taskDate).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const isT=taskDate===t,past=taskDate<t,tpd=parse(taskDate);
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
- $("points").innerHTML=`<div class="pt main"><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>밀린 과제</small><b style="${late.length?"color:var(--warn)":""}">${late.length}</b></div><span class="adm"><button class="btn small" data-add="rewards">보상으로 쓰기</button></span>`;
+ $("points").innerHTML=`<div class="pt main"><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>밀린 과제</small><b style="${late.length?"color:var(--warn)":""}">${late.length}</b></div><span class="adm"><button class="btn small" data-add="rewards">보상으로 쓰기</button></span>`;
  const row=(x,isLate)=>{const lateBy=isLate?diffDays(t,x.date):0;const kl=taskKindLabel(x);
   return`<li class="item ${x.done?"done":""} ${isLate?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)} <span class="meta">${kl}</span></span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${isLate?`<span class="pill warn">${lateBy}일 밀림</span>`:""}${!isLate&&past&&!x.done?`<span class="pill warn">안 함</span>`:""}${x.done&&x.doneDate&&x.doneDate>x.date?`<span class="meta">${parse(x.doneDate).getMonth()+1}/${parse(x.doneDate).getDate()}에 함</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${admBtns("tasks",x.id,x.title)}</li>`};
  $("tLabel").textContent=`${tpd.getMonth()+1}월 ${tpd.getDate()}일 (${DAYNAME[dayKey(tpd)]})${isT?" · 오늘":""}`;$("tToday").style.visibility=isT?"hidden":"visible";
@@ -666,7 +666,7 @@ function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const t=
 function renderHelp(){const t=today(),ws=weekStart();const n=S.helpmom.filter(x=>x.doneDate===t).length;
  $("helpCount").textContent=S.helpmom.length?`오늘 ${n}/${S.helpmom.length}`:"";
  const tot={},wk={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
- $("helpPts").innerHTML=PEOPLE.map(p=>`<div class="pt ${p===me?"main":""}"><small>${p} 도와주기 포인트</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
+ $("helpPts").innerHTML=PEOPLE.map(p=>`<div class="pt ${p===me?"main":""}"><small>${p} 도움 포인트</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
  $("helpList").innerHTML=S.helpmom.length?S.helpmom.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(x=>{const on=x.doneDate===t;
   return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-help="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}${on&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("helpmom",x.id,x.title)}</li>`}).join("")
   :`<li class="empty">미션이 아직 없어요.</li>`}
@@ -675,7 +675,7 @@ let growMonth=new Date();
 function renderGrow(){
  const t=today(),ws=weekStart(),sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+bonusSum(S.tasks,ws);
- $("gPts").innerHTML=`<div class="pt main"><small>쓸 수 있는 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>지금까지 모은</small><b>${earned}</b></div><div class="pt"><small>쓴 포인트</small><b>${used}</b></div>`;
+ $("gPts").innerHTML=`<div class="pt main"><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>지금까지 모은</small><b>${earned}</b></div><div class="pt"><small>쓴 포인트</small><b>${used}</b></div>`;
  const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
  const tot={},wk={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
