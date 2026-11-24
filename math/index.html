@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#fbfaf4">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>시훈 연산</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: 폰 세로 한 화면 앱. 위 막대(처음으로·진행·시계) + 모눈 공책 한 장 + 아래 큰 숫자 키패드.
+   사고력 공책 앱과 같은 종이·파란 모눈·연필 잉크. 한 가지 밝은 종이 테마로 고정(일부러). */
+:root{
+  --paper:#fbfaf4; --paper-2:#f3f1e7; --card:#ffffff; --ink:#262a31; --ink-2:#5d5a52;
+  --grid:rgba(64,112,168,.16); --blue:#2f5fa3; --blue-soft:#e3ebf7; --amber:#b5651d; --amber-soft:#fbeedd;
+  --green:#2e7d55; --green-soft:#e2f1e8; --hl:#ffd84d; --line:#dfdacb; --on-blue:#ffffff;
+  --f-ui:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  --f-disp:"Do Hyeon","Gowun Dodum","Apple SD Gothic Neo",system-ui,sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:17px;overflow:hidden;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+  -webkit-user-select:none;user-select:none;word-break:keep-all;overflow-wrap:anywhere;-webkit-tap-highlight-color:transparent}
+#app{height:100%;display:flex;flex-direction:column;min-height:0;max-width:560px;margin:0 auto;
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px))}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-disp);font-weight:400;margin:0;text-wrap:balance;line-height:1.25}
+h1{font-size:30px}h2{font-size:24px}h3{font-size:20px}
+p{margin:0;line-height:1.6}
+.tab{font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-2)}.small{font-size:14px}
+input,textarea,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;-webkit-user-select:text;user-select:text}
+textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-family:ui-monospace,monospace}
+
+/* 위 막대 */
+.bar{display:flex;align-items:center;gap:8px;padding-block:8px;flex:none;border-bottom:1px solid var(--line);background:var(--paper)}
+.bar .sp{flex:1}
+.bar .where{font-family:var(--f-disp);font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.nb{min-height:44px;padding:0 14px;border-radius:12px;background:var(--paper-2);border:1px solid var(--line);font-size:16px;white-space:nowrap}
+.nb:active,.chip:active,.key:active,.bigbtn:active{transform:translateY(1px)}
+.nb[disabled]{opacity:.35}
+.nb.pri{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.lives{display:flex;gap:8px;align-items:center;justify-content:center;padding-top:8px;min-height:22px;flex:none}
+.lives i{width:16px;height:16px;border-radius:50%;border:2px solid var(--blue);display:block}.lives i.f{background:var(--blue)}
+.clock{font-family:var(--f-disp);font-size:38px;min-width:84px;text-align:right;font-variant-numeric:tabular-nums}
+.prog{font-family:var(--f-disp);font-size:20px;color:var(--blue)}
+
+.page{flex:1;min-height:0;overflow-y:auto;padding-block:16px 40px;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;background:var(--paper-2);border:1px solid var(--line);white-space:nowrap}
+.pill.ok{background:var(--green-soft);border-color:#bfe0cc;color:#1f5e3e}
+.pill.new{background:var(--blue-soft);border-color:#c5d4ec;color:#1f447d}
+.pill.warm{background:var(--amber-soft);border-color:#efd3b0;color:#7a4313}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{min-width:62px;min-height:52px;padding:0 14px;border-radius:14px;background:var(--card);border:2px solid var(--line);font-size:19px;font-family:var(--f-disp)}
+.chip.on{border-color:var(--blue);background:var(--blue-soft)}
+.bigbtn{min-height:62px;padding:0 24px;border-radius:16px;background:var(--blue);color:var(--on-blue);font-family:var(--f-disp);font-size:24px;width:100%}
+.bigbtn.ghost{background:var(--card);color:var(--blue);border:2px solid var(--blue)}
+.bigbtn[disabled]{opacity:.35}
+.notice{background:var(--blue-soft);border:1px solid #c5d4ec;border-radius:14px;padding:12px 14px;line-height:1.6}
+.notice.warm{background:var(--amber-soft);border-color:#efd3b0}
+.notice.good{background:var(--green-soft);border-color:#bfe0cc}
+
+/* 홈 */
+.next{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--blue);color:var(--on-blue);border-radius:18px;padding:18px}
+.next .k{font-size:15px;opacity:.85}
+.next .v{font-family:var(--f-disp);font-size:30px}
+.plan{display:flex;flex-direction:column;gap:8px}
+.pitem{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-height:64px}
+.pitem .nm{font-family:var(--f-disp);font-size:21px}
+.pitem .ex{font-size:14px;color:var(--ink-2);grid-column:1}
+.pitem.done{background:var(--green-soft);border-color:#bfe0cc}
+.dots{display:flex;gap:5px;grid-row:1/3;grid-column:2;align-items:center}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--blue);display:block}
+.dots i.f{background:var(--blue)}
+.dots i.c{border-style:dashed}
+.side{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.side button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:64px;display:flex;flex-direction:column;gap:2px}
+.side b{font-family:var(--f-disp);font-weight:400;font-size:19px}
+.side span{font-size:13px;color:var(--ink-2)}
+.gate{position:relative;overflow:hidden}
+.gate .fill{position:absolute;left:0;bottom:0;height:4px;background:var(--blue);width:0}
+.gate.hold .fill{width:100%;transition:width 1.2s linear}
+
+/* 문제 */
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding-block:8px;text-align:center}
+.qline{font-family:var(--f-disp);font-size:44px;line-height:1.35;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 8px;font-variant-numeric:tabular-nums}
+.qline.mid{font-size:34px}
+.qline.txt{font-size:28px}
+.qline.stack{flex-direction:column;gap:10px}
+.qline .sub{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.box{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.3em;padding:0 .2em;border:3px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
+.box.act{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft)}
+.box.ok{border-color:var(--green);background:var(--green-soft)}
+.box.again{animation:nudge .32s}
+@keyframes nudge{0%,100%{transform:none}30%{transform:translateX(-6px)}70%{transform:translateX(6px)}}
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.08;font-size:.8em;gap:2px}
+.fr>span:first-child{border-bottom:3px solid currentColor;padding:0 .15em 2px}
+.fr .box{font-size:1em}
+.say{font-size:18px;color:var(--ink-2);min-height:1.6em}
+.say.blue{color:var(--blue)}
+.fig{width:min(100%,300px)}
+.fig svg{display:block;width:100%;height:auto;touch-action:manipulation}
+
+/* 키패드 */
+.pad{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-block:8px 12px}
+.key{height:62px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-family:var(--f-disp);font-size:32px;box-shadow:0 2px 0 var(--line)}
+.key.fn{font-size:20px;background:var(--paper-2)}
+.key.go{background:var(--blue);border-color:var(--blue);color:var(--on-blue);font-size:24px}
+.ox{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-block:8px 14px}
+.ox button{height:110px;border-radius:18px;background:var(--card);border:2px solid var(--line);font-family:var(--f-disp);font-size:64px}
+.under{flex:none;display:flex;gap:8px;justify-content:space-between;padding-top:4px}
+
+/* 풀이 순서 틀 */
+.steps{display:flex;flex-direction:column;gap:10px;width:100%;text-align:left}
+.st{display:flex;gap:6px 8px;align-items:center;font-family:var(--f-disp);font-size:21px;line-height:1.5;flex-wrap:wrap;padding:8px 12px;border-radius:12px;font-variant-numeric:tabular-nums}
+.st .n{font-size:16px;color:var(--blue);min-width:1.4em}
+.st.done{color:var(--ink-2)}
+.st.cur{background:var(--card);border:1px solid var(--line)}
+.st .box{font-size:24px}
+.hint{font-size:17px;line-height:1.6;color:var(--blue);background:var(--blue-soft);border-radius:12px;padding:10px 12px;text-align:left;width:100%;box-sizing:border-box}
+
+/* 결과 */
+.big{font-family:var(--f-disp);font-size:54px;line-height:1;font-variant-numeric:tabular-nums}
+.facts{display:flex;flex-direction:column;gap:8px}
+.facts p{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.facts p.star{background:var(--green-soft);border-color:#bfe0cc}
+.bars{width:100%}
+.bars svg{display:block;width:100%;height:auto}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px}
+.kv dt{color:var(--ink-2)}.kv dd{margin:0}
+
+/* 모달 */
+.veil{position:fixed;inset:0;background:rgba(38,42,49,.35);display:flex;align-items:flex-end;justify-content:center;z-index:20;
+  padding:0 max(14px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.sheet{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+
+/* 부모 화면 */
+.prow{display:flex;flex-direction:column;gap:8px;padding-block:10px;border-bottom:1px dashed var(--line)}
+.prow:last-child{border-bottom:0}
+.prow .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.prow .nm{font-family:var(--f-disp);font-size:19px;flex:1;min-width:120px}
+.stepper{display:flex;align-items:center;gap:4px}
+.stepper button{width:40px;height:40px;border-radius:10px;background:var(--paper-2);border:1px solid var(--line);font-size:20px}
+.stepper b{min-width:2.2em;text-align:center;font-family:var(--f-disp);font-size:20px;font-weight:400}
+.more{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:14px}
+.more label{display:flex;flex-direction:column;gap:4px}
+.more input{width:100%;box-sizing:border-box}
+.more input[type="checkbox"]{width:22px;height:22px;flex:none}
+.more .full{grid-column:1/3}
+.code{font-size:12px;padding:1px 6px;border-radius:5px;background:var(--blue-soft);color:var(--blue)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+.tbl td,.tbl th{padding:6px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{font-weight:400;color:var(--ink-2);font-size:12px}
+.scrollx{overflow-x:auto}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="app"></div>
+
+<script>
+"use strict";
+/* ───────── 도구 ───────── */
+const $=s=>document.querySelector(s);
+const app=$("#app");
+const ri=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=sec=>{sec=Math.max(0,Math.round(sec));return Math.floor(sec/60)+":"+String(sec%60).padStart(2,"0")};
+const parseT=s=>{s=String(s||"").trim();if(!s)return null;const m=s.match(/^(\d+):(\d{1,2})$/);if(m)return +m[1]*60+ +m[2];const n=parseFloat(s);return n>0?n:null};
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const dayLabel=k=>{const [y,m,d]=k.split("-").map(Number);const w="일월화수목금토"[new Date(y,m-1,d).getDay()];return `${m}월 ${d}일 ${w}요일`};
+const fr=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+const TREE="https://claude.ai/artifact/Bqfnoo9oaMFU7b8p1nfYcc";
+
+/* 곱셈 오답 모양 */
+function multPat(x,c,g){
+  const ans=x*c;g=+g;if(!(g>=0))return "";
+  const ds=String(x).split("").map(Number);
+  const noCarry=+(String(ds[0]*c)+ds.slice(1).map(d=>(d*c)%10).join(""));
+  if(g===noCarry&&noCarry!==ans)return "받아올림 빠뜨림";
+  const glued=+ds.map(d=>d*c).join("");
+  if(g===glued)return "곱을 나란히 붙임";
+  const parts=ds.map((d,i)=>d*Math.pow(10,ds.length-1-i)*c).filter(v=>v>0);
+  if(parts.includes(g))return "한 부분만 곱함";
+  if(Math.abs(g-ans)===c)return "한 번 더/덜 곱함";
+  if(g%10!==ans%10)return "일의 자리 틀림";
+  return "앞자리 틀림";
+}
+function splitSteps(x,c){
+  const ds=String(x).split("").map(Number),L=ds.length;
+  const pv=ds.map((d,i)=>d*Math.pow(10,L-1-i));
+  const nz=pv.filter(v=>v>0);
+  const st=[{h:`${x} = ${nz.slice(0,-1).join(" + ")} + [[0]]`,a:[String(nz[nz.length-1])],hints:[`${x}에서 ${nz.slice(0,-1).join(" + ")}를 빼면 얼마가 남을까?`]}];
+  nz.forEach(v=>{
+    const lead=String(v).replace(/0+$/,""),zeros=String(v).length-lead.length;
+    st.push({h:`${v} × ${c} = [[0]]`,a:[String(v*c)],hints:zeros?[`${lead} × ${c}는 얼마야? ${v}는 ${lead}의 ${Math.pow(10,zeros)}배니까, 곱도 몇 배가 될까?`,`${lead} × ${c} = ${+lead*c}. 여기에 0을 몇 개 붙여야 할까?`]:[`${c}단에서 ${v}번째 수는?`]});
+  });
+  st.push({h:`${nz.map(v=>v*c).join(" + ")} = [[0]]`,a:[String(x*c)],hints:["위에서 구한 곱들을 더해 볼까? 일의 자리부터 더하면 쉬워."]});
+  return st;
+}
+
+/* ───────── 좌표 그림 ───────── */
+const CO={o:34,u:34,max:6};
+function coordSVG(pt,user,clickable,showPt=true){
+  const {o,u,max}=CO,W=o+u*max+18,H=W,y0=H-o;
+  let s=`<svg viewBox="0 0 ${W} ${H}" ${clickable?'data-plot="1"':""} role="img" aria-label="좌표 모눈">`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" fill="var(--card)" rx="10"/>`;
+  for(let i=0;i<=max;i++){
+    s+=`<line x1="${o+i*u}" y1="${y0}" x2="${o+i*u}" y2="${y0-max*u}" stroke="var(--grid)" stroke-width="1.5"/>`;
+    s+=`<line x1="${o}" y1="${y0-i*u}" x2="${o+max*u}" y2="${y0-i*u}" stroke="var(--grid)" stroke-width="1.5"/>`;
+    s+=`<text x="${o+i*u}" y="${y0+22}" text-anchor="middle" font-size="16" fill="var(--ink-2)" font-family="Do Hyeon,sans-serif">${i}</text>`;
+    if(i>0)s+=`<text x="${o-12}" y="${y0-i*u+6}" text-anchor="middle" font-size="16" fill="var(--ink-2)" font-family="Do Hyeon,sans-serif">${i}</text>`;
+  }
+  s+=`<line x1="${o}" y1="${y0}" x2="${o+max*u+8}" y2="${y0}" stroke="var(--ink)" stroke-width="2"/><line x1="${o}" y1="${y0}" x2="${o}" y2="${y0-max*u-8}" stroke="var(--ink)" stroke-width="2"/>`;
+  if(pt&&showPt)s+=`<circle cx="${o+pt[0]*u}" cy="${y0-pt[1]*u}" r="9" fill="var(--blue)"/>`;
+  if(user)s+=`<circle cx="${o+user[0]*u}" cy="${y0-user[1]*u}" r="10" fill="var(--hl)" stroke="var(--ink)" stroke-width="2"/>`;
+  return s+"</svg>";
+}
+function svgToCoord(svg,ev){
+  const r=svg.getBoundingClientRect(),vb=svg.viewBox.baseVal;
+  const x=(ev.clientX-r.left)*vb.width/r.width,y=(ev.clientY-r.top)*vb.height/r.height;
+  const {o,u,max}=CO,y0=vb.height-o;
+  const gx=Math.round((x-o)/u),gy=Math.round((y0-y)/u);
+  if(gx<0||gy<0||gx>max||gy>max)return null;return [gx,gy];
+}
+
+/* ───────── 유형 ───────── */
+/* make(p) → {html (문제, [[i]] = 답칸), a:[정답], kind:'num'|'ox'|'plot', fig?, text}
+   steps(p) → {head, fig?, list:[{h,a,kind?,hints}]}  : 답을 먼저 주지 않고 빈칸을 채우며 찾는 순서 틀 */
+const TYPES={
+ A1:{hard:p=>(p.b>=6?1.5:0)+(p.q>=6?1:0),name:"몫찾기",code:"A1",ex:"42 ÷ 6 = □",sec:2.5,why:"3-2 나눗셈, 약수·배수, 약분, 가분수 → 대분수, 달력 문제에 그대로 쓰여요.",
+  idea:"나눗셈 식을 곱셈 식으로 바꿔서 찾아요.",
+  rand:()=>({b:ri(2,9),q:ri(2,9)}),key:p=>p.b+"/"+p.q,
+  make:({b,q})=>({html:`${b*q} ÷ ${b} = [[0]]`,a:[String(q)],kind:"num",text:`${b*q}÷${b}`}),
+  steps:({b,q})=>({head:`${b*q} ÷ ${b} = ?`,list:[
+    {h:`사탕 ${b*q}개를 ${b}명이 똑같이 나누면 한 명에 [[0]]개`,a:[String(q)],hints:[`한 명에 5개씩이면 모두 몇 개가 필요할까? ${b*q}개보다 많을까 적을까?`,`${b}명에게 □개씩 주면 ${b} × □개야.`]},
+    {h:`곱셈으로 맞는지 보기: ${b} × [[0]] = ${b*q}`,a:[String(q)],hints:[`${b}단을 처음부터 떠올려 볼까? ${b}, ${b*2}, ${b*3}, …`,`${b} × ${q-1} = ${b*(q-1)}이야. ${b}를 한 번 더 하면?`]},
+    {h:`그럼 ${b*q} ÷ ${b} = [[0]]`,a:[String(q)],hints:["바로 위 곱셈 식의 빈칸과 비교해 볼까? 같은 걸 묻고 있을까?"]}]}),
+  pat:(p,g)=>{const v=+g[0];let s=p.b+"단";if(Math.abs(v-p.q)===1)s+=" · 한 칸 옆";return s}},
+
+ A3:{hard:p=>(p.k>=6?1:0)+(p.N%p.k?0.3:0),name:"배수",code:"A3",ex:"36은 4의 배수? O / X",sec:2.5,why:"최소공배수 → 통분 → 분모가 다른 분수 계산으로 가는 길이에요.",
+  idea:"□의 배수는 □단(□×1, □×2, …)에 나오는 수예요.",
+  rand:()=>{const k=ri(2,9),q=ri(2,9),yes=Math.random()<.5;return{k,N:yes?k*q:k*q+ri(1,k-1)}},key:p=>p.k+"/"+p.N,
+  make:({k,N})=>({html:`${N}은 ${k}의<br>배수일까?`,a:[N%k===0?"O":"X"],kind:"ox",text:`${N}은 ${k}의 배수?`,cls:"txt"}),
+  steps:({k,N})=>{const q=Math.floor(N/k);return{head:`${N}은 ${k}의 배수일까?`,list:[
+    {h:`${k}단을 ${N}까지 세면 마지막은 ${k} × [[0]]`,a:[String(q)],hints:[`${k} × 5는 얼마야? ${N}보다 클까 작을까?`,`${k} × ${q} 와 ${k} × ${q+1} 중에 ${N}을 넘지 않는 건?`]},
+    {h:`${k} × ${q} = [[0]]`,a:[String(k*q)],hints:[`${k}단에서 ${q}번째 수는?`]},
+    {h:`${N}이 ${k}단에 나와?`,a:[N%k===0?"O":"X"],kind:"ox",hints:[`${k} × ${q} = ${k*q}. 이게 ${N}과 같은지 보자.`]}]}},
+  pat:(p,g)=>(g[0]==="O"?"X인데 O":"O인데 X")+" · "+p.k+"단"},
+
+ A6:{hard:p=>(p.k>=6?1:0)+(p.N%p.k?0.3:0),name:"약수",code:"A6",ex:"6은 42의 약수? O / X",sec:2.5,why:"최대공약수 → 약분 → 분수의 곱셈으로 가는 길이에요.",
+  idea:"□가 ○의 약수면 ○ ÷ □가 나누어떨어져요(나머지 0).",
+  rand:()=>{const k=ri(2,9),q=ri(2,9),yes=Math.random()<.5;return{k,N:yes?k*q:k*q+ri(1,k-1)}},key:p=>p.k+"/"+p.N,
+  make:({k,N})=>({html:`${k}는 ${N}의<br>약수일까?`,a:[N%k===0?"O":"X"],kind:"ox",text:`${k}는 ${N}의 약수?`,cls:"txt"}),
+  steps:({k,N})=>{const q=Math.floor(N/k),r=N%k;return{head:`${k}는 ${N}의 약수일까?`,list:[
+    {h:`${N} ÷ ${k}의 몫은 [[0]]`,a:[String(q)],hints:[`${k} × □가 ${N}을 넘지 않는 가장 큰 □를 찾아볼까?`]},
+    {h:`${k} × ${q} = ${k*q}, 나머지는 [[0]]`,a:[String(r)],hints:[`${N}에서 ${k*q}를 빼면?`]},
+    {h:`나누어떨어졌어?`,a:[r===0?"O":"X"],kind:"ox",hints:["나머지가 0이었는지 보자."]}]}},
+  pat:(p,g)=>(g[0]==="O"?"X인데 O":"O인데 X")+" · "+p.k+"단"},
+
+ B5:{hard:p=>((p.x%10)*p.c>=10?1:0)+(p.c>=6?1:0)+(Math.floor(p.x/10)*p.c+Math.floor((p.x%10)*p.c/10)>=10?.5:0),name:"두 자리 × 한 자리",code:"B5",ex:"34 × 6",sec:4,why:"세 자리 × 한 자리, 두 자리 × 두 자리, 소수의 곱셈이 모두 이 쪼개기로 풀려요.",
+  idea:"34 × 6을 30 × 6과 4 × 6으로 쪼개서 더해요.",
+  rand:()=>{let x,c;do{x=ri(12,99);c=ri(2,9)}while(x%10===0||(x%10)*c<10&&Math.random()<.7);return{x,c}},key:p=>p.x+"x"+p.c,
+  make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",text:`${x}×${c}`}),
+  steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
+  pat:(p,g)=>multPat(p.x,p.c,g[0])},
+
+ T19:{hard:p=>(p.c>=6?1.2:0)+(p.x>=16?.6:0),name:"19단",code:"19단",ex:"17 × 6",sec:3,why:"두 자리 × 한 자리를 머릿속에서 바로 꺼내고, 큰 수 나눗셈을 어림할 때 쓰여요.",
+  idea:"17 × 6을 10 × 6과 7 × 6으로 쪼개요.",
+  rand:()=>({x:ri(13,19),c:ri(2,9)}),key:p=>p.x+"x"+p.c,
+  make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",text:`${x}×${c}`}),
+  steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
+  pat:(p,g)=>{const v=+g[0];if(Math.abs(v-p.x*p.c)===p.x)return "한 묶음 차이";if(Math.abs(v-p.x*p.c)===p.c)return "한 번 더/덜 곱함";return multPat(p.x,p.c,g[0])}},
+
+ FR:{hard:p=>(p.d>=6?1:0)+(p.w>=4?.5:0),name:"가분수 ↔ 대분수",code:"0-3",ex:"17/5 = 3과 2/5",sec:4,conceptN:2,why:"몫과 나머지를 그대로 써요. 분수의 덧셈·뺄셈, 대분수 계산이 빨라져요.",
+  idea:"가분수 → 대분수는 나눗셈의 몫과 나머지, 대분수 → 가분수는 곱하고 더하기예요.",
+  rand:()=>{const d=ri(2,9);return{d,w:ri(1,6),n:ri(1,d-1),dir:Math.random()<.55?"toMixed":"toImp"}},key:p=>p.dir+p.d+"/"+p.w+"/"+p.n,
+  make:({d,w,n,dir})=>{const N=w*d+n;if(dir==="of")return{html:`${w*d}의 ${fr(n,d)} = [[0]]`,a:[String(w*n)],kind:"num",text:`${w*d}의 ${n}/${d}`};return dir==="toMixed"
+    ?{html:`${fr(N,d)} = [[0]] ${fr("[[1]]",d)}`,a:[String(w),String(n)],kind:"num",text:`${N}/${d}→대분수`}
+    :{html:`[[x]]${w} ${fr(n,d)} = ${fr("[[0]]",d)}`.replace("[[x]]",""),a:[String(N)],kind:"num",text:`${w}과 ${n}/${d}→가분수`}},
+  steps:({d,w,n,dir})=>{const N=w*d+n;if(dir==="of")return{head:`${w*d}의 ${fr(n,d)}`,list:[
+      {h:`${w*d}를 똑같이 ${d}묶음으로 나누면 한 묶음은 [[0]]`,a:[String(w)],hints:[`${d} × □ = ${w*d}가 되는 □는?`]},
+      {h:`${fr(n,d)}는 그런 묶음 ${n}개니까 [[0]]`,a:[String(w*n)],hints:[`한 묶음이 ${w}개야. ${n}묶음이면?`]}]};return dir==="toMixed"
+    ?{head:`${fr(N,d)} 를 대분수로`,list:[
+      {h:`${N} ÷ ${d} = [[0]] … [[1]]`,a:[String(w),String(n)],hints:[`${d}단에서 ${N}을 넘지 않는 마지막 수를 찾아볼까?`,`${d} × ${w} = ${w*d}. ${N}에서 이걸 빼면?`]},
+      {h:`그래서 ${fr(N,d)} = [[0]] ${fr("[[1]]",d)}`,a:[String(w),String(n)],hints:["몫은 자연수 자리, 나머지는 분자 자리에 가요. 위 나눗셈에서 찾아볼까?"]}]}
+    :{head:`${w} ${fr(n,d)} 를 가분수로`,list:[
+      {h:`${w} = ${fr("[[0]]",d)}`,a:[String(w*d)],hints:[`1 = ${fr(d,d)}이야. 그럼 ${w}는 ${fr(d,d)}가 몇 개일까?`]},
+      {h:`${fr(w*d,d)} + ${fr(n,d)} = ${fr("[[0]]",d)}`,a:[String(N)],hints:["분모가 같으면 분자끼리 더해요."]}]}},
+  pat:(p,g)=>{const N=p.w*p.d+p.n;if(p.dir==="of"){const v=+g[0];if(v===p.w)return "한 묶음만 구함";if(v===p.w*p.d)return "전체를 답함";return "나누기·곱하기 틀림 · "+p.d+"단"}if(p.dir==="toMixed"){if(+g[1]>=p.d)return "분자가 분모보다 큼";if(+g[0]!==p.w)return "몫(자연수) 틀림 · "+p.d+"단";return "나머지(분자) 틀림"}
+    const v=+g[0];if(v===p.w+p.n)return "곱하지 않고 더함";if(v===p.w*p.d)return "분자 더하기 빠뜨림";return "곱셈 틀림 · "+p.d+"단"}},
+
+ OF:{hard:p=>(p.d>=6?1:0)+(p.m>=6?.8:0)+(p.n>1?.4:0),name:"○의 몇 분의 몇",code:"C·3-2",ex:"48의 3/8 = 18",sec:4,why:"'남은 것의 몇 분의 몇' 문장제, 분수의 곱셈, 비율(20의 15%)이 이 계산이에요. 몫찾기를 그대로 써요.",
+  idea:"말로 하던 '똑같이 ○묶음 → 그중 □묶음'을 식으로 쓰면 ÷ 다음 × 예요.",
+  scaffold:true,
+  rand:()=>{const d=ri(2,9);return{d,m:ri(2,9),n:ri(1,d-1)}},key:p=>p.d+"/"+p.m+"/"+p.n,
+  make:({d,m,n},lv)=>{const W=d*m;return lv===0
+    ?{html:`<span class="sub">${W}의 ${fr(n,d)}</span><span class="sub">${W} ÷ [[0]] = [[1]]</span><span class="sub">[[2]] × [[3]] = [[4]]</span>`,a:[String(d),String(m),String(m),String(n),String(m*n)],alts:[[String(d),String(m),String(n),String(m),String(m*n)]],kind:"num",cls:"mid stack",text:`${W}의 ${n}/${d} (칸)`}
+    :{html:`${W}의 ${fr(n,d)} = [[0]]`,a:[String(m*n)],kind:"num",text:`${W}의 ${n}/${d}`}},
+  steps:({d,m,n})=>{const W=d*m;return{head:`${W}의 ${fr(n,d)}`,list:[
+    {h:`${W}개를 똑같이 ${d}묶음으로 나누면 한 묶음은 [[0]]개`,a:[String(m)],hints:[`${d}묶음에 똑같이 하나씩 나눠 준다고 생각해 볼까? ${d} × □ = ${W}`,`${d}단에서 ${W}이 나오는 곳은?`]},
+    {h:`그중 ${n}묶음은 [[0]]개`,a:[String(m*n)],hints:[`한 묶음이 ${m}개야. ${n}묶음이면 ${m}이 몇 번?`]},
+    {h:`방금 첫 번째로 한 일을 식으로: ${W} ÷ [[0]] = [[1]]`,a:[String(d),String(m)],hints:["몇 묶음으로 나눴었지? 나눠서 나온 한 묶음은?"]},
+    {h:`두 번째로 한 일을 식으로: [[0]] × [[1]] = [[2]]`,a:[String(m),String(n),String(m*n)],alts:[[String(n),String(m),String(m*n)]],hints:["한 묶음의 수와 묶음 수를 곱하면 돼. 위 두 줄에서 찾아볼까?"]}]}},
+  pat:(p,g)=>{const v=+g[g.length-1];if(g.length>1&&+g[0]!==p.d)return "나누는 수 틀림 (분모로 나눠요)";if(v===p.m)return "한 묶음만 구함";if(v===p.d*p.m)return "전체를 답함";return "나누기·곱하기 틀림 · "+p.d+"단"}},
+
+ CO:{name:"좌표 놀이",code:"I1·I2",ex:"점 읽기 · 점 찍기",sec:4,n:10,optional:true,why:"그래프 읽기 → 일차함수 → 이차함수. 함수 그래프가 모두 이 점들로 그려져요.",
+  idea:"(가로, 세로) 순서로 읽어요.",
+  rand:()=>({x:ri(0,6),y:ri(0,6),m:Math.random()<.5?"read":"plot"}),key:p=>p.m+p.x+","+p.y,
+  make:({x,y,m})=>m==="read"
+    ?{fig:coordSVG([x,y]),html:`점은 ( [[0]] , [[1]] )`,a:[String(x),String(y)],kind:"num",cls:"mid",text:`읽기 (${x},${y})`}
+    :{fig:"PLOT",pt:[x,y],html:`( ${x} , ${y} ) 에 점을 찍어 봐`,a:[x+","+y],kind:"plot",cls:"txt",text:`찍기 (${x},${y})`},
+  steps:({x,y,m})=>m==="read"
+    ?{head:"이 점은 어디일까?",fig:coordSVG([x,y]),list:[
+      {h:`점에서 곧장 아래로 내려가면 만나는 수 [[0]]`,a:[String(x)],hints:["손가락으로 점에서 아래 줄까지 따라가 볼까?"]},
+      {h:`점에서 곧장 왼쪽으로 가면 만나는 수 [[0]]`,a:[String(y)],hints:["이번엔 왼쪽 세로줄까지 따라가 볼까?"]},
+      {h:`그래서 점은 ( [[0]] , [[1]] )`,a:[String(x),String(y)],hints:["가로에서 찾은 수가 먼저, 세로에서 찾은 수가 다음이야."]}]}
+    :{head:`( ${x} , ${y} ) 찾기`,fig:"PLOT",pt:[x,y],list:[
+      {h:`앞의 수 ${x}: 아래 가로줄에서 ${x}를 찾고, 거기서 위로 ${y}칸. 눌러 봐`,a:[x+","+y],kind:"plot",hints:["앞의 수는 가로(아래 줄), 뒤의 수는 세로(위로 몇 칸)야.","아래 줄에서 먼저 출발점을 찾았어?"]}]},
+  pat:(p,g)=>{if(p.m==="read"){if(+g[0]===p.y&&+g[1]===p.x&&p.x!==p.y)return "가로·세로 순서 바뀜";return "한 칸 차이 / 읽기 틀림"}
+    const [gx,gy]=String(g[0]).split(",").map(Number);if(gx===p.y&&gy===p.x)return "가로·세로 순서 바뀜";return "위치 틀림"}},
+
+ /* 부모님이 추가할 수 있는 유형 (기본은 꺼짐) */
+ A2:{hard:p=>(p.b>=6?1.2:0)+(p.r>=p.b-2?.4:0),name:"나머지 있는 나눗셈",code:"A2",ex:"47 ÷ 6 = 7 … 5",sec:4,why:"달력·시계 문제, 두 자리 ÷ 한 자리, 가분수 → 대분수로 이어져요.",
+  idea:"나누는 수의 단에서 넘지 않는 마지막 곱을 찾아요.",
+  rand:()=>{const b=ri(2,9),q=ri(2,9);return{b,q,r:ri(1,b-1)}},key:p=>p.b+"/"+p.q+"/"+p.r,
+  make:({b,q,r})=>({html:`${b*q+r} ÷ ${b} = [[0]] … [[1]]`,a:[String(q),String(r)],kind:"num",cls:"mid",text:`${b*q+r}÷${b}`}),
+  steps:({b,q,r})=>{const a=b*q+r;return{head:`${a} ÷ ${b} = ?`,list:[
+    {h:`${b}단에서 ${a}를 넘지 않는 마지막: ${b} × [[0]]`,a:[String(q)],hints:[`${b} × ${q+1}은 ${a}보다 클까 작을까?`]},
+    {h:`${b} × ${q} = [[0]]`,a:[String(b*q)],hints:[`${b}단에서 ${q}번째 수는?`]},
+    {h:`${a} − ${b*q} = [[0]]`,a:[String(r)],hints:["남은 것이 나머지야. 빼 볼까?"]},
+    {h:`${a} ÷ ${b} = [[0]] … [[1]]`,a:[String(q),String(r)],hints:["위에서 찾은 두 수를 넣어 볼까?"]}]}},
+  pat:(p,g)=>{if(+g[1]>=p.b)return "나머지가 나누는 수보다 큼";if(+g[0]!==p.q)return "몫 틀림 · "+p.b+"단";return "나머지 틀림"}},
+
+ A7:{name:"약수 개수",code:"A7",ex:"18의 약수는 몇 개?",sec:6,why:"소수 찾기, 최대공약수, 약분으로 이어져요.",
+  idea:"두 수의 곱으로 짝을 지어 빠짐없이 찾아요.",
+  rand:()=>({N:pick([6,8,10,12,14,15,16,18,20,21,24,28,30,32,36,40,42,45,48])}),key:p=>""+p.N,
+  make:({N})=>{let c=0;for(let i=1;i<=N;i++)if(N%i===0)c++;return{html:`${N}의 약수는<br>모두 [[0]]개`,a:[String(c)],kind:"num",cls:"txt",text:`${N}의 약수 개수`}},
+  steps:({N})=>{const list=[];let c=0;for(let i=1;i*i<=N;i++){if(N%i===0){list.push({h:`${i} × [[0]] = ${N}`,a:[String(N/i)],hints:[`${N} ÷ ${i}는?`]});c+=(i*i===N)?1:2}else list.push({h:`${N}은 ${i}로 나누어떨어져?`,a:["X"],kind:"ox",hints:[`${N} ÷ ${i}의 나머지를 생각해 볼까?`]})}
+    list.push({h:`짝을 다 모으면 약수는 [[0]]개`,a:[String(c)],hints:["위에서 찾은 곱셈 식마다 수가 두 개씩 있어. 같은 수가 두 번이면 한 번만 세."]});return{head:`${N}의 약수는 몇 개?`,list}},
+  pat:(p,g)=>"개수 틀림"},
+
+ B6:{hard:p=>(String(p.x).includes("0")?1.2:0)+(p.c>=6?.8:0),name:"세 자리 × 한 자리",code:"B6",ex:"208 × 4",sec:6,why:"두 자리 × 두 자리, 단위 바꾸기, 큰 수 나눗셈 검산에 쓰여요.",
+  idea:"백, 십, 일로 쪼개서 곱하고 더해요.",
+  rand:()=>{let x=ri(101,989);if(Math.random()<.4){const d=String(x).split("");d[1]="0";x=+d.join("")}return{x,c:ri(2,9)}},key:p=>p.x+"x"+p.c,
+  make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",cls:"mid",text:`${x}×${c}`}),
+  steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
+  pat:(p,g)=>multPat(p.x,p.c,g[0])},
+
+ T12:{hard:p=>p.c>=6?1:0,name:"11·12단",code:"0-2",ex:"12 × 7",sec:2.5,why:"19단과 두 자리 곱셈의 바탕이에요.",idea:"12 × 7을 10 × 7과 2 × 7로 쪼개요.",
+  rand:()=>({x:ri(11,12),c:ri(2,9)}),key:p=>p.x+"x"+p.c,
+  make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",text:`${x}×${c}`}),
+  steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
+  pat:(p,g)=>multPat(p.x,p.c,g[0])},
+
+ C1:{name:"분모 같은 분수 덧셈",code:"C1",ex:"2/7 + 3/7",sec:3,why:"대분수 덧셈, 분모가 다른 분수 계산으로 이어져요.",idea:"1/7이 몇 개인지 세요.",
+  rand:()=>{const d=ri(3,9),a=ri(1,d-2);return{d,a,b:ri(1,d-1-a)}},key:p=>p.d+"/"+p.a+"/"+p.b,
+  make:({d,a,b})=>({html:`${fr(a,d)} + ${fr(b,d)} = ${fr("[[0]]",d)}`,a:[String(a+b)],kind:"num",text:`${a}/${d}+${b}/${d}`}),
+  steps:({d,a,b})=>({head:`${fr(a,d)} + ${fr(b,d)} = ?`,list:[
+    {h:`${fr(a,d)}는 ${fr(1,d)}이 [[0]]개`,a:[String(a)],hints:["분자가 몇 조각인지 알려 줘."]},
+    {h:`${fr(b,d)}는 ${fr(1,d)}이 [[0]]개`,a:[String(b)],hints:["분자를 봐."]},
+    {h:`모두 ${fr(1,d)}이 [[0]]개 → ${fr("?",d)}`,a:[String(a+b)],hints:["두 개수를 더하면?"]}]}),
+  pat:(p,g)=>+g[0]===p.a*p.b?"분자를 곱함":"분자 계산 틀림"}
+};
+const ORDER0=["A1","A3","B5","A6","T19","FR","OF","CO","A2","A7","B6","T12","C1"];
+const PLAN0={A1:3,A3:2,B5:2,A6:1,T19:1,FR:1,OF:1};
+
+/* ───────── 상태 ───────── */
+const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
+function freshCore(){return{v:1,cfg:{plan:clone(PLAN0),order:ORDER0.slice(),carryOn:true,tc:{}},ts:{},lastDay:null,carry:{},savedAt:0}}
+let S=freshCore(),DAYS={};
+try{const c=JSON.parse(localStorage.getItem(KCORE)||"null");if(c&&c.cfg)S=c}catch(e){}
+try{DAYS=JSON.parse(localStorage.getItem(KDAYS)||"{}")||{}}catch(e){DAYS={}}
+ORDER0.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});
+S.cfg.order=S.cfg.order.filter(id=>TYPES[id]);
+
+const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??1,n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
+const tst=id=>{const t=S.ts[id]||(S.ts[id]={runs:[],start:null,target:null,grad:false,gradDays:[],conceptDone:false,pool:[]});if(!t.facts)t.facts={};return t};
+const lvl=id=>TYPES[id].scaffold?(tst(id).level||0):1;
+const finalPQ=id=>tc(id).sec*(lvl(id)===0?2:1);
+const D=()=>DAYS[today()];
+
+function ensureToday(){
+  const t=today();if(S.lastDay===t&&DAYS[t])return;
+  let carry={};
+  if(S.cfg.carryOn&&S.lastDay&&DAYS[S.lastDay]){const L=DAYS[S.lastDay];
+    Object.keys({...L.plan,...L.carry}).forEach(id=>{const owe=(L.plan[id]||0)+(L.carry[id]||0)-(L.done[id]||0);if(owe>0&&!tc(id).home&&(S.cfg.plan[id]||0)>0)carry[id]=Math.min(owe,(S.cfg.plan[id]||1)*3)})}
+  if(!DAYS[t])DAYS[t]={plan:{},carry,done:{},sets:[],savedAt:0};
+  DAYS[t].plan=planNow();S.lastDay=t;save(t);
+}
+function planNow(){const p={};S.cfg.order.forEach(id=>{const n=S.cfg.plan[id]||0;if(n>0&&!tc(id).home)p[id]=n});return p}
+function owed(id){const d=D();return (d.plan[id]||0)+(d.carry[id]||0)}
+
+/* 저장: 이 기기(localStorage) + 가능하면 계정 저장소(db) */
+let DB=null,sync="local";const dirty=new Set();let flushT=null,flushing=false;
+function persistLocal(){
+  try{localStorage.setItem(KCORE,JSON.stringify(S))}catch(e){}
+  try{const keys=Object.keys(DAYS).sort(),cut=keys.length-45,slim={};keys.forEach((k,i)=>{slim[k]=i<cut?{...DAYS[k],sets:DAYS[k].sets.map(s=>({...s,items:undefined}))}:DAYS[k]});localStorage.setItem(KDAYS,JSON.stringify(slim))}catch(e){}
+}
+function save(dayKey){S.savedAt=Date.now();dirty.add("core");if(dayKey&&DAYS[dayKey]){DAYS[dayKey].savedAt=Date.now();dirty.add("d:"+dayKey)}persistLocal();if(DB){clearTimeout(flushT);flushT=setTimeout(flush,1200)}}
+async function flush(){if(!DB)return;if(flushing){flushT=setTimeout(flush,1200);return}flushing=true;
+  try{for(const k of [...dirty]){dirty.delete(k);try{if(k==="core")await DB.doc("app/core").set(clone(S));else{const d=k.slice(2);await DB.doc("days/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
+async function connectDB(){
+  try{if(!window.claude||!window.claude.use)return;const db=await window.claude.use("db");if(!db)return;
+    const core=await db.doc("app/core").get();let changed=false;
+    if(core.exists){const c=core.data();if((c.savedAt||0)>(S.savedAt||0)&&c.cfg){S=clone(c);changed=true}}
+    const ds=await db.collection("days").limit(1000).get();
+    ds.docs.forEach(d=>{const v=d.data();if(!v)return;if(!DAYS[d.id]||(v.savedAt||0)>(DAYS[d.id].savedAt||0)){DAYS[d.id]=clone(v);changed=true}});
+    DB=db;sync="db";
+    if(!core.exists){dirty.add("core");Object.keys(DAYS).forEach(k=>dirty.add("d:"+k))}
+    else{const remote=new Set(ds.docs.map(d=>d.id));Object.keys(DAYS).forEach(k=>{if(!remote.has(k))dirty.add("d:"+k)})}
+    S.lastDay=S.lastDay||null;ensureToday();persistLocal();flush();
+    if(changed&&(view==="home"||view==="parent"||view==="report"))render();
+  }catch(e){sync="local"}
+}
+
+/* ───────── 화면 ───────── */
+let view="home",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
+
+function go(v){view=v;modal=null;stopTick();render()}
+function render(){
+  ensureToday();
+  const f={home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord}[view]||vHome;
+  app.innerHTML=f()+(modal?modal():"");
+  if(view==="play")startTick();
+  if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
+}
+const bar=(title,right="")=>`<div class="bar"><button class="nb" data-act="home">처음으로</button><span class="where">${title}</span><span class="sp"></span>${right}</div>`;
+
+/* 홈 */
+function nextItem(){for(const id of S.cfg.order){const o=owed(id);if(o>0&&(D().done[id]||0)<o)return id}return null}
+function vHome(){
+  const d=D(),nx=nextItem(),totalOwed=S.cfg.order.reduce((s,id)=>s+owed(id),0),totalDone=S.cfg.order.reduce((s,id)=>s+Math.min(d.done[id]||0,owed(id)),0);
+  const carryN=Object.values(d.carry).reduce((a,b)=>a+b,0);
+  const items=S.cfg.order.filter(id=>owed(id)>0).map(id=>{const T=TYPES[id],o=owed(id),dn=d.done[id]||0,plan=d.plan[id]||0,st=tst(id);
+    const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
+    return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span></button>`}).join("");
+  const opt=S.cfg.order.filter(id=>TYPES[id].optional&&!owed(id)).map(id=>`<button data-act="open" data-arg="${id}"><b>${TYPES[id].name}</b><span>골라서 한 세트 · ${TYPES[id].ex}</span></button>`).join("");
+  return `${bar(dayLabel(today()))}<div class="page">
+   ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${TYPES[nx].ex}</span></button>`
+     :`<div class="notice good"><b>오늘 계획 ${totalOwed}세트를 다 했어.</b> 더 하고 싶으면 아래에서 골라도 돼.</div>`}
+   ${carryN?`<p class="small muted">점선 동그라미는 지난번에 남은 세트예요 (${carryN}세트).</p>`:""}
+   <div class="plan">${items||'<p class="muted">오늘 계획이 비어 있어요. 부모님 화면에서 정해 주세요.</p>'}</div>
+   <div class="side">${opt}
+     <button data-act="go" data-arg="word"><b>문장제 코너</b><span>시계 없이 천천히 · 준비 중</span></button>
+     <button data-act="go" data-arg="report"><b>오늘 기록</b><span>세트별 시간과 틀린 모양</span></button>
+     <button class="gate" id="gate" data-hold="parent"><b>부모님</b><span>꾹 누르고 있기</span><i class="fill"></i></button>
+   </div></div>`;
+}
+
+/* 세트 시작: 왜 하는지 + 예측 */
+let PRED={t:null,w:null};
+function lastRun(id){const r=tst(id).runs;return r.length?r[r.length-1]:null}
+function bestPQ(id){const r=tst(id).runs.filter(x=>x.w<=tc(id).allow);return r.length?Math.min(...r.map(x=>x.t/x.n)):null}
+function predOpts(id){const n=tc(id).n,lr=lastRun(id);let base;
+  if(lr){base=Math.round(lr.t/lr.n*n/5)*5;const o=[-15,-10,-5,0,5,10].map(x=>base+x).filter(x=>x>=5);return o}
+  const s=finalPQ(id)*n;return [1,1.5,2,2.5,3,4].map(k=>Math.round(s*k/10)*10)}
+function vIntro(){
+  const id=RUN.type,T=TYPES[id],c=tc(id),st=tst(id),n=c.n,lr=lastRun(id),bp=bestPQ(id);
+  const needConcept=!st.conceptDone&&!c.skipConcept;
+  const tgt=st.target?`지금 목표 <b>${fmt(st.target*n)}</b> (최종 기준 ${fmt(finalPQ(id)*n)})`
+    :st.runs.length===0?`처음 한 번은 빠른 확인이야. <b>${fmt(finalPQ(id)*n)}</b> 안에 오답 ${c.allow}개까지면 이미 되는 거라 바로 졸업.`
+    :`세트를 ${3-Math.min(3,st.runs.length)}번 더 하면 네 출발 기록이 정해져. 목표는 거기서 10%씩 줄여 가.`;
+  const tchips=predOpts(id).map(v=>`<button class="chip ${PRED.t===v?"on":""}" data-act="pt" data-arg="${v}">${fmt(v)}</button>`).join("");
+  const wchips=[0,1,2,3].map(v=>`<button class="chip ${PRED.w===v?"on":""}" data-act="pw" data-arg="${v}">${v===3?"3개 넘게":v+"개"}</button>`).join("");
+  return `${bar(T.name)}<div class="page">
+   <div class="card"><h2>${T.name} <span class="small muted">${n}문제</span></h2><p class="muted">${T.ex}</p>
+     <p><b>이걸 하면:</b> ${T.why}</p>
+     ${lr?`<dl class="kv"><dt>지난번</dt><dd class="tab">${fmt(lr.t)} · 오답 ${lr.w}</dd>${bp?`<dt>내 가장 빠른</dt><dd class="tab">${fmt(bp*n)}</dd>`:""}</dl>`:""}
+     ${T.scaffold?`<p class="small"><span class="pill new">${lvl(id)===0?"칸 채우기 단계":"답 칸만"}</span> ${lvl(id)===0?"식 칸을 순서대로 채워. 기준 안에 한 세트를 풀면 답 칸만 나오는 단계로 가.":""}</p>`:""}
+     <p class="small">${tgt}</p></div>
+   ${needConcept?`<div class="notice"><b>처음이니까 방법부터.</b> 한 문제를 먼저 같이 보고, 그다음 시계 없이 ${T.conceptN||3}문제를 빈칸 채우면서 풀어.</div>
+     <button class="bigbtn" data-act="concept">방법 찾기 시작</button>`:""}
+   <div class="card"><h3>먼저 예측해 봐</h3><p class="small muted">몇 초 걸릴까?</p><div class="chips">${tchips}</div>
+     <p class="small muted">몇 개 틀릴까?</p><div class="chips">${wchips}</div></div>
+   <button class="bigbtn ${needConcept?"ghost":""}" data-act="start" ${PRED.t==null||PRED.w==null?"disabled":""}>${needConcept?"방법 알아, 바로 시작":"시작"}</button>
+   ${st.conceptDone||c.skipConcept?`<button class="nb" data-act="concept">방법 다시 보기</button>`:""}
+  </div>`;
+}
+
+/* 문제 풀이 엔진 (세트와 방법 찾기가 같이 씀) */
+function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d)\]\]/g,(m,i)=>{i=+i;return `<button class="box ${i===act?"act":""} ${state&&state[i]||""}" data-act="box" data-arg="${i}">${esc(vals[i]||"")}</button>`})}
+function padHTML(kind,canSubmit){
+  if(kind==="ox")return `<div class="ox"><button data-act="ox" data-arg="O" aria-label="맞아요">O</button><button data-act="ox" data-arg="X" aria-label="아니에요">X</button></div>`;
+  if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
+  const k=[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" data-key="${n}">${n}</button>`).join("");
+  return `<div class="pad">${k}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button><button class="key" data-key="0">0</button><button class="key go" data-key="ok">확인</button></div>`;
+}
+function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
+
+/* ── 세트 ── */
+/* 알짜만: 문제(사실)마다 기록. 처음에 맞히고 자기 평균보다 빠르게 두 번 연속이면 쉬어 가고(7일 뒤 다시 확인),
+   틀리거나 느린 건 다음 세트에 다시 나와요. 7·8·9단, 받아올림, 0 낀 수 같은 어려운 것에 무게. */
+function buildSet(id){
+  const T=TYPES[id],n=tc(id).n,st=tst(id),F=st.facts,now=Date.now(),cand=new Map();
+  Object.values(F).forEach(f=>{if(f.p)cand.set(T.key(f.p),f.p)});
+  for(let g=0;g<400;g++){const p=T.rand();cand.set(T.key(p),p)}
+  const scored=[];
+  cand.forEach((p,k)=>{const f=F[k];let w=1+(T.hard?T.hard(p):0)+Math.random()*1.2;
+    if(f){if(f.r){if(now-f.r<7*864e5)return;w+=.5}
+      w+=f.w*2.5+(f.slow?2:0)+(f.s===0&&f.n>0?1.5:0)}
+    else w+=.3;
+    scored.push([w,p,k])});
+  scored.sort((a,b)=>b[0]-a[0]);
+  // 같은 단만 몰리지 않게: 같은 앞부분(예: 7단)은 세트에 최대 3개
+  const out=[],grp={},gk=p=>JSON.stringify(Object.values(p)[0]);
+  for(const [w,p] of scored){if(out.length>=n)break;const g=gk(p);if((grp[g]||0)>=3&&scored.length>n*3)continue;grp[g]=(grp[g]||0)+1;out.push(p)}
+  for(const [w,p] of scored){if(out.length>=n)break;if(!out.includes(p))out.push(p)}
+  out.sort(()=>Math.random()-.5);
+  const lv=lvl(id);return out.map(p=>({p,q:T.make(p,lv)}));
+}
+function updateFacts(id,probs,items){
+  const T=TYPES[id],F=tst(id).facts,ms=items.map(x=>x.ms).slice().sort((a,b)=>a-b),med=ms[Math.floor(ms.length/2)]||0;
+  probs.forEach((pr,k)=>{const key=T.key(pr.p),it=items[k],f=F[key]||(F[key]={p:pr.p,s:0,w:0,n:0});
+    f.n++;f.t=Math.round(it.ms);const fast=it.ok1&&it.ms<=med&&!it.skip;f.slow=it.ok1&&!fast;
+    if(!it.ok1){f.w++;f.s=0;f.r=0}else if(fast){f.s++;if(f.s>=2){f.r=Date.now();f.w=Math.max(0,f.w-1)}}else f.s=0});
+  const keys=Object.keys(F);if(keys.length>800){keys.sort((a,b)=>(F[a].n-F[b].n));keys.slice(0,keys.length-800).forEach(k=>delete F[k])}
+}
+function startSet(){
+  const id=RUN.type;RUN.probs=buildSet(id);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
+  RUN.items=RUN.probs.map(()=>({ms:0,tries:[],skip:false,mis:0,ok:false,ok1:false}));
+  RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred={...PRED};RUN.started=Date.now();RUN.user=null;
+  view="play";beginQ();render();
+}
+const curIdx=()=>RUN.order[RUN.pos];
+function beginQ(){RUN.vals=[];RUN.act=0;RUN.user=null;RUN.say="";RUN.cur=performance.now();RUN.boxState=[]}
+function stopClock(){if(RUN&&RUN.cur!=null){RUN.items[curIdx()].ms+=performance.now()-RUN.cur;RUN.cur=null}}
+function resumeClock(){if(RUN&&RUN.cur==null)RUN.cur=performance.now()}
+function elapsed(){if(!RUN)return 0;let s=RUN.items.reduce((a,b)=>a+b.ms,0);if(RUN.cur!=null)s+=performance.now()-RUN.cur;return s/1000}
+function startTick(){stopTick();tick=setInterval(()=>{const c=$("#clock");if(c)c.textContent=fmt(elapsed())},250)}
+function stopTick(){if(tick){clearInterval(tick);tick=null}}
+function vPlay(){
+  const i=curIdx(),pr=RUN.probs[i],q=pr.q,n=RUN.probs.length,doneN=RUN.items.filter(x=>x.ok||x.tries.length>=(q.kind==="ox"?1:2)).length;
+  const it=RUN.items[i],allow=tc(RUN.type).allow,wn=RUN.items.filter(x=>x.tries.length&&!x.ok1).length;
+  const lives=Array.from({length:allow},(_,k)=>`<i class="${k<allow-wn?"f":""}"></i>`).join("");
+  return `${bar(`<span class="prog">${Math.min(doneN+1,n)} / ${n}</span>`,`<span class="clock" id="clock">${fmt(elapsed())}</span>`)}
+   <div class="lives" aria-label="남은 실수 ${Math.max(0,allow-wn)}개">${lives}${wn>allow?`<span class="small muted">기록만 남기는 세트</span>`:""}</div>
+   <div class="stage">${q.kind==="plot"?`<div class="fig">${coordSVG(null,RUN.user,true)}</div>`:figHTML(q)}
+     <div class="qline ${q.cls||""}">${boxesHTML(q.html,RUN.vals,q.kind==="num"?RUN.act:-1,RUN.boxState)}</div>
+     <div class="say blue" aria-live="polite">${RUN.say}</div></div>
+   <div class="under"><button class="nb" data-act="pause">잠깐 멈춤</button>${!it.skip&&RUN.pos<RUN.order.length-1?`<button class="nb" data-act="later">나중에 풀기</button>`:""}</div>
+   ${padHTML(q.kind,!!RUN.user)}`;
+}
+function typeKey(k){
+  const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx)return;
+  const q=view==="play"?RUN.probs[curIdx()].q:curStep();if(!q||q.kind==="ox"||q.kind==="plot")return;
+  if(k==="ok"){submit();return}
+  const v=ctx.vals[ctx.act]||"";
+  if(k==="del"){ctx.vals[ctx.act]=v.slice(0,-1)}
+  else{if(v.length>=4)return;if(v==="0")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
+  ctx.boxState=[];ctx.say=view==="play"?"":ctx.say;
+  softRender();
+}
+function softRender(){ // 숫자칸만 다시 그리기 (빠르게)
+  if(view==="play"){const q=RUN.probs[curIdx()].q;const el=$(".qline");if(el)el.innerHTML=boxesHTML(q.html,RUN.vals,RUN.act,RUN.boxState);const s=$(".say");if(s)s.textContent=RUN.say}
+  else render();
+}
+function submit(){
+  if(view==="concept"){conceptSubmit();return}
+  const i=curIdx(),pr=RUN.probs[i],q=pr.q,it=RUN.items[i];
+  let given;
+  if(q.kind==="plot"){if(!RUN.user)return;given=[RUN.user.join(",")]}
+  else if(q.kind==="ox")given=RUN.vals.slice(0,1);
+  else{given=q.a.map((_,k)=>RUN.vals[k]||"");const empty=given.findIndex(v=>!v);if(empty>=0){RUN.act=empty;softRender();return}
+    // 잘못 누른 게 분명할 때: 자리 수가 다르면 한 번 묻고, 시간은 멈춤
+    if(!it.misAsked&&given.some((v,k)=>v.length!==q.a[k].length)){it.misAsked=true;it.mis++;stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>이렇게 낼까?</h3><p class="qline mid">${esc(given.join(" , "))}</p><p class="muted small">누르다 손이 미끄러졌을 수도 있어서 한 번만 물어봐. 이 시간은 안 세.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="misfix">고칠래</button><button class="bigbtn" style="flex:1" data-act="miskeep">이대로 낼래</button></div></div></div>`;render();return}}
+  judge(given);
+}
+function judge(given){
+  const i=curIdx(),pr=RUN.probs[i],q=pr.q,it=RUN.items[i];
+  const ok=[q.a,...(q.alts||[])].some(a=>a.every((v,k)=>v===given[k]));
+  it.tries.push(given.join("|"));
+  if(ok){it.ok=true;if(it.tries.length===1)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();setTimeout(nextQ,220);return}
+  if(it.tries.length===1){it.pat=TYPES[RUN.type].pat(pr.p,given)||"";}
+  if(it.tries.length===1&&q.kind!=="ox"){RUN.say="다시 한 번 볼까?";RUN.vals=q.kind==="plot"?[]:[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
+  stopClock();nextQ();
+}
+function nextQ(){
+  RUN.pos++;
+  if(RUN.pos>=RUN.order.length){finishSet();return}
+  beginQ();render();
+}
+function finishSet(){
+  stopTick();stopClock();
+  const id=RUN.type,c=tc(id),st=tst(id),T=TYPES[id];
+  const n=RUN.probs.length,t=RUN.items.reduce((a,b)=>a+b.ms,0)/1000,w=RUN.items.filter(x=>!x.ok1).length;
+  const pq=t/n,fin=finalPQ(id),valid=w<=c.allow,prevRuns=st.runs.slice(),prevBest=bestPQ(id),prevLast=lastRun(id);
+  const byO=RUN.order.map(k=>RUN.items[k].ms),hh=Math.floor(n/2),h1=byO.slice(0,hh).reduce((a,b)=>a+b,0)/1000,h2=byO.slice(hh).reduce((a,b)=>a+b,0)/1000;
+  const rec={type:id,n,t:Math.round(t*10)/10,w,h1:Math.round(h1*10)/10,h2:Math.round(h2*10)/10,pred:RUN.pred,at:Date.now(),
+    items:RUN.items.map((x,k)=>({q:RUN.probs[k].q.text,a:RUN.probs[k].q.a.join("|"),g:x.tries,ok1:x.ok1,ok:x.ok,ms:Math.round(x.ms),skip:x.skip,mis:x.mis,pat:x.pat||"",o:RUN.order.indexOf(k)}))};
+  const out={quick:false,pass:false,grad:false,tgtBefore:st.target,newStart:false};
+  if(prevRuns.length===0&&valid&&pq<=fin){out.quick=true;out.grad=true;st.grad=true;st.target=fin;st.start=pq}
+  else{
+    if(valid&&pq<=fin){const d=today();if(!st.gradDays.includes(d))st.gradDays.push(d);if(st.gradDays.length>=2&&!st.grad){st.grad=true;out.grad=true}}
+    if(st.target==null){if(prevRuns.length+1>=3){const first=prevRuns.slice(0,2).concat([{t,n}]);st.start=first.reduce((a,b)=>a+b.t/b.n,0)/first.length;st.target=Math.max(fin,st.start*.9);out.newStart=true}}
+    else if(valid&&pq<=st.target+1e-9){out.pass=true;st.target=Math.max(fin,st.target*.9)}
+  }
+  rec.pass=out.pass||out.quick;rec.tgt=out.tgtBefore;rec.lv=lvl(id);
+  if(T.scaffold&&lvl(id)===0&&valid&&(out.pass||out.quick||(st.target==null&&pq<=fin))){out.levelUp=true}
+  st.runs.push({d:today(),t:rec.t,w,n,pass:rec.pass});if(st.runs.length>200)st.runs=st.runs.slice(-200);
+  updateFacts(id,RUN.probs,RUN.items);st.pool=[];
+  if(out.levelUp){st.runs0=(st.runs0||[]).concat(st.runs);st.runs=[];st.level=1;st.start=null;st.target=null;st.gradDays=[];st.grad=false;out.grad=false;out.quick=false}
+  const d=D();d.sets.push(rec);d.done[id]=(d.done[id]||0)+1;
+  save(today());
+  LAST={rec,out,prevBest,prevLast,id,wrongs:RUN.probs.filter((p,k)=>!RUN.items[k].ok1).map(p=>p.p)};
+  RUN=null;view="result";render();
+}
+
+/* 결과: 근거 있는 말만 */
+function vResult(){
+  const {rec,out,prevBest,prevLast,id,wrongs}=LAST,T=TYPES[id],c=tc(id),st=tst(id),n=rec.n;
+  const facts=[];
+  if(rec.pred&&rec.pred.t!=null){const diff=rec.t-rec.pred.t,tol=Math.max(5,rec.pred.t*.1);
+    if(Math.abs(diff)<=tol)facts.push([1,`시간 예측이 맞았어. ${fmt(rec.pred.t)}라고 했고 ${fmt(rec.t)} 걸렸어. 네 판단이 정확했어.`]);
+    else facts.push([0,`예측은 ${fmt(rec.pred.t)}, 실제는 ${fmt(rec.t)}. ${diff>0?Math.round(diff)+"초 더":Math.round(-diff)+"초 덜"} 걸렸어.`]);
+    const pw=rec.pred.w,hit=pw===3?rec.w>=3:pw===rec.w;
+    facts.push(hit?[1,`오답 예측도 맞았어. ${pw===3?"3개 넘게":pw+"개"}라고 했고 ${rec.w}개였어.`]:[0,`오답은 ${pw===3?"3개 넘게":pw+"개"}라고 했고 ${rec.w}개였어.`]);}
+  if(prevLast){const dl=prevLast.t/prevLast.n*n-rec.t;if(dl>=1)facts.push([1,`지난번(${fmt(prevLast.t/prevLast.n*n)})보다 ${Math.round(dl)}초 빨라졌어.`]);else facts.push([0,`지난번은 ${fmt(prevLast.t/prevLast.n*n)}였어.`])}
+  if(prevBest!=null&&rec.w<=c.allow&&rec.t/n<prevBest-0.01)facts.push([1,`네 기록 중에 가장 빨라. 전에는 ${fmt(prevBest*n)}였어.`]);
+  if(out.levelUp)facts.push([1,`칸 채우기 세트를 기준 안에 풀었어. 다음부터는 답 칸만 나와. 순서는 머릿속으로: ÷ 다음 ×.`]);
+  else if(out.quick)facts.push([1,`첫 세트에 기준 ${fmt(finalPQ(id)*n)} 안에 들어왔어. 이건 이미 되는 거라 졸업이야.`]);
+  else if(out.grad)facts.push([1,`서로 다른 이틀에 최종 기준 안에 들어왔어. 졸업이야.`]);
+  else if(out.pass)facts.push([1,`목표 ${fmt(out.tgtBefore*n)} 안에 들어왔어. 다음 목표는 ${fmt(st.target*n)}.`]);
+  else if(out.newStart)facts.push([0,`세 번 푼 평균 ${fmt(st.start*n)}이 네 출발 기록이야. 첫 목표는 ${fmt(st.target*n)}.`]);
+  else if(st.target&&rec.w<=c.allow)facts.push([0,`목표는 ${fmt(st.target*n)}. 이번엔 ${Math.round(rec.t-st.target*n)}초 차이였어.`]);
+  if(rec.w>c.allow)facts.push([0,`오답이 ${rec.w}개라 이번 세트는 기록만 남겨. 틀린 문제를 같이 짚어 볼까?`]);
+  const mx=Math.max(...rec.items.map(x=>x.ms),1),bw=300/n;
+  const bars=`<svg viewBox="0 0 300 90" role="img" aria-label="문제별 걸린 시간">${rec.items.slice().sort((a,b)=>a.o-b.o).map((x,k)=>{const h=Math.max(3,x.ms/mx*70);return `<rect x="${k*bw+1.5}" y="${80-h}" width="${bw-3}" height="${h}" rx="2" fill="${x.ok1?"var(--blue)":"var(--amber)"}"/>`}).join("")}<line x1="0" y1="80.5" x2="300" y2="80.5" stroke="var(--line)"/><text x="0" y="90" font-size="9" fill="var(--ink-2)">1번</text><text x="300" y="90" font-size="9" text-anchor="end" fill="var(--ink-2)">${n}번</text></svg>`;
+  const left=owed(id)-(D().done[id]||0);
+  return `${bar(T.name)}<div class="page">
+   <div class="row" style="justify-content:space-between;align-items:flex-end"><div><p class="muted small">걸린 시간</p><p class="big">${fmt(rec.t)}</p></div><div style="text-align:right"><p class="muted small">오답</p><p class="big">${rec.w}</p></div></div>
+   <div class="facts">${facts.map(([s,t])=>`<p class="${s?"star":""}">${t}</p>`).join("")}</div>
+   <div class="card"><p class="small muted">문제마다 걸린 시간 (주황은 처음에 틀린 문제)</p><div class="bars">${bars}</div></div>
+   ${wrongs.length?`<button class="bigbtn ${rec.w>c.allow?"":"ghost"}" data-act="review">틀린 ${wrongs.length}문제 같이 짚기</button>`:""}
+   ${left>0?`<button class="bigbtn" data-act="again">${T.name} 한 세트 더 (${left}세트 남음)</button>`:""}
+   <button class="bigbtn ghost" data-act="home">처음으로</button></div>`;
+}
+
+/* ── 방법 찾기 / 틀린 문제 짚기 ── */
+function startConcept(id,probs,mode){
+  const T=TYPES[id];
+  if(!probs){const seen=new Set();probs=[];let g=0;while(probs.length<(T.conceptN||3)&&g++<200){const p=T.rand(),k=T.key(p);if(seen.has(k))continue;seen.add(k);probs.push(p)}
+    if(id==="FR"){probs=[{d:5,w:3,n:2,dir:"toMixed"},{d:4,w:2,n:3,dir:"toImp"}]}
+    if(id==="OF"){probs=[{d:8,m:6,n:3},{d:4,m:7,n:3},{d:6,m:9,n:5}]}
+    if(id==="CO"){probs.forEach((p,i)=>p.m=i<2?"read":"plot")}}
+  let demo=null;
+  if(mode==="concept"){const DP={FR:{d:3,w:2,n:1,dir:"toMixed"},OF:{d:4,m:5,n:3},CO:{x:2,y:4,m:"read"}}[id];let dp=DP;
+    if(!dp){let g=0;do{dp=T.rand()}while(g++<50&&probs.some(p=>T.key(p)===T.key(dp)))}
+    demo={s:T.steps(dp),shown:1}}
+  CON={type:id,mode,demo,probs:probs.map(p=>({p,s:T.steps(p)})),pi:0,si:0,vals:[],act:0,miss:0,say:"",user:null,boxState:[],done:[]};
+  view="concept";render();
+}
+const curStep=()=>{if(!CON)return null;const pr=CON.probs[CON.pi];const s=pr&&pr.s.list[CON.si];return s?{...s,html:s.h,kind:s.kind||"num"}:null};
+function vConcept(){
+  if(CON.demo){const dm=CON.demo,s=dm.s,all=dm.shown>=s.list.length;
+    const lines=s.list.slice(0,dm.shown).map((st,k)=>`<div class="st ${k===dm.shown-1?"cur":"done"}"><span class="n">${"①②③④⑤⑥⑦⑧"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b class="box ok">${esc(st.a[+i])}</b>`)}${st.kind==="ox"?` <b class="box ok">${st.a[0]}</b>`:""}${st.kind==="plot"?` → (${esc(st.a[0])})`:""}</div>`).join("");
+    const fig=s.fig==="PLOT"?"":s.fig?`<div class="fig">${s.fig}</div>`:"";
+    return `${bar("먼저 한 번 보기")}<div class="page">
+      <p class="small muted">${TYPES[CON.type].name}는 처음이니까 한 문제를 같이 보자. 줄마다 무엇을 하는지 봐.</p>
+      <div class="qline mid" style="justify-content:flex-start">${s.head}</div>${fig}
+      <div class="steps">${lines}</div>
+      ${all?`<div class="notice">${TYPES[CON.type].idea}</div><button class="bigbtn" data-act="demoend">이제 내가 해 볼게</button>`:`<button class="bigbtn" data-act="demonext">다음 줄 보기</button>`}</div>`}
+  const T=TYPES[CON.type],fin=CON.pi>=CON.probs.length,PI=Math.min(CON.pi,CON.probs.length-1),pr=CON.probs[PI],s=pr.s,cur=fin?null:curStep(),SI=fin?s.list.length:CON.si;
+  const doneList=s.list.slice(0,SI).map((st,k)=>`<div class="st done"><span class="n">${"①②③④⑤⑥⑦⑧"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b>${esc(st.a[+i])}</b>`).replace(/^/,"")}${st.kind==="ox"?` <b>${st.a[0]}</b>`:""}</div>`).join("");
+  const curHTML=cur?`<div class="st cur"><span class="n">${"①②③④⑤⑥⑦⑧"[SI]}</span>${cur.kind==="num"?boxesHTML(cur.h,CON.vals,CON.act,CON.boxState):cur.h}</div>`:"";
+  const hint=CON.miss>0&&cur?`<div class="hint">${cur.hints[Math.min(CON.miss-1,cur.hints.length-1)]}</div>`:"";
+  const fig=s.fig==="PLOT"?`<div class="fig">${coordSVG(null,CON.user,true)}</div>`:s.fig?`<div class="fig">${s.fig}</div>`:"";
+  const stuck=CON.miss>=3?`<button class="nb" data-act="cskip">이 칸은 부모님이랑 볼게</button>`:"";
+  return `${bar(`${CON.mode==="review"?"같이 짚기":"방법 찾기"} · ${PI+1}/${CON.probs.length}`)}
+   <div class="page" style="padding-bottom:8px">
+    ${CON.pi===0&&CON.si===0&&CON.mode!=="review"?`<p class="small muted">${T.name}: 순서대로 빈칸을 채워 봐. 시계는 없어.</p>`:""}
+    <div class="qline mid" style="justify-content:flex-start">${s.head}</div>${fig}
+    <div class="steps">${doneList}${curHTML}</div>${hint}<div class="row">${stuck}</div></div>
+   ${cur?padHTML(cur.kind,!!CON.user):""}`;
+}
+function conceptSubmit(){
+  const cur=curStep();if(!cur)return;
+  let given;
+  if(cur.kind==="plot"){if(!CON.user)return;given=[CON.user.join(",")]}
+  else if(cur.kind==="ox")given=CON.vals.slice(0,1);
+  else{given=cur.a.map((_,k)=>CON.vals[k]||"");const e=given.findIndex(v=>!v);if(e>=0){CON.act=e;render();return}}
+  if([cur.a,...(cur.alts||[])].some(a=>a.every((v,k)=>v===given[k]))){advanceStep();return}
+  CON.miss++;CON.vals=[];CON.act=0;CON.user=null;CON.boxState=cur.a.map(()=>"again");render();
+}
+function advanceStep(){
+  CON.si++;CON.vals=[];CON.act=0;CON.miss=0;CON.user=null;CON.boxState=[];
+  if(CON.si>=CON.probs[CON.pi].s.list.length){CON.pi++;CON.si=0;
+    if(CON.pi>=CON.probs.length){const id=CON.type;
+      if(CON.mode==="concept"){tst(id).conceptDone=true;save()}
+      const T=TYPES[id];
+      modal=()=>`<div class="veil"><div class="sheet"><h3>${CON.mode==="review"?"다 짚었어":CON.probs.length+"문제를 같은 순서로 풀었어"}</h3><p>${T.idea}</p><p class="small muted">세트에서도 이 순서를 머릿속으로 떠올려 봐.</p><button class="bigbtn" data-act="${CON.mode==="review"?"home":"tointro"}">${CON.mode==="review"?"처음으로":"세트 하러 가기"}</button></div></div>`;
+      render();return}}
+  render();
+}
+
+/* 오늘 기록 */
+function sigOf(sets){
+  const items=sets.flatMap(s=>(s.items||[]).map(x=>({...x})));
+  const first3=sets.reduce((a,s)=>a+(s.items||[]).filter(x=>x.o<3&&!x.ok1).length,0);
+  let late=[];sets.forEach(s=>{if(!s.items||s.n<6)return;const by=s.items.slice().sort((a,b)=>a.o-b.o),h=Math.floor(s.n/2);const a=by.slice(0,h).reduce((x,y)=>x+y.ms,0)/h,b=by.slice(h).reduce((x,y)=>x+y.ms,0)/(s.n-h);late.push(b-a)});
+  const lateAvg=late.length?late.reduce((a,b)=>a+b,0)/late.length/1000:0;
+  let stall=0;sets.forEach(s=>{if(!s.items)return;const ms=s.items.map(x=>x.ms).sort((a,b)=>a-b),med=ms[Math.floor(ms.length/2)]||0;stall+=s.items.filter(x=>x.ok1&&x.ms>med*3&&x.ms>4000).length});
+  const fixed=items.filter(x=>!x.ok1&&x.ok).length;
+  const pats={};items.forEach(x=>{if(!x.ok1&&x.pat)pats[x.pat]=(pats[x.pat]||0)+1});
+  return{first3,lateAvg,stall,fixed,pats};
+}
+function vReport(){
+  const t=today(),d=D(),daysWith=Object.keys(DAYS).filter(k=>DAYS[k].sets&&DAYS[k].sets.length).sort();
+  const byType={};d.sets.forEach(s=>(byType[s.type]=byType[s.type]||[]).push(s));
+  const prevDayOf=id=>{for(let i=daysWith.length-1;i>=0;i--){const k=daysWith[i];if(k===t)continue;const ss=DAYS[k].sets.filter(s=>s.type===id);if(ss.length)return{k,ss}}return null};
+  const rows=Object.keys(byType).map(id=>{const ss=byType[id],T=TYPES[id];if(!T)return "";const n=tc(id).n;
+    const best=Math.min(...ss.map(s=>s.t/s.n))*n,pd=prevDayOf(id),pbest=pd?Math.min(...pd.ss.map(s=>s.t/s.n))*n:null;
+    const sg=sigOf(ss),pats=Object.entries(sg.pats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} ${v}`).join(", ");
+    const predHit=ss.filter(s=>s.pred&&s.pred.t!=null&&Math.abs(s.t-s.pred.t)<=Math.max(5,s.pred.t*.1)).length;
+    return `<div class="card"><div class="row" style="justify-content:space-between"><h3>${T.name}</h3><span class="pill">${ss.length}세트</span></div>
+      <p class="tab">${ss.map(s=>`${fmt(s.t)}${s.w?`<span class="muted">(${s.w})</span>`:""}`).join(" → ")}</p>
+      ${ss.some(s=>s.h1!=null)?`<p class="small tab muted">앞 절반 / 뒤 절반: ${ss.filter(s=>s.h1!=null).map(s=>`${Math.round(s.h1)}초 / ${Math.round(s.h2)}초`).join(" · ")}</p>`:""}
+      <dl class="kv"><dt>오늘 가장 빠른</dt><dd class="tab">${fmt(best)}</dd>
+      ${pbest!=null?`<dt>지난 기록 (${pd.k.slice(5).replace("-","/")})</dt><dd class="tab">${fmt(pbest)} → ${best<pbest?Math.round(pbest-best)+"초 빨라짐":best>pbest?Math.round(best-pbest)+"초 느림":"같음"}</dd>`:""}
+      <dt>예측 맞음</dt><dd>${predHit}/${ss.length}세트</dd>
+      ${pats?`<dt>틀린 모양</dt><dd>${pats}</dd>`:""}
+      <dt>신호</dt><dd class="small">처음 3문제 오답 ${sg.first3} · 오래 멈췄다 맞힘 ${sg.stall} · 고쳐서 맞힘 ${sg.fixed}${sg.lateAvg?` · 후반이 앞보다 문제당 ${sg.lateAvg>0?"+":""}${sg.lateAvg.toFixed(1)}초`:""}</dd></dl></div>`}).join("");
+  const nDays=daysWith.length;
+  return `${bar("오늘 기록")}<div class="page">
+   <p>${dayLabel(t)} · ${d.sets.length}세트 · ${d.sets.reduce((a,s)=>a+s.n,0)}문제</p>
+   ${rows||'<p class="muted">오늘은 아직 푼 세트가 없어요.</p>'}
+   <div class="notice ${nDays>=5?"":"warm"} small">${nDays>=5?`기록이 ${nDays}일 쌓였어요. 위 신호로 막힘 종류(이해 부족 · 처리속도·컨디션 · 주의 · 꺼내기 막힘 · 후반 집중 저하)를 볼 수 있어요. 계통표의 대응표를 같이 보세요.`
+     :`지금 ${nDays}일치 기록이에요. 막힘 종류는 5일치가 쌓인 뒤에 판단해요. 그 전에는 숫자만 모아 둬요.`}</div>
+   <p class="small muted">시간은 시훈이 자기 기록끼리만 비교해요. 처음 3문제 오답은 주의, 오래 멈췄다 맞힘은 꺼내기 막힘, 후반 느려짐은 후반 집중 저하의 신호예요.</p>
+  </div>`;
+}
+
+/* 문장제 코너 (준비 중) */
+function vWord(){
+  const A=[["수세기 문장",115],["덧셈·뺄셈 문장",160],["곱셈·나눗셈 문장",105],["분수·소수 문장",30],["길이와 시간 문장",30],["들이와 무게 문장",20]];
+  return `${bar("문장제 코너")}<div class="page">
+   <div class="notice">시계 없이 천천히 푸는 곳이에요. 매번 같은 순서 틀(① 무엇을 묻나 ② 조건에 색칠 ③ 식 ④ 계산 ⑤ 답이 말이 되나)을 채워요. 문제는 다음 버전에 들어가요. 지금은 부모님과 따로 해요.</div>
+   <div class="card">${A.map(([a,n])=>`<div class="row" style="justify-content:space-between"><span>${a}</span><span class="pill tab">${n}문제</span></div>`).join("")}<p class="small muted">모두 460문제 · 한 묶음에서 연속 5문제를 맞히면 다음 묶음이 열려요.</p></div></div>`;
+}
+
+/* 부모님 화면 */
+let IMPORT_TXT="",MSG="";
+function vParent(){
+  const d=D(),carryN=Object.values(d.carry).reduce((a,b)=>a+b,0),total=Object.values(planNow()).reduce((a,b)=>a+b,0);
+  const rows=S.cfg.order.map((id,ix)=>{const T=TYPES[id],c=tc(id),st=tst(id),n=S.cfg.plan[id]||0,n20=c.n,open=parentOpen[id];
+    const stat=st.grad?'<span class="pill ok">졸업</span>':st.target?`<span class="pill new">목표 ${fmt(st.target*n20)}</span>`:st.runs.length?`<span class="pill">기록 ${st.runs.length}번</span>`:"";
+    return `<div class="prow"><div class="top"><span class="nm">${T.name} <span class="code">${T.code}</span></span>${c.home?'<span class="pill warm">집에서 따로 함</span>':""}${stat}
+      <div class="stepper"><button data-act="pl" data-arg="${id}|-1" aria-label="세트 줄이기">−</button><b>${n}</b><button data-act="pl" data-arg="${id}|1" aria-label="세트 늘리기">+</button></div></div>
+      <div class="row small"><button class="nb" data-act="mv" data-arg="${id}|-1" ${ix===0?"disabled":""}>위로</button><button class="nb" data-act="mv" data-arg="${id}|1" ${ix===S.cfg.order.length-1?"disabled":""}>아래로</button><button class="nb" data-act="popen" data-arg="${id}">${open?"닫기":"기준 바꾸기"}</button></div>
+      ${open?`<div class="more">
+        <label>문제당 초 (최종 기준)<input id="sec-${id}" type="number" step="0.5" min="1" max="60" value="${c.sec}" data-ch="sec" data-arg="${id}"></label>
+        <label>오답 허용<input id="allow-${id}" type="number" step="1" min="0" max="10" value="${c.allow}" data-ch="allow" data-arg="${id}"></label>
+        <label>세트당 문제 수<input id="n-${id}" type="number" step="1" min="5" max="40" value="${c.n}" data-ch="n" data-arg="${id}"></label>
+        <label>출발 기록 (${c.n}문제, 예 1:20)<input id="start-${id}" type="text" inputmode="numeric" placeholder="${id==="A1"?"수피온 1:05~1:46":"비우면 3세트 평균"}" value="${st.start?fmt(st.start*c.n):""}" data-ch="start" data-arg="${id}"></label>
+        <label class="full row" style="flex-direction:row"><input id="home-${id}" type="checkbox" ${c.home?"checked":""} data-ch="home" data-arg="${id}"> 집에서 따로 함 (앱에서 빼고 통과로 쳐요)</label>
+        <label class="full row" style="flex-direction:row"><input id="skc-${id}" type="checkbox" ${c.skipConcept?"checked":""} data-ch="skipConcept" data-arg="${id}"> 방법 찾기 건너뛰기</label>
+        <p class="full small muted">쉬어 가는 문제 ${Object.values(st.facts||{}).filter(f=>f.r).length}개 · 자주 틀린 문제 ${Object.values(st.facts||{}).filter(f=>f.w>=2).map(f=>esc(TYPES[id].make(f.p).text)).slice(0,6).join(", ")||"없음"}</p>
+        <p class="full small muted">최종 기준 ${fmt(c.sec*c.n)} · 지금 목표 ${st.target?fmt(st.target*c.n):"아직 없음"} · 기준 안에 통과한 날 ${st.gradDays.length}/2</p>
+        <div class="full row">${T.scaffold?`<button class="nb" data-act="plv" data-arg="${id}">${lvl(id)===0?"답 칸만으로 바꾸기":"칸 채우기로 되돌리기"}</button>`:""}<button class="nb" data-act="pgrad" data-arg="${id}">${st.grad?"졸업 취소":"졸업 처리"}</button><button class="nb" data-act="preset" data-arg="${id}">이 유형 기록 지우기</button></div>
+      </div>`:""}</div>`}).join("");
+  const syncTxt=sync==="db"?"이 계정에 저장되고 있어요. 같은 계정으로 다른 기기에서 열어도 이어져요.":sync==="err"?"계정 저장이 잠깐 안 됐어요. 이 기기에는 저장돼 있고, 다음에 다시 시도해요.":"이 기기(브라우저)에만 저장돼요. 가끔 아래에서 기록을 파일로 저장해 두세요.";
+  return `${bar("부모님")}<div class="page">
+   ${MSG?`<div class="notice good">${esc(MSG)}</div>`:""}
+   <div class="card"><h3>하루 계획 · ${total}세트</h3><p class="small muted">+/−로 유형별 세트 수를 정해요. 0이면 오늘 목록에서 빠져요. 좌표 놀이는 0이어도 홈에서 골라서 할 수 있어요. 순서대로 "다음 할 것"이 나와요.</p>${rows}</div>
+   <div class="card"><h3>밀린 세트</h3><p>지금 밀린 세트: <b>${carryN}</b>${carryN?" ("+Object.entries(d.carry).map(([k,v])=>TYPES[k].name+" "+v).join(", ")+")":""}</p>
+     <label class="row"><input id="carry" type="checkbox" ${S.cfg.carryOn?"checked":""} data-ch="carry"> 못 한 세트를 다음 날로 넘기기 (앱을 연 날 기준)</label>
+     <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
+   <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>
+     <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button></div>
+     <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
+     <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button></div></div>
+   <div class="card"><h3>기준이 어디서 왔나</h3><p class="small">한 세트는 10문제(부모님이 유형별로 바꿀 수 있어요), 오답 허용은 1개(20문제 기준 2개와 같은 비율). 문제는 시훈이가 틀리거나 느렸던 것, 7·8·9단·받아올림·0 낀 수처럼 어려운 것 위주로 골라요. 자기 평균보다 빠르게 두 번 연속 맞힌 문제는 쉬어 가고 7일 뒤에 다시 확인해요. 통과: 오답 허용 안에서 목표 시간 안. 출발 기록은 처음 3세트 평균, 목표는 거기서 10%씩 줄여 최종 기준에서 멈춰요. 첫 세트가 최종 기준 안이면 바로 졸업, 그 밖에는 서로 다른 날 2번 최종 기준 안이면 졸업이에요. 잘못 누른 게 분명한 답(자리 수가 다름)은 한 번 되묻고, 그 시간은 세지 않아요.</p>
+     <p class="small">유형 순서와 다음 유형은 <a href="${TREE}" target="_blank" rel="noopener">계통표</a>에 있어요.</p></div>
+  </div>`;
+}
+
+/* ───────── 동작 ───────── */
+const ACT={
+  home:()=>{if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>세트를 그만할까?</h3><p class="muted small">그만하면 이 세트는 기록에 안 남아.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
+    RUN=null;CON=null;MSG="";go("home")},
+  quit:()=>{RUN=null;go("home")},
+  mclose:()=>{modal=null;resumeClock();render()},
+  go:a=>go(a),
+  open:id=>{RUN={type:id};PRED={t:null,w:null};go("intro")},
+  pt:v=>{PRED.t=+v;render()},pw:v=>{PRED.w=+v;render()},
+  start:()=>{if(PRED.t==null||PRED.w==null)return;startSet()},
+  concept:()=>startConcept(RUN.type,null,"concept"),
+  tointro:()=>{modal=null;RUN={type:CON.type};CON=null;go("intro")},
+  review:()=>{startConcept(LAST.id,LAST.wrongs.slice(0,5),"review")},
+  again:()=>{RUN={type:LAST.id};PRED={t:null,w:null};go("intro")},
+  cskip:()=>advanceStep(),
+  demonext:()=>{CON.demo.shown++;render()},
+  demoend:()=>{CON.demo=null;render()},
+  box:i=>{const ctx=view==="play"?RUN:CON;if(!ctx)return;ctx.act=+i;view==="play"?softRender():render()},
+  ox:v=>{if(view==="play"){RUN.vals=[v];submit()}else{CON.vals=[v];conceptSubmit()}},
+  submit:()=>submit(),
+  plotclear:()=>{const ctx=view==="play"?RUN:CON;ctx.user=null;render()},
+  pause:()=>{stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>잠깐 멈췄어</h3><p class="muted small">멈춘 시간은 안 세.</p><button class="bigbtn" data-act="mclose">이어서 하기</button></div></div>`;render()},
+  later:()=>{const i=curIdx();RUN.items[i].skip=true;stopClock();RUN.order.splice(RUN.pos,1);RUN.order.push(i);beginQ();render()},
+  misfix:()=>{modal=null;resumeClock();render()},
+  miskeep:()=>{modal=null;resumeClock();const i=curIdx(),q=RUN.probs[i].q;render();judge(q.a.map((_,k)=>RUN.vals[k]||""))},
+  pl:a=>{const [id,dv]=a.split("|");S.cfg.plan[id]=Math.max(0,Math.min(10,(S.cfg.plan[id]||0)+ +dv));D().plan=planNow();save(today());render()},
+  mv:a=>{const [id,dv]=a.split("|"),o=S.cfg.order,i=o.indexOf(id),j=i+ +dv;if(j<0||j>=o.length)return;[o[i],o[j]]=[o[j],o[i]];save();render()},
+  popen:id=>{parentOpen[id]=!parentOpen[id];render()},
+  plv:id=>{const st=tst(id);st.level=lvl(id)===0?1:0;st.start=null;st.target=null;st.gradDays=[];save();render()},
+  pgrad:id=>{const st=tst(id);st.grad=!st.grad;if(st.grad)st.target=finalPQ(id);save();render()},
+  preset:id=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${TYPES[id].name} 기록을 지울까?</h3><p class="small muted">출발 기록, 목표, 졸업 표시가 처음으로 돌아가요. 날짜별 세트 기록은 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="preset2" data-arg="${id}">지우기</button></div></div></div>`;render()},
+  mclose2:()=>{modal=null;render()},
+  preset2:id=>{delete S.ts[id];modal=null;save();render()},
+  clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
+  resetplan:()=>{S.cfg.plan=clone(PLAN0);D().plan=planNow();save(today());MSG="하루 계획을 처음 값(10세트)으로 돌렸어요.";render()},
+  export:async()=>{const data=JSON.stringify({app:"sihun-yeonsan",v:1,core:S,days:DAYS});
+    if(!window.claude){try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=`시훈-연산-기록-${today()}.json`;document.body.appendChild(a);a.click();a.remove();MSG="파일로 저장했어요.";render();return}catch(e){}}
+    try{const dl=await window.claude?.use?.("downloads");if(!dl)throw 0;await dl.save({filename:`시훈-연산-기록-${today()}.json`,data});MSG="파일로 저장했어요."}
+    catch(e){if(e&&e.code==="declined"){MSG="저장을 취소했어요."}else{IMPORT_TXT=data;MSG="이 화면에서는 파일 저장이 안 돼요. 아래 칸의 글을 길게 눌러 복사해 메모에 보관해 주세요."}}render()},
+  copy:()=>{const data=JSON.stringify({app:"sihun-yeonsan",v:1,core:S,days:DAYS});
+    const ok=()=>{MSG="기록을 복사했어요. 메모나 카톡 나에게 보내기에 붙여 넣어 두세요.";render()},fail=()=>{IMPORT_TXT=data;MSG="아래 칸의 글을 길게 눌러 복사해 주세요.";render()};
+    try{navigator.clipboard.writeText(data).then(ok,fail)}catch(e){fail()}},
+  import:()=>{const el=$("#io");try{const o=JSON.parse(el.value);if(!o||!o.core||!o.core.cfg)throw 0;S=o.core;DAYS=o.days||{};IMPORT_TXT="";dirty.add("core");Object.keys(DAYS).forEach(k=>dirty.add("d:"+k));save();MSG="기록을 불러왔어요."}catch(e){MSG="불러올 수 없는 글이에요. 기록 복사로 나온 글 전체를 붙여 넣어 주세요."}render()}
+};
+app.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b||b.disabled)return;const f=ACT[b.dataset.act];if(f)f(b.dataset.arg,b,e)});
+app.addEventListener("pointerdown",e=>{
+  const k=e.target.closest("[data-key]");if(k){e.preventDefault();typeKey(k.dataset.key);return}
+  const svg=e.target.closest("svg[data-plot]");if(svg){const c=svgToCoord(svg,e);if(!c)return;const ctx=view==="play"?RUN:CON;if(!ctx)return;ctx.user=c;
+    if(view==="play"){const it=RUN.items[curIdx()];}render();return}
+  const g=e.target.closest("[data-hold]");if(g){g.classList.add("hold");const tm=setTimeout(()=>{g.classList.remove("hold");MSG="";go(g.dataset.hold)},1200);
+    const up=()=>{clearTimeout(tm);g.classList.remove("hold");window.removeEventListener("pointerup",up);window.removeEventListener("pointercancel",up)};window.addEventListener("pointerup",up);window.addEventListener("pointercancel",up)}
+});
+app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)return;const k=el.dataset.ch,id=el.dataset.arg;
+  if(k==="carry"){S.cfg.carryOn=el.checked;save();return}
+  if(k==="io"){IMPORT_TXT=el.value;return}
+  const c=S.cfg.tc[id]=S.cfg.tc[id]||{};
+  if(k==="sec"){const v=parseFloat(el.value);if(v>0){c.sec=v;const st=tst(id);if(st.target!=null)st.target=Math.max(v,st.target)}}
+  else if(k==="allow"){const v=parseInt(el.value);if(v>=0)c.allow=v}
+  else if(k==="n"){const v=parseInt(el.value);if(v>=5)c.n=v}
+  else if(k==="start"){const v=parseT(el.value),st=tst(id);if(v){st.start=v/tc(id).n;st.target=Math.max(finalPQ(id),st.start*.9)}else if(!el.value.trim()){st.start=null;st.target=null}}
+  else if(k==="home"){c.home=el.checked;D().plan=planNow()}
+  else if(k==="skipConcept"){c.skipConcept=el.checked}
+  save(today());render();
+});
+document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok")});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&view==="play"&&RUN&&!modal){ACT.pause()}});
+
+ensureToday();render();connectDB();
+</script>
+
+</body>
+</html>
