@@ -68,10 +68,8 @@ textarea,input[type=text]{width:100%;font:600 18px 'Noto Sans KR';padding:10px;b
   function speak(t){try{const u=new SpeechSynthesisUtterance(t);u.lang='ko-KR';u.rate=.95;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
   let REC=null;
   function mic(btn){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;const ta=$('#ta');if(!SR){toast('이 기기에선 말하기가 안 돼요. 자판으로 써요.');return}
-    if(REC){try{REC.stop()}catch(e){}return}
-    const r=new SR();REC=r;r.lang='ko-KR';r.interimResults=false;r.continuous=true;btn.textContent='⏹ 그만 듣기';
-    r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal&&ta)ta.value=(ta.value+' '+e.results[i][0].transcript).trim()};
-    r.onend=()=>{REC=null;const b=$('[data-a="mic"]');if(b)b.textContent='🎤 말로 하기'};r.onerror=()=>{};try{r.start()}catch(e){REC=null}}
+    if(REC){REC.stop();return}
+    REC=window.liveMic(ta,on=>{const b=$('[data-a="mic"]');if(b)b.textContent=on?'⏹ 그만 듣기':'🎤 말로 하기';if(!on)REC=null});if(!REC)toast('음성 인식이 안 돼요. 자판으로 써요.')}
   // ----- 화면 -----
   function toast(m){const t=$('#toast');if(t){t.textContent=m;return}}
   function render(){if(!sr)return;window.scrollTo(0,0);V==='list'?list():V==='mom'?momView():work()}
@@ -133,7 +131,7 @@ textarea,input[type=text]{width:100%;font:600 18px 'Noto Sans KR';padding:10px;b
     cv.oncontextmenu=e=>e.preventDefault();draw()}
   function padImg(){const cv=$('#gcv');if(!cv||!PAD||!PAD.strokes.length)return '';const o=document.createElement('canvas');const w=700,h=Math.round(cv.height/cv.width*700);o.width=w;o.height=h;const c=o.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,w,h);const gw=$('#gw');const n=+gw.dataset.cols,m=+gw.dataset.rows,q=w/n;c.strokeStyle='#e7b8b8';c.lineWidth=1;for(let i=0;i<=n;i++){c.beginPath();c.moveTo(i*q,0);c.lineTo(i*q,h);c.stroke()}for(let j=0;j<=m;j++){c.beginPath();c.moveTo(0,j*q);c.lineTo(w,j*q);c.stroke()}c.drawImage(cv,0,0,w,h);return o.toDataURL('image/jpeg',.7)}
   function shrink(f,max){return new Promise(res=>{const im=new Image();const u=URL.createObjectURL(f);im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.7))};im.onerror=()=>res('');im.src=u})}
-  async function onClick(e){const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
+  async function onClick(e){const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;if(a!=='mic'&&REC){REC.stop();REC=null}
     if(a==='hub'){try{speechSynthesis.cancel()}catch(_){}HUB.back('write');return}
     if(a==='list'){if(W)keep();V='list';W=null;render();return}
     if(a==='mom'){V='mom';render();return}

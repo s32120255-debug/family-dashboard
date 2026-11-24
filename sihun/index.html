@@ -4,6 +4,18 @@
 <meta name="theme-color" content="#2f6b4f">
 <script>
 /* ✍️ S펜 칸 크기(엄마 11/24): 줄 간격·모눈·원고지 칸을 모두 13mm로. 기기마다 화면 1mm가 달라서 관리자 모드 「📏 S펜 칸 크기 맞추기」로 자로 재서 맞춤(이 기기에 저장) */
+/* 🎤 말로 대답(엄마 11/24): 말을 멈춰도 끊지 않고 계속 들어요(「보내기」·「그만 듣기」까지). 들리는 글자는 바로바로 글 칸에 보이고, 멈춘 뒤 손으로 고칠 수 있어요.
+   안드로이드 크롬은 연속 모드에서 글자가 겹쳐 나와서, 한 번씩 듣고 끝나면 바로 다시 듣는 방식으로 이어 붙여요. */
+window.liveMic=function(ta,onState){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!ta)return null;
+  var on=true,cur=null,idle=0;
+  function go(){var base=(ta.value||'').trim(),txt='',r=new SR();cur=r;r.lang='ko-KR';r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+    r.onresult=function(e){var s='';for(var i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;txt=s.trim();idle=0;
+      ta.value=(base+' '+txt).trim();try{ta.dispatchEvent(new Event('input',{bubbles:true}))}catch(x){}};
+    r.onerror=function(e){if(/not-allowed|service-not-allowed|audio-capture/.test(e.error||''))on=false};
+    r.onend=function(){cur=null;if(on&&++idle<40){setTimeout(function(){if(on)go();else if(onState)onState(false)},120);return}on=false;if(onState)onState(false)};
+    try{r.start()}catch(x){on=false;cur=null;if(onState)onState(false)}}
+  go();if(on&&onState)onState(true);
+  return {stop:function(){if(!on)return;on=false;try{cur?cur.stop():onState&&onState(false)}catch(x){}},isOn:function(){return on}}};
 window.PEN_MM=13;
 window.penPxPerMm=function(){var k=0;try{k=+localStorage.getItem('pen:pxmm')||0}catch(e){}return k>1?k:96/25.4};
 window.penPx=function(){return Math.round(window.PEN_MM*window.penPxPerMm())};
@@ -3502,17 +3514,19 @@ function mountTutor(box,p,st,ist,show,finish,startKind){
     if(fin) return end('h',kind); if(r.state==='end') return end('h','solved');
     if(r.state==='retry') return retry();
     reply(); }
-  function reply(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let heard='';
-    draw(`<div class="tans" id="th"></div><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 대답</button>':''}<button class="hint" id="tp" style="flex:0 0 auto">✍️ 패드에 써서 대답</button><button class="hint" id="ts" style="flex:0 0 auto" disabled>보내기 ▶</button></div><div class="tsub"><button class="tlink" id="tr">다시 풀어 볼래요</button> · <button class="tlink" id="tl">🔊 다시 듣기</button> · ${stopBtn}</div>`);
-    const th=tb.querySelector('#th'), ts=tb.querySelector('#ts');
-    if(SR) tb.querySelector('#tm').onclick=()=>{ try{ const r=new SR(); r.lang='ko-KR'; r.interimResults=false; r.continuous=false; tb.querySelector('#tm').textContent='🎤 듣고 있어요…';
-      r.onresult=e=>{ for(let i=e.resultIndex;i<e.results.length;i++) if(e.results[i].isFinal) heard=(heard+' '+e.results[i][0].transcript).trim(); th.textContent=heard; ts.disabled=!heard; };
-      r.onend=()=>{ const b=tb.querySelector('#tm'); if(b) b.textContent=heard?'🎤 다시 말하기':'🎤 말로 대답'; if(!heard) toast('잘 안 들렸어요. 다시 말하거나 패드에 써 줘요.'); }; r.onerror=()=>{}; r.start(); }catch(e){ toast('음성 인식이 안 돼요. 패드에 써 줘요.'); } };
-    tb.querySelector('#tp').onclick=()=>{ heard=heard||'(패드에 써서 대답했어요)'; th.textContent=heard; ts.disabled=false; toast('패드에 대답을 쓰고 「보내기」를 눌러요.'); };
-    ts.onclick=()=>{ if(!heard) return; T.turns.push({who:'me',text:heard}); step('reply'); };
-    tb.querySelector('#tr').onclick=()=>{ T.turns.push({who:'me',text:'(다시 풀어 볼래요)'}); retry(); };
+  function reply(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let MIC=null;
+    draw(`<textarea class="tans" id="th" rows="3" placeholder="${SR?'🎤 누르고 말해요. 다 말하면 「보내기」!':'여기에 대답을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;line-height:1.5;min-height:84px;resize:vertical"></textarea><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 대답</button>':''}<button class="hint" id="tp" style="flex:0 0 auto">✍️ 패드에 써서 대답</button><button class="hint" id="ts" style="flex:0 0 auto" disabled>보내기 ▶</button></div><div class="tsub"><button class="tlink" id="tr">다시 풀어 볼래요</button> · <button class="tlink" id="tl">🔊 다시 듣기</button> · ${stopBtn}</div>`);
+    const th=tb.querySelector('#th'), ts=tb.querySelector('#ts'), tm=tb.querySelector('#tm');
+    const upd=()=>{ ts.disabled=!th.value.trim(); }; th.addEventListener('input',upd);
+    const stopMic=()=>{ if(MIC){ MIC.stop(); MIC=null; } };
+    if(tm) tm.onclick=()=>{ if(MIC&&MIC.isOn()){ stopMic(); return; }
+      MIC=window.liveMic(th,on=>{ const b=tb.querySelector('#tm'); if(b) b.textContent=on?'⏹ 그만 듣기':(th.value.trim()?'🎤 이어서 말하기':'🎤 말로 대답'); if(!on){ MIC=null; upd(); } });
+      if(!MIC) toast('음성 인식이 안 돼요. 패드에 써 줘요.'); };
+    tb.querySelector('#tp').onclick=()=>{ stopMic(); if(!th.value.trim()) th.value='(패드에 써서 대답했어요)'; upd(); toast('패드에 대답을 쓰고 「보내기」를 눌러요.'); };
+    ts.onclick=()=>{ stopMic(); const heard=th.value.trim(); if(!heard) return; T.turns.push({who:'me',text:heard}); step('reply'); };
+    tb.querySelector('#tr').onclick=()=>{ stopMic(); T.turns.push({who:'me',text:'(다시 풀어 볼래요)'}); retry(); };
     tb.querySelector('#tl').onclick=()=>{ const a=T.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) tutorSay(a.text); };
-    tb.querySelector('#tq').onclick=()=>{ T.turns.push({who:'me',text:'(그만할래요)'}); end('x','stopped'); }; }
+    tb.querySelector('#tq').onclick=()=>{ stopMic(); T.turns.push({who:'me',text:'(그만할래요)'}); end('x','stopped'); }; }
   function retry(){ draw(`<div class="tans">✏️ 답 칸에 다시 써 보고 「확인」을 눌러요.</div><div class="tsub">${stopBtn}</div>`);
     tb.querySelector('#tq').onclick=()=>{ T.turns.push({who:'me',text:'(그만할래요)'}); end('x','stopped'); };
     Object.keys(ist).forEach(k=>delete ist[k]); box.querySelector('#inp').innerHTML=inputHTML(p); mountInput(box.querySelector('#inp'),p,ist); const acts=box.querySelector('#macts'); acts.style.display=''; acts.querySelector('#hb').style.display='none';
