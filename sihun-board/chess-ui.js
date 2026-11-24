@@ -83,5 +83,5 @@ export function mountChess(el,{onEnd,gate,pay,payInfo}){
  render();cpu();
  return {render:()=>{if(!thinking)render()},
   isOpen:()=>!!st.paid&&!g.isGameOver(),
-  unlock:()=>{st.paid=true;save();render();cpu()}};
+  unlock:()=>{if(g.isGameOver()){g=new Chess();sel=null;last=null}ended=false;st.paid=true;save();render();cpu()}};
 }
