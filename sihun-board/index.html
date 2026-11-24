@@ -507,9 +507,9 @@ const PT_NAME={task:"과제",help:"가족 도움"}; // 시훈이는 둘 다 쓸 
 function ptBalance(from){const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  if(from==="help"){const tot=sum([...S.helpLog,...S.choreLog].filter(g=>g.who==="시훈"));return tot-sum(S.rewards.filter(r=>r.kind==="help"&&r.who==="시훈"))}
  return sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks)-sum(S.rewards.filter(x=>x.kind!=="help"))}
-async function spendPoint(title,use,n=1,from="task"){
+async function spendPoint(title,use,n=1,from="task",extra={}){
  if(!fs)return false;if(ptBalance(from)<n){toast(`포인트가 모자라요. ${PT_NAME[from]} 포인트 ${n}점이 필요해요`);return false}
- const data={title,points:n,who:"시훈",use,date:today(),createdAt:Date.now(),by:myName(),...(from==="help"?{kind:"help"}:{})};
+ const data={title,points:n,who:"시훈",use,date:today(),createdAt:Date.now(),by:myName(),...(from==="help"?{kind:"help"}:{}),...extra};
  try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"rewards"));b.set(ref,data);
   b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"rewards",docId:ref.id,action:"포인트 씀",summary:`${title} -${n}점`,before:null,after:data});
   await b.commit();S.rewards.push({id:ref.id,...data});return true}catch(e){toast("포인트를 쓰지 못했어요: "+(e.code||""));return false}}
@@ -521,6 +521,10 @@ async function spendPoint(title,use,n=1,from="task"){
 const SHOP_FIXED=[{k:"snack",e:"🍪",n:"간식 1개",p:1,sm:"말하고 사고 먹어요"},{k:"chess",e:"♟",n:"체스 1판",p:1,sm:"놀이 탭 체스판이 열려요"},{k:"wordchain",e:"🔤",n:"끝말잇기 1판",p:1,sm:"놀이 탭 끝말잇기가 열려요"}];
 const shopWishes=()=>S.wishes.filter(w=>w.who==="시훈"&&!w.got).sort((a,b)=>((Number(a.points)||1e9)-(Number(b.points)||1e9))||((a.createdAt||0)-(b.createdAt||0)));
 function shopItems(){const t=ptBalance("task");const items=SHOP_FIXED.map(x=>({...x}));
+ const ch=items.find(x=>x.k==="chess"),wc=items.find(x=>x.k==="wordchain"),lock=funLock(),usedC=S.chess.filter(x=>x.date===today()).length,lim=chessLimit();
+ ch.sm="사면 바로 한 판 시작";wc.sm="사면 바로 한 판 시작";
+ if(chessApi&&chessApi.isOpen()){ch.off=true;ch.why="하던 판 먼저 끝내자";ch.go=1}else if(lock){ch.off=true;ch.why="과제를 다 하면 열려요"}else if(usedC>=lim){ch.off=true;ch.why=`오늘 ${lim}판 다 했어`}
+ if(WC&&!WC.over){wc.off=true;wc.why="하던 판 먼저 끝내자";wc.go=1}
  for(const w of shopWishes()){const p=Number(w.points)||0;items.push({k:"wish",id:w.id,e:"🎁",n:w.title,sm:w.to?`${w.to}${w.to==="시훈"?"이가 해요":"가 해 줘요"}`:"",p,why:w.req?`${w.to||"상대"} 승인 기다리는 중`:!p?"엄마가 점수를 정해 줘야 해요":"",off:!!w.req||!p})}
  for(const it of items)if(!it.off&&t<it.p){it.off=true;it.why=`${it.p-t}점 더 모아요`}
  return items}
@@ -530,8 +534,15 @@ function renderShop(){const t=ptBalance("task"),h=ptBalance("help");$("shopBtn")
  $("shopGrid").querySelectorAll("[data-shop]").forEach(b=>b.onclick=()=>buy(shopItems()[b.dataset.shop]));
  const fmt=ms=>{const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`};
  const l=S.rewards.filter(r=>r.who==="시훈").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,10);
- $("shopLog").innerHTML=l.length?l.map(r=>`<li class="item"><span class="meta">${r.createdAt?fmt(r.createdAt):esc(r.date||"")}</span><span class="t">${esc(r.title||"")}${r.use==="chess"||r.use==="wordchain"?(r.usedAt?` <span class="meta">· 판 열었음</span>`:` <span class="meta">· 아직 안 함</span>`):""}</span><span class="pill">-${Number(r.points)||0} ${r.kind==="help"?"💗":"⭐"}</span>${(momAcct||pinOpen)&&r.usedAt&&(r.use==="chess"||r.use==="wordchain")?`<button class="btn small" type="button" data-revive="${r.id}">🎟 되살리기</button>`:""}</li>`).join(""):`<li class="empty">아직 산 게 없어요.</li>`;
- $("shopLog").querySelectorAll("[data-revive]").forEach(b=>b.onclick=()=>reviveTicket(b.dataset.revive))}
+ $("shopLog").innerHTML=l.length?l.map(r=>`<li class="item"><span class="meta">${r.createdAt?fmt(r.createdAt):esc(r.date||"")}</span><span class="t">${esc(r.title||"")}${r.use==="chess"||r.use==="wordchain"?(r.usedAt?` <span class="meta">· 판 열었음</span>`:` <span class="meta">· 아직 안 함</span>`):""}</span><span class="pill">-${Number(r.points)||0} ${r.kind==="help"?"💗":"⭐"}</span>${(momAcct||pinOpen)&&r.usedAt&&(r.use==="chess"||r.use==="wordchain")?`<button class="btn small" type="button" data-revive="${r.id}">🎟 되살리기</button>`:""}${(momAcct||pinOpen)&&!r.wishId?`<button class="btn small" type="button" data-unbuy="${r.id}" aria-label="구매 취소">↺ 취소</button>`:""}</li>`).join(""):`<li class="empty">아직 산 게 없어요.</li>`;
+ $("shopLog").querySelectorAll("[data-revive]").forEach(b=>b.onclick=()=>reviveTicket(b.dataset.revive));
+ $("shopLog").querySelectorAll("[data-unbuy]").forEach(b=>b.onclick=()=>unbuy(b.dataset.unbuy))}
+// 엄마·관리자: 산 것 취소 = 그 기록 지우기 → 포인트 돌아옴(우리집 기지 산 기록 ↺와 같음)
+async function unbuy(id){const r=S.rewards.find(x=>x.id===id);if(!r||!fs||!(momAcct||pinOpen))return;if(!confirm(`「${r.title}」 산 것을 취소하고 ${Number(r.points)||0}점 돌려줄까요?`))return;
+ try{const b=F.writeBatch(fs);b.delete(F.doc(fs,"rewards",id));
+  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"rewards",docId:id,action:"구매 취소",summary:`${r.title} +${Number(r.points)||0}점 돌려줌`,before:r,after:null});
+  await b.commit();S.rewards=S.rewards.filter(x=>x.id!==id);toast("취소했어요 (포인트 돌려놨어요)")}catch(e){toast("취소하지 못했어요: "+(e.code||""))}
+ renderAll()}
 // 엄마·관리자: 쓴 체스권·끝말잇기권 되살리기(usedAt 지움)
 async function reviveTicket(id){const r=S.rewards.find(x=>x.id===id);if(!r||!fs||!(momAcct||pinOpen))return;
  try{const b=F.writeBatch(fs);b.update(F.doc(fs,"rewards",id),{usedAt:null});
@@ -544,9 +555,12 @@ function askBox(msg,note,ok,onOk){$("layer").innerHTML=`<div class="layer"><form
  $("mc").onclick=()=>$("layer").innerHTML="";$("mf").onsubmit=e=>{e.preventDefault();$("layer").innerHTML="";onOk()}}
 let buying=false;
 function buy(it){if(!it||buying)return;
+ if(it.go){toast(it.why);return it.k==="chess"?goChess():goWc()}
  if(it.off){toast(it.why||"지금은 살 수 없어요");return}
- if(it.k!=="wish")return askBox(`${it.n} 살까요? ⭐${it.p}`,`과제 포인트 ${it.p}점을 써요. 엄마 기록에 남아요.`,"살래",async()=>{buying=true;try{
-   if(await spendPoint(it.n,it.k,it.p,"task")){if(it.k==="snack")toast("맛있게 먹어! 🍪 -1점");else if(it.k==="chess"){toast("체스권 생겼어! 🎟 놀이 탭에서 열어");goChess()}else{toast("끝말잇기권 생겼어! 🎟");goWc()}}
+ if(it.k!=="wish")return askBox(`${it.n} 살까요? ⭐${it.p}`,it.k==="snack"?`과제 포인트 ${it.p}점을 써요. 엄마 기록에 남아요.`:"사면 바로 한 판 시작해요. 끝날 때까지 할 수 있어요.",it.k==="snack"?"살래":"사고 시작",async()=>{buying=true;try{
+   if(it.k==="snack"){if(await spendPoint(it.n,it.k,it.p,"task"))toast("맛있게 먹어! 🍪 -1점")}
+   else if(it.k==="chess"){if(!chessApi){toast("체스를 아직 불러오는 중이에요");return}if(await payPlay("chess")){chessApi.unlock();toast("한 판 시작! ♟");goChess()}}
+   else{if(await wcStart("me")){toast("한 판 시작! 🔤");goWc()}}
    renderAll()}finally{buying=false}});
  const w=S.wishes.find(x=>x.id===it.id);if(!w)return;
  askBox(`「${w.title}」 받을까요? ⭐${it.p}`,`${w.to||"해 줄 사람"}가 승인하면 과제 포인트 ${it.p}점이 빠져요.`,"승인 부탁하기",()=>askWish(w))}
@@ -582,6 +596,14 @@ window.mailReady=true;
 const CHESS_CUTOFF=Date.parse("2026-11-24T04:35:00Z");
 const couponsOf=use=>S.rewards.filter(r=>r.use===use&&r.who==="시훈"&&!r.usedAt&&(r.createdAt||0)>=CHESS_CUTOFF).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
 const chessCoupons=()=>S.rewards.filter(r=>r.use==="chess"&&r.who==="시훈"&&!r.usedAt&&(r.createdAt||0)>=CHESS_CUTOFF).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+// 엄마 11/24 「사면 바로 시작」: 체스·끝말잇기는 모아 두는 권 없이 1점 내면 그 자리에서 한 판 시작(rewards에 usedAt 같이 적음). 남은 옛 권이 있으면 그걸 먼저 씀
+async function payPlay(use){const n=use==="chess"?"체스 1판":"끝말잇기 1판";if(couponsOf(use).length)return use==="chess"?useChessCoupon():useWcCoupon();
+ if(ptBalance("task")<1){toast("과제 포인트가 1점 있어야 해요");return false}return spendPoint(n,use,1,"task",{usedAt:Date.now()})}
+// 옛 권(사면 바로 시작 이전, 안 쓴 것) 한 번 환불: 그 기록을 지우면 포인트가 돌아옴(엄마 11/24)
+const REFUND_BEFORE=Date.parse("2026-11-24T05:15:00Z");let refunded=false;
+async function refundOldTickets(){if(refunded||!fs||!user)return;const l=S.rewards.filter(r=>(r.use==="chess"||r.use==="wordchain")&&r.who==="시훈"&&!r.usedAt&&(r.createdAt||0)>=CHESS_CUTOFF&&(r.createdAt||0)<REFUND_BEFORE);if(!l.length)return;refunded=true;
+ try{const b=F.writeBatch(fs);for(const r of l){b.delete(F.doc(fs,"rewards",r.id));b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"rewards",docId:r.id,action:"구매 취소",summary:`${r.title} 안 쓴 권 환불 +${Number(r.points)||0}점`,before:r,after:null})}
+  await b.commit();const ids=new Set(l.map(r=>r.id));S.rewards=S.rewards.filter(r=>!ids.has(r.id));toast(`안 쓴 권 ${l.length}장을 포인트로 돌려놨어요`);renderAll()}catch(e){refunded=false}}
 async function useChessCoupon(){const c=chessCoupons()[0];if(!c){openShop();return false}if(!fs)return false;
  try{const at=Date.now();const b=F.writeBatch(fs);b.update(F.doc(fs,"rewards",c.id),{usedAt:at});
   b.set(F.doc(sub("log")),{at,by:myName(),uid:user.uid,col:"rewards",docId:c.id,action:"체스권 씀",summary:"체스 1판 열기",before:null,after:{usedAt:at}});
@@ -749,8 +771,8 @@ function wcPick(last,used){const l=wcCands(last,used);if(!l.length)return null;
  // 시훈이가 이어 갈 수 있는 낱말을 주로 고름(가끔 어려운 것도)
  const easy=l.filter(w=>wcCands(w.slice(-1),new Set([...used,w])).length>=2);const pool=easy.length&&Math.random()<.85?easy:l;return pool[Math.floor(Math.random()*pool.length)]}
 let wcBusy=false;
-async function wcStart(first){if(wcBusy||(WC&&!WC.over))return;wcBusy=true;let ok=false;try{ok=await useWcCoupon()}finally{wcBusy=false}if(!ok)return;await wcLoad();WC={chain:[],used:new Set(),turn:first,over:null,msg:"",hint:null};
- if(first==="cpu"){const w=wcWords[Math.floor(Math.random()*wcWords.length)];wcAdd(w,"cpu");WC.turn="me"}renderWc();setTimeout(()=>{const i=$("wcIn");if(i)i.focus()},50)}
+async function wcStart(first){if(wcBusy||(WC&&!WC.over))return false;wcBusy=true;let ok=false;try{ok=await payPlay("wordchain")}finally{wcBusy=false}if(!ok)return false;await wcLoad();WC={chain:[],used:new Set(),turn:first,over:null,msg:"",hint:null};
+ if(first==="cpu"){const w=wcWords[Math.floor(Math.random()*wcWords.length)];wcAdd(w,"cpu");WC.turn="me"}wcSave();renderWc();setTimeout(()=>{const i=$("wcIn");if(i)i.focus()},50);return true}
 function wcAdd(w,by,unk){WC.chain.push({w,by,...(unk?{unk:true}:{})});WC.used.add(w);wcSave()}
 function wcEnd(result,msg){WC.over=result;WC.msg=msg;wcSave();renderWc();if(!fs)return;
  F.addDoc(sub("wc"),{words:WC.chain,result,n:WC.chain.filter(x=>x.by==="me").length,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{})}
@@ -764,9 +786,9 @@ function wcMine(raw){if(!WC||WC.over||WC.turn!=="me")return;const w=raw.trim().r
   if(!c){wcEnd("win",`으… 「${wcStarts(w.slice(-1)).join("/")}」(으)로 시작하는 낱말이 생각 안 나! 시훈이가 이겼어! 🎉`);return}
   wcAdd(c,"cpu");WC.turn="me";wcSave();const next=wcCands(c.slice(-1),WC.used);renderWc();const i=$("wcIn");if(i)i.focus()},350)}
 function renderWc(){const g=S.wc.filter(x=>x.date===today());$("wcScore").textContent=g.length?`오늘 ${g.filter(x=>x.result==="win").length}승 ${g.filter(x=>x.result!=="win").length}패`:"";
- const wn=couponsOf("wordchain").length;
- const startBtns=wn?`<p class="meta" style="margin:0">🎟 끝말잇기권 ${wn}장 · 한 판에 1장 써요.</p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`
-  :`<p class="meta" style="margin:0">상점에서 「끝말잇기 1판」(과제 1점)을 사면 열려요.</p><div><button class="btn primary" data-wc="shop">🏪 상점 가기</button></div>`;
+ const wn=couponsOf("wordchain").length,tb=ptBalance("task");
+ const startBtns=(wn||tb>=1)?`<p class="meta" style="margin:0">${wn?`🎟 끝말잇기권 ${wn}장 · 한 판에 1장 써요.`:`한 판에 과제 포인트 1점 (남은 ⭐${tb}). 누르면 바로 시작해요.`}</p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`
+  :`<p class="meta" style="margin:0">과제 포인트 1점이 있으면 한 판 할 수 있어요. 과제를 하고 와!</p>`;
  if(!WC){$("wcBox").innerHTML=`<p class="meta" style="margin:0">컴퓨터가 바로 대답해요. 두음법칙(력→역, 녀→여)도 돼요.</p>`+startBtns;return}
  const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
  const chips=WC.chain.map((x,i)=>`<span class="bub ${x.by==="me"?"me":"ai"}" style="font-family:var(--hand);font-size:1.3rem">${esc(x.w.slice(0,-1))}<b style="${i===WC.chain.length-1?"background:var(--yellow);color:#2e3f38;border-radius:6px;padding:0 4px":""}">${esc(x.w.slice(-1))}</b>${x.unk?" ❓":""}</span>`).join("");
@@ -858,7 +880,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=51;
+const VERSION=53;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -892,7 +914,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
     $("mf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===famPin){$("layer").innerHTML="";pinOpen=true;showWho();renderAll();showTab("mom");window.scrollTo({top:0})}else toast("비밀번호가 달라요")}}};showWho();
   fs=db;let denied=false;
   const onErr=err=>{if(err&&err.code==="permission-denied"&&!denied){denied=true;unsubs.splice(0).forEach(f=>f());fs=null;gate(`${u.email} 계정으로는 열 수 없어요. 가족 계정으로 로그인해 주세요.`,false,true)}};
-  for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll()},onErr));
+  for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll();if(c==="rewards")refundOldTickets()},onErr));
   for(const c of MINE)unsubs.push(F.onSnapshot(F.collection(db,"sihunBoard","main",c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));renderAll()},onErr));
   unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","main"),s=>{board=s.exists()?s.data():{};renderAll()},onErr));
   // 엄마 확인: 규칙에서 엄마 계정만 이 문서를 읽을 수 있어요
@@ -903,9 +925,9 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=51").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=53").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
- pay:useChessCoupon, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 열기 (${n}장)`,note:"우리집 기지 상점에서 산 체스권이 있어요."}:{label:"🏪 우리집 기지 상점 가기",note:"우리집 기지 상점에서 「체스 1판」(1점)을 사면 열려요."}},
+ pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
 </body>
