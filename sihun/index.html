@@ -592,7 +592,12 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .tlog{max-height:300px;overflow:auto;display:flex;flex-direction:column;gap:8px}.tb{padding:10px 14px;border-radius:14px;font-size:19px;line-height:1.6;max-width:92%}
 .tb.ai{background:var(--hl);align-self:flex-start}.tb.me{background:var(--chip);align-self:flex-end}
 .tans{min-height:30px;margin:10px 2px 0;font-size:18px;color:var(--ink)}.twait{margin-top:8px;color:var(--soft);font-size:17px}
-.tsub{margin-top:8px;font-size:15px;color:var(--soft)}.tlink,.tstop{font-size:15px;color:var(--soft);text-decoration:underline;background:none;border:0;padding:4px}
+.tsub{margin-top:8px;font-size:15px;color:var(--soft)}
+.big.tbig{margin-top:10px;background:#fff7e8;border-color:#f2c46d}.big.tbig .t{color:#7a4b00}.big.tbig.done{background:#f1faf4;border-color:#9bd3b0}.big.tbig.done .t{color:#2f6b4f}
+.tintro{background:#fff7e8;border:2px solid #f2c46d;border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.6}.tpick{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;font-size:17px;line-height:1.5;cursor:pointer}.tpick .tk{display:block;font-size:13px;font-weight:700;color:#a0670a;margin-bottom:4px}
+.tmy{margin-top:8px;font-size:16px;color:#2f6b4f}.tutor.teach .tlog{max-height:440px}.twork{margin-top:8px;padding:8px 10px;background:#fff;border:2px dashed #e4572e;border-radius:10px;font-size:18px}.tpadm{font-size:13px;color:var(--soft);margin-top:4px}
+.tdone{text-align:center;margin:12px 0 4px;font-size:20px}.tdone .em{font-size:40px}.tord{margin-top:10px;background:#f6f9ff;border:1.5px solid #b9cbe8;border-radius:14px;padding:10px 12px}.toh{font-weight:700;margin-bottom:6px}.tos{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #cfd8e8;font-size:17px}.tos .tn{flex:0 0 26px;height:26px;border-radius:50%;background:#2f4a7a;color:#fff;text-align:center;line-height:26px;font-size:14px}.tos small{display:block;font-size:13px;color:#a0670a}.tos.asked .tn{background:#f2b233}
+.tlogd{border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0;background:#fff}.tlogd summary{cursor:pointer;font-size:15px}.tlogd .tlog{margin-top:8px}.tlink,.tstop{font-size:15px;color:var(--soft);text-decoration:underline;background:none;border:0;padding:4px}
 .solbtn{margin-top:8px;padding:10px 16px;border-radius:12px;background:var(--chip);border:1.5px solid var(--line);font-size:17px;font-weight:600}
 .skipq{margin-top:6px;font-size:15px;color:var(--soft);text-decoration:underline}
 .navrow{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}.navrow button{flex:1;min-width:100px;height:46px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:16px;color:var(--ink)}.navrow button:disabled{opacity:.35}
@@ -3370,6 +3375,7 @@ async function loadDB(){
   if(!DBH){ clearTimeout(timer); DB_STATE='offline'; refreshTop(); return; }
   try{ const snap=await DBH.doc('m32/progress').get(); if(snap.exists) PROG=mergeProg(snap.data());
     const qs=await DBH.collection('m32att').limit(1000).get(); SAVED_ATT=[]; qs.docs.forEach(d=>{ const x=d.data(); (x.items||[]).forEach(it=>SAVED_ATT.push(it)); }); SAVED_ATT.sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
+    try{ const ts=await DBH.doc('m32/teach').get(); if(ts.exists) teachMerge(ts.data()); }catch(e){}
     DB_STATE='ok'; m32Restore(); }catch(e){ DB_STATE='error'; }
   clearTimeout(timer); if(CUR==='home') home(); else refreshTop(); }
 let SAVING=false;
@@ -3379,6 +3385,7 @@ async function saveAll(quiet){ quiet=quiet===true; if(SAVING) return; if(!DBH){ 
   try{ for(const pd of pens){ await DBH.doc('m32pen/'+pd.id).set(pd); } PENQ=PENQ.slice(pens.length);
     if(items.length){ SEQ++; await DBH.doc(`m32att/${today()}-${SID}-${String(SEQ).padStart(3,'0')}`).set({date:today(),savedAt:new Date().toISOString(),items}); }
     PROG.whys=PROG.whys.slice(-200); PROG.ctime=PROG.ctime.slice(-100); await DBH.doc('m32/progress').set(JSON.parse(JSON.stringify(PROG)));
+    if(TEACH_DIRTY&&TEACHD){ TEACH_DIRTY=false; try{ await DBH.doc('m32/teach').set(JSON.parse(JSON.stringify(TEACHD))); }catch(e){ TEACH_DIRTY=true; throw e; } }
     SAVED_ATT=SAVED_ATT.concat(items); UNSAVED=UNSAVED.slice(items.length); DIRTY=false; m32Backup(); if(!quiet) toast('💾 저장했어요!'); }
   catch(e){ if(!quiet) toast('저장이 안 됐어요. 잠시 뒤 다시 눌러 주세요.'); }
   SAVING=false; refreshTop(); }
@@ -3421,7 +3428,10 @@ function bookNextOf(u){ const BOOK=bookObj(); if(!BOOK) return null; const ui=BO
 let CUR='home';
 function topBar(title,sub,back=true){ return `<div class="top">${back?`<button class="homebtn" data-act="home">⏮ 처음으로</button>`:EMBED?`<button class="homebtn" data-act="hub">← 오늘의 공부</button>`:''}<div class="tt"><h1>${title}</h1>${sub?`<div class="sub">${sub}</div>`:''}</div>${saveBtnHTML()}</div><div class="dbst" id="dbst">${dbText()}</div>`; }
 function bindCommon(){ document.querySelectorAll('[data-act="home"]').forEach(b=>b.onclick=home); document.querySelectorAll('[data-act="hub"]').forEach(b=>b.onclick=toHub); bindSave(); }
-async function toHub(){ if(UNSAVED.length||DIRTY){ m32Backup(); await saveAll(true); } if(!UNSAVED.length&&!DIRTY) return HUB.back('m32');
+async function toHub(){ const skipT=toHub.later; toHub.later=false;
+  if(!skipT&&!teachDone()&&DB_STATE==='ok'){ const m=modal(`<h2>🧑‍🏫 오늘의 가르치기가 남았어요</h2><p>친구 콩이에게 1문제만 알려 주면 수학 끝이에요.</p><div class="acts"><button class="ok" id="tg">가르치러 가기</button></div><div class="acts"><button class="hint" id="tlt" style="flex:1">이따가 할게요</button></div>`);
+    m.querySelector('#tg').onclick=()=>{ m.remove(); teachHome(); }; m.querySelector('#tlt').onclick=()=>{ m.remove(); toHub.later=true; toHub(); }; return; }
+  if(UNSAVED.length||DIRTY){ m32Backup(); await saveAll(true); } if(!UNSAVED.length&&!DIRTY) return HUB.back('m32');
   const m=modal(`<h2>저장 안 한 기록이 있어요</h2><p>💾 저장을 눌러야 기록이 남아요.</p><div class="acts"><button class="ok" id="hs">💾 저장하고 나가기</button></div><div class="acts"><button class="hint" id="hn" style="flex:1">저장 안 하고 나가기</button><button class="hint" id="hc" style="flex:1">취소</button></div>`);
   m.querySelector('#hs').onclick=async()=>{ m.remove(); await saveAll(); if(!UNSAVED.length&&!DIRTY) HUB.back('m32'); };
   m.querySelector('#hn').onclick=()=>{ m.remove(); HUB.back('m32'); }; m.querySelector('#hc').onclick=()=>m.remove(); }
@@ -3432,10 +3442,12 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   app().innerHTML=`<div class="wrap">${topBar('시훈 수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
    <button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
+   ${EMBED?`<button class="big tbig ${teachDone()?'done':''}" id="tgo"><div><div class="t">${teachDone()?'✅ 오늘의 가르치기 끝':'🧑‍🏫 오늘의 가르치기 · 1문제'}</div><div class="s">${teachDone()?'콩이에게 잘 알려 줬어요. 내일 또 해요!':'친구 콩이에게 풀이를 처음부터 순서대로 알려 줘요'}</div></div><span class="go">${teachDone()?'✓':'▶'}</span></button>`:''}
    ${units}
    <div class="note">기록은 문제마다 자동으로 저장돼요. 중간에 나가도 다음에 이어서 해요.</div>
    <div class="foot"><button class="pbtn" id="parent">👩 엄마 보기</button></div></div>`;
   document.querySelectorAll('.bkc').forEach(b=>b.onclick=()=>{ if(b.classList.contains('lock')){ toast(`${b.querySelector('h3').textContent.split('· ')[1]} 1~5단계를 다 하면 열려요.`); return; } bookHome(b.dataset.u); });
+  const tgo=$('#tgo'); if(tgo) tgo.onclick=()=>{ if(teachDone()){ toast('오늘 가르치기는 끝! 내일 또 해요.'); return; } teachHome(); };
   $('#go').onclick=()=>{ if(t.kind==='book') bookStart(t.ui,t.gi); else if(t.kind==='lesson') startLesson(t.i); else if(t.kind==='check') startCheck(t.i); else startSolve(t.i,t.lv); };
   document.querySelectorAll('.sk:not(.bkc)').forEach(b=>b.onclick=()=>skillPage(+b.dataset.i)); $('#parent').onclick=parentGate; bindCommon(); }
 function bookCard(u){ const BOOK=bookObj(); if(!BOOK) return ''; const U=BOOK.units.find(x=>x.title===u); if(!U) return ''; const D=PROG.book||{};
@@ -3623,7 +3635,7 @@ function mountProblem(box,p,opts){
     else { if(res==='x') show('x',`${note?note+'<br>':''}정답은 <b>${answerText(p)}</b> 이에요. 풀이를 따라가 봐요.`);
       else show('o',`${res==='o'?'⭕ 정답! 한 번에 맞혔어요.':'⭕ 정답!'}${note?`<div class="tagline">${note}</div>`:''}`);
       box.querySelector('#sol').innerHTML=solHTML; }
-    opts.onDone&&opts.onDone(rec); DIRTY=true; refreshTop();
+    opts.onDone&&opts.onDone(rec); if(solve) teachAdd(p,rec); DIRTY=true; refreshTop();
     const af=box.querySelector('#after');
     const nextBtn=()=>{ af.insertAdjacentHTML('beforeend',`<div class="acts"><button class="next" id="nx">${opts.nextLabel||'다음 문제 ▶'}</button></div>`); af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); af.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}); };
     if(false){ /* 엄마 11/23: 풀고 나서 '어떻게 풀었어?' 묻기 없앰 */ const mv=fmOptions(p); af.innerHTML=`<div class="fmq">어떻게 풀었어?<small>내가 쓴 방법을 골라 봐요</small></div>${mv.map((m,k)=>`<button class="fmo" data-k="${k}">${m.t}</button>`).join('')}<button class="skipq" id="mvs">건너뛰기</button>`;
@@ -3833,10 +3845,11 @@ function parentGate(tab){ tab=typeof tab==='string'?tab:'rec'; let ok=false; try
     if(s.length===6){ if(s==='503553'){ try{ sessionStorage.setItem('m32:mom','1'); }catch(e){} m.remove(); parent(tab); } else { s=''; m.querySelector('#pw').textContent=''; const f=m.querySelector('#pwf'); f.className='fb show x'; f.textContent='비밀번호가 달라요.'; } } }); }
 const fmtKey=k=>{ const m=String(k).split('|'); if(m.length!==3) return k; return m[0]==='0'?`${m[1]}/${m[2]}`:`${m[0]}과 ${m[1]}/${m[2]}`; };
 const WHYL=Object.fromEntries(WHY.map(w=>[w[0],w[1]+' '+w[2]]));
-function parent(tab='rec'){ CUR='parent'; const A=allAtt();
-  const tabs=`<div class="tabs"><button data-t="rec" class="${tab==='rec'?'on':''}">기록</button><button data-t="prev" class="${tab==='prev'?'on':''}">문제 미리보기 (답 포함)</button><button data-t="book" class="${tab==='book'?'on':''}">📘 최상위 문제집 (답 포함)</button></div>`;
+function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
+  const tabs=`<div class="tabs"><button data-t="rec" class="${tab==='rec'?'on':''}">기록</button><button data-t="prev" class="${tab==='prev'?'on':''}">문제 미리보기 (답 포함)</button><button data-t="book" class="${tab==='book'?'on':''}">📘 최상위 문제집 (답 포함)</button><button data-t="teach" class="${tab==='teach'?'on':''}">🧑‍🏫 가르치기</button></div>`;
   let body='';
   if(tab==='book') body=bookMomHTML();
+  else if(tab==='teach') body=teachMomHTML();
   else if(tab==='rec'){
     const rows=SKILLS.map(s=>{ const r=PROG.sk[s.id]; const a=A.filter(x=>x.sk===s.id&&x.mode==='solve'&&x.res!=='s'); const o=a.filter(x=>x.res==='o').length; const secs=a.map(x=>x.sec); const tg={}; a.forEach(x=>x.tags.forEach(t=>tg[t]=(tg[t]||0)+1)); const top=Object.entries(tg).sort((p,q)=>q[1]-p[1]).slice(0,2).map(([t,c])=>`${TAGS[t]||t} ${c}`).join('<br>');
       return `<tr><td>${s.title}</td><td>${r.lesson>=2?'✓':r.lesson?'½':'–'} / ${r.check?'✓':'–'}</td><td>${r.lv>=5?'최상위(5단계) 통과':LVM[r.lv]+' ('+LV[r.lv]+')'}</td><td>${a.length}</td><td>${a.length?Math.round(o/a.length*100)+'%':'–'}<div class="bar"><i style="width:${a.length?o/a.length*100:0}%"></i></div></td><td>${secs.length?median(secs)+'초':'–'}</td><td class="sm">${top||'–'}</td></tr>`; }).join('');
@@ -3856,12 +3869,127 @@ function parent(tab='rec'){ CUR='parent'; const A=allAtt();
   document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>parent(b.dataset.t));
   document.querySelectorAll('[data-pen]').forEach(b=>b.onclick=()=>penModal(b.dataset.pen,b.closest('tr').children[3].textContent));
   if(tab==='book') bookMomBind();
+  if(tab==='teach') teachMomBind();
   if(tab==='prev'){ document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ parent.si=+b.dataset.s; parent('prev'); }); document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ parent.lv=+b.dataset.l; parent('prev'); }); $('#again').onclick=()=>parent('prev'); } }
+
+// ===== 🧑‍🏫 AI에게 가르치기 (엄마 11/24): 하루 1문제, 시훈이가 친구 콩이(AI)에게 풀이를 순서대로 설명 =====
+// 엄마: "무조건 매일" → 그날 맞힌 문제가 없어도 예전에 맞힌 문제나 통과한 단계의 새 문제로 꼭 1문제.
+// 콩이는 헷갈려하는 친구: 건너뛴 단계("여기서 18은 어떻게 나왔어?")·순서를 묻고, 한 번은 일부러 틀린 풀이를 보여 줘요. 답·방법은 먼저 말 안 해요.
+// 문제 모음·한 날 m32/teach {pool,days}, 요청 m32teachai/<id>(서버 m32Teach), 대화 기록 m32teach/<날짜>-<SID>-<시각>.
+var TEACH_MAX=5, TEACHD=null, TEACH_DIRTY=false, TC=null;
+function teachP(){ if(!TEACHD) TEACHD={pool:[],days:{}}; return TEACHD; }
+function teachDone(d){ const x=teachP().days[d||today()]; return !!(x&&x.done); }
+function teachMerge(d){ const T=teachP(); if(!d) return; const have=new Set(T.pool.map(x=>x.key)); T.pool=(Array.isArray(d.pool)?d.pool:[]).filter(x=>x&&!have.has(x.key)).concat(T.pool).slice(-20); T.days=Object.assign({},d.days||{},T.days); }
+function teachAdd(p,rec){ try{ if(!p||!rec||(rec.res!=='o'&&rec.res!=='h')) return; const T=teachP(); let it;
+    if(p.book) it={key:'b:'+p.book,bkey:p.book};
+    else { if(!p.text||!p.sol||/^<b>⑤ 처음 문제/.test(p.text)) return; const q=stripTags(p.text); if(!q) return; const svg=p.svg&&p.svg.length<30000?p.svg:''; if(p.svg&&!svg) return;
+      it={key:q,q,html:p.text,svg,ans:stripTags(answerText(p)),sol:p.sol.map(stripTags)}; }
+    Object.assign(it,{d:today(),lv:p.lv,sk:rec.sk,src:p.book?'book':'solve',res:rec.res,cond:(rec.cond&&rec.cond.n)||0});
+    T.pool=T.pool.filter(x=>x.key!==it.key); T.pool.push(it); T.pool=T.pool.slice(-20); TEACH_DIRTY=true; DIRTY=true; }catch(e){} }
+async function teachBookP(key){ try{ if(!(await bookLoad())) return null; const i=key.indexOf('/'); const uid=key.slice(0,i), iid=key.slice(i+1); const u=BOOK.units.find(x=>x.id===uid); if(!u) return null;
+    const it=u.groups.flatMap(g=>g.items).find(x=>String(x.id)===iid); if(!it) return null; const p=bookProb(u,it); const sc=(it.guide||[]).find(x=>x&&x.strat);
+    return {q:stripTags(p.text),html:p.text,svg:p.svg||'',ans:stripTags(answerText(p)),sol:p.sol.map(stripTags),strat:sc?`${sc.sname} 전략 — ${stripTags(sc.sdesc||'')}`:''}; }catch(e){ return null; } }
+function teachGen(k){ // 통과한(또는 지금 하는) 단계에서 새 문제
+  const c=SKILLS.map((s,i)=>({i,r:PROG.sk[s.id]})).filter(x=>x.r.check).sort((a,b)=>b.r.lv-a.r.lv);
+  const x=c.length?c[k%c.length]:{i:nextTarget().i,r:{lv:0}}; const lv=Math.max(0,Math.min(4,x.r.lv-1));
+  try{ return makeProblem(x.i,lv); }catch(e){ return null; } }
+const dAgo=n=>{ const d=new Date(); d.setDate(d.getDate()-n); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+async function teachCands(){ const T=teachP(), t=today(), out=[], seen=new Set();
+  const used=new Set(Object.keys(T.days).filter(d=>d>=dAgo(14)).map(d=>T.days[d]&&T.days[d].key).filter(Boolean)); // 최근 2주에 가르친 문제는 빼요
+  const score=x=>(x.d===t?100:0)+(x.d>=dAgo(7)?10:0)+(x.res==='h'?20:0)+(x.src==='book'?15:0)+(x.lv||0)*3+(x.cond>=2?10:0);
+  const pool=T.pool.filter(x=>!used.has(x.key)).sort((a,b)=>score(b)-score(a)||String(b.d).localeCompare(String(a.d)));
+  for(const x of pool){ if(out.length>=3) break; if(seen.has(x.key)) continue; let c=Object.assign({},x);
+    if(x.bkey){ const b=await teachBookP(x.bkey); if(!b) continue; Object.assign(c,b); }
+    seen.add(x.key); c.kind=x.d===t?'today':'past'; out.push(c); }
+  for(let g=0;out.length<3&&g<12;g++){ const p=teachGen(out.length+g); if(!p) break; const q=stripTags(p.text); if(seen.has(q)) continue; seen.add(q);
+    out.push({key:q,kind:'new',d:t,q,html:p.text,svg:p.svg||'',ans:stripTags(answerText(p)),sol:p.sol.map(stripTags),lv:p.lv,sk:SKILLS[p.sk].id,src:'new',res:null,cond:0,strat:''}); }
+  return out; }
+function teachSay(txt){ try{ const u=new SpeechSynthesisUtterance(txt); u.lang='ko-KR'; u.rate=1; u.pitch=1.25; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+function teachHome(mom){ mom=mom===true; CUR='teach'; TC=null;
+  app().innerHTML=`<div class="wrap">${topBar('🧑‍🏫 AI에게 가르치기',mom?'👩 엄마 직접 해 보기 · 시훈이 기록에 안 남아요':'오늘 1문제 · 친구 콩이에게 설명해 줘요')}<div id="tch" class="note">문제 고르는 중…</div></div>`; bindCommon();
+  teachCands().then(cs=>{ const el=$('#tch'); if(!el||CUR!=='teach') return; el.className='';
+    if(!cs.length){ el.innerHTML='<p class="note">가르칠 문제를 못 찾았어요. 인터넷을 확인하고 다시 들어와 주세요.</p>'; return; }
+    el.innerHTML=`<div class="tintro">🐹 <b>콩이</b>는 3학년 친구예요. 이 문제를 처음 봐서 잘 몰라요.<br>시훈이가 <b>처음부터 순서대로</b> 알려 주면 돼요. 말로 해도 되고, 오른쪽 패드에 식을 써도 돼요.</div>
+      <div class="sec">어떤 문제를 가르쳐 줄까?</div>${cs.map((c,i)=>`<button class="tpick" data-i="${i}"><span class="tk">${c.kind==='today'?'오늘 맞힌 문제':c.kind==='past'?`${String(c.d).slice(5).replace('-','/')}에 맞힌 문제`:'새 문제 · 풀면서 가르쳐요'}${c.src==='book'?' · 📘 최상위 문제집':''}</span>${picEsc(c.q.length>110?c.q.slice(0,110)+'…':c.q)}</button>`).join('')}`;
+    el.querySelectorAll('.tpick').forEach(b=>b.onclick=()=>teachStart(cs[+b.dataset.i],mom)); }); }
+function teachStart(c,mom){ CUR='teachrun';
+  TC={id:`${today()}-${SID}-${Date.now().toString(36)}`,c,mom:!!mom,t0:Date.now(),turns:[],n:0,calls:0,seq:0,wrongDone:false,have:null,skipped:[],moms:[],order:[],end:null,correct:null,lastN:0,lastImg:'',err:null};
+  app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right'));
+  $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="tback">⏮ 처음으로</button><div class="stitle">🧑‍🏫 AI에게 가르치기<div class="cnt">${mom?'👩 엄마 해 보기 · 기록 안 남음':'콩이에게 순서대로 알려 줘요'}</div></div>${saveBtnHTML()}</div>
+    <div class="pcard">${c.html}${c.svg?`<div class="picwrap">${c.svg}</div>`:''}${c.kind!=='new'?`<div class="tmy">✔ 시훈이가 구한 답: <b>${picEsc(c.ans)}</b></div>`:''}</div><div class="tutor teach" id="tbx"></div>`;
+  $('#tback').onclick=()=>{ if(TC&&!TC.end&&TC.n>0){ if(!confirm('가르치기를 그만할까요? 지금까지 한 건 남아요.')) return; teachFinish('stopped',true); } if(TC&&TC.mom) return teachHome(true); home(); }; bindSave();
+  const first='시훈아, 나 이 문제 처음 봐. 어떻게 푸는 거야? 처음부터 순서대로 알려 줘!';
+  TC.turns.push({who:'ai',text:first}); teachSay(first); teachReply(); }
+function teachDraw(ctl){ const tb=$('#tbx'); if(!tb||!TC) return;
+  const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'🐹 ':'🙋 '}${picEsc(t.text)}${t.work?`<div class="twork"><b>콩이 풀이</b><br>${picEsc(t.work).replace(/\n/g,'<br>')}</div>`:''}${t.pad?'<div class="tpadm">✍️ 패드에 쓴 것도 같이 보냈어요</div>':''}</div>`;
+  tb.innerHTML=`<div class="tlog">${TC.turns.map(bub).join('')}</div><div class="tctl">${ctl||''}</div>`; const l=tb.querySelector('.tlog'); l.scrollTop=l.scrollHeight; tb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+function teachReply(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let MIC=null;
+  teachDraw(`<textarea class="tans" id="th" rows="3" placeholder="${SR?'🎤 누르고 설명해요. 다 말하면 「보내기」!':'여기에 설명을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;line-height:1.5;min-height:84px;resize:vertical"></textarea><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 설명</button>':''}<button class="hint" id="ts" style="flex:0 0 auto">보내기 ▶</button></div><div class="tsub">✍️ 오른쪽 패드에 식을 쓰면 같이 보내져요 · <button class="tlink" id="tl">🔊 다시 듣기</button> · <button class="tstop" id="tq">그만할래요</button></div>`);
+  const tb=$('#tbx'), th=tb.querySelector('#th'), tm=tb.querySelector('#tm');
+  const stopMic=()=>{ if(MIC){ MIC.stop(); MIC=null; } };
+  if(tm) tm.onclick=()=>{ if(MIC&&MIC.isOn()){ stopMic(); return; }
+    MIC=window.liveMic?window.liveMic(th,on=>{ const b=tb.querySelector('#tm'); if(b) b.textContent=on?'⏹ 그만 듣기':(th.value.trim()?'🎤 이어서 말하기':'🎤 말로 설명'); if(!on) MIC=null; }):null;
+    if(!MIC) toast('음성 인식이 안 돼요. 글로 쓰거나 패드에 써 줘요.'); };
+  tb.querySelector('#ts').onclick=()=>{ stopMic(); const txt=th.value.trim(); const s=PAD&&PAD.snap?PAD.snap(TC.t0):{n:0}; const pn=(s.n||0)+((s.photos||[]).length);
+    const padNew=pn>0&&(pn!==TC.lastN||(s.img||'')!==TC.lastImg);
+    if(!txt&&!padNew){ toast('말로 하거나 패드에 써서 알려 줘요.'); return; }
+    TC.lastN=pn; TC.lastImg=s.img||''; TC.n++; TC.turns.push({who:'me',text:txt||'(패드에 써서 설명했어요)',pad:padNew?1:0}); teachStep(s); };
+  tb.querySelector('#tl').onclick=()=>{ const a=TC.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) teachSay(a.text); };
+  tb.querySelector('#tq').onclick=()=>{ stopMic(); if(TC.n>0||confirm('콩이에게 아직 하나도 안 알려 줬어요. 그만할까요?')) teachFinish('stopped'); }; }
+async function teachAsk(s,final){ const id=`${TC.id}-a${++TC.seq}`, c=TC.c;
+  const req={at:today(),date:today(),ts:new Date().toISOString(),mom:TC.mom?1:0,problem:{q:c.q,ans:c.ans,sol:c.sol||[],strat:c.strat||'',kind:c.kind,res:c.res||''},
+    turns:TC.turns.map(t=>({who:t.who,text:t.text+(t.work?'\n[콩이가 보여 준 틀린 풀이] '+t.work:'')+(t.pad?' (패드에도 씀)':'')})),n:TC.n,max:TEACH_MAX,final:final?1:0,wrongDone:TC.wrongDone?1:0,img:(s&&s.img)||''};
+  { let room=900000-req.img.length; req.photos=((s&&s.photos)||[]).slice().reverse().filter(x=>(room-=x.length)>=0).reverse(); }
+  await DBH.doc('m32teachai/'+id).set(req); TC.calls++;
+  for(let i=0;i<75;i++){ await new Promise(r=>setTimeout(r,i<5?1500:1000)); if(!TC) return {state:'error',err:'left'}; try{ const sn=await DBH.doc('m32teachai/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) return d.res; }catch(e){} }
+  return {state:'error',err:'timeout'}; }
+async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait">🐹 콩이가 생각하고 있어요…</div>`);
+  const final=TC.n>=TEACH_MAX; let r;
+  if(!tutorOK()) r={state:'error',err:'db'}; else { try{ r=await teachAsk(s,final); }catch(e){ r={state:'error',err:String(e&&e.message||e)}; } }
+  if(TC!==T0||CUR!=='teachrun') return;
+  if(!r||r.state==='error'||r.state==='limit'||!r.say){ TC.err=r&&(r.err||r.state); const last=TC.turns.pop(); TC.n--;
+    teachDraw(`<div class="fb show h">${r&&r.state==='limit'?'오늘은 콩이가 너무 많이 이야기해서 쉬어야 해요.':'콩이 연결이 잠깐 안 됐어요.'}</div><div class="acts">${r&&r.state==='limit'?'':'<button class="ok" id="tre">다시 보내기</button>'}<button class="hint" id="tq2" style="flex:0 0 auto">그만할래요</button></div>`);
+    const re=$('#tre'); if(re) re.onclick=()=>{ TC.n++; TC.turns.push(last); teachStep(s); }; $('#tq2').onclick=()=>teachFinish(TC.n>0?'stopped':'error'); return; }
+  if(r.have) TC.have=r.have; (r.skipped||[]).forEach(x=>{ if(x&&!TC.skipped.includes(x)) TC.skipped.push(x); }); if(r.mom) TC.moms.push(r.mom);
+  let st=r.state, say=r.say; if(st==='wrong'&&(TC.wrongDone||!r.wrongWork)) st='ask'; if(st==='wrong') TC.wrongDone=true;
+  if(final&&st!=='done'){ st='done'; say='고마워 시훈아! 네 덕분에 이제 거의 다 알 것 같아.'; }
+  const turn={who:'ai',text:say,state:st,focus:r.focus||''}; if(st==='wrong') turn.work=r.wrongWork; TC.turns.push(turn); teachSay(say);
+  if(st==='done'){ TC.order=Array.isArray(r.order)?r.order.filter(o=>o&&o.text).slice(0,6):[]; TC.correct=typeof r.correct==='boolean'?r.correct:null; return teachFinish(final&&r.state!=='done'?'max':'done'); }
+  teachSave(); teachReply(); }
+function teachRec(){ const c=TC.c; return {at:today(),date:today(),ts:new Date(TC.t0).toISOString(),id:TC.id,prob:{q:c.q,ans:c.ans,kind:c.kind,src:c.src,lv:c.lv,sk:c.sk,strat:c.strat||'',d:c.d,res:c.res||null},
+  turns:TC.turns,n:TC.n,have:TC.have,skipped:TC.skipped,mom:TC.moms,order:TC.order,correct:TC.correct,end:TC.end,calls:TC.calls,err:TC.err||null,sec:Math.round((Date.now()-TC.t0)/1000),img:TC.end?TC.lastImg:''}; }
+function teachSave(){ if(!TC||TC.mom||!DBH||DB_STATE!=='ok') return; try{ DBH.doc('m32teach/'+TC.id).set(JSON.parse(JSON.stringify(teachRec()))).catch(()=>{}); }catch(e){} }
+function teachFinish(end,silent){ if(!TC||TC.end) return; TC.end=end;
+  if(!TC.mom&&TC.n>0){ const T=teachP(); T.days[today()]={done:true,end,key:TC.c.key,id:TC.id,n:TC.n}; const ks=Object.keys(T.days).sort(); ks.slice(0,Math.max(0,ks.length-60)).forEach(k=>delete T.days[k]); TEACH_DIRTY=true; DIRTY=true; refreshTop(); }
+  teachSave(); if(silent) return;
+  const ok=end==='done'||end==='max', ord=TC.order||[];
+  teachDraw(`<div class="tdone"><div class="em">${ok?'🎉':'🌿'}</div><b>${ok?'콩이가 이해했어요!':'오늘 가르치기는 여기까지!'}</b></div>
+    ${ord.length?`<div class="tord"><div class="toh">📝 시훈이가 가르친 순서</div>${ord.map((o,i)=>`<div class="tos ${o.asked?'asked':''}"><span class="tn">${i+1}</span><span>${picEsc(o.text)}${o.asked?'<small>🔍 콩이가 물어봐서 꺼낸 단계</small>':''}</span></div>`).join('')}</div>`:''}
+    ${TC.correct===false?`<div class="fb show h">정답은 <b>${picEsc(TC.c.ans)}</b>이에요. 풀이를 같이 봐요.</div><div class="sol">${(TC.c.sol||[]).map(x=>`<div class="st">${picEsc(x)}</div>`).join('')}</div>`:''}
+    <div class="acts"><button class="next" id="tfin">${TC.mom?'다른 문제로 해 보기':'수학 처음으로 ▶'}</button></div>`);
+  const m=TC.mom; $('#tfin').onclick=()=>{ if(m) teachHome(true); else home(); }; }
+// 엄마 보기 「🧑‍🏫 가르치기」 탭: 직접 해 보기 + 시훈이가 한 대화 전체
+function teachMomHTML(){ return `<button class="big" id="tmom"><div><div class="t">🧑‍🏫 직접 해 보기</div><div class="s">시훈이 화면 그대로 · 시훈이 기록에는 안 남아요 (콩이 AI는 실제로 불러요)</div></div><span class="go">▶</span></button>
+  <p class="note">콩이는 시훈이가 <b>건너뛴 단계</b>("여기서 18은 어떻게 나왔어?")와 <b>순서</b>를 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요. 3~5번 주고받으면 끝나요. 오늘 했는지: <b>${teachDone()?'했어요 ✅':'아직이에요'}</b></p>
+  <div class="sec">시훈이가 한 가르치기</div><div id="tlogs" class="note">불러오는 중…</div>`; }
+const TEND={done:'✅ 콩이가 이해',max:'✅ 5번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
+const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
+function teachLogHTML(x){ const E=picEsc, h=x.have||{};
+  return `<details class="tlogd"><summary><b>${E(x.date)} ${E((x.ts||'').slice(11,16))}</b> · ${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 · ${E(String((x.prob||{}).q||'').slice(0,50))}…</summary>
+   <div class="pcard sm">${E((x.prob||{}).q||'')}<div>정답: <b>${E((x.prob||{}).ans||'')}</b>${(x.prob||{}).strat?` · 🃏 ${E(x.prob.strat)}`:''} · ${{today:'그날 맞힌 문제',past:'예전에 맞힌 문제',new:'새 문제'}[(x.prob||{}).kind]||''}</div></div>
+   <div class="sm">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · ❗ 설명한 답이 정답과 달랐어요':''}</div>
+   ${(x.skipped||[]).length?`<div class="sm">🔍 건너뛴 단계: ${x.skipped.map(E).join(' / ')}</div>`:''}
+   <div class="tlog" style="max-height:none">${(x.turns||[]).map(t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'🐹 ':'🙋 '}${E(t.text)}${t.work?`<div class="twork"><b>콩이 틀린 풀이</b><br>${E(t.work).replace(/\n/g,'<br>')}</div>`:''}</div>`).join('')}</div>
+   ${(x.order||[]).length?`<div class="tord"><div class="toh">📝 시훈이가 가르친 순서</div>${x.order.map((o,i)=>`<div class="tos ${o.asked?'asked':''}"><span class="tn">${i+1}</span><span>${E(o.text)}${o.asked?'<small>🔍 콩이가 물어봐서 나옴</small>':''}</span></div>`).join('')}</div>`:''}
+   ${(x.mom||[]).length?`<div class="sm">👩 메모: ${x.mom.map(E).join(' / ')}</div>`:''}${x.img?`<div class="penview"><img src="${x.img}" alt="패드"></div>`:''}</details>`; }
+function teachMomBind(){ $('#tmom').onclick=()=>teachHome(true); const el=$('#tlogs'); if(!DBH){ el.textContent='기록을 못 불러왔어요.'; return; }
+  DBH.collection('m32teach').limit(300).get().then(qs=>{ const L=qs.docs.map(d=>d.data()).filter(x=>x&&x.ts).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,40); if(!$('#tlogs')) return;
+    el.className=''; el.innerHTML=L.length?L.map(teachLogHTML).join(''):'<p class="note">아직 기록이 없어요.</p>'; }).catch(()=>{ el.textContent='기록을 못 불러왔어요.'; }); }
 
 home(); loadDB();
 // ===== 오늘의 공부 홈 화면과 주고받는 것 =====
 function allPassed(){ return SKILLS.every(s=>PROG.sk[s.id].lv>=5); } // 10개 기능 모두 최상위 통과 → 4학년 큰 수로
-function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length}; }
+function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length, teach:teachDone()}; }
 function todayTime(){ const t=today(); const concept=PROG.ctime.filter(c=>c.d===t).reduce((s,c)=>s+(c.sec||0),0); const problem=allAtt().filter(x=>x.d===t&&x.mode==='solve').reduce((s,x)=>s+(x.sec||0),0); return {concept,problem}; }
 function hubPlan(){ const t=nextTarget(), s=SKILLS[t.i], r=PROG.sk[s.id]; const lvn=t.kind==='solve'?LV[t.lv]:LV[Math.min(r.lv,4)];
   return {kind:t.kind, title:s.title, unit:s.unit, lv:lvn, lessonMin:estLesson(), checkMin:estCheck(), probMin:estProblems(), per:PER, ready:DB_STATE!=='loading', passed:SKILLS.filter(x=>PROG.sk[x.id].lv>=5).length, total:SKILLS.length}; }
@@ -3968,7 +4096,7 @@ function bookMomBind(){
   let s=''; m.querySelectorAll('.keys button').forEach(k=>k.onclick=async()=>{ const d=k.dataset.d; if(d==='x'){ m.remove(); return; } if(d==='b') s=s.slice(0,-1); else if(s.length<12) s+=d; m.querySelector('#bc').textContent=s;
     if(s.length===12){ const f=m.querySelector('#bcf'); f.className='fb show h'; f.textContent='여는 중…'; if(await bookUnlock(s)){ m.remove(); toast('📘 최상위 문제집이 열렸어요!'); parent('book'); } else { s=''; m.querySelector('#bc').textContent=''; f.className='fb show x'; f.textContent='코드가 달라요.'; } } }); }; }
 if(typeof document!=='undefined') setTimeout(()=>{ const w=setInterval(()=>{ if(DB_STATE!=='loading'){ clearInterval(w); bookLoad().then(ok=>{ if(ok&&CUR==='home') home(); }); } },500); },0);
-return { open(v){ home(); if(v==='preview') parentGate('prev'); else if(v==='book') parentGate('book'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
+return { open(v){ home(); if(v==='preview') parentGate('prev'); else if(v==='book') parentGate('book'); else if(v==='teach') parentGate('teach'); }, leave(){}, done:allPassed, stats:todayStats, time:todayTime, plan:hubPlan };
 })(mountApp('host-m32','t-m32'));}catch(e){console.error('수학 3-2 불러오기 실패',e);return null}})();
 
 const APP_CONCEPT=(function(document){
@@ -6886,8 +7014,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     if(k==='en'){if(st.done)return `<span class="st done">오늘 영어 끝 ✅ ${st.actualMin}분</span>`;if(st.main)return `<span class="st">오늘 ${st.main} / ${st.daily||5}</span>`;return '<span class="st">아직 안 했어요</span>'}
     if(k==='write')return st.n?`<span class="st done">오늘 글 ${st.n}개 저장 ✅</span>`:'<span class="st">쓸 글이 있을 때 열어요</span>';
     if(k==='ko')return st.n?`<span class="st done">오늘 ${st.n}개 저장 ✅${st.score!=null?` · 누테 ${st.score}점`:''}</span>`:'<span class="st">아직 안 했어요</span>';
-    if(st.n&&M32())return `<span class="st done">오늘 ${st.n}문제 했어요 ✅</span>`;if(st.n)return `<span class="st ${st.n>=MATH_N?'done':''}">오늘 ${st.n} / ${MATH_N}문제${st.n>=MATH_N?' ✅':''}</span>`;return '<span class="st">아직 안 했어요</span>'}
-  function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/50':'—';if(k==='ko'||k==='write')return st.n?'✅ '+st.n:'—';if(M32())return st.n?'✅ '+st.n:'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
+    if(M32()&&(st.n||st.teach))return `<span class="st ${st.teach?'done':''}">${st.n?`오늘 ${st.n}문제 했어요`:'오늘 문제는 아직'} · 🧑‍🏫 가르치기 ${st.teach?'✅':'남았어요'}</span>`;if(st.n)return `<span class="st ${st.n>=MATH_N?'done':''}">오늘 ${st.n} / ${MATH_N}문제${st.n>=MATH_N?' ✅':''}</span>`;return '<span class="st">아직 안 했어요</span>'}
+  function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/50':'—';if(k==='ko'||k==='write')return st.n?'✅ '+st.n:'—';if(M32())return ((st.n?'✅ '+st.n:'')+(st.teach?' 🧑‍🏫':'')).trim()||'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
   function dateLabel(){const d=new Date();return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+'일월화수목금토'[d.getDay()]+'요일'}
 
   function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why,admin})[VIEW]()}
@@ -6913,6 +7041,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${A('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
       ${A('🔢','수학 3-2 미리보기','문제 · 정답 · 시훈이 결과','data-h="aopen" data-app="m32" data-v="preview"')}
       ${A('📘','최상위 문제집 미리보기','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
+      ${A('🧑‍🏫','수학 AI에게 가르치기','직접 해 보기 · 시훈이가 콩이와 한 대화 전체','data-h="aopen" data-app="m32" data-v="teach"')}
       ${A('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
       ${A('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
       ${A('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}

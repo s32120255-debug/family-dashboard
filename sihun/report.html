@@ -127,7 +127,8 @@ async function exportRecs(k,days){ const out=document.getElementById('expout'); 
     const R=C.routine&&C.routine.days||{}, V=C.vcheck&&C.vcheck.days||{};
     const en={routine:Object.fromEntries(Object.entries(R).filter(([d])=>inR(d))),vocab:Object.fromEntries(Object.entries(V).filter(([d])=>inR(d)))};
     const changes=((C.changes&&C.changes.items)||[]).filter(x=>inR(x.date));
-    const data={app:'sihun-report-export',v:1,from:fk,to:k,made:new Date().toISOString(),math,pens,ana,ko,kotutor,koana,writing,en,daily,changes};
+    const teach=(await getC('m32teach',where('at','>=',fk),where('at','<=',k)).catch(()=>[])).map(({img,...x})=>x);
+    const data={app:'sihun-report-export',v:1,from:fk,to:k,made:new Date().toISOString(),math,pens,ana,ko,kotutor,koana,writing,en,daily,changes,teach};
     const blob=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`시훈기록_${fk}_${k}.json`; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),5000);
     out.innerHTML=`✅ 파일을 받았어요 (수학 ${math.length}문제, 손풀이 ${Object.keys(pens).length}장, ${Math.round(blob.size/1024)}KB). 다운로드 폴더의 <b>시훈기록_…json</b>을 Claude에게 올려 주세요.`;
   }catch(e){ out.textContent='내보내기가 안 됐어요: '+(e.code||e.message); } }
@@ -256,7 +257,7 @@ async function writeFill(k){ const el=document.getElementById('wrbody'); if(!el)
     ${w.final?`<div><span class="muted">완성 글:</span> <b>${esc(w.final)}</b></div>`:''}
     ${w.img?`<div class="pen"><div class="muted">원고지 (S펜)</div><img src="${w.img}" alt="원고지"></div>`:''}${w.photo?`<div class="pen"><div class="muted">📷 종이 사진</div><img src="${w.photo}" alt="종이"></div>`:''}</div>`}).join('');
 }
-const AIN={m32tutor:'수학 과외',m32ana:'수학 분석',kotutor:'국어 과외',koana:'국어 분석',writecoach:'글쓰기 첨삭'};
+const AIN={m32tutor:'수학 과외',m32teachai:'수학 가르치기',m32ana:'수학 분석',kotutor:'국어 과외',koana:'국어 분석',writecoach:'글쓰기 첨삭'};
 const usd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당)
 const won=d=>'약 '+Math.round(d*1450).toLocaleString('ko-KR')+'원';
 async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) return; const M=await getD('aiuse/'+k.slice(0,7)).catch(()=>null); const D=(M&&M.days)||{};
@@ -266,6 +267,24 @@ async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) retu
   el.innerHTML=`<div class="row">${stat(dS.n+'번','이날 AI 사용')}${stat(won(usd(dS)),'이날 비용')}${stat(mS.n+'번',`${+k.slice(5,7)}월 AI 사용`)}${stat(won(usd(mS)),`${+k.slice(5,7)}월 비용`)}</div>
     ${mS.n?`<table class="kot"><tr><td></td><td>이날</td><td>${+k.slice(5,7)}월</td></tr>${Object.keys(AIN).filter(c=>mon[c]).map(c=>`<tr><td>${AIN[c]}</td><td>${day[c]?day[c].n+'번 · '+won(usd(day[c])):'-'}</td><td>${mon[c].n}번 · ${won(usd(mon[c]))}</td></tr>`).join('')}</table>`:''}
     <p class="muted" style="font-size:13px">시훈 공부방 AI만 센 대략 값이에요(1달러 1,450원으로 계산). 정확한 청구액과 한 달 한도는 Claude 콘솔(platform.claude.com)의 Usage·Limits에서 봐요.${nd?` 이번 달 AI 쓴 날 ${nd}일, 하루 평균 ${won(usd(mS)/nd)}.`:' 기록은 서버 업데이트 뒤부터 쌓여요.'}</p>`; }
+// ===== 🧑‍🏫 수학 가르치기 (엄마 11/24): 시훈이가 친구 콩이(AI)에게 1문제 설명 — 대화 전체·건너뛴 단계 =====
+const TEND={done:'✅ 콩이가 이해',max:'✅ 5번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
+const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
+const TKIND={today:'그날 맞힌 문제',past:'예전에 맞힌 문제',new:'새 문제(풀면서 가르침)'};
+function teachHTML(x){ const p=x.prob||{}, h=x.have||{};
+  return `<div class="kowr"><div><b>${esc((x.ts||'').slice(11,16)?new Date(x.ts).toTimeString().slice(0,5):'')}</b> · ${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 말함 · ${Math.round((x.sec||0)/60)}분 · ${TKIND[p.kind]||''}</div>
+    <div class="kobox">${esc(p.q)}<br>정답: <b>${esc(p.ans)}</b>${p.strat?` · 🃏 ${esc(p.strat)}`:''}</div>
+    <div class="muted">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · <span class="bad">설명한 답이 정답과 달랐어요</span>':''}</div>
+    ${(x.skipped||[]).length?`<div><b>🔍 건너뛴 단계</b><ul>${x.skipped.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
+    <details><summary>대화 전체 (${(x.turns||[]).length})</summary>${(x.turns||[]).map(t=>`<div class="tut">${t.who==='ai'?'🐹 콩이':'🙋 시훈'}: ${esc(t.text)}${t.work?`<br><span class="muted">콩이 틀린 풀이:</span> ${esc(t.work).replace(/\n/g,'<br>')}`:''}</div>`).join('')}</details>
+    ${(x.order||[]).length?`<div><b>📝 시훈이가 가르친 순서</b><ol>${x.order.map(o=>`<li>${esc(o.text)}${o.asked?' <span class="muted">(🔍 콩이가 물어봐서 나옴)</span>':''}</li>`).join('')}</ol></div>`:''}
+    ${(x.mom||[]).length?`<div class="ana"><b>👩 메모</b><ul>${x.mom.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:''}
+    ${x.img?`<div class="pen"><div class="muted">✍️ 패드에 쓴 것</div><img src="${x.img}" alt="패드"></div>`:''}</div>`; }
+async function teachFill(k){ const el=document.getElementById('tcbody'); if(!el) return;
+  const L=(await getC('m32teach',where('at','==',k)).catch(()=>null));
+  if(!L){ el.innerHTML='<p class="muted">기록을 못 불러왔어요.</p>'; return; }
+  L.sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:1);
+  el.innerHTML=L.length?L.map(teachHTML).join(''):'<p class="muted">이날 가르치기 기록이 없어요.</p>'; }
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
@@ -288,6 +307,7 @@ async function render(){
   const MW=MI.filter(x=>x.res==='x'||x.res==='s'||x.fixed||(x.res==='h'&&x.pen)||(x.tutor&&x.tutor.turns&&x.tutor.turns.length)||x.guide);
   const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':x.res==='h'?'△':x.res==='o'?'⭕':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">${x.pen.ph?`📷 사진 ${x.pen.ph} · `:''}✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.solSeen?' · 📖 풀이 봄':''}${x.twin?`<div>🔁 쌍둥이 문제: ${x.twin.res==='o'?'⭕ 혼자 한 번에 맞힘':x.twin.res==='h'?'△ 두 번째에 맞힘':'❌ 못 맞힘'} <span class="muted">(${esc(x.twin.q)} · 정답 ${esc(x.twin.ans)}${x.twin.wrong&&x.twin.wrong.length?` · 쓴 답 ${esc(x.twin.wrong.join(', '))}`:''})</span></div>`:''}${x.strat?`<div class="muted">🃏 ${STRN[x.strat]||x.strat} 전략${x.stratOk==null?'':x.stratOk?' · 길잡이에서 전략 카드 바로 고름':' · 길잡이에서 전략 카드 헤맴'}</div>`:''}${x.guide?`<div class="muted">🧭 길잡이로 풂${x.guideAfterWrong?'(틀린 뒤)':'(처음부터)'} · 작은 질문 ${x.guide}칸 중 스스로 맞힘 ${x.guideOk}</div>`:''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<div class="tut"><b>🧑‍🏫 AI 과외</b> <span class="muted">(${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</span>${x.tutor.read?`<div class="muted">읽은 식: ${esc(x.tutor.read)}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${esc(t.text)}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${esc([...new Set(x.tutor.mom)].join(' / '))}</div>`:''}${x.tutor.shorter?`<div>💡 더 간단한 방법: ${esc(x.tutor.shorter)}</div>`:''}${x.learn&&(x.learn.nw||x.learn.use)?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</div>`:''}${x.fixed?'<div class="muted">✏️ 패드에 쓰다가 스스로 고침</div>':''}${x.cond?`<div class="muted">🔎 조건 ${x.cond.n}개 · ${x.cond.tries<=1?'한 번에 다 찾음':x.cond.tries+'번 만에 다 찾음'}${(x.cond.miss||[]).length&&x.cond.mode==='tap'?` · 처음에 놓친 조건: ${x.cond.miss.map(m=>'「'+esc(m)+'」').join(' ')}`:''}</div>`:''}${x.ts?`<div class="aslot" data-key="${esc(x.ts)}"></div><button class="abtn" data-one="${esc(x.ts)}">🔍 이 문제 AI 분석</button>`:''}</li>`).join('');
   h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}${(()=>{const c=MI.filter(x=>x.cond);return c.length?stat(c.filter(x=>x.cond.tries<=1).length+'/'+c.length,'조건 한 번에 다 찾음'):''})()}</div>${stratBox(MI,C.m32.filter(d=>d.date<=k).flatMap(d=>d.items||[]).filter(x=>x.mode==='solve'))}<div><button class="abtn" id="aday">🔍 이날 수학 AI 분석</button><button class="abtn" id="aweek">🔍 최근 7일 AI 분석</button><span class="muted" style="font-size:13px"> 1~3분 걸려요</span></div><div id="adayout"></div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제 · 손풀이 · AI 과외 대화</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
+  h+=`<div class="card"><h2>🧑‍🏫 수학 가르치기 (친구 콩이)</h2><div id="tcbody"><p class="muted">불러오는 중…</p></div></div>`;
   h+=`<div class="card"><h2>✍️ 글쓰기 첨삭</h2><div id="wrbody"><p class="muted">불러오는 중…</p></div></div>`;
   // 막힌 이유
   const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별',write:'글쓰기'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
@@ -302,7 +322,7 @@ async function render(){
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&(d.img||(d.ph||[]).length)){el.innerHTML=d.img?`<img src="${d.img}" alt="손풀이">`:'';for(const q of (d.ph||[])){const pd=await getD('m32pen/'+q).catch(()=>null);if(pd&&pd.img)el.insertAdjacentHTML('beforeend',`<div class="muted">📷 종이 풀이 사진</div><img src="${pd.img}" alt="사진">`)}}else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   if(MI.length) mountAna(k,MI);
   if(KR.length) koFill(KR).then(()=>koExtra(k));
-  writeFill(k); aiUse(k);
+  writeFill(k); aiUse(k); teachFill(k);
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
