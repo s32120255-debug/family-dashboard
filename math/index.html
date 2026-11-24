@@ -94,7 +94,7 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .gate.hold .fill{width:100%;transition:width 1.2s linear}
 
 /* 문제 */
-.stage{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding-block:8px;text-align:center}
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center;overflow-y:auto;align-items:center;gap:8px;padding-block:4px;text-align:center}
 .qline{font-family:var(--f-disp);font-size:44px;line-height:1.35;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 8px;font-variant-numeric:tabular-nums}
 .qline.mid{font-size:34px}
 .qline.txt{font-size:28px}
@@ -111,16 +111,17 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .fr>span:first-child{border-bottom:3px solid currentColor;padding:0 .15em 2px}
 .fr .box{font-size:1em}
 .cnt{font-family:var(--f-disp);font-size:24px;color:var(--on-blue);background:var(--blue);border-radius:10px;padding:2px 18px}
-.found{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:36px}
+.found{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;min-height:0}
 .found span{font-family:var(--f-disp);font-size:24px;background:var(--green-soft);border:2px solid var(--green);border-radius:10px;padding:0 10px}
 .say{font-size:18px;color:var(--ink-2);min-height:1.6em}
 .say.blue{color:var(--blue)}
-.fig{width:min(100%,300px)}
+.fig{width:min(100%,300px,32vh);flex:none}
 .fig svg{display:block;width:100%;height:auto;touch-action:manipulation}
 
 /* 키패드 */
-.pad{flex:none;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-block:8px 12px}
+.pad{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-block:8px 12px}
 .key{height:62px;border-radius:14px;background:var(--card);border:1px solid var(--line);font-family:var(--f-disp);font-size:32px;box-shadow:0 2px 0 var(--line)}
+.key.nk{background:var(--blue-soft,#dbe6f5);color:var(--blue)}
 .key.fn{font-size:20px;background:var(--paper-2)}
 .key.go{background:var(--blue);border-color:var(--blue);color:var(--on-blue);font-size:24px}
 .ox{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-block:8px 14px}
@@ -323,7 +324,7 @@ const TYPES={
 
  CO:{name:"좌표 놀이",code:"I1·I2",ex:"점 읽기 · 점 찍기",sec:4,n:10,optional:true,why:"그래프 읽기 → 일차함수 → 이차함수. 함수 그래프가 모두 이 점들로 그려져요.",
   idea:"(가로, 세로) 순서로 읽어요.",
-  rand:()=>({x:ri(0,6),y:ri(0,6),m:Math.random()<.5?"read":"plot"}),key:p=>p.m+p.x+","+p.y,
+  rand:()=>{const L=(tst("CO").runs||[]).length;return L<3?{x:ri(1,5),y:ri(1,5),m:"read"}:L<6?{x:ri(1,5),y:ri(1,5),m:Math.random()<.5?"read":"plot"}:{x:ri(0,6),y:ri(0,6),m:Math.random()<.5?"read":"plot"}},key:p=>p.m+p.x+","+p.y,
   make:({x,y,m})=>m==="read"
     ?{fig:coordSVG([x,y]),html:`점은 ( [[0]] , [[1]] )`,a:[String(x),String(y)],kind:"num",cls:"mid",text:`읽기 (${x},${y})`}
     :{fig:"PLOT",pt:[x,y],html:`( ${x} , ${y} ) 에 점을 찍어 봐`,a:[x+","+y],kind:"plot",cls:"txt",text:`찍기 (${x},${y})`},
@@ -540,8 +541,8 @@ function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d)\]\]/g,(m,i
 function padHTML(kind,canSubmit){
   if(kind==="ox")return `<div class="ox"><button data-act="ox" data-arg="O" aria-label="맞아요">O</button><button data-act="ox" data-arg="X" aria-label="아니에요">X</button></div>`;
   if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
-  const k=[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" data-key="${n}">${n}</button>`).join("");
-  return `<div class="pad">${k}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button><button class="key" data-key="0">0</button><button class="key go" data-key="ok">확인</button></div>`;
+  const K=n=>`<button class="key" data-key="${n}">${n}</button>`;
+  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음">n</button>${K(7)}${K(8)}${K(9)}<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button><button class="key" data-key="0" style="grid-column:span 3">0</button></div>`;
 }
 function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
 
@@ -597,7 +598,7 @@ function vPlay(){
   return `${bar(`<span class="prog">${RUN.label?RUN.label+" · ":""}${Math.min(doneN+1,n)} / ${n}</span>`,`<span class="clockwrap"><span class="clock" id="clock">${fmt(elapsed())}</span><span class="goal">${goal[0]} ${fmt(goal[1])}</span></span>`)}
    <div class="lives" aria-label="남은 실수 ${Math.max(0,allow-wn)}개">${lives}${wn>allow?`<span class="small muted">기록만 남기는 세트</span>`:""}</div>
    <div class="stage">${q.kind==="plot"?`<div class="fig">${coordSVG(null,RUN.user,true)}</div>`:figHTML(q)}
-     ${q.kind==="multi"?`<div class="big">${q.big}</div><div class="cnt">[${(it.found||[]).length}/${q.need.length}]</div><div class="found">${(it.found||[]).map(v=>`<span>${v}</span>`).join("")}</div><div class="qline">${boxesHTML("[[0]]",RUN.vals,0,RUN.boxState)}</div>`
+     ${q.kind==="multi"?`<div class="big">${q.big}</div><div class="cnt">[${(it.found||[]).length}/${q.need.length}]</div>${(it.found||[]).length?`<div class="found">`:"<div>"}${(it.found||[]).map(v=>`<span>${v}</span>`).join("")}</div><div class="qline">${boxesHTML("[[0]]",RUN.vals,0,RUN.boxState)}</div>`
        :`<div class="qline ${q.cls||""}">${boxesHTML(q.html,RUN.vals,q.kind==="num"?RUN.act:-1,RUN.boxState)}</div>`}
      <div class="say blue" aria-live="polite">${RUN.say}</div></div>
    <div class="under">${PREVIEW?`<span class="ans-pv">정답 ${esc((q.a||q.need).join(" , "))}</span><button class="nb pri" data-act="pvnext">다음 ▶</button>`:`<button class="nb" data-act="pause">잠깐 멈춤</button>${!it.skip&&RUN.pos<RUN.order.length-1?`<button class="nb" data-act="later">나중에 풀기</button>`:""}`}</div>
@@ -607,6 +608,7 @@ function typeKey(k){
   const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx)return;
   const q=view==="play"?RUN.probs[curIdx()].q:curStep();if(!q||q.kind==="ox"||q.kind==="plot")return;if(q.kind==="multi")ctx.act=0;
   if(k==="ok"){submit();return}
+  if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}ctx.act++;softRender();return}
   const v=ctx.vals[ctx.act]||"";
   if(k==="del"){ctx.vals[ctx.act]=v.slice(0,-1)}
   else{if(v.length>=4)return;if(v==="0")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
@@ -945,7 +947,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
   else if(k==="step"){tst(id).step=+el.value}
   save(today());render();
 });
-document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok")});
+document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok");else if(e.key==="n")typeKey("n")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&view==="play"&&RUN&&!modal){ACT.pause()}});
 
 ensureToday();render();connectDB();
