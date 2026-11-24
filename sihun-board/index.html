@@ -8,7 +8,7 @@
 <link rel="icon" href="icons/ninja-192.png?v=2">
 <link rel="apple-touch-icon" href="icons/ninja-192.png?v=2">
 <meta name="theme-color" content="#14141c">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Yeon+Sung&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 시훈이 대시보드: 파스텔 레트로 고양이. 시간표·과제는 우리집 대시보드 데이터를 그대로 읽음.
    용돈·기억·질문은 sihunBoard/main/* 에 저장하고, 모든 변경은 log 에 남아 엄마가 봄.
@@ -69,10 +69,10 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tabs button[aria-pressed="true"]{background:var(--yellow);color:#2e3f38}
 .navtabs{position:sticky;top:0;z-index:10;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0 10px;border-bottom:2px solid var(--line)}
 .navtabs::-webkit-scrollbar{display:none}
-.navtabs button{flex:1 1 0;min-width:max-content;border:2px solid var(--line);background:var(--card);border-radius:999px;padding:8px 12px;cursor:pointer;font-family:var(--body);font-weight:700;letter-spacing:.04em;font-size:1rem;color:var(--muted)}
+.navtabs button{flex:1 1 0;min-width:max-content;border:2px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;cursor:pointer;font-family:"Yeon Sung",var(--body);font-weight:400;font-size:1.35rem;color:var(--muted)}
 .navtabs button[aria-selected="true"]{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 3px 0 #a3202e}
 .navtabs button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
-@media (max-width:420px){.navtabs{gap:4px}.navtabs button{padding:6px 6px;font-size:.9rem}}
+@media (max-width:420px){.navtabs{gap:4px}.navtabs button{padding:5px 6px;font-size:1.1rem}}
 .who .btn.small{font-size:.85rem}
 #noticeBtn{background:var(--yellow);border-color:var(--yellow);color:#14141c;font-weight:700}
 .tt{position:relative;margin-top:4px}
@@ -167,7 +167,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--pink)">
    <h2><span class="ttl">도움 포인트</span><small>집안일·엄마 도와주기, 과제 포인트와 따로</small></h2>
-   <div class="sum" id="helpBox" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+   <div class="sum" id="helpBox" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--mint)">
    <h2><span class="ttl">성장 달력</span><span class="nav"><button class="btn small" id="gPrev" aria-label="이전 달">◀</button><b id="gMonth" style="min-width:6.5em;font-size:1.1rem"></b><button class="btn small" id="gNext" aria-label="다음 달">▶</button></span></h2>
@@ -381,8 +381,9 @@ function renderGrow(earned,used,week){
  const t=today(),ws=weekStart();
  $("ptBox").innerHTML=`<div><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div><div><small>쓴 포인트</small><b>${used}</b></div>`;
  {let tot=0,wk=0;for(const g of [...S.helpLog,...S.choreLog]){if(g.who!=="시훈")continue;const v=Number(g.points)||0;tot+=v;if(g.date>=ws)wk+=v}
-  $("helpBox").innerHTML=`<div><small>모은 도움 포인트</small><b>💗 ${tot}</b></div><div><small>이번 주</small><b>${wk}</b></div>`}
- const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const hu=S.rewards.filter(r=>r.kind==="help"&&r.who==="시훈").reduce((a,r)=>a+(Number(r.points)||0),0);
+  $("helpBox").innerHTML=`<div><small>쓸 수 있는 도움 포인트</small><b>💗 ${tot-hu}</b></div><div><small>이번 주 모은</small><b>${wk}</b></div><div><small>지금까지 모은</small><b>${tot}</b></div><div><small>쓴 도움 포인트</small><b>${hu}</b></div>`}
+ const rw=S.rewards.filter(x=>x.kind!=="help").slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
  $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
  const by={};for(const x of S.tasks){if(!x.date)continue;const o=by[x.date]||(by[x.date]={n:0,d:0});o.n++;if(x.done)o.d++}
  const st=k=>{const o=by[k];if(!o||!o.n)return"";return o.d===o.n?"all":o.d?"some":k<t?"none":""};
@@ -600,7 +601,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=22;
+const VERSION=23;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -644,7 +645,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=22").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=23").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
