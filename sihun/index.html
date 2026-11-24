@@ -86,14 +86,20 @@ const unpack = v => (v && typeof v._j === 'string') ? JSON.parse(v._j) : v;
 const segs = path => P.concat(String(path).split('/').filter(Boolean));
 const wrap = s => ({ id: s.id, exists: s.exists(), data: () => s.exists() ? unpack(s.data()) : undefined });
 
+// 👀 직접 해 보기(엄마 11/25): 관리자 모드에서 시훈이 화면 그대로 열고, 아무것도 저장하지 않음.
+// AI 요청 칸(과외·가르치기·첨삭)만 써야 AI가 답하므로 trial 표시를 붙여 저장 → 리포트에서 뺌.
+const TRY_AI = ['m32tutor','m32teachai','kotutor','writecoach','m32ana','koana'];
 function docRef(path){
   const ref = () => doc(fs, ...segs(path));
+  const top = String(path).split('/').filter(Boolean)[0];
+  const tr = d => (window.HUBTRY && TRY_AI.includes(top)) ? Object.assign({}, d, { trial: true }) : d;
+  const blocked = () => window.HUBTRY && !TRY_AI.includes(top);   // 저장할 때마다 확인(미리 만들어 둔 ref도 막힘)
   const api = {
     id: segs(path).slice(-1)[0],
     get: async () => wrap(await getDoc(ref())),
-    set: async d => { await setDoc(ref(), pack(d)); },
-    update: async d => { const s = await getDoc(ref()); const cur = s.exists() ? unpack(s.data()) : {}; await setDoc(ref(), pack(Object.assign({}, cur, d))); },
-    delete: async () => { await deleteDoc(ref()); }
+    set: async d => { if (blocked()) return; await setDoc(ref(), pack(tr(d))); },
+    update: async d => { if (blocked()) return; const s = await getDoc(ref()); const cur = s.exists() ? unpack(s.data()) : {}; await setDoc(ref(), pack(tr(Object.assign({}, cur, d)))); },
+    delete: async () => { if (window.HUBTRY) return; await deleteDoc(ref()); }
   };
   return api;
 }
@@ -981,6 +987,12 @@ table.lmap th small{font-weight:500;color:var(--muted)}
 </div></div></template>
 <script>
 // ===== 오늘의 공부: 공통 =====
+// 👀 직접 해 보기: 이 기기 저장(localStorage)도 막음 — 끝내기 누르면 새로 불러와서 시훈이 원래 상태로
+window.HUBTRY=false;
+(()=>{const P=Storage.prototype,si=P.setItem,ri=P.removeItem,cl=P.clear;
+  P.setItem=function(k,v){if(window.HUBTRY&&this===window.localStorage&&!String(k).startsWith('pen:'))return;return si.call(this,k,v)};
+  P.removeItem=function(k){if(window.HUBTRY&&this===window.localStorage)return;return ri.call(this,k)};
+  P.clear=function(){if(window.HUBTRY&&this===window.localStorage)return;return cl.call(this)}})();
 const HUB=(()=>{
   const pad=n=>String(n).padStart(2,'0');
   const dkey=t=>{const d=t?new Date(t):new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
@@ -3451,7 +3463,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
    ${units}
    <div class="note">기록은 문제마다 자동으로 저장돼요. 중간에 나가도 다음에 이어서 해요.</div>
    <div class="foot"><button class="pbtn" id="parent">👩 엄마 보기</button></div></div>`;
-  document.querySelectorAll('.bkc').forEach(b=>b.onclick=()=>{ if(b.classList.contains('lock')){ toast(`${b.querySelector('h3').textContent.split('· ')[1]} 1~5단계를 다 하면 열려요.`); return; } bookHome(b.dataset.u); });
+  document.querySelectorAll('.bkc').forEach(b=>b.onclick=()=>{ if(b.classList.contains('lock')&&!window.HUBTRY){ toast(`${b.querySelector('h3').textContent.split('· ')[1]} 1~5단계를 다 하면 열려요.`); return; } bookHome(b.dataset.u); });
   const tgo=$('#tgo'); if(tgo) tgo.onclick=()=>{ if(teachDone()){ toast('오늘 가르치기는 끝! 내일 또 해요.'); return; } teachHome(); };
   if($('#pfgo')) $('#pfgo').onclick=startReview;
   $('#go').onclick=()=>{ if(t.kind==='book') bookStart(t.ui,t.gi); else if(t.kind==='lesson') startLesson(t.i); else if(t.kind==='check') startCheck(t.i); else startSolve(t.i,t.lv); };
@@ -3466,7 +3478,7 @@ function skillPage(i){ CUR='skill'; const s=SKILLS[i], r=PROG.sk[s.id]; let sel=
    <div class="learn">${s.learn}</div>
    <div class="row3"><button class="big rev" id="ls"><div><div class="t">📘 개념 수업</div><div class="s">${r.lesson>=2?'다시 보기':'처음이면 여기부터'}</div></div></button>
    <button class="big rev" id="ck"><div><div class="t">✅ 개념 확인</div><div class="s">5문제 · ${r.check?'통과했어요':'4개 맞히면 통과'}</div></div></button></div>
-   <div class="sec">단계 고르기</div><div class="lvpick">${LV.map((n,l)=>`<button data-l="${l}" class="${l===sel?'on':''}" ${l>r.lv?'disabled':''}>${l>r.lv?'🔒 ':''}${n}<small>${r.lv>l?'통과':''} ${'★'.repeat(r.st[l])}${'☆'.repeat(5-r.st[l])}</small></button>`).join('')}</div>
+   <div class="sec">단계 고르기</div><div class="lvpick">${LV.map((n,l)=>`<button data-l="${l}" class="${l===sel?'on':''}" ${l>r.lv&&!window.HUBTRY?'disabled':''}>${l>r.lv&&!window.HUBTRY?'🔒 ':''}${n}<small>${r.lv>l?'통과':''} ${'★'.repeat(r.st[l])}${'☆'.repeat(5-r.st[l])}</small></button>`).join('')}</div>
    <button class="big" id="sv" style="margin-top:14px"><div><div class="t">✏️ 문제 풀기</div><div class="s" id="svs">${LV[sel]} · 되는 만큼</div></div><span class="go">▶</span></button></div>`;
   document.querySelectorAll('.lvpick button').forEach(b=>b.onclick=()=>{ sel=+b.dataset.l; document.querySelectorAll('.lvpick button').forEach(x=>x.classList.toggle('on',x===b)); $('#svs').textContent=`${LV[sel]} · 되는 만큼`; });
   $('#ls').onclick=()=>startLesson(i); $('#ck').onclick=()=>startCheck(i); $('#sv').onclick=()=>startSolve(i,sel); bindCommon(); }
@@ -3829,12 +3841,12 @@ function startSolve(si,lv){ CUR='solve'; C={si,lv,list:[],idx:-1,t0:Date.now()};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right')); newProblem(); }
 function solveBar(){ const s=SKILLS[C.si], r=PROG.sk[s.id], n=r.st[C.lv]||0; const done=C.list.filter(x=>x.rec).length;
   return `<div class="sbar"><button class="homebtn" data-act="home">⏮ 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span><div class="cnt">이번에 ${done}문제</div></div><span class="stars"><b>${'★'.repeat(n)}</b>${'☆'.repeat(Math.max(0,5-n))}</span>${saveBtnHTML()}</div>`; }
-function navRow(){ return `<div class="navrow"><button id="pv" ${C.idx<=0?'disabled':''}>◀ 이전</button><button id="nxp">다음 ▶</button><button id="lvdn" ${C.lv<=0?'disabled':''}>단계 ▼</button><button id="lvup" ${C.lv>=Math.min(4,PROG.sk[SKILLS[C.si].id].lv)?'disabled':''}>단계 ▲</button></div>`; }
+function navRow(){ return `<div class="navrow"><button id="pv" ${C.idx<=0?'disabled':''}>◀ 이전</button><button id="nxp">다음 ▶</button><button id="lvdn" ${C.lv<=0?'disabled':''}>단계 ▼</button><button id="lvup" ${C.lv>=(window.HUBTRY?4:Math.min(4,PROG.sk[SKILLS[C.si].id].lv))?'disabled':''}>단계 ▲</button></div>`; }
 function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } };
   // 엄마 11/23: 그냥 넘어가기 없앰 — 풀어야(맞히거나, 틀린 뒤 정답까지 보고) 다음 문제로
-  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec){ toast('이 문제를 먼저 풀어요. 막히면 💡 힌트를 봐도 돼요.'); return; } if(false){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),pen:cur.st?penSnap(cur.st):null}); cur.rec={res:'s'}; }
+  $('#nxp').onclick=()=>{ const cur=C.list[C.idx]; if(cur&&!cur.rec&&!window.HUBTRY){ toast('이 문제를 먼저 풀어요. 막히면 💡 힌트를 봐도 돼요.'); return; } if(false){ recordAtt({d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[C.si].id,lv:C.lv,res:'s',tries:cur.st?cur.st.tries:0,hints:cur.st?cur.st.hints:0,wrong:[],tags:[],sec:Math.round((Date.now()-cur.st.t0)/1000),fm:cur.p.fm,mv:null,why:null,q:stripTags(cur.p.text).slice(0,140),ans:stripTags(answerText(cur.p)),pen:cur.st?penSnap(cur.st):null}); cur.rec={res:'s'}; }
     if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
-  $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<Math.min(4,PROG.sk[SKILLS[C.si].id].lv)){ C.lv++; newProblem(true); } }; bindCommon(); }
+  $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<(window.HUBTRY?4:Math.min(4,PROG.sk[SKILLS[C.si].id].lv))){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
   C.list.push({p:makeProblem(C.si,C.lv),rec:null}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
@@ -4131,10 +4143,10 @@ function bookRender(){ const u=BOOK.units[BS.ui], g=u.groups[BS.gi], it=g.items[
     onGuide:it.guide?(pre=>{ bookGuide(box,p,it.guide,log=>{ const nb=document.createElement('div'); box.appendChild(nb);
       BS.st=mountProblem(nb,Object.assign({},p,{text:'<b>⑤ 처음 문제</b>의 답을 넣어요.',svg:undefined}),{mode:'solve',nextLabel:BS.ii<g.items.length-1?'다음 문제 ▶':'이 묶음 끝 ▶',onDone:rec=>{ rec.wrong=pre.wrong.concat(rec.wrong||[]); rec.tries+=pre.tries; rec.hints+=pre.hints; if(rec.res==='o') rec.res='h'; rec.guide=log.length; rec.guideOk=log.filter(x=>x.ok).length; bookStratRec(rec,it,log); rec.guideAfterWrong=1; BS.recs[key]=rec; recordAtt(rec); D[key]=rec.res; DIRTY=true; refreshTop(); },onNext:()=>bookAfter(u,it,key)}); }); }):null});
   $('#pv').onclick=()=>{ if(BS.ii>0){ BS.ii--; bookRender(); } };
-  $('#nxp').onclick=()=>{ if(!BS.recs[key]){ toast('이 문제를 먼저 풀어요. 막히면 💡 힌트를 봐도 돼요.'); return; } bookAfter(u,it,key); }; }
+  $('#nxp').onclick=()=>{ if(!BS.recs[key]&&!window.HUBTRY){ toast('이 문제를 먼저 풀어요. 막히면 💡 힌트를 봐도 돼요.'); return; } bookAfter(u,it,key); }; }
 // 🔁 쌍둥이 문제(엄마 11/23): 길잡이·AI 과외로 풀었거나, 틀렸거나, 힌트를 본 문제 뒤에 같은 구조·다른 숫자 문제를 혼자(힌트 없이) 풀어 확인
 const needTwin=r=>!!r&&(r.res!=='o'||!!r.guide||!!(r.tutor&&r.tutor.turns&&r.tutor.turns.length));
-function bookAfter(u,it,key){ const rec=BS.recs[key]; if(it.twin&&needTwin(rec)&&!rec.twin) bookTwin(u,it,rec); else bookNext(); }
+function bookAfter(u,it,key){ const rec=BS.recs[key]; if(rec&&it.twin&&needTwin(rec)&&!rec.twin) bookTwin(u,it,rec); else bookNext(); }
 function bookTwin(u,it,rec){ const g=u.groups[BS.gi], box=$('#pbox'); PAD&&PAD.clear();
   box.innerHTML=`<div class="twh">🔁 <b>쌍둥이 문제</b> · 방금 문제와 생각 길이 똑같아요. 이번엔 혼자 풀어 봐요!</div><div id="twb"></div>`;
   const p=bookProb(u,Object.assign({},it.twin,{id:it.id,src:it.src+' 쌍둥이'}));
@@ -7078,6 +7090,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   const M32=()=>{try{return !!APP_M32&&!APP_M32.done()}catch(e){return false}};
   const MSUB=()=>M32()?'3-2 · 분수 · 들이와 무게 · 그림그래프':'4-1 큰 수 · 개념 확인';
   let day=HUB.today(), REC=load(day), F=0, VIEW='home', WHYSEL=[], CUR=null, DB=null, RET=null;
+  try{if(sessionStorage.getItem('hub:goadmin')){sessionStorage.removeItem('hub:goadmin');if(sessionStorage.getItem('hub:mom')==='1')VIEW='admin'}}catch(e){} // 직접 해 보기 끝내기 → 관리자 모드로
   function load(d){try{return JSON.parse(localStorage.getItem(LSK+d))||{date:d,subjects:{}}}catch(e){return {date:d,subjects:{}}}}
   function S(k){REC.subjects[k]=REC.subjects[k]||{};return REC.subjects[k]}
   let wT=null;
@@ -7145,7 +7158,13 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
       ${B('🧑‍🏫','가르치기 대화','시훈이가 콩이와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
       ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
-      ${H('👀 직접 해 보기 (답 포함)')}
+      ${H('👀 직접 해 보기 · 시훈이 화면 그대로')}
+      <p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 풀지 않아도 다음 ▶으로 넘기고, 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
+      ${B('🇺🇸','영어','단어 · 문장 · 녹음','data-h="try" data-app="en"')}
+      ${B('📖','국어','복습 · 비문학 · 숙제 · 누적 테스트','data-h="try" data-app="ko"')}
+      ${B('🔢','수학 3-2','단계 · 그림 틀 · 🖼 그림 복습 · 🧑‍🏫 가르치기 · 📘 최상위 문제집','data-h="try" data-app="m32"')}
+      ${B('✍️','글쓰기','AI 쌤과 글쓰기','data-h="try" data-app="write"')}
+      ${H('🔎 답 보기 (표로 한눈에)')}
       ${B('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
       ${B('🔢','수학 3-2 미리보기','문제 · 정답','data-h="aopen" data-app="m32" data-v="preview"')}
       ${B('📘','최상위 문제집','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
@@ -7154,6 +7173,10 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${B('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
       ${B('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
       </div>`;adminAI()}
+  function tryBar(){if(document.getElementById('tryBar'))return;const b=document.createElement('div');b.id='tryBar';
+    b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483600;background:#ffe36e;color:#3a2e00;font:600 15px "Noto Sans KR",sans-serif;padding:6px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)';
+    b.innerHTML='<span style="flex:1">👀 직접 해 보기 · 시훈이 기록에 안 남아요</span><button style="font:600 15px sans-serif;padding:4px 12px;border-radius:8px;border:0;background:#3a2e00;color:#fff">끝내기</button>';
+    b.querySelector('button').onclick=()=>{try{sessionStorage.setItem('hub:goadmin','1')}catch(e){}location.reload()};document.body.appendChild(b);document.body.style.paddingTop='40px'}
   function penCal(){let k=window.penPxPerMm();const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;font-size:16px;line-height:1.5;color:#222">
@@ -7242,6 +7265,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
     else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
+    else if(a==='try'){window.HUBTRY=true;RET='admin';tryBar();openApp(t.dataset.app)}
     else if(a==='report'){location.href='./report.html'}
     else if(a==='pencal'){penCal()}
     else if(a==='lock'){try{sessionStorage.removeItem('hub:mom')}catch(e){}location.reload()}
