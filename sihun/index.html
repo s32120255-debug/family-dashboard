@@ -6505,8 +6505,11 @@ function pvHW(){const nchk=HW.reduce((a,h)=>a+h.items.filter(i=>i.chk).length,0)
 /* 요일 순서 (엄마 11/22): 일 쉼 · 월 비문학 · 화 문학 · 수 문법 · 목 스키마 (복습 → 핵심 빈칸 쓰기 → 그 영역 누테)
    금 독서 워크지 · 토 이번 주 대비 누테. 주차는 복습 카드가 있는 가장 최근 주차(MAXW).
    특정 날만 바꾸려면 KO_PLAN.custom['YYYY-MM-DD']=[...] */
-const KO_PLAN={steps:[],custom:{}};
-function dayBase(d){if(KO_PLAN.custom[d])return KO_PLAN.custom[d].slice();const wd=new Date(d+'T12:00:00').getDay();const W=MAXW;const R=Array.from({length:W},(_,i)=>i+1);
+const KO_PLAN={steps:[],custom:{},add:{}};
+/* 보충(엄마 지정): 그 날짜 요일 순서 맨 뒤에 붙음. 11/24 엄마 "비문학 숙제 오늘 보충으로" */
+KO_PLAN.add['2026-11-24']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'문단 쪼개 읽기 → 근거 문장 찾기'}];
+function dayBase(d){return dayBase0(d).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
+function dayBase0(d){if(KO_PLAN.custom[d])return KO_PLAN.custom[d].slice();const wd=new Date(d+'T12:00:00').getDay();const W=MAXW;const R=Array.from({length:W},(_,i)=>i+1);
   if(wd===0)return [];
   if(wd<=4){const [day,,A]=DAYS[wd-1];const H=HW.find(h=>h.w===W&&h.day===day);return [{k:'daily',w:W,day,area:A,label:`📝 ${W}주차 ${A} 복습`,sub:'블록으로 빈칸 채우기'}].concat(H?[{k:'hw',set:H.id,w:W,label:`📒 ${H.title}`,sub:'앱에서 생각 → 종이엔 옮겨 적기만'}]:[],[{k:'fill',w:W,area:A,label:'✍️ 핵심 빈칸 쓰기',sub:'왼쪽 보고 빈칸 단어만 S펜으로'},{k:'test',r:R,area:A,cnt:10,label:`📮 ${A} 누테`,sub:`1~${W}주차 ${A}만 10문항`}])}
   if(wd===5)return [{k:'read',w:W,label:'📚 독서 워크지',sub:'읽기 → 문제 → 내 말로 서술형 → 원고지'}];
