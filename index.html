@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=67">
-<link rel="icon" href="icon-192.png?v=67">
-<link rel="apple-touch-icon" href="icon-192.png?v=67">
+<link rel="manifest" href="manifest.json?v=68">
+<link rel="icon" href="icon-192.png?v=68">
+<link rel="apple-touch-icon" href="icon-192.png?v=68">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -110,8 +110,8 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .gbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .who{color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .linkbtn{border:none;background:none;color:var(--accent-ink);cursor:pointer;padding:0;text-decoration:underline}
-.datenav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.datenav b{min-width:8.5em;text-align:center}
+.datenav{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.datenav b{min-width:8em;text-align:center;font-family:var(--display);font-weight:400;font-size:1.3rem}
 .schedbody{display:grid;grid-template-columns:minmax(0,280px) minmax(0,1fr);gap:16px;align-items:start}
 @media (max-width:640px){.schedbody{grid-template-columns:minmax(0,1fr)}}
 #dial svg{width:100%;height:auto;max-width:340px;display:block;margin:0 auto}
@@ -133,9 +133,10 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .tt-b b{font-family:var(--display);font-weight:400;line-height:1.1}
 .tt-b .tt-t{flex:1;min-width:0;text-align:center}
 .tt-b .adm{position:absolute;right:4px;top:2px}.tt-b .pill{position:absolute;right:4px;bottom:2px}
-.tt-b .tt-t span{font-size:.75rem;opacity:.75;font-variant-numeric:tabular-nums}
-.tt-n{font-size:.75rem;opacity:.8}
+.tt-b .tt-t span{font-size:.8rem;opacity:.75;font-variant-numeric:tabular-nums}
+.tt-n{font-size:.8rem;opacity:.8}
 .tt-b.now{box-shadow:0 0 0 3px var(--info)}
+.tt-b.past{opacity:.55}
 .tt-b.skipped{opacity:.4}.tt-b.skipped b{text-decoration:line-through}
 .tt-b .icon{color:#3a2a00;padding:0 3px}
 .tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid #e8590c;pointer-events:none}
@@ -229,7 +230,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 67</p></div></div>
+<p style="font-size:.75rem">버전 68</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -367,8 +368,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=67";
-import {SEED_SCHEDULE} from "./seed.js?v=67";
+import {firebaseConfig} from "./config.js?v=68";
+import {SEED_SCHEDULE} from "./seed.js?v=68";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -555,16 +556,16 @@ function timetable(list,nm){
    if(!ttOpen){lo=cut/60;timed=timed.filter(x=>x.e>cut).map(x=>x.s<cut?{...x,s:cut}:x)}}}
  const lanes=[];for(const x of timed){let k=lanes.findIndex(end=>end<=x.s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.e;x.lane=k}
  for(const x of timed){x.n=Math.max(...timed.filter(y=>y.s<x.e&&x.s<y.e).map(y=>y.lane))+1}
- const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.src==="cal"?`<span class="pill info">달력</span>`:it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
+ const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.src==="cal"?(admin?`<span class="pill info">달력</span>`:""):it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
    :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
  let rows="";const lt=timed.filter(x=>!x.skipped);
  for(let h=lo;h<hi;h++)for(const half of [0,30]){const m=h*60+half,cov=lt.find(x=>x.s<m+30&&x.e>m),col=cov?schedColor(cov,TTC):"";
   rows+=`<div class="tt-row${half?" half":""}" style="top:${y(m)}px"><span class="tt-h${cov?" on":""}">${half?`${h%12||12}:30`:`${h<12?"오전":"오후"} ${h%12||12}시`}</span>${admin?`<button class="tt-slot" data-slot="${pad(h)}:${half?"30":"00"}" aria-label="${h}시 ${half?"30분":""}에 일정 넣기"></button>`:""}</div>`}
  let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>0)gaps+=`<div class="tt-gap" style="top:${y(pe)+1}px;height:${y(x.s)-y(pe)-2}px"><span>${x.s-pe>=60?"상의 · 엄마와 시훈이가 정해요":"상의"}</span></div>`;pe=Math.max(pe??0,x.e)}
  const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
- const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.rs&&nm<x.re;
+ const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.rs&&nm<x.re,past=nm!=null&&!x.skipped&&nm>=x.re;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
-  return`<div class="tt-b${x.skipped?" skipped":""}${now?" now":""}" style="top:${y(x.s)+1}px;height:${hgt}px;${x.lane?`left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px)`:`left:-64px;width:calc(${w}% + 62px);padding-left:72px`};background:${schedColor(x,TTC)}"><div class="tt-t"><b style="font-size:${Math.min(32,15+Math.max(0,Math.round(hgt/32)-1)*5)}px">${x.star?'<i class="star">★</i>':""}${esc(x.title)}</b>${hgt>40?"<br>":" "}<span>${time}</span>${x.note&&hgt>60?`<div class="tt-n">${esc(x.note)}</div>`:""}</div>${x.skipped?'<span class="pill low">이 날 빠짐</span>':x.src==="date"?'<span class="pill info">이 날만</span>':""}${abtn(x)}</div>`}).join("");
+  return`<div class="tt-b${x.skipped?" skipped":""}${now?" now":""}${past?" past":""}" style="top:${y(x.s)+1}px;height:${hgt}px;${x.lane?`left:calc(${x.lane*w}% + 2px);width:calc(${w}% - 4px)`:`left:-64px;width:calc(${w}% + 62px);padding-left:72px`};background:${schedColor(x,TTC)}"><div class="tt-t"><b style="font-size:${Math.min(32,15+Math.max(0,Math.round(hgt/32)-1)*5)}px">${x.star?'<i class="star">★</i>':""}${esc(x.title)}</b>${hgt>40?"<br>":" "}<span>${time}</span>${x.note&&hgt>60?`<div class="tt-n">${esc(x.note)}</div>`:""}</div>${!admin?"":x.skipped?'<span class="pill low">이 날 빠짐</span>':x.src==="date"?'<span class="pill info">이 날만</span>':""}${abtn(x)}</div>`}).join("");
  const nowLine=nm!=null&&nm>=lo*60&&nm<hi*60?`<div class="tt-nowl" style="top:${y(nm)}px"></div>`:"";
  const un=untimed.length?`<ul class="list" style="margin-bottom:8px">${untimed.map(x=>`<li class="item${x.skipped?" skipped":""}"><span class="meta">${x.allDay?"종일":"시간 미정"}</span><span class="t"><b>${x.star?'<i class="star">★</i>':""}${esc(x.title)}</b>${x.note?` <span class="meta">${esc(x.note)}</span>`:""}</span>${abtn(x)}</li>`).join("")}</ul>`:"";
  const empty=!list.length?`<p class="empty" style="margin:0 0 6px">이 날 일정이 없어요.${admin?" 시간 줄을 누르면 그 시각에 넣을 수 있어요.":" 관리자 모드에서 넣을 수 있어요."}</p>`:"";
@@ -968,7 +969,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=67;
+const VERSION=68;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
