@@ -35,7 +35,7 @@ export function mountChess(el,{onEnd,gate,pay}){
  let st;try{st=JSON.parse(localStorage.getItem("sbChess")||"null")}catch(e){st=null}
  st=st||{fen:null,me:"w",level:"easy",hist:[]};
  let g=new Chess(st.fen||undefined);let sel=null,thinking=false,last=null,ended=false,paying=false;
- // 한 판에 1점: 시훈이가 그 판의 첫 수를 둘 때 낸다(st.paid). 저장돼 있던 진행 중 판은 이미 낸 것으로 봄.
+ // 한 판에 1점: 「⭐1점 쓰고 체스 열기」를 눌러야 판이 열린다(st.paid). 저장돼 있던 진행 중 판은 이미 낸 것으로 봄.
  if(st.paid===undefined)st.paid=g.history().length>0;
  const save=()=>{try{localStorage.setItem("sbChess",JSON.stringify({fen:g.fen(),me:st.me,level:st.level,paid:st.paid}))}catch(e){}};
  const status=()=>{if(g.isCheckmate())return g.turn()===st.me?"체크메이트! 컴퓨터가 이겼어.":"체크메이트! 시훈이가 이겼어!";
@@ -49,13 +49,16 @@ export function mountChess(el,{onEnd,gate,pay}){
   const gt=gate?gate():null;
   if(gt&&!ended&&(gt.lock||(!inProg()&&gt.used>=gt.limit))){
    el.innerHTML=`<div style="text-align:center;padding:24px 8px;display:grid;gap:8px"><b style="font-family:var(--hand);font-size:1.6rem">${gt.lock?"잠겨 있어요":"오늘 체스는 끝!"}</b><span class="meta">${gt.lock||`오늘 ${gt.limit}판 다 했어. 내일 또 하자.`}</span></div>`;return}
+  if(pay&&!st.paid){
+   el.innerHTML=`<div style="text-align:center;padding:28px 8px;display:grid;gap:12px;justify-items:center"><b style="font-family:var(--hand);font-size:1.6rem">체스판이 잠겨 있어요</b><span class="meta">과제 포인트 1점을 쓰면 한 판 열려요.${gt?` 오늘 ${gt.used+1}/${gt.limit}판째`:""}</span><button class="btn primary" data-ch="open" style="font-size:1.3rem;padding:10px 20px">⭐1점 쓰고 체스 열기</button></div>`;
+   el.querySelector('[data-ch=open]').onclick=async()=>{if(paying)return;paying=true;const ok=await pay();paying=false;if(!ok)return;st.paid=true;save();render();cpu()};return}
   const flip=st.me==="b";const b=g.board();const legal=sel?g.moves({square:sel,verbose:true}).map(m=>m.to):[];
   let cells="";
   for(let i=0;i<8;i++)for(let j=0;j<8;j++){const r=flip?7-i:i,c=flip?7-j:j;const sq="abcdefgh"[c]+(8-r);const p=b[r][c];
    const dark=(r+c)%2===1;const isSel=sel===sq,isLeg=legal.includes(sq),isLast=last&&(last.from===sq||last.to===sq);
    cells+=`<button class="cq" data-sq="${sq}" style="background:${isSel?"#f7c873":isLast?"#f3d9a4":dark?"#8fcfb8":"#fbf5e8"}" aria-label="${sq}">${p?`<span class="pc ${p.color}">${GLYPH[p.type]}</span>`:""}${isLeg?`<span class="dot ${p?"cap":""}"></span>`:""}</button>`}
   el.innerHTML=`<div class="row between"><span class="meta">난이도</span><div class="tabs">${Object.entries(LV).map(([k,v])=>`<button data-lv="${k}" aria-pressed="${k===st.level}">${v}</button>`).join("")}</div></div>
-  <div class="row between"><b id="chStatus">${status()}</b><span class="meta">${!st.paid&&pay?"첫 수에 1점 · ":""}${gt?(gt.used+1>=gt.limit?"오늘 마지막 판 · ":`오늘 ${gt.used+1}/${gt.limit}판째 · `):""}시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
+  <div class="row between"><b id="chStatus">${status()}</b><span class="meta">${gt?(gt.used+1>=gt.limit?"오늘 마지막 판 · ":`오늘 ${gt.used+1}/${gt.limit}판째 · `):""}시훈이 ${st.me==="w"?"흰색":"검은색"}</span></div>
   <div class="board">${cells}</div>
   <div class="row"><button class="btn small" data-ch="undo">한 수 무르기</button><button class="btn small" data-ch="new">새 판</button></div>`;
   el.querySelectorAll(".cq").forEach(x=>x.onclick=()=>tap(x.dataset.sq));
@@ -63,11 +66,10 @@ export function mountChess(el,{onEnd,gate,pay}){
   el.querySelector('[data-ch=undo]').onclick=undo;el.querySelector('[data-ch=new]').onclick=newGame}
  async function tap(sq){if(thinking||paying||g.isGameOver()||g.turn()!==st.me)return;const p=g.get(sq);
   if(sel){const mv=g.moves({square:sel,verbose:true}).find(m=>m.to===sq);
-   if(mv){if(!st.paid&&pay){paying=true;const ok=await pay();paying=false;if(!ok){sel=null;render();return}st.paid=true;save()}
-    const first=g.history().length===0;const gt=gate?gate():null;if(first&&gt&&gt.used+1>=gt.limit)setTimeout(()=>{const t=document.createElement("div");t.className="toast";t.textContent="오늘 마지막 판이야";document.body.appendChild(t);setTimeout(()=>t.remove(),2600)},10);
+   if(mv){const first=g.history().length===0;const gt=gate?gate():null;if(first&&gt&&gt.used+1>=gt.limit)setTimeout(()=>{const t=document.createElement("div");t.className="toast";t.textContent="오늘 마지막 판이야";document.body.appendChild(t);setTimeout(()=>t.remove(),2600)},10);
     const m=g.move({from:sel,to:sq,promotion:"q"});last=m;sel=null;save();render();finish();setTimeout(cpu,250);return}}
   sel=p&&p.color===st.me?sq:null;render()}
- function cpu(){if(g.isGameOver()||g.turn()===st.me)return;thinking=true;render();
+ function cpu(){if(g.isGameOver()||g.turn()===st.me||(pay&&!st.paid))return;thinking=true;render();
   setTimeout(()=>{const m=bestMove(g.fen(),st.level);if(m)last=g.move(m);thinking=false;save();render();finish()},50)}
  function undo(){if(thinking)return;if(g.history().length===0)return;g.undo();if(g.turn()!==st.me&&g.history().length)g.undo();ended=false;sel=null;last=null;save();render();cpu()}
  function newGame(){if(thinking)return;const gt=gate?gate():null;if(gt&&gt.lock)return;
