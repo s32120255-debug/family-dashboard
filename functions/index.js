@@ -668,7 +668,7 @@ exports.m32Teach = onDocumentCreated(
 // AI 요청 문서에 답(res)이 처음 채워질 때 토큰 수를 sihun/data/aiuse/{YYYY-MM} 에 더해요. 앱 코드는 안 건드려요.
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { FieldValue } = require("firebase-admin/firestore");
-for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai"]) {
+for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai", "enchat"]) {
   exports["aiUse_" + col] = onDocumentUpdated(
     { document: "sihun/data/" + col + "/{id}", region: "asia-northeast3", maxInstances: 2 },
     async (event) => {
@@ -684,3 +684,101 @@ for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32t
     }
   );
 }
+
+// ===================================================================================
+// 시훈 공부방 영어 「⚡ 카츄랑 말하기」(엄마 11/25): 그날 연습한 문장을 대화에서 꺼내 쓰기.
+// 카츄 = 시훈이 인형(귀여운 동생). 앱이 sihun/data/enchat/{id} 에 요청을 쓰면 같은 문서에 res를 채워요.
+// 시훈이가 아는 단어로만 말하게: 앱이 보낸 단어 목록(vocab) + 오늘 문장 + 기본 낱말 밖의 단어가 나오면 다시 만들게 해요.
+// ===================================================================================
+const ENCHAT_LIMIT = 200; // 하루 상한(한 대화 최대 12번)
+const EN_BASIC = ("i me my mine you your yours he him his she her it its we us our they them their this that these those " +
+  "a an the and or but so too very really not no yes yeah oh wow ok okay hi hello bye thanks thank please sorry " +
+  "is am are was were be do does did can will let lets what who where when why how which " +
+  "here there now today yesterday tomorrow again more one two three four five six seven eight nine ten first " +
+  "in on at to for with of from up down about after before " +
+  "go come see look like want have has get play eat say know think help make good great nice fun cool big little " +
+  "shane katchu brother big haha hmm uh me too same").split(/\s+/);
+function enWords(t) {
+  return String(t || "").toLowerCase().replace(/[’‘]/g, "'")
+    .replace(/n't\b/g, " not").replace(/'m\b/g, " am").replace(/'re\b/g, " are").replace(/'s\b/g, " is").replace(/'ll\b/g, " will")
+    .replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+}
+function enKnown(w, set) {
+  if (set.has(w)) return true;
+  const c = [w.replace(/ies$/, "y"), w.replace(/es$/, ""), w.replace(/s$/, ""), w.replace(/ed$/, ""), w.replace(/ed$/, "e"), w.replace(/d$/, ""), w.replace(/ing$/, ""), w.replace(/ing$/, "e"), w.replace(/er$/, ""), w.replace(/est$/, "")];
+  return c.some((x) => x && x.length > 1 && set.has(x));
+}
+const ENCHAT_SYSTEM = `너는 "카츄"야. 시훈이(영어 이름 Shane, 초3)가 아끼는 노란 인형이고, 시훈이를 "형아"라고 부르며 따르는 귀여운 동생이야. 카츄는 영어로만 말해(한국어 뜻은 앱이 따로 보여 줘).
+목표: 시훈이가 오늘 연습한 영어 문장(번호 목록)을 대화 속에서 자기 입으로 실제로 쓰게 만드는 것. 시훈이는 문장을 겨우 만드는 수준이고, 빨리 말하거나 모르는 단어가 나오면 하나도 못 해.
+카츄가 말하는 법(say, react):
+- 영어 한 문장(많아도 두 문장), 한 문장은 8단어 이하. 쉬운 말만.
+- 낱말은 반드시 [쓸 수 있는 낱말] 목록과 오늘 문장 안의 낱말만. 목록 밖 낱말·숙어·줄임말 금지(isn't, don't, I'm 대신 is not, do not, I am).
+- 동생 말투: 궁금해하고, 형아한테 묻고, 형아 말에 감탄해. 과한 칭찬·이모지 금지.
+매 차례 할 일:
+1) 시훈이 대답(heard)이 있으면 판정해. 음성 인식이라 발음이 흐려 낱말이 엉뚱하게 들릴 수 있어(특히 첫 낱말). 비슷한 소리면 시훈이 뜻으로 인정해.
+   - 오늘 문장의 문법 틀(be 모양, 주어, 부정·의문 순서)이 맞으면 낱말이 조금 달라도 그 문장을 "썼다"로 인정하고 used에 번호를 넣어(예: 오늘 문장 "The coach is strict." → "My coach is strict."도 인정).
+   - 문법이 틀렸으면 지적하지 말고 react에서 바른 문장으로 자연스럽게 되받아 말하고(예: 시훈 "The coach are strict" → react "Oh, the coach is strict!"), fix=true, fixLine에 시훈이가 따라 말할 바른 문장(시훈이 말을 고친 것). 이 경우 used에는 넣지 마.
+   - 문법이 맞으면 fix=false, fixLine="", react는 짧은 맞장구(예: "Wow! Me too!").
+   - 딴 얘기면 react로 한 번 짧게 받아 주고, 다음 상황은 같은 목표 문장으로 더 쉽게.
+   - "I don't know"·한국어·빈 대답이면 react "That is OK!"처럼 짧게 하고, 같은 목표 문장으로 상황을 더 구체적으로.
+2) 다음 상황을 만들어: 아직 안 쓴 오늘 문장 하나를 target(번호)으로 골라,
+   - scene: 한국어 상황 카드 1~2문장. 시훈이가 무슨 상황에서 어떤 뜻의 말을 하면 되는지 알려 줘(영어 정답은 쓰지 마). 카츄는 "카츄"로, 시훈이는 "형아"로 불러. 예: "🏀 농구 연습 끝! 카츄가 코치님이 어떤 분인지 궁금해해요. 코치님이 엄격하다고 말해 줘요."
+   - say: 카츄가 하는 영어 말. 시훈이가 target 문장으로 대답하게 되는 짧은 질문(예: "Shane, is your coach nice?"). target 문장을 그대로 말하지 마.
+   - ko: say의 한국어 뜻.
+   오늘 문장이 질문(?)이면 시훈이가 카츄에게 묻게 상황을 만들어(scene에 "카츄한테 물어봐요").
+3) 오늘 문장을 다 썼거나 turnsLeft가 0이면 done=true, scene·say·ko는 "", target 0, react 끝에 짧은 인사("Bye, Shane! Thank you!").
+mom: 엄마에게 남기는 한국어 한 문장(시훈이가 무엇을 바로 말했고 어디서 막혔는지 구체적으로).`;
+const ENCHAT_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["react", "reactKo", "fix", "fixLine", "used", "done", "scene", "say", "ko", "target", "mom"],
+  properties: {
+    react: { type: "string" }, reactKo: { type: "string" }, fix: { type: "boolean" }, fixLine: { type: "string" },
+    used: { type: "array", items: { type: "integer" } }, done: { type: "boolean" },
+    scene: { type: "string" }, say: { type: "string" }, ko: { type: "string" }, target: { type: "integer" }, mom: { type: "string" },
+  },
+};
+exports.enChat = onDocumentCreated(
+  { document: "sihun/data/enchat/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.sents || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("enchat", req.at)) > ENCHAT_LIMIT) return done({ state: "limit", say: "", mom: "하루 AI 상한을 넘었어요" });
+    const sents = (req.sents || []).slice(0, 8);
+    const allow = new Set(EN_BASIC);
+    (req.vocab || []).forEach((w) => enWords(w).forEach((x) => allow.add(x)));
+    sents.forEach((s) => enWords(s.en).forEach((x) => allow.add(x)));
+    const lines = [
+      "오늘 문장:",
+      ...sents.map((s, i) => `${i + 1}. ${s.en} (${s.ko})${(req.used || []).includes(i + 1) ? " ← 이미 씀" : ""}`),
+      `[쓸 수 있는 낱말] ${[...allow].sort().join(", ")}`,
+      `turnsLeft: ${Math.max(0, +req.turnsLeft || 0)}`,
+    ];
+    if (req.turns && req.turns.length) {
+      lines.push("지금까지 대화:");
+      req.turns.forEach((t) => lines.push(`${t.who === "ai" ? "카츄" : "시훈"}: ${t.text}${t.help ? ` (도움 ${t.help}단계 보고)` : ""}`));
+    }
+    lines.push(req.kind === "start" ? "대화를 시작해. react·reactKo는 \"\", fix=false, used=[]. 첫 인사는 say에 짧게 넣고 바로 첫 상황으로." : `시훈이 방금 대답(heard): "${req.heard || ""}"${req.typed ? " (자판으로 씀)" : " (말로 함)"}`);
+    const content = lines.join("\n");
+    try {
+      let r = null, bad = [], tries = 0, usage = { in: 0, out: 0 }, model = "";
+      while (tries < 3) {
+        tries++;
+        const extra = bad.length ? `\n\n방금 만든 말에 시훈이가 모르는 낱말이 있었어: ${bad.join(", ")}. 이 낱말 없이 목록 안의 낱말로만 다시 만들어.` : "";
+        r = await callJson(ENCHAT_SYSTEM, [{ type: "text", text: content + extra }], ENCHAT_SCHEMA, { tag: "enChat", max: 3000, effort: "low" });
+        model = r.model || model;
+        if (r.usage) { usage.in += r.usage.in || 0; usage.out += r.usage.out || 0; }
+        if (r.refusal) break;
+        const o = r.out;
+        bad = [...new Set(enWords(`${o.say} ${o.react} ${o.fixLine}`).filter((w) => !enKnown(w, allow)))];
+        if (!bad.length) break;
+      }
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "", mom: "", model, usage });
+      return done({ state: "ok", ...r.out, badWords: bad, tries, model, usage });
+    } catch (e) {
+      console.error("enChat", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", mom: "" });
+    }
+  }
+);

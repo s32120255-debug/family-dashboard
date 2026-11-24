@@ -254,6 +254,13 @@ async function koExtra(k){
       <div>${esc(strip(p.q).slice(0,160))}</div><div class="muted" style="font-size:13px">시훈이가 고른 답: ${esc((t.picks||[]).join(' → ')||'-')}${p.ans?` · 정답: ${esc(p.ans)}`:''}</div>
       ${turns.map(x=>`<div>${x.who==='ai'?'🧑‍🏫':'🙋'} ${esc(x.text)}</div>`).join('')}${r.mom?`<div><b>엄마 메모:</b> ${esc(r.mom)}</div>`:''}${r.keyDoubt?`<div class="bad">⚠️ 정답 의심: ${esc(r.doubtWhy)}</div>`:''}</div>`}).join('');
 }
+// ⚡ 카츄랑 말하기 대화 (엄마 11/25)
+async function enChatFill(k){const el=document.getElementById('enchat');if(!el)return;const L=latestTut(await getC('enchat',where('at','==',k)).catch(()=>[]));if(!L.length)return;
+  el.innerHTML=L.map(t=>{const r=t.res||{};const turns=(t.turns||[]).concat(t.heard&&t.kind==='reply'&&!(t.turns||[]).some((x,i,a)=>i===a.length-1&&x.who==='me'&&x.text===t.heard)?[{who:'me',text:t.heard}]:[]).concat(r.react?[{who:'ai',text:r.react}]:[]);
+    const used=[...new Set((t.used||[]).concat(r.used||[]))];
+    return `<div class="tut"><b>⚡ 카츄랑 말하기</b> <span class="muted" style="font-size:13px">오늘 문장 ${used.length} / ${(t.sents||[]).length} 씀${r.state&&r.state!=='ok'?' · 연결 안 됨':''}</span>
+      <div class="muted" style="font-size:13px">${(t.sents||[]).map((x,i)=>(used.includes(i+1)?'✅ ':'⬜ ')+esc(x.en)).join(' · ')}</div>
+      ${turns.map(x=>`<div>${x.who==='ai'?'⚡':'🙋'} ${esc(x.text)}${x.help?` <span class="muted">(도움 ${x.help}단계)</span>`:''}</div>`).join('')}${r.mom?`<div><b>엄마 메모:</b> ${esc(r.mom)}</div>`:''}${(r.badWords||[]).length?`<div class="muted" style="font-size:13px">⚠️ 카츄가 모르는 단어를 썼을 수 있어요: ${esc(r.badWords.join(', '))}</div>`:''}</div>`}).join('')}
 async function writeFill(k){ const el=document.getElementById('wrbody'); if(!el) return; const L=(await getWrite(k,k)).sort((a,b)=>(a.at||'')<(b.at||'')?-1:1);
   if(!L.length){el.innerHTML='<p class="muted">이날 글쓰기 기록이 없어요.</p>';return}
   el.innerHTML=L.map(w=>{const t=w.task||{};return `<div class="kowr"><b>${esc(t.title)}</b> ${w.done?'<span class="ok">· 다 씀 ✅</span>':`<span class="muted">· 중간 저장 (${esc(w.step||'')})</span>`}${w.sec?` <span class="muted">· ${mmss(+w.sec)}</span>`:''}
@@ -264,7 +271,7 @@ async function writeFill(k){ const el=document.getElementById('wrbody'); if(!el)
     ${w.final?`<div><span class="muted">완성 글:</span> <b>${esc(w.final)}</b></div>`:''}
     ${w.img?`<div class="pen"><div class="muted">원고지 (S펜)</div><img src="${w.img}" alt="원고지"></div>`:''}${w.photo?`<div class="pen"><div class="muted">📷 종이 사진</div><img src="${w.photo}" alt="종이"></div>`:''}</div>`}).join('');
 }
-const AIN={m32tutor:'수학 과외',m32teachai:'수학 가르치기',m32ana:'수학 분석',kotutor:'국어 과외',koana:'국어 분석',writecoach:'글쓰기 첨삭'};
+const AIN={enchat:'영어 카츄',m32tutor:'수학 과외',m32teachai:'수학 가르치기',m32ana:'수학 분석',kotutor:'국어 과외',koana:'국어 분석',writecoach:'글쓰기 첨삭'};
 const usd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당)
 const won=d=>'약 '+Math.round(d*1450).toLocaleString('ko-KR')+'원';
 async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) return; const M=await getD('aiuse/'+k.slice(0,7)).catch(()=>null); const D=(M&&M.days)||{};
@@ -308,6 +315,7 @@ async function render(){
       return `<p>📌 <b>문법 단계: ${esc(STN[g.k]||g.k)}</b>${g.back?' (🔁 다시 다지는 날)':''}<br>혼자 · 철자까지 정확 <b>${g.perfect??'–'} / ${g.n??'–'}</b> · 오늘의 문법 고르기 <b>${q.n?q.ok+' / '+q.n:'–'}</b>${(q.picks||[]).some(p=>p&&!p.ok)?` <span class="muted">(틀린 고르기: ${(q.picks||[]).filter(p=>p&&!p.ok).map(p=>esc(p.v)).join(', ')})</span>`:''}
       <br>${g.pass?`<span class="ok">🎉 통과${g.fast?' (빠른 통과)':''}</span>`:g.eval?(g.good?'4문장 이상 정확 · 한 번 더 이러면 통과':'아직 · 다음에 새 문장으로 다시'):'<span class="muted">아직 안 끝남</span>'}${g.sendBack?` · 복습 이틀 틀려 <b>${esc(STN[g.sendBack]||g.sendBack)}</b> 하루 다시`:''}
       <br><span class="muted">지금까지 통과: ${Object.keys(G.passed||{}).map(x=>esc(STN[x]||x)).join(' → ')||'없음'}</span></p>`})()}
+    ${R.nook?`<p>🧩 틈새 코너: <b>${esc(R.nook.p||'')}</b> 따라 말하고 뜻 봄</p>`:''}<div id="enchat"></div>
     ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
   // 국어 (엄마 11/23: 그날 한 것 + 틀린 문제를 시훈 답·정답 나란히)
   const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k).sort((a,b)=>a.at<b.at?-1:1);
@@ -333,7 +341,7 @@ async function render(){
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&(d.img||(d.ph||[]).length)){el.innerHTML=d.img?`<img src="${d.img}" alt="손풀이">`:'';for(const q of (d.ph||[])){const pd=await getD('m32pen/'+q).catch(()=>null);if(pd&&pd.img)el.insertAdjacentHTML('beforeend',`<div class="muted">📷 종이 풀이 사진</div><img src="${pd.img}" alt="사진">`)}}else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   if(MI.length) mountAna(k,MI);
   if(KR.length) koFill(KR).then(()=>koExtra(k));
-  writeFill(k); aiUse(k); teachFill(k);
+  writeFill(k); aiUse(k); teachFill(k); enChatFill(k);
   document.getElementById('pv').onclick=()=>{day.setDate(day.getDate()-1);render()};
   document.getElementById('nx').onclick=()=>{day.setDate(day.getDate()+1);render()};
   document.getElementById('td').onclick=()=>{day=new Date();render()};
