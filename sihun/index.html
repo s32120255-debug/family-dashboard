@@ -3596,8 +3596,8 @@ function qSent(p){ const t=stripTags(p.text||''); const ss=t.split(/(?<=[.?!])\s
   const qs=ss.filter(x=>/(\?|시오\.|세요\.)$/.test(x)); const q=qs.length?qs[qs.length-1]:''; return q&&qHits(q).some(Boolean)?q:''; }
 function qCircle(box,p,st){ const q=qSent(p); if(!q) return false; const ws=q.split(/\s+/), H=qHits(q);
   const inp=box.querySelector('#inp'), acts=box.querySelector('#macts'); inp.style.display='none'; acts.style.display='none';
-  inp.insertAdjacentHTML('beforebegin',`<div class="qc"><div class="qch">✏️ 답 넣기 전에, 묻는 말에 <b>◯ 하나</b>!</div><div class="qcs">${ws.map((w,i)=>`<button data-i="${i}">${w.replace(/[<&]/g,'')}</button>`).join('')}</div><div class="qcf"></div></div>`);
-  const qc=box.querySelector('.qc'), f=qc.querySelector('.qcf'); st.qc=0;
+  inp.insertAdjacentHTML('beforebegin',`<div class="qc qa"><div class="qch">✏️ 답 넣기 전에, 묻는 말에 <b>◯ 하나</b>!</div><div class="qcs">${ws.map((w,i)=>`<button data-i="${i}">${w.replace(/[<&]/g,'')}</button>`).join('')}</div><div class="qcf"></div></div>`);
+  const qc=box.querySelector('.qc.qa'), f=qc.querySelector('.qcf'); st.qc=0; // 조건 찾기 칸도 .qc라서 꼭 .qa로 찾기(엄마 11/24 버그)
   qc.querySelectorAll('.qcs button').forEach(b=>b.onclick=()=>{ if(qc.dataset.done) return; st.qc++;
     if(H[+b.dataset.i]){ qc.dataset.done=1; b.classList.add('circ'); qc.querySelectorAll('.qcs button').forEach(x=>x.disabled=true); f.innerHTML='👍 맞아요, 이걸 물어봤어요. 이제 답을 넣어요.'; inp.style.display=''; acts.style.display=''; return; }
     f.innerHTML=st.qc>=2?'이 문장에서 <b>남은 · 전체의 · ○씩</b> 같은 말을 찾아봐요. (반짝이는 말)':'그 말도 문제에 있어요. 그런데 <b>무엇을</b> 물어봤을까요?';
