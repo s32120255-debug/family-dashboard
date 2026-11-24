@@ -181,7 +181,7 @@ body.noscroll{overflow:hidden}
    <p class="meta" style="margin:0">🧾 내가 산 기록 (우리집 기지에도 똑같이 보여요)</p><ul class="list" id="shopLog"></ul>
   </section>
   <section data-tab="today" class="card wide" style="--tape:var(--red)" id="mustCard" hidden>
-   <h2><span class="ttl">오늘 꼭</span><small>하면 💗 가족 도움 포인트</small></h2>
+   <h2><span class="ttl">오늘 꼭</span><small>미션은 하면 💗 가족 도움 포인트</small></h2>
    <ul class="list" id="mustList"></ul>
   </section>
   <!-- 요약 오늘: 엄마 11/24 「시훈이꺼엔 요약오늘은 없애자」 → 숨김(코드는 둠) -->
@@ -308,7 +308,7 @@ $("topCat").innerHTML=ninjaSvg(56);$("gateCat").innerHTML=ninjaSvg(96);
 document.querySelectorAll(".card h2 .ttl").forEach(t=>t.insertAdjacentHTML("afterbegin",ninjaSvg(34)));
 
 /* ---------- 탭 ---------- */
-let curTab="today";try{curTab=localStorage.getItem("sbTab")||"today"}catch(e){}
+let curTab="today"; // 앱을 열면 늘 임무 탭(오늘 꼭·미션이 바로 보이게, 엄마 11/24)
 let backTab="today";
 function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`);if(t!=="shop"&&(!b||b.hidden))t="today";if(t==="shop"&&curTab!=="shop")backTab=curTab;curTab=t;
  document.querySelectorAll("#navtabs [data-nav]").forEach(x=>x.setAttribute("aria-selected",String(x.dataset.nav===t)));
@@ -618,20 +618,21 @@ async function useWcCoupon(){const c=couponsOf("wordchain")[0];if(!c){openShop()
 /* ---------- 오늘 꼭 (우리집 기지 musts{title,who,date,done,doneDate,doneBy}) ----------
    시훈이 것 + 모두(who "") 보이기. 못 한 지난 것은 넘어오고 「M/D부터」. 시훈이는 자기 것만 체크(모두 것은 보기만) */
 // 오늘 꼭(엄마 11/24 「미션이랑 합치고 체크하면 포인트」): musts(시훈·모두) + 미션 helpmom(바라는 사람 시훈) 한 칸.
-// 시훈 것 체크 = 💗 가족 도움 포인트: musts는 helpLog `must_${id}_${했던 날}` {mustId,title,points(기본 1),date,who:"시훈"}, 미션은 우리집 기지와 같은 helpLog `${id}_${오늘}`
+// 오늘 꼭은 포인트 없음(엄마 11/24 정정), 💗 가족 도움 포인트는 미션만(우리집 기지와 같은 helpLog `${id}_${오늘}`)
+// v55에서 잠깐 쌓인 오늘 꼭 포인트(helpLog id must_…) 지우기(엄마 11/24 「오늘 꼭은 포인트 없음」)
+let mustDropped=false;async function dropMustPts(){if(mustDropped||!fs||!user)return;const l=S.helpLog.filter(h=>String(h.id).startsWith("must_"));if(!l.length)return;mustDropped=true;
+ try{const b=F.writeBatch(fs);for(const h of l)b.delete(F.doc(fs,"helpLog",h.id));await b.commit();S.helpLog=S.helpLog.filter(h=>!String(h.id).startsWith("must_"));renderAll()}catch(e){mustDropped=false}}
 function renderMust(){const t=today();
  const l=S.musts.filter(x=>(x.who==="시훈"||!x.who)&&x.date&&(x.done?x.doneDate===t:x.date<=t)).sort((a,b)=>(a.done?1:0)-(b.done?1:0)||String(a.date).localeCompare(b.date)||(a.createdAt||0)-(b.createdAt||0));
  const ms=S.helpmom.filter(x=>x.who==="시훈"&&!(x.once&&x.doneDate&&x.doneDate<t)).sort((a,b)=>((a.doneDate===t)?1:0)-((b.doneDate===t)?1:0)||(a.once?0:1)-(b.once?0:1)||(a.createdAt||0)-(b.createdAt||0));
  const n=l.length+ms.length;$("mustCard").hidden=!n;if(curTab==="today"&&n)$("mustCard").style.display="";
- const mh=l.map(x=>{const mine=x.who==="시훈",d=parse(x.date);return`<li class="item ${x.done?"done":""}">${mine?`<button class="check ${x.done?"on":""}" data-must="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button>`:`<span class="pill info">모두</span>`}<span class="t" style="font-size:1.15rem">${esc(x.title)}</span>${!x.done&&x.date<t?`<span class="pill warn">${d.getMonth()+1}/${d.getDate()}부터</span>`:""}${x.done&&!mine?`<span class="pill ok">${esc(x.doneBy||"")} 했어요</span>`:""}${mine?`<span class="pill ok">💗${Number(x.points)||1}</span>`:""}</li>`});
+ const mh=l.map(x=>{const mine=x.who==="시훈",d=parse(x.date);return`<li class="item ${x.done?"done":""}">${mine?`<button class="check ${x.done?"on":""}" data-must="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button>`:`<span class="pill info">모두</span>`}<span class="t" style="font-size:1.15rem">${esc(x.title)}</span>${!x.done&&x.date<t?`<span class="pill warn">${d.getMonth()+1}/${d.getDate()}부터</span>`:""}${x.done&&!mine?`<span class="pill ok">${esc(x.doneBy||"")} 했어요</span>`:""}</li>`});
  const hh=ms.map(x=>{const on=x.doneDate===t;return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-msn="${x.id}" aria-label="${on?"안 했어요":"했어요"}">${on?"✓":""}</button><span class="t" style="font-size:1.15rem">${esc(x.title)}</span>${x.once?"":`<span class="pill info">매일</span>`}<span class="pill ok">💗${Number(x.points)||1}</span></li>`});
  $("mustList").innerHTML=[...mh,...hh].join("")}
 $("mustList").addEventListener("click",async e=>{const b=e.target.closest("[data-must]");if(!b||!fs)return;const x=S.musts.find(m=>m.id===b.dataset.must);if(!x||x.who!=="시훈")return;
  const data=x.done?{done:false,doneDate:null,doneBy:null}:{done:true,doneDate:today(),doneBy:"시훈"};
- const pts=Number(x.points)||1,lid=`must_${x.id}_${x.done?(x.doneDate||today()):today()}`;
- try{const bt=F.writeBatch(fs);bt.update(F.doc(fs,"musts",x.id),data);
-  if(x.done)bt.delete(F.doc(fs,"helpLog",lid));else bt.set(F.doc(fs,"helpLog",lid),{mustId:x.id,title:x.title,points:pts,date:today(),who:"시훈"});bt.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:x.id,action:x.done?"오늘 꼭 취소":"오늘 꼭 했어요",summary:x.title,before:null,after:data});
-  await bt.commit();if(data.done)S.helpLog.push({id:lid,mustId:x.id,title:x.title,points:pts,date:today(),who:"시훈"});else S.helpLog=S.helpLog.filter(h=>h.id!==lid);Object.assign(x,data);if(data.done)toast(`잘했어! 💗${pts}`);renderAll()}catch(err){toast("저장하지 못했어요: "+(err.code||""))}});
+ try{const bt=F.writeBatch(fs);bt.update(F.doc(fs,"musts",x.id),data);bt.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"musts",docId:x.id,action:x.done?"오늘 꼭 취소":"오늘 꼭 했어요",summary:x.title,before:null,after:data});
+  await bt.commit();Object.assign(x,data);if(data.done)toast("잘했어! ✓");renderAll()}catch(err){toast("저장하지 못했어요: "+(err.code||""))}});
 
 /* ---------- ⚡ 미션: 우리집 기지 helpmom 중 바라는 사람 who==="시훈" (엄마 11/24). 매일은 오늘 했으면 ✓, 특별(once)은 지난날 끝낸 것 숨김 ----------
    체크 = 우리집 기지와 같게 helpmom{doneDate,doneBy:"시훈"} + helpLog `${id}_${오늘}` {helpId,title,points,date,who:"시훈"} */
@@ -897,7 +898,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=55;
+const VERSION=56;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -931,7 +932,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
     $("mf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===famPin){$("layer").innerHTML="";pinOpen=true;showWho();renderAll();showTab("mom");window.scrollTo({top:0})}else toast("비밀번호가 달라요")}}};showWho();
   fs=db;let denied=false;
   const onErr=err=>{if(err&&err.code==="permission-denied"&&!denied){denied=true;unsubs.splice(0).forEach(f=>f());fs=null;gate(`${u.email} 계정으로는 열 수 없어요. 가족 계정으로 로그인해 주세요.`,false,true)}};
-  for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll();if(c==="rewards")refundOldTickets()},onErr));
+  for(const c of FAMILY)unsubs.push(F.onSnapshot(F.collection(db,c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));if(!loaded.has(c)){loaded.add(c);ensureTasks()}renderAll();if(c==="rewards")refundOldTickets();if(c==="helpLog")dropMustPts()},onErr));
   for(const c of MINE)unsubs.push(F.onSnapshot(F.collection(db,"sihunBoard","main",c),s=>{S[c]=s.docs.map(d=>({id:d.id,...d.data()}));renderAll()},onErr));
   unsubs.push(F.onSnapshot(F.doc(db,"sihunBoard","main"),s=>{board=s.exists()?s.data():{};renderAll()},onErr));
   // 엄마 확인: 규칙에서 엄마 계정만 이 문서를 읽을 수 있어요
@@ -942,7 +943,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=55").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=56").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
