@@ -17,18 +17,18 @@
  --bg:#14141c;--grid:#1a1a24;--card:#1e1e2a;--fg:#ecebf3;--muted:#9a99ad;--line:#3a3a4e;--soft:#2a2a38;
  --mint:#3dd9a8;--yellow:#ffd34d;--pink:#ff7a8a;--blue:#6fa8ff;--purple:#b48cff;--green:#8fd14f;--red:#ff4d5e;
  --accent:#ff4d5e;--warn:#ff7a8a;--ok:#3dd9a8;--tapeink:#14141c;
- --hand:"Gaegu",cursive;--body:"Noto Sans KR",system-ui,sans-serif;color-scheme:dark;
+ --hand:"Yeon Sung","Noto Sans KR",sans-serif;--body:"Yeon Sung","Noto Sans KR",system-ui,sans-serif;color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:14px 14px;color:var(--fg);font-family:var(--body);font-size:17px}
+body{margin:0;background:var(--bg);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:14px 14px;color:var(--fg);font-family:var(--body);font-size:19px}
 button,input,select,textarea{font:inherit;color:inherit}
 .wrap{max-width:1200px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:grid;gap:16px}
 .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .hello{display:flex;align-items:center;gap:10px}
 .hello h1{font-family:var(--hand);font-size:2.1rem;margin:0;line-height:1}
 .hello .d{color:var(--muted);font-size:.95rem}
-.who{color:var(--muted);font-size:.85rem;display:flex;gap:8px;align-items:center}
+.who{color:var(--muted);font-size:.95rem;display:flex;gap:8px;align-items:center}
 .linkbtn{border:none;background:none;text-decoration:underline;cursor:pointer;color:var(--muted);padding:0}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
 @media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
@@ -37,21 +37,21 @@ button,input,select,textarea{font:inherit;color:inherit}
 .card h2{font-family:var(--hand);font-size:1.6rem;margin:0;display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
 .card h2 .ttl{display:inline-flex;align-items:center;gap:6px;padding:0 12px 0 4px;border-radius:8px;background:var(--tape,var(--mint));color:var(--tapeink)}
 .card h2 .ttl svg{width:34px;height:34px}
-.card h2 small{font-family:var(--body);font-size:.85rem;color:var(--muted);font-weight:400}
+.card h2 small{font-family:var(--body);font-size:.95rem;color:var(--muted);font-weight:400}
 .list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
 .item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--bg);min-width:0}
 .item .t{flex:1;min-width:0;overflow-wrap:anywhere}
-.meta{color:var(--muted);font-size:.85rem;font-variant-numeric:tabular-nums}
+.meta{color:var(--muted);font-size:.95rem;font-variant-numeric:tabular-nums}
 .item.now{outline:2.5px solid var(--accent);background:color-mix(in srgb,var(--mint) 35%,var(--card))}
 .item.past{opacity:.5}
 .item.free{background:transparent;border:2px dashed var(--soft)}
 .item.done .t{text-decoration:line-through;color:var(--muted)}
 .item.overdue{background:color-mix(in srgb,var(--pink) 25%,var(--card))}
-.pill{font-size:.78rem;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--fg)}
+.pill{font-size:.9rem;padding:2px 9px;border-radius:999px;white-space:nowrap;background:var(--soft);color:var(--fg)}
 .pill.ok{background:var(--mint);color:#2e3f38}.pill.warn{background:var(--pink);color:#2e3f38}.pill.info{background:var(--blue);color:#2e3f38}
 .btn{border:2px solid var(--line);background:var(--card);border-radius:10px;padding:7px 14px;cursor:pointer;white-space:nowrap;font-weight:500}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.small{padding:3px 10px;font-size:.88rem;border-width:1.5px}
+.btn.small{padding:3px 10px;font-size:.98rem;border-width:1.5px}
 a.btn{text-decoration:none;display:inline-block}
 .btn:focus-visible,.check:focus-visible,.tabs button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 .check{width:30px;height:30px;border-radius:9px;border:2.5px solid var(--accent);background:transparent;cursor:pointer;flex:none;display:grid;place-items:center;color:var(--card);font-weight:700}
@@ -77,11 +77,11 @@ textarea{width:100%;resize:vertical;min-height:70px}
 #noticeBtn{background:var(--yellow);border-color:var(--yellow);color:#14141c;font-weight:700}
 .tt{position:relative;margin-top:4px}
 .tt-row{position:absolute;left:0;right:0;height:48px;border-top:1px dashed var(--line)}
-.tt-h{position:absolute;left:0;top:-9px;width:62px;font-size:.78rem;color:var(--muted);background:var(--card);font-variant-numeric:tabular-nums;padding-right:4px}
+.tt-h{position:absolute;left:0;top:-9px;width:62px;font-size:.9rem;color:var(--muted);background:var(--card);font-variant-numeric:tabular-nums;padding-right:4px}
 .tt-area{position:absolute;left:66px;right:0;top:0;bottom:0}
-.tt-gap{position:absolute;left:2px;right:2px;border:1.5px dashed #4a4a60;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:.8rem}
+.tt-gap{position:absolute;left:2px;right:2px;border:1.5px dashed #4a4a60;border-radius:10px;display:grid;place-items:center;color:var(--muted);font-size:.95rem}
 .tt-b{position:absolute;border-radius:10px;border:2px solid #000;padding:3px 8px;overflow:hidden;color:#14141c;font-size:.95rem;line-height:1.25}
-.tt-b span{font-size:.78rem;opacity:.75;font-variant-numeric:tabular-nums}
+.tt-b span{font-size:.9rem;opacity:.75;font-variant-numeric:tabular-nums}
 .tt-b.now{box-shadow:0 0 0 3px var(--red)}
 .tt-b.past{opacity:.45}
 .tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid var(--red);pointer-events:none}
@@ -294,11 +294,11 @@ function dialA(items,half){
  for(const it of items){if(!it.start)continue;const s=mins(it.start);const name=String(it.title||"").replace(/\s/g,"");
   if(it.end){const e=mins(it.end);const i=k++;const a=Math.max(s,lo),b=Math.min(e,hi);if(b<=a)continue;
    g+=`<path d="${ann(RO,RI,a+1.5,b-1.5)}" fill="url(#tp${i%PAL.length})" stroke="${INK}" stroke-width="1.6"/>`;const[x,y]=pt((RO+RI)/2,(a+b)/2);
-   lb+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?13:16}" font-family="Gaegu,cursive" font-weight="700" fill="#2e3f38" stroke="#fbf5e8" stroke-width="3.5" paint-order="stroke">${esc(name.slice(0,b-a<45?3:4))}</text>`}
+   lb+=`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="${b-a<45?13:16}" font-family="Yeon Sung,sans-serif" font-weight="700" fill="#2e3f38" stroke="#fbf5e8" stroke-width="3.5" paint-order="stroke">${esc(name.slice(0,b-a<45?3:4))}</text>`}
   else{if(s<lo||s>=hi)continue;const[x,y]=pt(RO,s),[x2,y2]=pt(RI,s);const[tx,ty]=pt(RI-12,s);
-   lb+=`<line x1="${f(x)}" y1="${f(y)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#e07a68" stroke-width="2.5" stroke-dasharray="5 4"/><text x="${f(tx)}" y="${f(ty)}" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Gaegu,cursive" font-weight="700" fill="#c4563f" stroke="#fbf5e8" stroke-width="3" paint-order="stroke">${esc(name.slice(0,2))}</text>`}}
- for(let h=1;h<=12;h++){const[x,y]=pt(130,h*60);g+=h%3?`<circle cx="${f(x)}" cy="${f(y)}" r="2.2" fill="${INK}"/>`:`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="22" font-family="Gaegu,cursive" font-weight="700" fill="${INK}">${h}</text>`}
- g+=lb+`<text x="${C}" y="${C-34}" text-anchor="middle" font-size="14" font-family="Gaegu,cursive" font-weight="700" fill="#9a99ad">${half==="am"?"오전":"오후"}</text>`;
+   lb+=`<line x1="${f(x)}" y1="${f(y)}" x2="${f(x2)}" y2="${f(y2)}" stroke="#e07a68" stroke-width="2.5" stroke-dasharray="5 4"/><text x="${f(tx)}" y="${f(ty)}" text-anchor="middle" dominant-baseline="central" font-size="12" font-family="Yeon Sung,sans-serif" font-weight="700" fill="#c4563f" stroke="#fbf5e8" stroke-width="3" paint-order="stroke">${esc(name.slice(0,2))}</text>`}}
+ for(let h=1;h<=12;h++){const[x,y]=pt(130,h*60);g+=h%3?`<circle cx="${f(x)}" cy="${f(y)}" r="2.2" fill="${INK}"/>`:`<text x="${f(x)}" y="${f(y)}" text-anchor="middle" dominant-baseline="central" font-size="22" font-family="Yeon Sung,sans-serif" font-weight="700" fill="${INK}">${h}</text>`}
+ g+=lb+`<text x="${C}" y="${C-34}" text-anchor="middle" font-size="14" font-family="Yeon Sung,sans-serif" font-weight="700" fill="#9a99ad">${half==="am"?"오전":"오후"}</text>`;
  g+=`<g filter="url(#hs)"><g id="hHour"><path d="M${C-6},${C+8} L${C},${C-58} L${C+6},${C+8}Z" fill="${INK}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/></g>
  <g id="hMin"><path d="M${C-4},${C+10} L${C},${C-98} L${C+4},${C+10}Z" fill="${INK}" stroke="${INK}" stroke-width="1.5" stroke-linejoin="round"/></g>
  <g id="hSec"><line x1="${C}" y1="${C+22}" x2="${C}" y2="${C-112}" stroke="#ff4d5e" stroke-width="1.8" stroke-linecap="round"/><circle cx="${C}" cy="${C-112}" r="3.2" fill="#ff4d5e"/></g></g>
@@ -601,7 +601,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=23;
+const VERSION=24;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -645,7 +645,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=23").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=24").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
