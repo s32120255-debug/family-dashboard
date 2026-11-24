@@ -208,6 +208,38 @@ button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
 .plan{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:18px}.plan td{padding:10px 6px;border-bottom:1px solid var(--line)}.plan td.m{text-align:right;white-space:nowrap;font-weight:700}.plan tr.sum td{border-bottom:none;font-weight:700}
 </style>
 <div id="hub"><div class="panel">불러오는 중…</div></div>
+<div id="zoomui" aria-label="화면 크기"><button id="zt" title="화면 크기">🔍</button><span id="zp" hidden><button data-z="-1">➖</button><button data-z="0" id="z0">100%</button><button data-z="1">➕</button></span></div>
+<style>
+#zoomui{position:fixed;left:0;bottom:96px;z-index:9998;display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.92);border:1.5px solid #d9dee8;border-left:0;border-radius:0 14px 14px 0;padding:4px 6px 4px 4px;box-shadow:0 2px 8px rgba(0,0,0,.12);transform-origin:0 100%;font-family:'Noto Sans KR',system-ui,sans-serif}
+#zoomui button{border:0;background:none;font-size:18px;padding:6px 8px;border-radius:10px;color:#1c2533;cursor:pointer;touch-action:manipulation}
+#zoomui #z0{font-size:14px;font-weight:700;background:#eef2f8}
+#zoomui #zt{opacity:.7}
+#zp{display:flex;gap:2px}#zp[hidden]{display:none}
+</style>
+<script>
+/* 🔍 화면 키우기·줄이기(엄마 11/24: 잘못 눌러 화면이 커졌는데 안 줄여짐).
+   두 손가락 확대는 막고(필기 칸에서 손바닥·손가락에 잘못 커지지 않게), 이 버튼으로만 크기를 바꿔요. 기기에 기억. 「100%」 = 한 번에 원래대로. */
+(function(){var KEY='zoom:scale',S=[1,1.15,1.3,1.5,1.75,2];
+  function get(){var v=1;try{v=+localStorage.getItem(KEY)||1}catch(e){}return S.indexOf(v)>=0?v:1}
+  function meta(v){var m=document.querySelector('meta[name=viewport]');if(!m)return;
+    m.setAttribute('content','width=device-width,initial-scale='+v+',minimum-scale='+v+',maximum-scale='+v+',user-scalable=no,viewport-fit=cover')}
+  function set(v){try{localStorage.setItem(KEY,String(v))}catch(e){}
+    if(v===1){meta(1.01);setTimeout(function(){meta(1);place()},60)}else meta(v);
+    var z=document.getElementById('z0');if(z)z.textContent=Math.round(v*100)+'%';setTimeout(place,200)}
+  /* 화면이 커져도 버튼은 늘 보이는 자리·같은 크기로 */
+  function place(){var u=document.getElementById('zoomui'),vv=window.visualViewport;if(!u||!vv)return;
+    var k=1/vv.scale;u.style.left=vv.offsetLeft+'px';u.style.top=(vv.offsetTop+vv.height-150*k)+'px';u.style.bottom='auto';u.style.transform='scale('+k+')'}
+  window.zoomSet=set;meta(get());
+  document.addEventListener('DOMContentLoaded',function(){var u=document.getElementById('zoomui');if(!u)return;
+    var zp=document.getElementById('zp'),z=document.getElementById('z0');z.textContent=Math.round(get()*100)+'%';
+    var tm=0,hide=function(){clearTimeout(tm);tm=setTimeout(function(){zp.hidden=true},5000)};
+    document.getElementById('zt').onclick=function(){zp.hidden=!zp.hidden;if(!zp.hidden)hide()};
+    zp.addEventListener('click',function(e){var b=e.target.closest('[data-z]');if(!b)return;var d=+b.dataset.z,i=S.indexOf(get());
+      hide();set(d===0?1:S[Math.max(0,Math.min(S.length-1,i+d))])});
+    if(window.visualViewport){visualViewport.addEventListener('resize',place);visualViewport.addEventListener('scroll',place)}place()});
+})();
+</script>
+
 <div id="host-en" class="apphost" hidden></div>
 <div id="host-math" class="apphost" hidden></div>
 <div id="host-m32" class="apphost" hidden></div>
