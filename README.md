@@ -9,7 +9,7 @@
 
 ## 서윤 보드 (`seoyun/`)
 
-서윤 개인 관리 화면이에요. 주소: `https://s32120255-debug.github.io/family-dashboard/seoyun/`
+서윤 개인 관리 화면이에요. 주소: `https://kmsysh-fa740.web.app/seoyun/`
 - 같은 Firebase를 쓰지만 데이터는 `seoyun/main/items` 에만 저장하고, 규칙으로 서윤 계정만 읽고 쓸 수 있어요.
 - 금액은 가족 화면으로 절대 보내지 않아요. 「우리집으로 보내기」는 글자만 장보기·달력·엄마 도와주기에 보내요.
 - 화면 미리 보기(저장 안 됨): 주소 끝에 `#demo`

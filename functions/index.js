@@ -5,7 +5,7 @@ const { getFirestore } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 
 initializeApp();
-const APP_URL = "https://s32120255-debug.github.io/family-dashboard/";
+const APP_URL = "https://kmsysh-fa740.web.app/";
 
 exports.notifyNote = onDocumentCreated({ document: "notes/{id}", region: "asia-northeast3" }, async (event) => {
   const note = event.data && event.data.data();
