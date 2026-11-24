@@ -87,6 +87,17 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid var(--red);pointer-events:none}
 .tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:var(--red)}
 #taskChip{border:2px solid var(--line)}
+.gcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
+.gcal .dow{font-size:.8rem;color:var(--muted);padding:2px 0}
+.gcal div.d{background:var(--bg);border-radius:8px;min-height:46px;display:grid;align-content:start;justify-items:center;gap:2px;padding:4px 0;font-variant-numeric:tabular-nums}
+.gcal .other{opacity:.35}.gcal .today{outline:2px solid var(--red)}
+.gcal .n{font-size:.72rem;opacity:.85}
+.glegend{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;color:var(--muted)}
+.glegend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:4px;vertical-align:-2px;border:1px solid var(--line)}
+.gbars{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;align-items:end;height:120px}
+.gbars .c{display:flex;gap:2px;align-items:end;justify-content:center;height:100%}
+.gbars .c i{display:block;width:40%;border-radius:4px 4px 0 0;min-height:2px}
+.gbl{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;font-size:.8rem;color:var(--muted);margin-top:4px}
 .dial{max-width:420px;width:100%;margin:0 auto}
 .dial svg{width:100%;height:auto;display:block}
 .nav{display:flex;align-items:center;justify-content:center;gap:8px}
@@ -132,7 +143,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
   <div class="row" style="gap:8px"><span id="noticeSlot"></span><div class="who" id="who"></div></div>
  </header>
- <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">TODAY</button><button role="tab" data-nav="task">TASK</button><button role="tab" data-nav="money">MONEY</button><button role="tab" data-nav="play">PLAY</button><button role="tab" data-nav="memo">MEMO</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>MOM</button></nav>
+ <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
   <section data-tab="today" class="card wide" style="--tape:var(--mint)">
@@ -143,13 +154,28 @@ textarea{width:100%;resize:vertical;min-height:70px}
   </section>
 
   <section data-tab="task" class="card wide" style="--tape:var(--yellow)">
-   <h2><span class="ttl">오늘 과제</span><small>우리집 기지와 같은 과제·포인트</small></h2>
-   <div class="sum" id="ptBox"></div>
+   <h2><span class="ttl">오늘 과제</span><small id="ptText"></small></h2>
    <ul class="list" id="taskList"></ul>
    <div id="lateBox"></div>
   </section>
 
 
+  <section data-tab="grow" class="card wide" style="--tape:var(--yellow)">
+   <h2><span class="ttl">과제 포인트</span><small>우리집 기지와 같은 포인트</small></h2>
+   <div class="sum" id="ptBox" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+   <p class="meta" style="margin:0">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
+  </section>
+  <section data-tab="grow" class="card wide" style="--tape:var(--pink)">
+   <h2><span class="ttl">도움 포인트</span><small>집안일·엄마 도와주기, 과제 포인트와 따로</small></h2>
+   <div class="sum" id="helpBox" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+  </section>
+  <section data-tab="grow" class="card wide" style="--tape:var(--mint)">
+   <h2><span class="ttl">성장 달력</span><span class="nav"><button class="btn small" id="gPrev" aria-label="이전 달">◀</button><b id="gMonth" style="min-width:6.5em;font-size:1.1rem"></b><button class="btn small" id="gNext" aria-label="다음 달">▶</button></span></h2>
+   <div class="sum" id="gStreak" style="grid-template-columns:repeat(2,minmax(0,1fr))"></div>
+   <div class="gcal" id="gCal"></div>
+   <div class="glegend"><span><i style="background:#ffd34d"></i>다 했어요</span><span><i style="background:#5c5230"></i>조금 했어요</span><span><i style="background:#5a2a32"></i>못 했어요</span></div>
+   <p class="meta" style="margin:6px 0 0">이번 주 vs 지난주 (한 과제 수)</p><div id="gBars"></div>
+  </section>
   <section data-tab="money" class="card wide" style="--tape:var(--green)">
    <h2><span class="ttl">용돈기입장</span><small id="balText"></small></h2>
    <div class="row"><button class="btn primary" data-money="in">＋ 들어온 돈</button><button class="btn primary" data-money="out">－ 쓴 돈</button></div>
@@ -234,7 +260,7 @@ $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({to
 
 /* ---------- 데이터 ---------- */
 // 우리집 대시보드에서 그대로 읽는 것 (복사 아님, 같은 Firestore)
-const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards"];
+const FAMILY=["schedule","schedOverrides","tasks","taskTpls","rewards","helpLog","choreLog"];
 // 시훈이 대시보드 전용 (sihunBoard/main/...)
 const MINE=["money","memory","ask","play","hb","chess","log"];
 const S=Object.fromEntries([...FAMILY,...MINE].map(c=>[c,[]]));
@@ -339,7 +365,8 @@ function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"
 function renderTasks(){
  const t=today();const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=weekStart()))+bonusSum(S.tasks,weekStart());
- $("ptBox").innerHTML=`<div><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div>`;
+ $("ptText").textContent=`쓸 수 있는 과제 포인트 ⭐${earned-used}`;
+ renderGrow(earned,used,week);
  const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span></li>`;
  const tl=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const dn=tl.filter(x=>x.done).length;
@@ -347,6 +374,34 @@ function renderTasks(){
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
  $("lateBox").innerHTML=late.length?`<p class="meta" style="margin:6px 4px">밀린 과제 ${late.length}개</p><ul class="list">${late.map(x=>row(x,true)).join("")}</ul>`:"";
 }
+
+/* ---------- 레벨(GROW): 포인트 + 성장 달력 (우리집 기지 GROW와 같은 계산) ---------- */
+let growMonth=new Date();
+function renderGrow(earned,used,week){
+ const t=today(),ws=weekStart();
+ $("ptBox").innerHTML=`<div><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div><small>이번 주 모은</small><b>${week}</b></div><div><small>지금까지 모은</small><b>${earned}</b></div><div><small>쓴 포인트</small><b>${used}</b></div>`;
+ {let tot=0,wk=0;for(const g of [...S.helpLog,...S.choreLog]){if(g.who!=="시훈")continue;const v=Number(g.points)||0;tot+=v;if(g.date>=ws)wk+=v}
+  $("helpBox").innerHTML=`<div><small>모은 도움 포인트</small><b>💗 ${tot}</b></div><div><small>이번 주</small><b>${wk}</b></div>`}
+ const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
+ const by={};for(const x of S.tasks){if(!x.date)continue;const o=by[x.date]||(by[x.date]={n:0,d:0});o.n++;if(x.done)o.d++}
+ const st=k=>{const o=by[k];if(!o||!o.n)return"";return o.d===o.n?"all":o.d?"some":k<t?"none":""};
+ let streak=0;{let k=by[t]&&by[t].d===by[t].n?t:addDays(t,-1);while(by[k]&&by[k].n&&by[k].d===by[k].n){streak++;k=addDays(k,-1)}}
+ const full=Object.keys(by).filter(k=>k<=t&&st(k)==="all").length;
+ $("gStreak").innerHTML=`<div><small>연속으로 다 한 날</small><b>🔥 ${streak}일</b></div><div><small>다 한 날 (전체)</small><b>${full}일</b></div>`;
+ const y=growMonth.getFullYear(),m=growMonth.getMonth();$("gMonth").textContent=`${y}년 ${m+1}월`;
+ const start=new Date(y,m,1);start.setDate(1-((start.getDay()+6)%7));
+ const BG={all:"background:#ffd34d;color:#14141c",some:"background:#5c5230",none:"background:#5a2a32"};
+ let h=DAYS.map(([,l])=>`<div class="dow">${l}</div>`).join("");
+ for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const k=ymd(d),c=st(k),o=by[k];
+  h+=`<div class="d ${d.getMonth()!==m?"other":""} ${k===t?"today":""}" style="${c?BG[c]:""}"><span>${d.getDate()}</span>${o&&o.n&&k<=t?`<span class="n">${c==="all"?"★":`${o.d}/${o.n}`}</span>`:""}</div>`}
+ $("gCal").innerHTML=h;
+ const cnt=from=>Array.from({length:7},(_,i)=>{const k=addDays(from,i);return S.tasks.filter(x=>x.done&&(x.doneDate||x.date)===k).length});
+ const a=cnt(ws),b=cnt(addDays(ws,-7)),mx=Math.max(1,...a,...b);
+ $("gBars").innerHTML=`<div class="gbars">${a.map((v,i)=>`<div class="c" title="지난주 ${b[i]} · 이번 주 ${v}"><i style="height:${b[i]/mx*100}%;background:var(--line)"></i><i style="height:${v/mx*100}%;background:#ffd34d"></i></div>`).join("")}</div><div class="gbl">${DAYS.map(([,l])=>`<span>${l}</span>`).join("")}</div><div class="glegend" style="margin-top:6px"><span><i style="background:var(--line)"></i>지난주 ${b.reduce((x,y)=>x+y,0)}개</span><span><i style="background:#ffd34d"></i>이번 주 ${a.reduce((x,y)=>x+y,0)}개</span></div>`;
+}
+$("gPrev").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()-1,1);renderTasks()};
+$("gNext").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()+1,1);renderTasks()};
 
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT="https://sites.google.com/view/maean35/"; // 학교 알림장 기본 주소(설정에 넣으면 그 주소가 먼저)
@@ -545,7 +600,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=20;
+const VERSION=21;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -589,7 +644,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=20").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=21").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
 </script>
