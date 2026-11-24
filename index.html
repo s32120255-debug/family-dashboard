@@ -320,8 +320,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=39";
-import {SEED_SCHEDULE} from "./seed.js?v=39";
+import {firebaseConfig} from "./config.js?v=40";
+import {SEED_SCHEDULE} from "./seed.js?v=40";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -487,7 +487,7 @@ function renderSched(){
 }
 // 타임테이블: 세로 시간 줄(1시간=48px) 위에 일정 칸. 관리자 모드에서 빈 시간 줄을 누르면 그 시각으로 새 일정
 const HPX=48;
-const SHOW_FREE=false; // 일정 사이 빈 시간 "집공부·자유" 칸 — 엄마 11/24: 일단 끔. 다시 켜려면 true
+const SHOW_FREE=true; // 일정 사이 빈 시간 칸 — 엄마 11/24: "엄마와 시훈이가 상의해 보아요"로 표시. 끄려면 false
 function timetable(list,nm){
  const timed=list.filter(x=>x.start).map(x=>{const s0=mins(x.start);return{...x,s:s0,e:x.end?Math.max(mins(x.end),s0+10):s0+20}}).sort((a,b)=>a.s-b.s||a.e-b.e);
  const untimed=list.filter(x=>!x.start);
@@ -497,7 +497,7 @@ function timetable(list,nm){
  const y=m=>(m-lo*60)/60*HPX,abtn=it=>it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
    :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
  let rows="";for(let h=lo;h<hi;h++)rows+=`<div class="tt-row" style="top:${(h-lo)*HPX}px"><span class="tt-h">${h<12?"오전":"오후"} ${h%12||12}시</span>${admin?`<button class="tt-slot" data-slot="${pad(h)}:00" aria-label="${h}시에 일정 넣기"></button>`:""}</div>`;
- let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>집공부·자유 · 엄마가 정해요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
+ let gaps="",pe=null;if(SHOW_FREE)for(const x of timed.filter(x=>!x.skipped)){if(pe!=null&&x.s-pe>=20)gaps+=`<div class="tt-gap" style="top:${y(pe)+2}px;height:${y(x.s)-y(pe)-4}px">${x.s-pe>=40?"<span>엄마와 시훈이가 상의해 보아요</span>":""}</div>`;pe=Math.max(pe??0,x.e)}
  const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
  const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.s&&nm<x.e;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
@@ -518,7 +518,7 @@ function heroHTML(items,nm){
  const bolt=`<svg class="bolt" viewBox="0 0 12 20" aria-hidden="true"><path d="M6 0 L0 11 H5 L3 20 L11 7 H6 L9 0Z" fill="#fff"/></svg>`;
  let main;
  if(cur)main=`<div class="lbl">⚡ 지금 할 일</div><div class="now">${esc(cur.title)}</div><div class="tm">${fmtT(cur.start)} ~ ${fmtT(cur.end).replace(/^오[전후] /,"")}${cur.note?" · "+esc(cur.note):""}</div>`;
- else if(free)main=`<div class="lbl">⚡ 지금은</div><div class="now">집공부·자유</div><div class="tm">엄마가 정해요</div>`;
+ else if(free)main=`<div class="lbl">⚡ 지금은</div><div class="now">빈 시간</div><div class="tm">엄마와 시훈이가 상의해 보아요</div>`;
  else if(next)main=`<div class="lbl">⚡ 곧 시작</div><div class="now">${esc(next.title)}</div><div class="tm">${dur(next.s-nm)} 뒤 시작 (${fmtT(next.start)})</div>`;
  else main=`<div class="lbl">⚡ 오늘 일정</div><div class="now">${tl.length?"다 끝났어요!":"일정이 없어요"}</div><div class="tm">푹 쉬어요</div>`;
  const bar=span?`<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}" aria-label="지난 시간"><i style="width:${pct.toFixed(1)}%"></i></div><div class="left">${dur(left)} 남았어요</div>`:"";
@@ -825,7 +825,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=39;
+const VERSION=40;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
