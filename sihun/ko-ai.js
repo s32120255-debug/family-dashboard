@@ -52,10 +52,13 @@
       if(res.state==='limit'){S.err='오늘 AI 선생님 시간을 다 썼어요. 내일 또 해요.';draw();return}
       if(res.state==='error'||!res.say){S.err='선생님이 대답을 못 했어요. 다시 해 볼까요?';draw();return}
       S.turns.push({who:'ai',text:res.say});S.state=res.state;if(res.state==='end')S.done=true;say(res.say);draw()}
+    let MIC=null;
     function act(k){const ta=box.querySelector('textarea');
+      if(k!=='mic'&&MIC){MIC.stop();MIC=null}
       if(k==='send'){const v=(ta&&ta.value||'').trim();if(v.replace(/\s/g,'').length<1)return;S.turns.push({who:'me',text:v});ask('reply')}
-      else if(k==='mic'){const b=box.querySelector('[data-k="mic"]');if(b){b.disabled=true;b.textContent='듣고 있어요…'}
-        listen(t=>{if(ta&&t)ta.value=(ta.value+' '+t).trim()},e=>{if(b){b.disabled=false;b.textContent='🎤 말로 하기'}if(e==='none'&&ta)ta.placeholder='이 기기에선 말하기가 안 돼요. 자판으로 써요.'})}
+      else if(k==='mic'){if(MIC&&MIC.isOn()){MIC.stop();return}
+        MIC=window.liveMic&&window.liveMic(ta,on=>{const b=box.querySelector('[data-k="mic"]');if(b)b.textContent=on?'⏹ 그만 듣기':'🎤 말로 하기';if(!on)MIC=null});
+        if(!MIC&&ta)ta.placeholder='이 기기에선 말하기가 안 돼요. 자판으로 써요.'}
       else if(k==='again'){const a=[...S.turns].reverse().find(t=>t.who==='ai');if(a)say(a.text)}
       else if(k==='more'){S.turns.push({who:'me',text:'아직 모르겠어요.'});ask('reply')}
       else if(k==='retryreq'){S.err='';if(S.turns.length&&S.turns[S.turns.length-1].who==='me')ask('reply');else ask(S.turns.length?'reply':'start')}
