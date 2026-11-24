@@ -320,8 +320,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=38";
-import {SEED_SCHEDULE} from "./seed.js?v=38";
+import {firebaseConfig} from "./config.js?v=39";
+import {SEED_SCHEDULE} from "./seed.js?v=39";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -411,7 +411,7 @@ function renderTop(){const d=new Date();$("today").textContent=`${d.getMonth()+1
 function schedItems(date){
  const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.date===date);
  const hidden=new Set(ov.filter(o=>o.baseId).map(o=>o.baseId));
- const base=S.schedule.filter(x=>x.day===dk).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
+ const base=S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
  const extra=ov.filter(o=>!o.skip).map(o=>({...o,src:"date"}));
  return [...base,...extra].sort((a,b)=>(a.start||"99").localeCompare(b.start||"99"));
 }
@@ -525,20 +525,23 @@ function heroHTML(items,nm){
  const nx=(cur||free)&&next?`<div class="nextup"><span>다음</span><b>${esc(next.title)}</b><span style="margin-left:auto;font-variant-numeric:tabular-nums">${fmtT(next.start)}</span></div>`:"";
  return`<div class="hero">${bolt}${main}${bar}</div>${nx}`;
 }
-function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["note","메모","text"],...(scopeOpts?[["scope","어떻게 바꿀까요","select",scopeOpts]]:[]),]}}
+function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["note","메모","text"],...(scopeOpts?[["scope","어떻게 바꿀까요","select",scopeOpts],["from","매주일 때: 시작 날짜 (모르면 비우기)","date"],["until","매주일 때: 끝나는 날짜 (모르면 비우기)","date"]]:[]),]}}
+// 매주 일정의 기간(from~until). 이 날만 일정엔 안 씀
+const noRange=({from,until,...f})=>f;
+const badRange=d=>d.scope==="week"&&d.from&&d.until&&d.from>d.until?(toast("끝나는 날짜가 시작 날짜보다 앞이에요"),true):false;
 function openSched(item,src,preset){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
- const pick=d=>({title:d.title,start:d.start,end:d.end,note:d.note});
+ const pick=d=>({title:d.title,start:d.start,end:d.end,note:d.note,from:d.from,until:d.until});
  if(!item){openForm("schedule",null,{scope:"date",...(preset||{})},schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`]]),data=>{
-   if(!data.title){toast("일정 이름을 적어 주세요");return false}const {scope,...f}=data;
-   if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요`);
-   else run(db.collection("schedOverrides").add({...f,date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
- if(src==="date"){openForm("schedule",{...pick(item),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}
+   if(!data.title){toast("일정 이름을 적어 주세요");return false}if(badRange(data))return false;const {scope,...f}=data;
+   if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요${f.until?` (${+f.until.slice(5,7)}/${+f.until.slice(8)}까지)`:""}`);
+   else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
+ if(src==="date"){openForm("schedule",{...noRange(pick(item)),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}
    run(db.collection("schedOverrides").doc(item.id).update(data),"저장했어요")});return}
  openForm("schedule",{...pick(item),id:item.id,scope:"date"},null,schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일 모두`]]),data=>{
-  if(!data.title){toast("일정 이름을 적어 주세요");return false}const {scope,...f}=data;
+  if(!data.title){toast("일정 이름을 적어 주세요");return false}if(badRange(data))return false;const {scope,...f}=data;
   if(scope==="week")run(db.collection("schedule").doc(item.id).update(f),"매주 일정을 바꿨어요");
-  else run(db.collection("schedOverrides").add({...f,date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
+  else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
 }
 function delSched(item,src){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
@@ -699,7 +702,7 @@ function renderCal(){
  const sc=schedItems(selDate).filter(x=>!x.skipped).map(x=>({k:"sc",t:x.start||"",x}));
  const all=[...ev,...sc].sort((a,b)=>(a.t||"").localeCompare(b.t||""));
  const row=r=>r.k==="ev"?`<li class="item"><span class="meta">${r.e.time?fmtT(r.e.time):"하루 종일"}</span><span class="t">${esc(r.e.title)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="events" data-id="${r.e.id}" aria-label="수정">✎</button><button class="icon" data-del="events" data-id="${r.e.id}" data-name="${esc(r.e.title)}" aria-label="삭제">✕</button></span></li>`
-  :`<li class="item"><span class="meta">${r.x.start?fmtT(r.x.start)+(r.x.end?"~"+fmtT(r.x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${r.x.src==="week"?"🔁":"📌"} ${esc(r.x.title)}${r.x.note?` <span class="meta">${esc(r.x.note)}</span>`:""}</span></li>`;
+  :`<li class="item"><span class="meta">${r.x.start?fmtT(r.x.start)+(r.x.end?"~"+fmtT(r.x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${r.x.src==="week"?"🔁":"📌"} ${esc(r.x.title)}${r.x.src==="week"&&r.x.until?` <span class="meta">~${+r.x.until.slice(5,7)}/${+r.x.until.slice(8)}</span>`:""}${r.x.note?` <span class="meta">${esc(r.x.note)}</span>`:""}</span></li>`;
  $("eventList").innerHTML=`<li class="weekday">${sd.getMonth()+1}월 ${sd.getDate()}일 ${DAYNAME[dayKey(sd)]}요일</li>`+(all.length?all.map(row).join(""):`<li class="empty">일정 없음</li>`)+(sc.length?`<li class="meta" style="list-style:none;font-size:.8rem">🔁 매주 · 📌 그날만 — 시훈이 일정은 「오늘 일정」에서 고쳐요</li>`:"");
 }
 
@@ -822,7 +825,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=38;
+const VERSION=39;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
