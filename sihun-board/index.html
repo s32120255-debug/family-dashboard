@@ -169,7 +169,7 @@ body.noscroll{overflow:hidden}
   <div class="hello"><span id="topCat"></span><div><h1>시훈이 대시보드</h1><div class="d" id="today"></div></div></div>
   <div class="row" style="gap:8px"><button class="btn small primary" id="shopBtn" type="button">🏪 상점</button><span id="noticeSlot"></span><a class="btn small" id="homeBtn" href="../" style="text-decoration:none">🏠 우리집</a><div class="who" id="who"></div></div>
  </header>
- <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="mail" id="mailTabBtn">✉ 편지</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
+ <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="mail" id="mailTabBtn">💬 톡톡</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
   <section data-tab="today" class="card wide" style="--tape:var(--yellow)">
@@ -218,7 +218,7 @@ body.noscroll{overflow:hidden}
   </section>
 
   <section data-tab="mail" class="card wide" style="--tape:var(--mint)">
-   <h2><span class="ttl">편지</span><small>우리집 기지 MAIL과 같은 편지함</small></h2>
+   <h2><span class="ttl">톡톡</span><small>우리집 기지 톡톡과 같은 곳</small></h2>
    <form id="mailForm" style="display:grid;gap:8px">
     <div class="row" style="gap:6px;align-items:center"><span>시훈이가</span><select id="mailTo" aria-label="받는 사람"><option>엄마</option><option>아빠</option><option>모두</option></select><span>에게</span></div>
     <div class="row" style="gap:6px"><input id="mailInput" placeholder="하고 싶은 말" aria-label="하고 싶은 말" maxlength="200" style="flex:1;min-width:0"><button class="btn primary">보내기</button></div>
@@ -539,11 +539,11 @@ const ME="시훈";let mailSeen=0;try{mailSeen=Number(localStorage.getItem("sbMai
 const myMail=()=>S.notes.filter(n=>n.from===ME||n.to===ME||!n.to||n.to==="모두").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,40);
 const mailNew=()=>myMail().filter(n=>n.from!==ME&&(n.createdAt||0)>mailSeen).length;
 function mailSeenNow(){const l=myMail();const top=l.length?Math.max(...l.map(n=>n.createdAt||0)):0;if(top>mailSeen){setTimeout(()=>{mailSeen=top;try{localStorage.setItem("sbMailSeen",String(top))}catch(e){}renderMail()},4000)}}
-function renderMail(){const n=mailNew();$("mailTabBtn").innerHTML=`✉ 편지${n?`<span class="nbadge">${n}</span>`:""}`;
+function renderMail(){const n=mailNew();$("mailTabBtn").innerHTML=`💬 톡톡${n?`<span class="nbadge">${n}</span>`:""}`;
  const ago=ms=>{const m=Math.round((Date.now()-ms)/60000);if(m<1)return"방금";if(m<60)return m+"분 전";const h=Math.round(m/60);if(h<24)return h+"시간 전";const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()}`};
  const l=myMail();
  $("mailList").innerHTML=l.length?l.map(x=>`<li class="mail${x.from===ME?" me":""}${x.from!==ME&&(x.createdAt||0)>mailSeen?" new":""}"><div class="h"><span><b>${esc(x.from||"")}</b> → ${esc(x.to||"모두")}</span><span>${ago(x.createdAt||0)}</span></div><div class="b">${esc(x.text||"")}</div></li>`).join("")
-  :`<li class="empty">아직 편지가 없어요. 엄마 아빠에게 한마디 보내 볼까?</li>`}
+  :`<li class="empty">아직 톡톡이 없어요. 엄마 아빠에게 한마디 보내 볼까?</li>`}
 $("mailForm").onsubmit=async e=>{e.preventDefault();const v=$("mailInput").value.trim();if(!v)return;if(!fs){toast("저장소에 연결되지 않았어요");return}
  const data={text:v,from:ME,to:$("mailTo").value,createdAt:Date.now()};
  try{const b=F.writeBatch(fs);const ref=F.doc(F.collection(fs,"notes"));b.set(ref,data);
