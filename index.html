@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=79">
-<link rel="icon" href="icon-192.png?v=79">
-<link rel="apple-touch-icon" href="icon-192.png?v=79">
+<link rel="manifest" href="manifest.json?v=80">
+<link rel="icon" href="icon-192.png?v=80">
+<link rel="apple-touch-icon" href="icon-192.png?v=80">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -175,9 +175,9 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .scard button{border:2px solid #3a2a00;background:#ffc928;color:#3a2a00;border-radius:999px;padding:6px;font-weight:700;cursor:pointer}
 .scard button:disabled{background:#eee3c0;color:#9a8f78;border-color:#c9bfa8;cursor:not-allowed}
 .star{font-style:normal;color:#e8590c;margin-right:3px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:baseline;gap:6px;border:2px solid #3a2a00;border-radius:999px;padding:6px 14px;background:#fffbe8;color:#2b2414;font-family:var(--display);font-size:1.2rem;line-height:1.2}
-.chip small{font-family:var(--body);font-size:.8rem;color:#7a6f55;font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:baseline;gap:6px;border:2px solid #3a2a00;border-radius:999px;padding:4px 11px;background:#fffbe8;color:#2b2414;font-family:var(--display);font-size:1rem;line-height:1.2}
+.chip small{font-family:var(--body);font-size:.72rem;color:#7a6f55;font-variant-numeric:tabular-nums}
 .chip.now{box-shadow:0 0 0 3px #2f6fd6;font-weight:700}
 .chip.past{opacity:.45}.chip.past b{text-decoration:line-through}
 .chip b{font-weight:400}
@@ -237,7 +237,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 79</p></div></div>
+<p style="font-size:.75rem">버전 80</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -255,6 +255,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
   <button role="tab" data-nav="today" aria-selected="true">오늘</button><button role="tab" data-nav="cal" aria-selected="false">달력</button><button role="tab" data-nav="mail" aria-selected="false">톡톡</button><button role="tab" data-nav="food" aria-selected="false">냠냠</button><button role="tab" data-nav="stuff" aria-selected="false">찾기</button><button role="tab" data-nav="grow" aria-selected="false">포인트<b class="nbadge" id="pointBadge"></b></button>
  </nav>
  <main class="grid" id="main">
+  <section class="card full" data-tab="today" id="c-must">
+   <h2>오늘 꼭 <small id="mustCount"></small><button class="btn small" data-add="musts" aria-label="오늘 꼭 추가">＋</button></h2>
+   <ul class="list" id="mustList"></ul>
+  </section>
+
   <section class="card full sumcard" data-tab="today" id="c-sum">
    <h2>요약 시훈 오늘 <small id="sumDate"></small></h2>
    <div class="chips" id="sumChips"></div>
@@ -378,8 +383,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=79";
-import {SEED_SCHEDULE} from "./seed.js?v=79";
+import {firebaseConfig} from "./config.js?v=80";
+import {SEED_SCHEDULE} from "./seed.js?v=80";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -394,7 +399,7 @@ const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"�
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 
-const COLS=["wishes","schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","helpLog","wishfood","notes","pantry","ate","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const COLS=["musts","wishes","schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","helpLog","wishfood","notes","pantry","ate","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
 const S=Object.fromEntries(COLS.map(c=>[c,[]]));
 let db=null,admin=false,schedDate=ymd(new Date()),taskDate=ymd(new Date()),loadedCols=new Set(),me=null,calMonth=new Date(),selDate=ymd(new Date());
 calMonth.setDate(1);
@@ -406,6 +411,7 @@ const FIELDS={
  pantry:{title:"우리집 먹을거리",f:[["name","이름","text"],["place","어디","select",[["fridge","냉장고"],["snack","간식"],["storage","부식창고"]]],["qty","양 (예: 2개, 반 통)","text"],["expiry","유통기한 (선택)","date"]]},
  rewards:{title:"보상으로 포인트 쓰기",f:[["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},
  schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
+ musts:{title:"오늘 꼭",f:[["title","꼭 챙길 것 (준비물·약속·낼 것)","text"],["who","누구","select",[["","모두"],["엄마","엄마"],["아빠","아빠"],["시훈","시훈"]]],["date","날짜","date"]]},
  events:{title:"달력 일정",f:[["date","날짜 (여러 날이면 시작 날짜)","date"],["endDate","끝 날짜 (여러 날일 때만)","date"],["title","내용","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["time","시작","time"],["end","끝 (모르면 비우기)","time"]]},
  locations:{title:"물건 위치",f:[["name","물건","text"],["place","있는 곳","text"]]},
  supplies:{title:"소모품",f:[["name","이름","text"],["status","상태","select",[["ok","넉넉"],["low","조금 남음"],["out","다 떨어짐"]]],["note","메모 (예: 사는 곳)","text"]]},
@@ -438,7 +444,7 @@ function openForm(col,doc,preset,defOv,onSave){
   
   if(col==="events"){if(data.endDate&&data.date&&data.endDate<data.date){toast("끝 날짜가 시작 날짜보다 앞이에요");return}if(data.endDate===data.date)data.endDate=null;if(data.allDay){data.time=null;data.end=null}else if(!data.time)data.allDay="1";if(data.time&&data.end&&data.end<=data.time){toast("끝 시간이 시작보다 늦어야 해요");return}}
   if(col==="schedule"&&!data.title){toast("일정 이름을 적어 주세요");return}
-  if((col==="events"&&(!data.date||!data.title))||((col==="locations"||col==="pantry")&&!data.name)||(["supplies","helpmom","chores"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
+  if((col==="events"&&(!data.date||!data.title))||((col==="locations"||col==="pantry")&&!data.name)||(["supplies","helpmom","chores","musts"].includes(col)&&!(data.name||data.title))){toast("빈 칸을 채워 주세요");return}
   closeForm();
   if(col==="meals")return run(db.collection("meals").doc(v._date).set(data),"저장했어요");
   if(doc&&doc.id)return run(db.collection(col).doc(doc.id).update(data),"저장했어요");
@@ -785,6 +791,14 @@ const canApprove=w=>admin||(me&&me===w.to);
 function wishBtns(w){if(w.got)return`<span class="adm"><button class="btn small" data-wishgot="${w.id}">취소</button></span>`;
  if(w.req)return(canApprove(w)?`<button class="btn small primary" data-wishok="${w.id}">승인</button><button class="btn small" data-wishno="${w.id}">거절</button>`:"")+(me===w.who&&!canApprove(w)?`<button class="btn small" data-wishno="${w.id}">신청 취소</button>`:"");
  return`<button class="btn small" data-wishreq="${w.id}">쓸게요</button>`}
+// 오늘 꼭: musts{title,who("" 모두),date,done,doneDate,doneBy}. 오늘 것 + 지난날 못 한 것(넘어옴). 체크하면 그날만 보이고 다음 날 사라짐. 누구나 적고 지움
+function renderMust(){const t=today();
+ const l=S.musts.filter(x=>x.date&&(x.done?x.doneDate===t:x.date<=t)).sort((a,b)=>(!!a.done-!!b.done)||(a.date||"").localeCompare(b.date||"")||(a.createdAt||0)-(b.createdAt||0));
+ const left=l.filter(x=>!x.done).length;$("mustCount").textContent=l.length?`${l.length-left}/${l.length}`:"";
+ $("mustList").innerHTML=l.length?l.map(x=>{const old=!x.done&&x.date<t,pd=parse(x.date);
+  return`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-must="${x.id}" aria-label="${x.done?"취소":"했어요"}">${x.done?"✓":""}</button><span class="t">${x.who?`<span class="pill info">${esc(x.who)}</span> `:""}${esc(x.title)}${old?` <span class="pill warn">${pd.getMonth()+1}/${pd.getDate()}부터</span>`:""}${x.done&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-edit="musts" data-id="${x.id}" aria-label="수정">✎</button><button class="icon" data-del="musts" data-id="${x.id}" data-name="${esc(x.title)}" aria-label="삭제">✕</button></span></li>`}).join("")
+  :`<li class="empty">오늘 꼭 챙길 게 없어요. ＋로 준비물·약속을 적어요.</li>`;
+ const n=S.musts.filter(x=>!x.done&&x.date&&x.date>addDays(t,0)).length;if(n)$("mustList").insertAdjacentHTML("beforeend",`<li class="meta" style="list-style:none;font-size:.8rem;color:var(--muted)">다음에 챙길 것 ${n}개 (그날 되면 보여요)</li>`)}
 function renderWish(){const l=S.wishes.slice().sort((a,b)=>(!!a.got-!!b.got)||(!!b.req-!!a.req)||(a.createdAt||0)-(b.createdAt||0));
  const mine=S.wishes.filter(w=>w.req&&!w.got&&me&&w.to===me).length;$("wishWait").textContent=mine?`승인할 것 ${mine}개`:"";for(const id of ["pointBadge","shopBadge"]){const e=$(id);if(e)e.textContent=mine?String(mine):""}
  $("wishList").innerHTML=l.length?l.map(w=>`<li class="item ${w.got?"done":""}"><span class="pill info">${esc(w.who||"")}${w.to?` → ${esc(w.to)}`:""}</span><span class="t">${esc(w.title)}${w.got?` <span class="meta">${parse(w.got).getMonth()+1}/${parse(w.got).getDate()} 받음</span>`:w.req?` <span class="pill warn">승인 대기 · ${esc(w.to||"")}</span>`:""}</span>${w.points?`<span class="pill ok">⭐${Number(w.points)}</span>`:`<span class="meta">포인트 미정</span>`}${wishBtns(w)}<button class="icon" data-wishedit="${w.id}" aria-label="수정">✎</button><button class="icon" data-del="wishes" data-id="${w.id}" aria-label="삭제">✕</button></li>`).join(""):`<li class="empty">받고 싶은 보상을 적어 보세요. 예: 시훈 → 아빠 · 자전거 타기</li>`}
@@ -914,7 +928,7 @@ function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.fil
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
 // 한 칸에서 오류가 나도 나머지 칸(포인트 등)은 계속 새로 그리기
-function renderAll(){try{autoMe()}catch(e){}for(const f of [renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
+function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -952,7 +966,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   else run(db.collection("pantry").doc(x.id).update({empty:true,qty:m?"0"+m[2]:x.qty}),`${x.name} 다 먹었어요`);return}
  if(d.prefill){const x=S.pantry.find(y=>y.id===d.prefill);if(x)openForm("pantry",{...x,qty:""},null,null,data=>{if(!data.name){toast("이름을 적어 주세요");return false}run(db.collection("pantry").doc(x.id).update({...data,empty:false}),"채웠어요")});return}
  if(d.ptoshop){const x=S.pantry.find(y=>y.id===d.ptoshop);if(x)run(db.collection("shopping").add({name:x.name,done:false,from:PLACES.find(p=>p[0]===x.place)[1],createdAt:Date.now()}),"장보기에 넣었어요");return}
- if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
+ if(d.must){const x=S.musts.find(y=>y.id===d.must);if(!x)return;const on=!x.done;run(db.collection("musts").doc(x.id).update({done:on,doneDate:on?today():null,doneBy:on?(me||null):null}),on?"챙겼어요 ✓":null);return}
+ if(d.add){const preset=d.add==="events"?{date:selDate}:d.add==="musts"?{date:today()}:d.add==="supplies"?{status:"ok"}:{};openForm(d.add,null,preset);return}
  if(d.edit){const doc=S[d.edit].find(x=>x.id===d.id);if(doc)openForm(d.edit,{...doc,repeat:doc.repeat!=null?String(doc.repeat):undefined});return}
  if(d.del){confirmDel(d.del,d.id,d.name);return}
  if(d.chore){doneChore(d.chore);return}
@@ -1038,7 +1053,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=79;
+const VERSION=80;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
