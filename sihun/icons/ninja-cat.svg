@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+ <rect width="512" height="512" fill="#2f6b4f"/>
+ <circle cx="256" cy="262" r="196" fill="#3f8a66"/>
+ <g transform="translate(256 262) scale(0.88) translate(-256 -262)">
+ <!-- ears -->
+ <path d="M128 222 L150 92 L232 160 Z" fill="#f2a541"/>
+ <path d="M384 222 L362 92 L280 160 Z" fill="#f2a541"/>
+ <path d="M150 196 L162 124 L210 164 Z" fill="#f7c9a8"/>
+ <path d="M362 196 L350 124 L302 164 Z" fill="#f7c9a8"/>
+ <!-- head -->
+ <ellipse cx="256" cy="270" rx="150" ry="132" fill="#f2a541"/>
+ <!-- stripes -->
+ <path d="M236 142 q20 -6 40 0 l-8 28 h-24 z" fill="#d9822b"/>
+ <!-- ninja mask band -->
+ <path d="M106 232 Q256 196 406 232 L406 300 Q256 270 106 300 Z" fill="#26313f"/>
+ <!-- headband tails -->
+ <path d="M400 246 q48 -14 74 -48 q-10 44 -54 70 z" fill="#d94b3d"/>
+ <path d="M402 268 q52 6 82 -14 q-20 40 -76 40 z" fill="#d94b3d"/>
+ <!-- eyes -->
+ <path d="M168 256 q30 -22 62 0 q-30 16 -62 0 z" fill="#fff"/>
+ <path d="M282 256 q30 -22 62 0 q-30 16 -62 0 z" fill="#fff"/>
+ <circle cx="200" cy="254" r="12" fill="#1b1b1b"/>
+ <circle cx="314" cy="254" r="12" fill="#1b1b1b"/>
+ <circle cx="204" cy="250" r="3.5" fill="#fff"/>
+ <circle cx="318" cy="250" r="3.5" fill="#fff"/>
+ <!-- lower face mask -->
+ <path d="M150 318 Q256 300 362 318 Q350 392 256 402 Q162 392 150 318 Z" fill="#26313f"/>
+ <!-- nose on mask -->
+ <path d="M244 326 h24 l-12 12 z" fill="#f28c8c"/>
+ <!-- whiskers -->
+ <g stroke="#26313f" stroke-width="6" stroke-linecap="round">
+  <line x1="112" y1="320" x2="160" y2="330"/><line x1="112" y1="348" x2="158" y2="346"/>
+  <line x1="400" y1="320" x2="352" y2="330"/><line x1="400" y1="348" x2="354" y2="346"/>
+ </g>
+ <!-- star on band -->
+ <path d="M256 214 l8 16 18 2 -13 12 4 18 -17 -9 -17 9 4 -18 -13 -12 18 -2 z" fill="#f2f2f2" transform="translate(0,-2) scale(1)"/>
+ </g>
+</svg>
