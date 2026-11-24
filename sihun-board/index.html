@@ -137,7 +137,8 @@ body.noscroll{overflow:hidden}
 .layer label{display:grid;gap:4px;font-size:.92rem;color:var(--muted)}
 .layer h3{font-family:var(--hand);font-size:1.5rem;margin:0}
 .shopBal{background:var(--bg);border-radius:16px;padding:12px;text-align:center}.shopBal small{display:block;color:var(--muted)}.shopBal b{font-family:var(--hand);font-size:3rem;line-height:1.1;color:var(--yellow);font-variant-numeric:tabular-nums}
-.shopGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.shopGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(150px,40%),1fr));gap:10px;min-width:0}
+[data-tab="shop"]>*{min-width:0}
 .shopCard{border:2.5px solid var(--line);background:var(--bg);color:inherit;border-radius:16px;padding:14px 10px;display:grid;gap:6px;justify-items:center;text-align:center;cursor:pointer;font:inherit}
 .shopCard .e{font-size:2.4rem;line-height:1}.shopCard .n{font-family:var(--hand);font-size:1.3rem;overflow-wrap:anywhere}.shopCard .pr{font-family:var(--hand);font-size:1.25rem;color:var(--yellow)}
 .shopCard[aria-disabled="true"]{opacity:.5;cursor:default}.shopCard .why{font-size:.8rem;color:var(--muted)}
@@ -172,6 +173,13 @@ body.noscroll{overflow:hidden}
  <nav class="navtabs" role="tablist" id="navtabs"><button role="tab" data-nav="today">🗡 임무</button><button role="tab" data-nav="task">🥋 수련</button><button role="tab" data-nav="money">👛 지갑</button><button role="tab" data-nav="play">🎮 놀이</button><button role="tab" data-nav="mail" id="mailTabBtn">💬 톡톡</button><button role="tab" data-nav="memo">📜 기억</button><button role="tab" data-nav="grow">⭐ 레벨</button><button role="tab" data-nav="mom" id="momTabBtn" hidden>엄마</button></nav>
 
  <main class="grid">
+  <section data-tab="shop" class="card wide" style="--tape:var(--yellow)">
+   <h2><span class="ttl">상점</span><button class="btn small" id="shopBack" type="button">← 돌아가기</button></h2>
+   <div class="shopBal"><small>🎒 과제 포인트</small><b id="shopPt">⭐0</b></div>
+   <div class="shopGrid" id="shopGrid"></div>
+   <div class="row"><button class="btn" id="shopHome" type="button" style="white-space:normal">💗 가족 도움 포인트는 우리집 상점</button></div>
+   <p class="meta" style="margin:0">🧾 내가 산 기록 (우리집 기지에도 똑같이 보여요)</p><ul class="list" id="shopLog"></ul>
+  </section>
   <section data-tab="today" class="card wide" style="--tape:var(--red)" id="mustCard" hidden>
    <h2><span class="ttl">오늘 꼭</span><small>우리집 기지와 같은 목록</small></h2>
    <ul class="list" id="mustList"></ul>
@@ -183,9 +191,8 @@ body.noscroll{overflow:hidden}
    <p class="meta" style="margin:0">자세한 건 아래 「상세 오늘」에서 확인해요</p>
   </section>
   <section data-tab="today" class="card wide" style="--tape:var(--mint)">
-   <h2><span class="ttl">상세 오늘</span><small>엄마가 우리집 대시보드에서 정해요</small></h2>
    <div class="nav"><button class="btn small" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="btn small" id="sNext" aria-label="다음 날">▶</button><button class="btn small" id="sToday">오늘</button></div>
-   <a href="#" class="item" id="taskChip" style="text-decoration:none;color:inherit"></a>
+   <a href="#" class="item" id="taskChip" hidden style="text-decoration:none;color:inherit"></a>
    <div id="schedList"></div>
   </section>
 
@@ -200,7 +207,7 @@ body.noscroll{overflow:hidden}
   <section data-tab="grow" class="card wide" style="--tape:var(--yellow)">
    <h2><span class="ttl">과제 포인트</span><small>우리집 기지와 같은 포인트</small></h2>
    <div class="sum" id="ptBox" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
-   <div class="row"><button class="btn primary" id="snackBtn" type="button">🏪 상점 가기</button><span class="meta">간식·체스·받고 싶은 보상은 우리집 기지 상점에서 사요</span></div>
+   <div class="row"><button class="btn primary" id="snackBtn" type="button">🏪 상점 가기</button><span class="meta">간식·체스·끝말잇기·받고 싶은 보상을 과제 포인트로 사요</span></div>
    <p class="meta" style="margin:0">보상으로 쓴 기록</p><ul class="list" id="gRewards"></ul>
   </section>
   <section data-tab="grow" class="card wide" style="--tape:var(--pink)">
@@ -310,9 +317,11 @@ function showTab(t){const b=document.querySelector(`#navtabs [data-nav="${t}"]`)
  if(t==="mail"&&window.mailReady){renderMail();mailSeenNow()}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 showTab(curTab);
-// 상점은 우리집 기지에만(엄마 11/24: 누가 뭘 샀는지 한곳에서). 같은 창으로 우리집 기지 POINT 탭 열기
-const openShop=()=>{try{sessionStorage.setItem("tab","grow")}catch(e){}location.href="../index.html#shop"};
-$("snackBtn").onclick=openShop;$("shopBtn").onclick=openShop;
+// 상점(엄마 11/24 「과제는 바로 쓰게」): 과제 포인트 상품은 여기서 바로 사기. 가족 도움 포인트는 우리집 기지 상점(같은 창)
+const openShop=()=>{showTab("shop");window.scrollTo({top:0})};
+const openHomeShop=()=>{try{sessionStorage.setItem("tab","grow")}catch(e){}location.href="../index.html#shop"};
+$("snackBtn").onclick=openShop;$("shopBtn").onclick=openShop;$("shopHome").onclick=openHomeShop;
+$("shopBack").onclick=()=>{showTab(backTab);window.scrollTo({top:0})};
 $("chessBig").onclick=()=>{const c=$("chessBig").closest("section"),on=!c.classList.contains("chessbig");c.classList.toggle("chessbig",on);document.body.classList.toggle("noscroll",on);$("chessBig").textContent=on?"✕ 작게 보기":"⛶ 크게 보기";window.scrollTo({top:0})};
 $("taskChip").onclick=e=>{e.preventDefault();showTab("task");window.scrollTo({top:0})};
 
@@ -507,38 +516,39 @@ async function spendPoint(title,use,n=1,from="task"){
 
 /* ---------- 🏪 상점: 포인트 쓰는 곳은 여기 한 곳 ---------- */
 // 간식·체스는 rewards{use:"snack"|"chess"}, 받고 싶은 보상은 우리집 기지와 같은 형식(rewards{wishId} + wishes{got,rewardId})
-const shopWishes=()=>S.wishes.filter(w=>w.who==="시훈"&&!w.got&&Number(w.points)>0).sort((a,b)=>(Number(a.points)-Number(b.points))||((a.createdAt||0)-(b.createdAt||0)));
-function shopItems(){const bal=Math.max(ptBalance("task"),ptBalance("help"));const items=[{k:"snack",e:"🍪",n:"간식 1개",p:1}];
- const lock=funLock(),usedC=S.chess.filter(x=>x.date===today()).length,lim=chessLimit(),open=chessApi&&chessApi.isOpen();
- items.push({k:"chess",e:"♟",n:"체스 1판",p:1,why:open?"열린 판이 있어요":lock?"과제를 다 하면 열려요":usedC>=lim?`오늘 ${lim}판 다 했어`:`오늘 ${usedC+1}/${lim}판째`,off:!open&&(!!lock||usedC>=lim)});
- for(const w of shopWishes())items.push({k:"wish",id:w.id,e:"🎁",n:w.title,by:w.to?`${w.to}${w.to==="시훈"?"이가 해요":"가 해 줘요"}`:"",p:Number(w.points)});
- for(const it of items)if(!it.off&&!(it.k==="chess"&&open)&&bal<it.p){it.off=true;it.why=`${it.p-bal}점 더 모아요`}
+// 우리집 기지 상점 「🎒 시훈 과제」 칸과 같은 기록: 고정 상품 rewards{title,points,who:"시훈",use,date,createdAt,by}
+// 체스·끝말잇기는 산 기록이 곧 판 열기 권(usedAt 없을 때). 받고 싶은 보상은 우리집 기지처럼 해 줄 사람 승인 요청(wishes.req{src:"task"})
+const SHOP_FIXED=[{k:"snack",e:"🍪",n:"간식 1개",p:1,sm:"말하고 사고 먹어요"},{k:"chess",e:"♟",n:"체스 1판",p:1,sm:"놀이 탭 체스판이 열려요"},{k:"wordchain",e:"🔤",n:"끝말잇기 1판",p:1,sm:"놀이 탭 끝말잇기가 열려요"}];
+const shopWishes=()=>S.wishes.filter(w=>w.who==="시훈"&&!w.got).sort((a,b)=>((Number(a.points)||1e9)-(Number(b.points)||1e9))||((a.createdAt||0)-(b.createdAt||0)));
+function shopItems(){const t=ptBalance("task");const items=SHOP_FIXED.map(x=>({...x}));
+ for(const w of shopWishes()){const p=Number(w.points)||0;items.push({k:"wish",id:w.id,e:"🎁",n:w.title,sm:w.to?`${w.to}${w.to==="시훈"?"이가 해요":"가 해 줘요"}`:"",p,why:w.req?`${w.to||"상대"} 승인 기다리는 중`:!p?"엄마가 점수를 정해 줘야 해요":"",off:!!w.req||!p})}
+ for(const it of items)if(!it.off&&t<it.p){it.off=true;it.why=`${it.p-t}점 더 모아요`}
  return items}
-function renderShop(){const t=ptBalance("task"),h=ptBalance("help");$("shopBtn").textContent=`🏪 상점 ⭐${t} · 💗${h}`;$("snackBtn").textContent="🏪 우리집 기지 상점";const c=chessCoupons().length;$("chessCoupon").textContent=c?`🎟 체스권 ${c}장`:"";if(curTab!=="shop")return;
- $("shopPt").textContent=`⭐${t}`;$("shopHelp").textContent=`💗${h}`;
- $("shopGrid").innerHTML=shopItems().map((it,i)=>`<button class="shopCard" type="button" data-shop="${i}" aria-disabled="${!!it.off}"><span class="e">${it.e}</span><span class="n">${esc(it.n)}</span>${it.by?`<span class="why">${esc(it.by)}</span>`:""}<span class="pr">⭐${it.p}</span>${it.why?`<span class="why">${esc(it.why)}</span>`:""}</button>`).join("");
- $("shopGrid").querySelectorAll("[data-shop]").forEach(b=>b.onclick=()=>buy(shopItems()[b.dataset.shop]))}
+function renderShop(){const t=ptBalance("task"),h=ptBalance("help");$("shopBtn").textContent=`🏪 상점 ⭐${t} · 💗${h}`;$("snackBtn").textContent="🏪 상점 가기";const c=chessCoupons().length;$("chessCoupon").textContent=c?`🎟 체스권 ${c}장`:"";if(curTab!=="shop")return;
+ $("shopPt").textContent=`⭐${t}`;
+ $("shopGrid").innerHTML=shopItems().map((it,i)=>`<button class="shopCard" type="button" data-shop="${i}" aria-disabled="${!!it.off}"><span class="e">${it.e}</span><span class="n">${esc(it.n)}</span>${it.sm?`<span class="why">${esc(it.sm)}</span>`:""}<span class="pr">${it.p?"⭐"+it.p:""}</span>${it.why?`<span class="why">${esc(it.why)}</span>`:""}</button>`).join("");
+ $("shopGrid").querySelectorAll("[data-shop]").forEach(b=>b.onclick=()=>buy(shopItems()[b.dataset.shop]));
+ const fmt=ms=>{const d=new Date(ms);return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`};
+ const l=S.rewards.filter(r=>r.who==="시훈").sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,10);
+ $("shopLog").innerHTML=l.length?l.map(r=>`<li class="item"><span class="meta">${r.createdAt?fmt(r.createdAt):esc(r.date||"")}</span><span class="t">${esc(r.title||"")}${r.use==="chess"||r.use==="wordchain"?(r.usedAt?` <span class="meta">· 판 열었음</span>`:` <span class="meta">· 아직 안 함</span>`):""}</span><span class="pill">-${Number(r.points)||0} ${r.kind==="help"?"💗":"⭐"}</span></li>`).join(""):`<li class="empty">아직 산 게 없어요.</li>`}
 function goChess(){showTab("play");setTimeout(()=>$("chessBox").scrollIntoView({behavior:"smooth",block:"start"}),50)}
-// 살 때 어느 포인트로 낼지 고르기 (모자란 쪽은 못 누름)
-function payBox(msg,n,note,onPay){const t=ptBalance("task"),h=ptBalance("help");
- const opt=(k,v,e)=>`<button type="button" class="btn ${v>=n?"primary":""}" data-from="${k}" ${v>=n?"":"disabled"} style="font-size:1.15rem;padding:10px">${e} ${PT_NAME[k]} 포인트로 (남은 ${v})</button>`;
- $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>${esc(msg)}</h3><p class="meta" style="margin:0">${esc(note)}</p>${opt("task",t,"⭐")}${opt("help",h,"💗")}<div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">안 살래</button></div></form></div>`;
- $("mc").onclick=()=>$("layer").innerHTML="";$("mf").onsubmit=e=>e.preventDefault();
- $("mf").querySelectorAll("[data-from]").forEach(b=>b.onclick=()=>{$("layer").innerHTML="";onPay(b.dataset.from)})}
-function buy(it){if(!it)return;
- if(it.k==="chess"&&chessApi&&chessApi.isOpen()){toast("열린 체스판이 있어. 이어서 하자");goChess();return}
+function goWc(){showTab("play");setTimeout(()=>$("wcBox").scrollIntoView({behavior:"smooth",block:"start"}),50)}
+function askBox(msg,note,ok,onOk){$("layer").innerHTML=`<div class="layer"><form id="mf"><h3>${esc(msg)}</h3><p class="meta" style="margin:0">${esc(note)}</p><div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">안 살래</button><button class="btn primary" style="font-size:1.15rem">${esc(ok)}</button></div></form></div>`;
+ $("mc").onclick=()=>$("layer").innerHTML="";$("mf").onsubmit=e=>{e.preventDefault();$("layer").innerHTML="";onOk()}}
+let buying=false;
+function buy(it){if(!it||buying)return;
  if(it.off){toast(it.why||"지금은 살 수 없어요");return}
- if(it.k==="snack")return payBox("간식 1개 살까요? 1점",1,"엄마 기록에 남아요.",async from=>{if(await spendPoint("간식 1개","snack",1,from))toast("맛있게 먹어! -1점");renderAll()});
- if(it.k==="chess")return payBox("체스 1판 살까요? 1점",1,"사면 놀이 탭 체스판이 바로 열려요.",async from=>{if(!chessApi){toast("체스를 아직 불러오는 중이에요");return}
-  if(await spendPoint("체스 1판","chess",1,from)){chessApi.unlock();toast("체스판이 열렸어! ♟");goChess()}renderAll()});
+ if(it.k!=="wish")return askBox(`${it.n} 살까요? ⭐${it.p}`,`과제 포인트 ${it.p}점을 써요. 엄마 기록에 남아요.`,"살래",async()=>{buying=true;try{
+   if(await spendPoint(it.n,it.k,it.p,"task")){if(it.k==="snack")toast("맛있게 먹어! 🍪 -1점");else if(it.k==="chess"){toast("체스권 생겼어! 🎟 놀이 탭에서 열어");goChess()}else{toast("끝말잇기권 생겼어! 🎟");goWc()}}
+   renderAll()}finally{buying=false}});
  const w=S.wishes.find(x=>x.id===it.id);if(!w)return;
- payBox(`「${w.title}」 받을까요? ${it.p}점`,it.p,"엄마 기록에 남아요.",from=>buyWish(w,from))}
-async function buyWish(w,from="task"){if(!fs)return;const pts=Number(w.points)||0,bal=ptBalance(from);
- if(!pts||w.got)return;if(bal<pts){toast(`포인트가 모자라요 (남은 ${bal}, 필요 ${pts})`);return}
- const id="wish_"+w.id+"_"+Date.now();const data={title:w.title,points:pts,...(from==="help"?{kind:"help"}:{}),who:"시훈",wishId:w.id,date:today(),createdAt:Date.now(),by:myName()};
- try{const b=F.writeBatch(fs);b.set(F.doc(fs,"rewards",id),data);b.update(F.doc(fs,"wishes",w.id),{got:today(),rewardId:id});
-  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"rewards",docId:id,action:"포인트 씀",summary:`${w.title} -${pts}점`,before:null,after:data});
-  await b.commit();S.rewards.push({id,...data});w.got=today();w.rewardId=id;toast(`받았다! 🎉 -${pts}점`)}catch(e){toast("포인트를 쓰지 못했어요: "+(e.code||""))}
+ askBox(`「${w.title}」 받을까요? ⭐${it.p}`,`${w.to||"해 줄 사람"}가 승인하면 과제 포인트 ${it.p}점이 빠져요.`,"승인 부탁하기",()=>askWish(w))}
+async function askWish(w){if(!fs)return;const pts=Number(w.points)||0;if(!pts||w.got||w.req)return;
+ if(ptBalance("task")<pts){toast("포인트가 모자라요");return}
+ const req={src:"task",at:Date.now(),by:myName()};
+ try{const b=F.writeBatch(fs);b.update(F.doc(fs,"wishes",w.id),{req});
+  b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"wishes",docId:w.id,action:"보상 승인 부탁",summary:`${w.title} ⭐${pts}`,before:null,after:{req}});
+  await b.commit();w.req=req;toast(`${w.to||"상대"}에게 승인을 부탁했어요 🙏`)}catch(e){toast("부탁하지 못했어요: "+(e.code||""))}
  renderAll()}
 
 /* ---------- ✉ 편지: 우리집 기지 notes{text,from,to("모두"|이름),createdAt} 그대로 ---------- */
@@ -742,7 +752,7 @@ function wcMine(raw){if(!WC||WC.over||WC.turn!=="me")return;const w=raw.trim().r
 function renderWc(){const g=S.wc.filter(x=>x.date===today());$("wcScore").textContent=g.length?`오늘 ${g.filter(x=>x.result==="win").length}승 ${g.filter(x=>x.result!=="win").length}패`:"";
  const wn=couponsOf("wordchain").length;
  const startBtns=wn?`<p class="meta" style="margin:0">🎟 끝말잇기권 ${wn}장 · 한 판에 1장 써요.</p><div class="row" style="justify-content:center"><button class="btn primary" data-wc="me">내가 먼저</button><button class="btn" data-wc="cpu">컴퓨터 먼저</button></div>`
-  :`<p class="meta" style="margin:0">우리집 기지 상점에서 「끝말잇기 1판」(1점)을 사면 열려요.</p><div><button class="btn primary" data-wc="shop">🏪 우리집 기지 상점 가기</button></div>`;
+  :`<p class="meta" style="margin:0">상점에서 「끝말잇기 1판」(과제 1점)을 사면 열려요.</p><div><button class="btn primary" data-wc="shop">🏪 상점 가기</button></div>`;
  if(!WC){$("wcBox").innerHTML=`<p class="meta" style="margin:0">컴퓨터가 바로 대답해요. 두음법칙(력→역, 녀→여)도 돼요.</p>`+startBtns;return}
  const last=WC.chain.length?WC.chain[WC.chain.length-1].w.slice(-1):null;
  const chips=WC.chain.map((x,i)=>`<span class="bub ${x.by==="me"?"me":"ai"}" style="font-family:var(--hand);font-size:1.3rem">${esc(x.w.slice(0,-1))}<b style="${i===WC.chain.length-1?"background:var(--yellow);color:#2e3f38;border-radius:6px;padding:0 4px":""}">${esc(x.w.slice(-1))}</b>${x.unk?" ❓":""}</span>`).join("");
@@ -834,7 +844,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=49;
+const VERSION=50;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -878,7 +888,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
  });
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 renderAll();
-import("./chess-ui.js?v=49").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=50").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:useChessCoupon, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 열기 (${n}장)`,note:"우리집 기지 상점에서 산 체스권이 있어요."}:{label:"🏪 우리집 기지 상점 가기",note:"우리집 기지 상점에서 「체스 1판」(1점)을 사면 열려요."}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
