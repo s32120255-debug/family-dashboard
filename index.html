@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=39">
-<link rel="icon" href="icon-192.png?v=39">
-<link rel="apple-touch-icon" href="icon-192.png?v=39">
+<link rel="manifest" href="manifest.json?v=40">
+<link rel="icon" href="icon-192.png?v=40">
+<link rel="apple-touch-icon" href="icon-192.png?v=40">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -142,6 +142,11 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .gbars .c i{display:block;width:40%;border-radius:4px 4px 0 0;min-height:2px}
 .gbl{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;text-align:center;font-size:.8rem;color:var(--muted);margin-top:4px}
 .x2{border:2px dashed #e0a800;border-radius:12px;padding:6px 10px;font-weight:700;color:#7a5200;background:#fff8d6}.x2.on{background:#ffc928;border-style:solid;color:#3a2a00}
+.missionbtn{align-self:center;border:2px solid #3a2a00;background:#ffc928;color:#3a2a00;border-radius:999px;padding:6px 12px;font-family:var(--display);font-size:1.05rem;cursor:pointer;box-shadow:0 3px 0 #e0a800;white-space:nowrap}
+.missionbtn b{background:#3a2a00;color:#ffc928;border-radius:999px;padding:0 7px;margin-left:2px;font-family:var(--body);font-size:.85rem}
+.missionbtn b:empty{display:none}
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:15}
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(560px,100%);max-height:85vh;overflow:auto;z-index:16;border-radius:22px 22px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 24px rgba(0,0,0,.18)}
 .item.free{background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.85rem;padding:4px 10px}
 .item.skipped{opacity:.45}
 .item.skipped .t{text-decoration:line-through}
@@ -163,7 +168,8 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .ttl{display:inline-flex;align-items:center;gap:6px}.ttl svg{width:28px;height:28px;flex:none}
 .brand{display:flex;align-items:center;gap:10px}
 .brand svg{width:52px;height:52px;flex:none}
-.brand h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1}
+.brand h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1;white-space:nowrap}
+@media (max-width:420px){.brand h1{font-size:1.55rem}.brand svg{width:44px;height:44px}.missionbtn{font-size:.95rem;padding:5px 10px}}
 .date{font-family:var(--display);font-size:1.1rem;line-height:1.2;color:var(--muted)}
 .clock{font-family:var(--display);font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1}
 .navtabs{position:sticky;top:0;z-index:10;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0 10px;margin:-4px 0 0;border-bottom:2px dashed var(--line)}
@@ -197,11 +203,11 @@ body.admin #tplBox{display:grid!important;gap:6px}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 39</p></div></div>
+<p style="font-size:.75rem">버전 40</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <b id="missionN"></b></button></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -306,12 +312,15 @@ body.admin #tplBox{display:grid!important;gap:6px}
    <ul class="list" id="choreList"></ul>
   </section>
 
-  <section class="card" data-tab="today">
-   <h2>해결할 미션 <small id="helpCount"></small><button class="btn small" data-add="helpmom">＋</button></h2>
-   <div class="pts" id="helpPts"></div>
-   <ul class="list" id="helpList"></ul>
-  </section>
  </main>
+ <div id="sheetBg" class="sheetbg" hidden></div>
+ <section class="card sheet" id="c-help" role="dialog" aria-label="해결할 미션" hidden>
+   <h2>해결할 미션 <small id="helpCount"></small><span style="display:inline-flex;gap:6px"><button class="btn small" data-add="helpmom">＋</button><button class="btn small" id="sheetClose" aria-label="닫기">닫기</button></span></h2>
+   <ul class="list" id="helpList"></ul>
+   <p class="sub2">도움 포인트 (과제 포인트와 따로)</p>
+   <div class="pts" id="helpPts"></div>
+   <div class="adm"><button class="btn small" id="helpSpend">도움 포인트로 보상 쓰기</button></div>
+ </section>
  <div class="sub" style="text-align:center"><span id="status">불러오는 중…</span><div class="who" id="who" style="justify-content:center"></div></div>
 </div>
 <div id="layer"></div>
@@ -597,7 +606,7 @@ function renderTasks(){
  const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks);
  const week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+bonusSum(S.tasks,ws);
- const used=S.rewards.reduce((a,x)=>a+(Number(x.points)||0),0);
+ const used=S.rewards.filter(x=>x.kind!=="help").reduce((a,x)=>a+(Number(x.points)||0),0);
  const todayT=S.tasks.filter(x=>x.date===taskDate).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const isT=taskDate===t,past=taskDate<t,tpd=parse(taskDate);
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
@@ -663,10 +672,14 @@ function doneChore(id){const x=S.chores.find(y=>y.id===id);if(!x)return;const t=
  run(db.collection("chores").doc(id).update({doneDate:on?null:t,doneBy:on?null:me}),on?null:`${me} ⭐${pts}`);
  if(on)run(db.collection("choreLog").doc(lid).delete());else run(db.collection("choreLog").doc(lid).set({choreId:id,title:x.title,points:pts,date:t,who:me}))}
 
-function renderHelp(){const t=today(),ws=weekStart();const n=S.helpmom.filter(x=>x.doneDate===t).length;
+// 도움 포인트: 사람별 모은 것(helpLog+예전 choreLog) − 도움 포인트로 쓴 보상(rewards kind:"help", who)
+function helpBal(){const ws=weekStart(),tot={},wk={},sp={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
+ for(const r of S.rewards)if(r.kind==="help"&&r.who)sp[r.who]=(sp[r.who]||0)+(Number(r.points)||0);return{tot,wk,sp}}
+const helpCard=(p,b,main)=>`<div class="pt ${main?"main":""}"><small>${p} 도움 포인트</small><b>⭐ ${(b.tot[p]||0)-(b.sp[p]||0)}</b><small>이번 주 ${b.wk[p]||0}${b.sp[p]?` · 쓴 것 ${b.sp[p]}`:""}</small></div>`;
+function renderHelp(){const t=today();const n=S.helpmom.filter(x=>x.doneDate===t).length;
  $("helpCount").textContent=S.helpmom.length?`오늘 ${n}/${S.helpmom.length}`:"";
- const tot={},wk={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
- $("helpPts").innerHTML=PEOPLE.map(p=>`<div class="pt ${p===me?"main":""}"><small>${p} 도움 포인트</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
+ const left=S.helpmom.filter(x=>x.doneDate!==t).length;$("missionN").textContent=left?String(left):"";
+ const hb=helpBal();$("helpPts").innerHTML=PEOPLE.map(p=>helpCard(p,hb,p===me)).join("");
  $("helpList").innerHTML=S.helpmom.length?S.helpmom.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)).map(x=>{const on=x.doneDate===t;
   return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-help="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}${on&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("helpmom",x.id,x.title)}</li>`}).join("")
   :`<li class="empty">미션이 아직 없어요.</li>`}
@@ -674,12 +687,12 @@ function renderHelp(){const t=today(),ws=weekStart();const n=S.helpmom.filter(x=
 let growMonth=new Date();
 function renderGrow(){
  const t=today(),ws=weekStart(),sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
- const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+bonusSum(S.tasks,ws);
+ const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards.filter(x=>x.kind!=="help")),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=ws))+bonusSum(S.tasks,ws);
  $("gPts").innerHTML=`<div class="pt main"><small>쓸 수 있는 과제 포인트</small><b>⭐ ${earned-used}</b></div><div class="pt"><small>이번 주 모은</small><b>${week}</b></div><div class="pt"><small>지금까지 모은</small><b>${earned}</b></div><div class="pt"><small>쓴 포인트</small><b>${used}</b></div>`;
  const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
- $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
+ $("gRewards").innerHTML=rw.length?rw.slice(0,10).map(r=>{const d=r.createdAt?new Date(r.createdAt):null;return`<li class="item"><span class="meta">${d?`${d.getMonth()+1}/${d.getDate()}`:""}</span><span class="t">${esc(r.title)}${r.kind==="help"?` <span class="meta">도움·${esc(r.who||"")}</span>`:` <span class="meta">과제</span>`}</span><span class="pill warn">-${Number(r.points)||0}</span></li>`}).join(""):`<li class="empty">아직 쓴 포인트가 없어요.</li>`;
  const tot={},wk={};for(const g of [...S.helpLog,...S.choreLog]){if(!g.who)continue;const v=Number(g.points)||0;tot[g.who]=(tot[g.who]||0)+v;if(g.date>=ws)wk[g.who]=(wk[g.who]||0)+v}
- $("gHelp").innerHTML=PEOPLE.map(p=>`<div class="pt"><small>${p}</small><b>⭐ ${tot[p]||0}</b><small>이번 주 ${wk[p]||0}</small></div>`).join("");
+ {const hb=helpBal();$("gHelp").innerHTML=PEOPLE.map(p=>helpCard(p,hb,false)).join("")}
  // 날짜별 과제 기록
  const by={};for(const x of S.tasks){if(!x.date)continue;const o=by[x.date]||(by[x.date]={n:0,d:0});o.n++;if(x.done)o.d++}
  const st=k=>{const o=by[k];if(!o||!o.n)return"";return o.d===o.n?"all":o.d?"some":k<t?"none":""};
@@ -806,6 +819,13 @@ function showTab(t){if(!document.querySelector(`[data-nav="${t}"]`))t="today";
  $("main").classList.toggle("one",n<=1||t==="grow");$("main").classList.toggle("two",t==="food");try{sessionStorage.setItem("tab",t)}catch(e){}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 {let t0="today";try{t0=sessionStorage.getItem("tab")||"today"}catch(e){}showTab(t0)}
+function openSheet(on){$("c-help").hidden=!on;$("sheetBg").hidden=!on;document.body.style.overflow=on?"hidden":""}
+$("missionBtn").onclick=()=>openSheet(true);$("sheetClose").onclick=()=>openSheet(false);$("sheetBg").onclick=()=>openSheet(false);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("c-help").hidden&&!document.querySelector(".overlay"))openSheet(false)});
+$("helpSpend").onclick=()=>{if(!db)return toast("저장소에 연결되지 않았어요");const hb=helpBal();
+ openForm("rewards",null,{who:me||"시훈"},{title:"도움 포인트로 보상 쓰기",f:[["who","누구 포인트","select",PEOPLE.map(p=>[p,`${p} (남은 ${(hb.tot[p]||0)-(hb.sp[p]||0)})`])],["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},data=>{
+  if(!data.title||!data.points){toast("빈 칸을 채워 주세요");return false}
+  run(db.collection("rewards").add({...data,kind:"help",date:today(),createdAt:Date.now()}),`${data.who} 도움 포인트를 썼어요`)})};
 $("gPrev").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()-1,1);renderGrow()};
 $("gNext").onclick=()=>{growMonth=new Date(growMonth.getFullYear(),growMonth.getMonth()+1,1);renderGrow()};
 $("tPrev").onclick=()=>{taskDate=addDays(taskDate,-1);renderTasks()};
