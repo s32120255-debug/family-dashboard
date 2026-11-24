@@ -1,0 +1,9 @@
+# GitHub Pages(Jekyll) 설정: 웹앱에 필요 없는 파일은 사이트에 올리지 않아요.
+exclude:
+  - functions
+  - android-lockscreen
+  - README.md
+  - firestore.rules
+  - firebase.json
+  - .firebaserc
+  - .github
