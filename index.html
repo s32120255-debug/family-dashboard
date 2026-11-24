@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=72">
-<link rel="icon" href="icon-192.png?v=72">
-<link rel="apple-touch-icon" href="icon-192.png?v=72">
+<link rel="manifest" href="manifest.json?v=73">
+<link rel="icon" href="icon-192.png?v=73">
+<link rel="apple-touch-icon" href="icon-192.png?v=73">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -155,6 +155,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 a.missionbtn{text-decoration:none;display:inline-block}
 .missionbtn b{background:#3a2a00;color:#ffc928;border-radius:999px;padding:0 7px;margin-left:2px;font-family:var(--body);font-size:.85rem}
 .missionbtn b:empty{display:none}
+.card.folded>:not(h2){display:none!important}.card h2 .hb{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
 .shoploghead{margin:12px 0 4px;font-family:var(--display);font-weight:400;font-size:1.15rem}.shoploghead small{font-family:var(--body);font-size:.8rem;color:var(--muted)}
 .helphead{list-style:none;font-family:var(--display);font-size:1.05rem;color:var(--muted);margin:8px 0 2px}.helphead:first-child{margin-top:0}
 .sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:15}
@@ -232,7 +233,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 72</p></div></div>
+<p style="font-size:.75rem">버전 73</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -251,19 +252,19 @@ a.missionbtn{text-decoration:none;display:inline-block}
  </nav>
  <main class="grid" id="main">
   <section class="card full sumcard" data-tab="today" id="c-sum">
-   <h2>요약 오늘 <small id="sumDate"></small></h2>
+   <h2>요약 시훈 오늘 <small id="sumDate"></small></h2>
    <div class="chips" id="sumChips"></div>
   </section>
 
-  <section class="card full" data-tab="today" id="c-sched" hidden>
-   <h2>상세 오늘 <span class="adm"><button class="btn small" data-add="schedule">＋</button></span></h2>
+  <section class="card full folded" data-tab="today" id="c-sched">
+   <h2>상세 시훈 오늘 <span class="hb"><span class="adm"><button class="btn small" data-add="schedule">＋</button></span><button class="btn small" data-fold="c-sched" aria-expanded="false">펼치기 ▾</button></span></h2>
    <div id="heroBox"></div>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
    <div id="schedList"></div>
   </section>
 
-  <section class="card" data-tab="today" id="c-tasks" hidden>
-   <h2>오늘의 과제 <span class="adm"><button class="btn small" data-add="tasks">＋</button></span></h2>
+  <section class="card full folded" data-tab="today" id="c-tasks">
+   <h2>시훈 오늘 과제 <span class="hb"><span class="adm"><button class="btn small" data-add="tasks">＋</button></span><button class="btn small" data-fold="c-tasks" aria-expanded="false">펼치기 ▾</button></span></h2>
    <div class="pts" id="points"></div>
    <div class="datenav"><button class="icon" id="tPrev" aria-label="전날">◀</button><b id="tLabel"></b><button class="icon" id="tNext" aria-label="다음날">▶</button><button class="btn small" id="tToday">오늘</button></div>
    <ul class="list" id="taskList"></ul>
@@ -372,8 +373,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=72";
-import {SEED_SCHEDULE} from "./seed.js?v=72";
+import {firebaseConfig} from "./config.js?v=73";
+import {SEED_SCHEDULE} from "./seed.js?v=73";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -446,9 +447,9 @@ const ADMIN_ONLY=new Set(["schedule","tasks","taskTpls","rewards"]);
 const admBtns=(col,id,name)=>`<span class="${ADMIN_ONLY.has(col)?"adm":"own"}" style="${ADMIN_ONLY.has(col)?"":"display:inline-flex;gap:4px"}"><button class="icon" data-edit="${col}" data-id="${id}" aria-label="수정">✎</button><button class="icon" data-del="${col}" data-id="${id}" data-name="${esc(name)}" aria-label="삭제">✕</button></span>`;
 
 /* ---------- admin ---------- */
-// 상세 오늘·오늘의 과제는 관리자 모드에서만 보임(sy 11/24: 우리집 기지엔 요약 오늘만). 입력·고치기는 관리자 모드에서
-function adminOnlyCards(){for(const id of ["c-sched","c-tasks"])$(id).hidden=!admin;const cur=document.querySelector('#navtabs [aria-selected="true"]');if(cur)showTab(cur.dataset.nav)}
-function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);adminOnlyCards();$("adminBtn").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
+// 상세 시훈 오늘·시훈 오늘 과제는 기본 접힘, 제목 옆 「펼치기」로 열기(sy 11/24). 펼친 상태는 이 기기 세션 동안 기억
+function setFold(id,open){const c=$(id);if(!c)return;c.classList.toggle("folded",!open);const b=c.querySelector("[data-fold]");if(b){b.textContent=open?"접기 ▴":"펼치기 ▾";b.setAttribute("aria-expanded",String(open))}try{sessionStorage.setItem("fold_"+id,open?"1":"")}catch(e){}}
+function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);$("adminBtn").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
 $("adminBtn").onclick=()=>{if(admin)return setAdmin(false);const pin=(S.settings.find(d=>d.id==="main")||{}).pin;
  if(!pin)return setAdmin(true);
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="pf"><h3>관리자 비밀번호</h3><label for="pinIn">비밀번호<input id="pinIn" type="password" inputmode="numeric" autocomplete="off"></label><div class="row"><button type="button" class="btn" id="pc">취소</button><button class="btn primary">열기</button></div></form></div>`;
@@ -929,6 +930,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
   if(left<1)return toast(`포인트가 모자라요 (남은 ${left})`);
   run(db.collection("rewards").add({title:USES[d.use],points:1,who:"시훈",use:d.use,date:today(),createdAt:Date.now()}),`${USES[d.use]} ⭐1 썼어요 (남은 ${left-1})`);return}
  if(d.shopwho){shopWho=d.shopwho;renderStore();return}
+ if(d.fold){setFold(d.fold,$(d.fold).classList.contains("folded"));return}
  if(d.buyuse){if(!db)return toast("저장소에 연결되지 않았어요");const it=FIXED_ITEMS.find(x=>x.k===d.buyuse);if(!it)return;const help=d.from==="help",hb=helpBal(),bal=help?(hb.tot["시훈"]||0)-(hb.sp["시훈"]||0):taskBal();
   if(bal<it.p)return toast("포인트가 모자라요");
   run(db.collection("rewards").add({title:it.n,points:it.p,who:"시훈",use:it.k,date:today(),createdAt:Date.now(),...(me?{by:me}:{}),...(help?{kind:"help"}:{})}),it.k==="chess"?"체스 1판 샀어요 ♟ 시훈이 대시보드에서 해요":"간식 1개 샀어요 🍪");return}
@@ -963,6 +965,7 @@ function showTab(t){if(!document.querySelector(`[data-nav="${t}"]`))t="today";
  $("main").classList.toggle("one",n<=1||t==="grow");$("main").classList.toggle("two",t==="food");try{sessionStorage.setItem("tab",t)}catch(e){}}
 $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]");if(b){showTab(b.dataset.nav);window.scrollTo({top:0})}});
 {let t0="today";try{t0=sessionStorage.getItem("tab")||"today"}catch(e){}showTab(t0)}
+for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getItem("fold_"+id)}catch(e){}setFold(id,o)}
 let sheetId=null;
 function openSheet(id){for(const x of ["c-help","c-shop"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
 $("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
@@ -1001,7 +1004,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=72;
+const VERSION=73;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
