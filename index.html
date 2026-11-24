@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><script>/*옛 주소에서 넘어올 때 이 기기 기록 받기*/(function(){try{var h=location.hash,i=h.indexOf("__mig=");if(i<0)return;var p=h.slice(i+6),j=p.indexOf("__h="),d=j<0?p:p.slice(0,j),o=j<0?"":decodeURIComponent(p.slice(j+4)),m=JSON.parse(decodeURIComponent(escape(atob(d))));for(var k in m)if(localStorage.getItem(k)===null)localStorage.setItem(k,m[k]);history.replaceState(null,"",location.pathname+location.search+o)}catch(e){}})();</script>
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
@@ -683,17 +683,19 @@ function delSched(item,src){
 
 /* ---------- tasks & points ---------- */
 const weekStart=()=>{const d=new Date();d.setDate(d.getDate()-((d.getDay()+6)%7));return ymd(d)};
+// 사이트 주소가 바뀌어도 링크가 지금 사이트를 가리키게 해요.
+const SITE=new URL("./",location.href).href,fixSite=u=>u.startsWith("https://s32120255-debug.github.io/family-dashboard/")?SITE+u.slice(51):u;
 function ensureTasks(){
  if(!db||!["tasks","taskTpls"].every(c=>loadedCols.has(c)))return;
  const t=today(),ws=weekStart(),have=new Set(S.tasks.map(x=>x.id));
- for(const c of ["taskTpls","tasks"])for(const x of S[c])if(x.link&&x.link.includes("claude.ai/artifact/1MTzG655j9K3nseEUp1kvB"))run(db.collection(c).doc(x.id).update({link:"https://s32120255-debug.github.io/family-dashboard/sihun/"}));
+ for(const c of ["taskTpls","tasks"])for(const x of S[c])if(x.link&&x.link.includes("claude.ai/artifact/1MTzG655j9K3nseEUp1kvB"))run(db.collection(c).doc(x.id).update({link:SITE+"sihun/"}));
  for(const tp of S.taskTpls){const from=tp.from&&tp.from>ws?tp.from:ws;
   for(let d=from;d<=t;d=addDays(d,1)){if(!(tp.days||[]).includes(dayKey(parse(d))))continue;const id=`${tp.id}_${d}`;
    if(!have.has(id)){have.add(id);run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,link:tp.link||null,date:d,tplId:tp.id,done:false,createdAt:Date.now()}))}}}
 }
 const ALLDAYS=["mon","tue","wed","thu","fri","sat","sun"];
 const tplKind=tp=>tp.kind||((tp.days||[]).length===7?"daily":"weekly");
-function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=(tp&&tp.link)||x.link||"";return /^(https?:|intent:|market:)/i.test(u)?u:""}
+function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=fixSite((tp&&tp.link)||x.link||"");return /^(https?:|intent:|market:)/i.test(u)?u:""}
 function taskKindLabel(x){if(!x.tplId)return"하루만";const tp=S.taskTpls.find(y=>y.id===x.tplId);return tp&&tplKind(tp)==="weekly"?(tp.days||[]).map(d=>DAYNAME[d]).join(""):tp?"매일":"반복"}
 function openTaskForm(tp){
  const kinds=tp?[["repeat","요일마다 반복"]]:[["repeat","요일마다 반복"],["once","하루만"]];
@@ -1199,7 +1201,7 @@ function resetSchedOnce(){
 async function seedIfNeeded(){
  const ref=doc(fs,"settings","main");const snap=await getDoc(ref);
  if(!(snap.exists()&&snap.data().seededStudy)){const b2=writeBatch(fs);
-  b2.set(doc(fs,"taskTpls","study-daily"),{title:"오늘의 공부",points:1,kind:"daily",days:["mon","tue","wed","thu","fri","sat","sun"],link:"https://s32120255-debug.github.io/family-dashboard/sihun/",from:today(),createdAt:Date.now()});
+  b2.set(doc(fs,"taskTpls","study-daily"),{title:"오늘의 공부",points:1,kind:"daily",days:["mon","tue","wed","thu","fri","sat","sun"],link:SITE+"sihun/",from:today(),createdAt:Date.now()});
   b2.set(ref,{seededStudy:true},{merge:true});await b2.commit();setTimeout(ensureTasks,800)}
  if(snap.exists()&&snap.data().seeded)return;
  const b=writeBatch(fs);

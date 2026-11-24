@@ -1,0 +1,53 @@
+name: 새 주소(Firebase Hosting)에 올리기
+
+# main에 올라올 때마다 https://kmsysh-fa740.web.app 에 그대로 올려요.
+# 비밀번호(키)는 저장소에 없어요. GitHub가 이 저장소라는 증명만 Google에 보내고(Workload Identity),
+# Google 쪽에서 "이 저장소만 올려도 돼요"라고 한 번 허락해 둔 것(Cloud Shell 설정)을 써요.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "android-lockscreen/**"
+      - ".github/workflows/android-lockscreen.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: hosting
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Google 허락 받기
+        id: auth
+        continue-on-error: true
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/36140585172/locations/global/workloadIdentityPools/github/providers/family-dashboard
+          service_account: hosting-deploy@kmsysh-fa740.iam.gserviceaccount.com
+          create_credentials_file: true
+      - name: 아직 Google 쪽 허락이 없으면 건너뛰기
+        if: steps.auth.outcome != 'success'
+        run: echo "::warning::Cloud Shell 설정이 아직 안 돼서 이번엔 올리지 않았어요."
+      - name: 올리기
+        if: steps.auth.outcome == 'success'
+        run: npx -y firebase-tools@latest deploy --only hosting --project kmsysh-fa740 --non-interactive
+      - name: 새 주소 열리는지 확인
+        if: steps.auth.outcome == 'success'
+        run: |
+          for p in "" sihun/ seoyun/ sihun-board/ version.json; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "https://kmsysh-fa740.web.app/$p")
+            echo "$p -> $code"; [ "$code" = 200 ] || exit 1
+          done
+          code=$(curl -s -o /dev/null -w "%{http_code}" "https://kmsysh-fa740.web.app/functions/index.js")
+          echo "functions/index.js -> $code (404여야 해요)"; [ "$code" = 404 ] || exit 1
