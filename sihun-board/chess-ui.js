@@ -31,7 +31,7 @@ export function bestMove(fen,level){
 
 const GLYPH={k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟\uFE0E"};// ♟는 안드로이드에서 그림 이모지로 바뀌지 않게 글자 모양 표시(FE0E)
 const LV={easy:"쉬움",normal:"보통",hard:"어려움"};
-export function mountChess(el,{onEnd,gate,pay}){
+export function mountChess(el,{onEnd,gate,pay,payInfo}){
  let st;try{st=JSON.parse(localStorage.getItem("sbChess")||"null")}catch(e){st=null}
  st=st||{fen:null,me:"w",level:"easy",hist:[]};
  let g=new Chess(st.fen||undefined);let sel=null,thinking=false,last=null,ended=false,paying=false;
@@ -49,8 +49,8 @@ export function mountChess(el,{onEnd,gate,pay}){
   const gt=gate?gate():null;
   if(gt&&!ended&&(gt.lock||(!inProg()&&gt.used>=gt.limit))){
    el.innerHTML=`<div style="text-align:center;padding:24px 8px;display:grid;gap:8px"><b style="font-family:var(--hand);font-size:1.6rem">${gt.lock?"잠겨 있어요":"오늘 체스는 끝!"}</b><span class="meta">${gt.lock||`오늘 ${gt.limit}판 다 했어. 내일 또 하자.`}</span></div>`;return}
-  if(pay&&!st.paid){
-   el.innerHTML=`<div style="text-align:center;padding:28px 8px;display:grid;gap:12px;justify-items:center"><b style="font-family:var(--hand);font-size:1.6rem">체스판이 잠겨 있어요</b><span class="meta">🏪 상점에서 체스 1판(⭐1)을 사면 열려요.${gt?` 오늘 ${gt.used+1}/${gt.limit}판째`:""}</span><button class="btn primary" data-ch="open" style="font-size:1.3rem;padding:10px 20px">🏪 상점에서 체스 사기</button></div>`;
+  if(pay&&!st.paid){const pi=payInfo?payInfo():{label:"열기",note:""};
+   el.innerHTML=`<div style="text-align:center;padding:28px 8px;display:grid;gap:12px;justify-items:center"><b style="font-family:var(--hand);font-size:1.6rem">체스판이 잠겨 있어요</b><span class="meta">${pi.note}${gt?` 오늘 ${gt.used+1}/${gt.limit}판째`:""}</span><button class="btn primary" data-ch="open" style="font-size:1.3rem;padding:10px 20px">${pi.label}</button></div>`;
    el.querySelector('[data-ch=open]').onclick=async()=>{if(paying)return;paying=true;const ok=await pay();paying=false;if(!ok)return;st.paid=true;save();render();cpu()};return}
   const flip=st.me==="b";const b=g.board();const legal=sel?g.moves({square:sel,verbose:true}).map(m=>m.to):[];
   let cells="";
