@@ -2,6 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>시훈이 대시보드</title>
 <link rel="manifest" href="manifest.json?v=6">
@@ -553,7 +554,7 @@ $("mailForm").onsubmit=async e=>{e.preventDefault();const v=$("mailInput").value
 window.mailReady=true;
 
 /* ---------- 학교 알림장 ---------- */
-const NOTICE_DEFAULT="https://sites.google.com/view/maean35/"; // 학교 알림장 기본 주소(설정에 넣으면 그 주소가 먼저)
+const NOTICE_DEFAULT=atob("aHR0cHM6Ly9zaXRlcy5nb29nbGUuY29tL3ZpZXcvbWFlYW4zNS8="); // 학교 알림장 기본 주소(검색에 학교 이름이 안 걸리게 감춰 둠)(설정에 넣으면 그 주소가 먼저)
 function renderNotice(){
  const u=board.noticeUrl||NOTICE_DEFAULT;
  $("noticeSlot").innerHTML=/^https?:\/\//i.test(u)?`<a class="btn small" id="noticeBtn" href="${esc(u)}" rel="noopener">알림장</a>`:"";
