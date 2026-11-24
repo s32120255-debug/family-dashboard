@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=86">
-<link rel="icon" href="icon-192.png?v=86">
-<link rel="apple-touch-icon" href="icon-192.png?v=86">
+<link rel="manifest" href="manifest.json?v=87">
+<link rel="icon" href="icon-192.png?v=87">
+<link rel="apple-touch-icon" href="icon-192.png?v=87">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -155,10 +155,11 @@ body.admin #tplBox{display:grid!important;gap:6px}
 a.missionbtn{text-decoration:none;display:inline-block}
 .missionbtn b{background:#3a2a00;color:#ffc928;border-radius:999px;padding:0 7px;margin-left:2px;font-family:var(--body);font-size:.85rem}
 .missionbtn b:empty{display:none}
+.missionbtn .hg{display:inline-flex;vertical-align:middle;margin-left:2px}.missionbtn .hg svg{width:12px!important;height:18px!important}.missionbtn .hg:empty{display:none}
 .missionbtn .mday{font-style:normal;font-family:var(--body);font-size:.75rem;font-weight:700;border:1.5px solid #3a2a00;border-radius:999px;padding:0 5px;margin-left:2px}.missionbtn .mday:empty{display:none}
 .missionbtn.mini{padding:6px 9px}
 .hmini{display:inline-flex;gap:5px;margin-left:auto;align-self:flex-start;flex-shrink:0}.brand>div{flex:1 1 0;min-width:0}.brand h1{white-space:nowrap}
-@media (max-width:380px){.brand h1{font-size:1.25rem!important}.brand svg{width:38px;height:38px}.brand .date{font-size:.8rem}.hmini .missionbtn{font-size:.8rem;padding:4px 6px}}.missionbtn.mini b{background:#e03131;color:#fff}
+@media (max-width:380px){.brand h1{font-size:1.25rem!important}.brand svg{width:38px;height:38px}.brand .date{font-size:.8rem}.hmini .missionbtn{font-size:.8rem;padding:4px 6px}.hbtns{gap:4px}.hbtns .missionbtn{font-size:.78rem;padding:4px 6px}}.missionbtn.mini b{background:#e03131;color:#fff}
 .ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
 @keyframes laddraw{to{stroke-dashoffset:0}}
 .ladin{display:grid;gap:8px}.ladin label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
@@ -210,7 +211,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .brand{display:flex;align-items:center;gap:10px}
 .brand svg{width:52px;height:52px;flex:none}
 .brand h1{font-family:var(--display);font-weight:400;font-size:1.9rem;margin:0;line-height:1;white-space:nowrap}
-@media (max-width:420px){.brand{flex-wrap:wrap}.hbtns{flex-basis:100%;flex-wrap:wrap}.brand h1{font-size:1.55rem}.brand svg{width:44px;height:44px}.missionbtn{font-size:.85rem;padding:4px 8px}.missionbtn.mini{padding:4px 7px}.hbtns{gap:5px}}
+@media (max-width:420px){.brand{flex-wrap:wrap}.hbtns{flex-basis:100%;flex-wrap:wrap}.brand h1{font-size:1.55rem}.brand svg{width:44px;height:44px}.missionbtn{font-size:.8rem;padding:4px 7px}.missionbtn.mini{padding:4px 7px}.hbtns{gap:4px}}
 .date{font-family:var(--display);font-size:1.1rem;line-height:1.2;color:var(--muted)}
 .clock{font-family:var(--display);font-size:2.2rem;font-variant-numeric:tabular-nums;line-height:1}
 .navtabs{position:sticky;top:0;z-index:10;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;background:var(--bg);padding:8px 0 10px;margin:-4px 0 0;border-bottom:2px dashed var(--line)}
@@ -244,11 +245,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 86</p></div></div>
+<p style="font-size:.75rem">버전 87</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hmini"><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈기지 열기">🥷 시훈기지</a><button class="missionbtn mini" id="ladderBtn" aria-label="사다리타기" title="사다리타기">🪜<b id="ladderN"></b></button></span><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="missionBtn" aria-label="해결할 미션 열기">⚡ 미션 <i class="mday" id="missionD" title="매일 미션 남은 것"></i><b id="missionN" title="특별 미션 남은 것"></b></button><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button></span></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hmini"><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈기지 열기">🥷 시훈기지</a><button class="missionbtn mini" id="ladderBtn" aria-label="사다리타기" title="사다리타기">🪜<b id="ladderN"></b></button></span><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="dailyBtn" aria-label="매일 살림 열기">🧹 살림 <i class="hg" id="dailyHG"></i></button><button class="missionbtn" id="missionBtn" aria-label="특별 미션 열기">⚡ 미션 <b id="missionN"></b></button><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button></span></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -312,8 +313,8 @@ a.missionbtn{text-decoration:none;display:inline-block}
   </section>
 
   <section class="card full" data-tab="food">
-   <h2>식단표 <small>칸을 눌러 입력</small></h2>
-   <div class="tabs"><button type="button" data-mtab="plan" aria-pressed="true">이번 주 식단표</button><button type="button" data-mtab="ate" aria-pressed="false">먹은 메뉴 기록</button></div>
+   <h2>식단표 <small id="mealSub"></small></h2>
+   <div class="tabs"><button type="button" data-mtab="plan" aria-pressed="true">식단표</button><button type="button" data-mtab="ate" aria-pressed="false">먹은 메뉴 기록</button></div>
    <div class="meals" id="meals"></div>
    <div id="atePane" hidden><div class="datenav" style="margin-bottom:6px"><button class="icon" id="atePrev" aria-label="이전 주">◀</button><b id="ateLabel"></b><button class="icon" id="ateNext" aria-label="다음 주">▶</button><button class="btn small" id="ateCopy">오늘 식단표대로 먹음</button></div><div class="meals" id="ateTable"></div></div>
   </section>
@@ -379,7 +380,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <div id="ladderBox"></div>
  </section>
  <section class="card sheet" id="c-help" role="dialog" aria-label="해결할 미션" hidden>
-   <h2>해결할 미션 <small id="helpCount"></small><span style="display:inline-flex;gap:6px"><button class="btn small" data-add="helpmom">＋</button><button class="btn small" id="sheetClose" aria-label="닫기">닫기</button></span></h2>
+   <h2><span id="helpTitle">해결할 미션</span> <small id="helpCount"></small><span style="display:inline-flex;gap:6px"><button class="btn small" data-add="helpmom">＋</button><button class="btn small" id="sheetClose" aria-label="닫기">닫기</button></span></h2>
    <ul class="list" id="helpList"></ul>
    <p class="sub2">가족 도움 포인트 (과제 포인트와 따로)</p>
    <div class="pts" id="helpPts"></div>
@@ -394,8 +395,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=86";
-import {SEED_SCHEDULE} from "./seed.js?v=86";
+import {firebaseConfig} from "./config.js?v=87";
+import {SEED_SCHEDULE} from "./seed.js?v=87";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -789,18 +790,22 @@ function helpBal(){const ws=weekStart(),tot={},wk={},sp={};for(const g of [...S.
  for(const r of S.rewards)if(r.kind==="help"&&r.who)sp[r.who]=(sp[r.who]||0)+(Number(r.points)||0);return{tot,wk,sp}}
 const helpCard=(p,b,main)=>`<div class="pt ${main?"main":""}"><small>${p} 가족 도움 포인트</small><b>⭐ ${(b.tot[p]||0)-(b.sp[p]||0)}</b><small>이번 주 ${b.wk[p]||0}${b.sp[p]?` · 쓴 것 ${b.sp[p]}`:""}</small></div>`;
 // 미션 종류: 매일(once 없음, 매일 체크가 풀림) / 한 번(once:"1", 끝낸 날이 지나면 목록에서 사라짐)
-function renderHelp(){const t=today();const vis=S.helpmom.filter(x=>!(x.once&&x.doneDate&&x.doneDate<t));const n=vis.filter(x=>x.doneDate===t).length;
+// 맨 위 버튼 둘(sy 11/24): 「🧹 살림」= 매일 미션(모래시계로 남은 정도), 「⚡ 미션」= 특별 미션(남은 개수). 누른 버튼에 따라 창에 그 종류만 보임
+let helpMode="once";
+function hourglass(left,total){const f=total?left/total:0,top=Math.round(14*f),bot=14-top;
+ return`<svg viewBox="0 0 20 32" width="14" height="22" aria-hidden="true"><path d="M3 2h14M3 30h14M5 2c0 8 10 8 10 14S5 22 5 30M15 2c0 8-10 8-10 14s10 6 10 14" fill="none" stroke="#3a2a00" stroke-width="2" stroke-linecap="round"/>${top?`<path d="M${10-top*0.35} ${15-top} L${10+top*0.35} ${15-top} L10 15.5Z" fill="#e8590c"/>`:""}${bot?`<path d="M${10-bot*0.45} 29 L${10+bot*0.45} 29 L10 ${29-bot}Z" fill="#e8590c"/>`:""}</svg>`}
+function renderHelp(){const t=today();const all=S.helpmom.filter(x=>!(x.once&&x.doneDate&&x.doneDate<t));
+ const dailyAll=all.filter(x=>!x.once),dl=dailyAll.filter(x=>x.doneDate!==t).length;
+ $("dailyHG").innerHTML=dailyAll.length?hourglass(dl,dailyAll.length):"";$("dailyBtn").title=dailyAll.length?`매일 살림 ${dailyAll.length-dl}/${dailyAll.length} 했어요`:"";
+ const left=all.filter(x=>x.once&&x.doneDate!==t).length;$("missionN").textContent=left?String(left):"";
+ const vis=all.filter(x=>helpMode==="daily"?!x.once:!!x.once),n=vis.filter(x=>x.doneDate===t).length;
+ $("helpTitle").textContent=helpMode==="daily"?"🧹 매일 살림":"⚡ 특별 미션";
  $("helpCount").textContent=vis.length?`오늘 ${n}/${vis.length}`:"";
- // 맨 위 ⚡ 미션: 매일 남은 것(테두리 숫자)과 특별 남은 것(진한 숫자)을 따로 표시(sy 11/24)
- const left=vis.filter(x=>x.once&&x.doneDate!==t).length;$("missionN").textContent=left?String(left):"";
- const dl=vis.filter(x=>!x.once&&x.doneDate!==t).length;$("missionD").textContent=dl?String(dl):"";
  const hb=helpBal();$("helpPts").innerHTML=PEOPLE.map(p=>helpCard(p,hb,p===me)).join("");
  const li=x=>{const on=x.doneDate===t;
   return`<li class="item ${on?"done":""}"><button class="check ${on?"on":""}" data-help="${x.id}" aria-label="${on?"취소":"했어요"}">${on?"✓":""}</button><span class="t">${esc(x.title)}${on&&x.doneBy?` <span class="meta">${esc(x.doneBy)}</span>`:""}</span><span class="pill ok">⭐${Number(x.points)||1}</span>${admBtns("helpmom",x.id,x.title)}</li>`};
- const srt=l=>l.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)),daily=srt(vis.filter(x=>!x.once)),once=srt(vis.filter(x=>x.once));
- const head=(txt,sub)=>`<li class="helphead">${txt} <span class="meta">${sub}</span></li>`;
- $("helpList").innerHTML=vis.length?(daily.length?head("🔁 매일","매일 다시 떠요")+daily.map(li).join(""):"")+(once.length?head("✨ 특별","한 번만, 끝내면 다음 날 사라져요")+once.map(li).join(""):"")
-  :`<li class="empty">미션이 아직 없어요.</li>`}
+ const srt=l=>l.slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ $("helpList").innerHTML=vis.length?srt(vis).map(li).join(""):`<li class="empty">${helpMode==="daily"?"매일 할 살림이 아직 없어요. ＋로 적어요.":"특별 미션이 없어요. ＋로 적어요."}</li>`}
 
 // 포인트로 받고 싶은 보상: wishes{title,who,points(관리자),got(받은 날),createdAt}
 // 받고 싶은 보상 쓰기 = 신청(wishes.req{src,at,by}) → 해 줄 사람(to)이 자기 폰에서 승인하면 포인트 빠지고 got. 거절·신청 취소 가능 (sy 11/24)
@@ -951,11 +956,13 @@ function renderAte(){const t=today();const end=ateEnd||t;const by=Object.fromEnt
  for(let i=0;i<7;i++){const s0=addDays(end,-i);const d=parse(s0);const r=by[s0]||{};
   h+=`<tr class="${s0===t?"today":""}"><th>${DAYNAME[dayKey(d)]} ${d.getMonth()+1}/${d.getDate()}</th>${["breakfast","lunch","dinner","snack"].map(k=>`<td class="edit" data-ate="${s0}">${esc(r[k]||"")}</td>`).join("")}</tr>`}
  $("ateTable").innerHTML=h+`</tbody></table>`}
-function renderMeals(){renderAte();const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));const t=today();
- const by=Object.fromEntries(S.meals.map(x=>[x.id,x]));
+// 식단표(sy 11/24): 평소엔 오늘·내일만, 관리자 모드에선 이번 주 전체(+내일이 다음 주면 그날도) 보이고 칸을 눌러 입력
+function renderMeals(){renderAte();const now=new Date();const mon=new Date(now);mon.setDate(now.getDate()-((now.getDay()+6)%7));const t=today(),tm=addDays(t,1);
+ const by=Object.fromEntries(S.meals.map(x=>[x.id,x]));$("mealSub").textContent=admin?"칸을 눌러 입력":"오늘 · 내일";
+ let days=[];if(admin){for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);days.push(ymd(d))}if(!days.includes(tm))days.push(tm)}else days=[t,tm];
  let h=`<table><thead><tr><th style="width:4.5em"></th><th>아침</th><th>점심</th><th>저녁</th></tr></thead><tbody>`;
- for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);const s=ymd(d);const r=by[s]||{};
-  h+=`<tr class="${s===t?"today":""}"><th>${DAYS[i][1]} ${d.getMonth()+1}/${d.getDate()}</th>${["breakfast","lunch","dinner"].map(k=>`<td class="edit" data-meal="${s}">${esc(r[k]||"")}</td>`).join("")}</tr>`}
+ for(const s of days){const d=parse(s),r=by[s]||{},lab=s===t?"오늘":s===tm?"내일":DAYNAME[dayKey(d)];
+  h+=`<tr class="${s===t?"today":""}"><th>${lab} ${d.getMonth()+1}/${d.getDate()}</th>${["breakfast","lunch","dinner"].map(k=>`<td class="${admin?"edit":""}" ${admin?`data-meal="${s}"`:""}>${esc(r[k]||"")}</td>`).join("")}</tr>`}
  $("meals").innerHTML=h+`</tbody></table>`}
 
 function renderShop(){const l=S.shopping.slice().sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(a.createdAt||0)-(b.createdAt||0));
@@ -998,7 +1005,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.edit==="tasks"||d.edit==="rewards"){const x=S[d.edit].find(y=>y.id===d.id);if(x)openForm(d.edit,x,null,null,data=>{if(!data.title){toast("빈 칸을 채워 주세요");return false}run(db.collection(d.edit).doc(x.id).update(data),"저장했어요")});return}
  if(d.add==="helpmom"||d.edit==="helpmom"){const doc=d.edit?S.helpmom.find(x=>x.id===d.id):null;
   const def={title:"해결할 미션",f:[["title","미션","text"],["once","종류","select",[["","매일 (매일 다시 떠요)"],["1","특별 (한 번, 끝내면 사라져요)"]]],...(admin?[["points","포인트 (관리자만 바꿔요)","number"]]:[])]};
-  openForm("helpmom",doc,{points:1},def,data=>{if(!data.title){toast("미션을 적어 주세요");return false}if(!admin)delete data.points;else data.points=data.points||1;
+  openForm("helpmom",doc,{points:1,once:helpMode==="daily"?"":"1"},def,data=>{if(!data.title){toast("미션을 적어 주세요");return false}if(!admin)delete data.points;else data.points=data.points||1;
    if(doc)run(db.collection("helpmom").doc(doc.id).update(data),"저장했어요");else run(db.collection("helpmom").add({points:1,...data,createdAt:Date.now()}),"추가했어요")});return}
  if(d.add==="chores"||d.edit==="chores"){const doc=d.edit?S.chores.find(x=>x.id===d.id):null;
   const def={title:"살림",f:[["title","할 일","text"],...(admin?[["points","포인트 (관리자만 바꿔요)","number"]]:[])]};
@@ -1047,7 +1054,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.toshop){const x=S.supplies.find(y=>y.id===d.toshop);run(db.collection("shopping").add({name:x.name,done:false,from:"소모품",createdAt:Date.now()}),"장보기에 넣었어요");return}
  if(d.mtab){const ate=d.mtab==="ate";$("meals").hidden=ate;$("atePane").hidden=!ate;document.querySelectorAll("[data-mtab]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mtab===d.mtab)));return}
  if(d.ate){const doc=S.ate.find(x=>x.id===d.ate);const pd=parse(d.ate);openForm("ate",doc?{...doc,id:undefined}:null,{_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`},null,data=>{run(db.collection("ate").doc(d.ate).set(data),"기록했어요")});return}
- if(d.meal){const doc=S.meals.find(x=>x.id===d.meal);const pd=parse(d.meal);openForm("meals",doc?{...doc,id:undefined}:null,{_date:d.meal,_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`});return}
+ if(d.meal){if(!admin)return toast("식단표는 관리자 모드에서 입력해요");const doc=S.meals.find(x=>x.id===d.meal);const pd=parse(d.meal);openForm("meals",doc?{...doc,id:undefined}:null,{_date:d.meal,_label:`${pd.getMonth()+1}/${pd.getDate()} ${DAYNAME[dayKey(pd)]}`});return}
 });
 $("prevM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()-1);renderCal()};
 $("nextM").onclick=()=>{calMonth.setMonth(calMonth.getMonth()+1);renderCal()};
@@ -1065,7 +1072,7 @@ if(location.hash==="#shop"){openSheet("c-shop");history.replaceState(null,"",loc
 for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getItem("fold_"+id)}catch(e){}setFold(id,o)}
 let sheetId=null;
 function openSheet(id){for(const x of ["c-help","c-shop","c-buy","c-ladder"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
-$("missionBtn").onclick=()=>openSheet("c-help");$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
+$("missionBtn").onclick=()=>{helpMode="once";renderHelp();openSheet("c-help")};$("dailyBtn").onclick=()=>{helpMode="daily";renderHelp();openSheet("c-help")};$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>openSheet(null));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheetId&&!document.querySelector(".overlay"))openSheet(null)});
 $("helpSpend").onclick=()=>{if(!db)return toast("저장소에 연결되지 않았어요");const hb=helpBal();
@@ -1101,7 +1108,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=86;
+const VERSION=87;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
