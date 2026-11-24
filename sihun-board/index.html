@@ -250,7 +250,8 @@ body.noscroll{overflow:hidden}
    <h2><span class="ttl">AI랑 이야기</span><small id="playLeft"></small></h2>
    <p class="meta" id="playNote" style="margin:0"></p>
    <div class="list" id="playList" style="max-height:360px;overflow:auto"></div>
-   <form id="playForm" class="row"><input type="text" id="playInput" placeholder="예: 스무고개 하자 / 지동설이 뭐야?" maxlength="100" style="flex:1"><button class="btn primary">보내기</button></form>
+   <div id="playPic" class="row" style="gap:8px" hidden><img id="playPicImg" alt="보낼 사진" style="max-height:80px;border-radius:10px"><button class="btn small" type="button" id="playPicX">사진 빼기</button></div>
+   <form id="playForm" class="row" style="gap:6px"><label class="btn" id="playCam" style="cursor:pointer" aria-label="사진 올리기">📷<input type="file" id="playFile" accept="image/*" hidden></label><input type="text" id="playInput" placeholder="예: 스무고개 하자 / 지동설이 뭐야?" maxlength="100" style="flex:1;min-width:0"><button class="btn primary">보내기</button></form>
    <div><button class="btn small" id="playNew" type="button">새 이야기 시작</button></div>
   </section>
 
@@ -740,7 +741,7 @@ function renderPlay(){
  $("playLeft").textContent=`오늘 ${left}번 남음`;
  $("playNote").textContent=board.aiOn?"끝말잇기 같은 놀이도 하고, 궁금한 것도 물어봐요. 엄마도 볼 수 있어요.":"AI는 엄마가 켜면 이야기할 수 있어요.";
  const lock=funLock();
- $("playInput").disabled=left===0||!board.aiOn||!!lock;$("playForm").querySelector("button").disabled=$("playInput").disabled;
+ $("playInput").disabled=left===0||!board.aiOn||!!lock;$("playForm").querySelector("button").disabled=$("playInput").disabled;$("playFile").disabled=$("playInput").disabled;$("playCam").style.opacity=$("playInput").disabled?.5:1;
  $("playInput").placeholder=lock?"과제를 다 하면 열려요":left===0?"오늘 이야기는 끝! 내일 또 하자":"예: 스무고개 하자 / 지동설이 뭐야?";
  if(lock)$("playNote").textContent=lock;
  const sid=curSid();const l=sid?S.play.filter(m=>m.sid===sid).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0)):[];
@@ -749,7 +750,7 @@ function renderPlay(){
  // 25번째(하루 한도-5) 대답 뒤에 "5번 남았어", 한도에 닿으면 "내일 또 하자"
  const lim=playLimit();const todayUser=S.play.filter(m=>m.date===t&&m.role==="user").sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const rank=new Map(todayUser.map((m,i)=>[m.createdAt,i+1]));let lastN=0;
- box.innerHTML=l.map(m=>{let x=`<div class="bub ${m.role==="user"?"me":"ai"}">${esc(m.text)}</div>`;
+ box.innerHTML=l.map(m=>{let x=`<div class="bub ${m.role==="user"?"me":"ai"}">${m.img&&/^data:image\/jpeg;base64,/.test(m.img)?`<img src="${m.img}" alt="보낸 사진" style="display:block;max-width:100%;max-height:200px;border-radius:10px;margin-bottom:4px">`:""}${esc(m.text)}</div>`;
   if(m.role==="user"&&m.date===t)lastN=rank.get(m.createdAt)||0;
   else if(m.role!=="user"&&lastN){if(lastN===lim-5)x+=`<div class="bub ai"><b>이제 내가 해 줄 수 있는 대답은 5번 남았어.</b></div>`;if(lastN===lim)x+=`<div class="bub ai"><b>오늘은 여기까지! 내일 또 하자.</b></div>`;lastN=0}
   return x}).join("")+(waiting?`<div class="bub ai meta">생각 중이에요…</div>`:"")||`<p class="empty">"끝말잇기 하자"처럼 보내 보세요.</p>`;
@@ -906,15 +907,21 @@ if($("askForm"))$("askForm").onsubmit=async e=>{e.preventDefault();const v=$("as
  const t=today();if(S.ask.filter(x=>x.date===t).length>=askLimit())return toast("오늘 질문은 다 썼어요");
  if(await write("ask",null,{q:v,a:null,date:t},"추가",v.slice(0,60))){$("askInput").value="";toast("질문을 저장했어요")}};
 
-$("playForm").onsubmit=async e=>{e.preventDefault();const v=$("playInput").value.trim();if(!v)return;
+// 📷 사진 질문(엄마 11/24): 긴 쪽 800px JPEG로 줄여 play 문서 img(data URL)에 같이 저장 → playClaude가 사진을 보고 대답. 하루 이야기 횟수 1번으로 셈(포인트 없음)
+let playImg=null;
+function shrinkImg(file){return new Promise((ok,no)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const k=Math.min(1,800/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);let q=.7,d=c.toDataURL("image/jpeg",q);while(d.length>300000&&q>.3){q-=.1;d=c.toDataURL("image/jpeg",q)}ok(d)};im.onerror=()=>{URL.revokeObjectURL(u);no()};im.src=u})}
+const setPlayImg=d=>{playImg=d;$("playPic").hidden=!d;$("playPicImg").src=d||"";if(d)$("playInput").placeholder="사진에 대해 물어봐! 예: 이건 무슨 벌레야?"};
+$("playFile").onchange=async()=>{const f=$("playFile").files[0];$("playFile").value="";if(!f)return;try{setPlayImg(await shrinkImg(f))}catch(e){toast("사진을 열지 못했어요")}};
+$("playPicX").onclick=()=>{setPlayImg(null);renderPlay()};
+$("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.trim();if(!v&&!playImg)return;if(!v)v="이 사진 뭐야?";
  if(/끝\s*말\s*잇\s*기|끝말/.test(v)){toast("끝말잇기는 아래 「끝말잇기」 칸에서 해요!");const c=$("wcBox");if(c)c.scrollIntoView({behavior:"smooth",block:"center"});return}if(funLock())return toast(funLock());
  const t=today();if(S.play.filter(m=>m.date===t&&m.role==="user").length>=playLimit())return toast("오늘 이야기는 끝! 내일 또 하자");
  const sid=curSid()||("p"+Date.now());playSid=sid;
- if(await write("play",null,{sid,role:"user",text:v,date:t},"추가",v.slice(0,60))){$("playInput").value=""}};
+ if(await write("play",null,{sid,role:"user",text:v,date:t,...(playImg?{img:playImg}:{})},"추가",(playImg?"📷 ":"")+v.slice(0,60))){$("playInput").value="";setPlayImg(null);renderPlay()}};
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=61;
+const VERSION=62;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -959,7 +966,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=61").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=62").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});

@@ -103,6 +103,7 @@ const PLAY_SYSTEM = `너는 초등학교 3학년 남자아이(시훈)의 이야�
 - 궁금한 것(예: 지동설이 뭐야?): 초등학교 3학년이 알아들을 쉬운 말로 2~4문장 설명해. 어려운 낱말은 풀어서 말하고, 아는 것과 맞는 예를 하나 들어. 확실하지 않으면 모른다고 하고 엄마나 선생님께 여쭤보자고 해. 설명 끝에 스스로 생각해 볼 짧은 질문을 하나 붙여.
 - 숙제 문제의 답을 그대로 달라고 하면 답은 바로 주지 말고, 풀 수 있게 힌트와 되묻는 질문을 줘.
 - 놀이 중에 궁금한 걸 물으면 설명해 주고, 놀이를 계속할지 물어봐. 무엇을 할지 정해지지 않았으면 놀이할지 궁금한 걸 물어볼지 짧게 물어봐.
+- 시훈이가 사진을 보내면 사진에 보이는 것을 바탕으로 쉬운 말로 2~4문장 대답해. 잘 안 보이거나 확실하지 않으면 그렇다고 말해. 숙제 사진이면 답은 주지 말고 힌트와 되묻는 질문을 줘. 사진 속 사람 얼굴로 누구인지 맞히지는 마.
 - 아이에게 맞지 않는 내용이나 사람·몸·마음이 걱정되는 말이면 "그건 엄마랑 같이 이야기해 보자."라고만 말해.`;
 
 exports.playClaude = onDocumentCreated(
@@ -123,12 +124,16 @@ exports.playClaude = onDocumentCreated(
     const hist = (await col.where("sid", "==", msg.sid).get()).docs.map((d) => d.data())
       .filter((m) => (m.createdAt || 0) <= (msg.createdAt || 0) && m.by !== "limit" && m.by !== "error")
       .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).slice(-40);
+    // 📷 사진 질문: 시훈이 메시지에 img(data:image/jpeg, 800px로 줄인 것)가 있으면 그림으로 같이 보냄. 토큰 아끼려 최근 사진 2장까지만
+    const withImg = new Set(hist.filter((m) => m.role === "user" && m.img).slice(-2));
     const messages = [];
     for (const m of hist) {
       const role = m.role === "user" ? "user" : "assistant";
       const text = String(m.text || "").slice(0, 500);
-      if (messages.length && messages[messages.length - 1].role === role) messages[messages.length - 1].content += "\n" + text;
-      else messages.push({ role, content: text });
+      const img = withImg.has(m) ? imgBlock(m.img) : null;
+      const blocks = img ? [img, { type: "text", text }] : [{ type: "text", text }];
+      if (messages.length && messages[messages.length - 1].role === role) messages[messages.length - 1].content.push(...blocks);
+      else messages.push({ role, content: blocks });
     }
     while (messages.length && messages[0].role !== "user") messages.shift();
     if (!messages.length) return;
