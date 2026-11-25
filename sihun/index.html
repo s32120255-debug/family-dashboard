@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><script>/*옛 주소에서 넘어올 때 이 기기 기록 받기*/(function(){try{var h=location.hash,i=h.indexOf("__mig=");if(i<0)return;var p=h.slice(i+6),j=p.indexOf("__h="),d=j<0?p:p.slice(0,j),o=j<0?"":decodeURIComponent(p.slice(j+4)),m=JSON.parse(decodeURIComponent(escape(atob(d))));for(var k in m)if(localStorage.getItem(k)===null)localStorage.setItem(k,m[k]);history.replaceState(null,"",location.pathname+location.search+o)}catch(e){}})();</script><meta name="robots" content="noindex,nofollow,noarchive,nosnippet"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.json?v=2">
-<link rel="icon" href="icons/icon-192.png?v=2">
-<link rel="apple-touch-icon" href="icons/icon-192.png?v=2">
+<link rel="icon" href="icons/icon-192.png?v=3">
+<link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
 <meta name="theme-color" content="#2f6b4f">
 <script>
 /* ✍️ S펜 칸 크기(엄마 11/24): 줄 간격·모눈·원고지 칸을 모두 13mm로. 기기마다 화면 1mm가 달라서 관리자 모드 「📏 S펜 칸 크기 맞추기」로 자로 재서 맞춤(이 기기에 저장) */
@@ -131,7 +131,7 @@ function gateBox(html){
 const btn = 'font-size:18px;padding:14px 22px;border-radius:14px;border:0;background:#2f6b4f;color:#fff;font-weight:700;cursor:pointer';
 
 function showLogin(err){
-  const el = gateBox('<img src="icons/icon-192.png?v=2" style="width:88px;height:88px;border-radius:20px"><h2 style="margin:14px 0 6px">시훈 공부방</h2>'
+  const el = gateBox('<img src="icons/icon-192.png?v=3" style="width:88px;height:88px;border-radius:20px"><h2 style="margin:14px 0 6px">시훈 공부방</h2>'
     + '<p style="color:#5b6b62;margin:0 0 18px">가족 구글 계정으로 들어와요</p>'
     + '<button id="sihunLogin" style="' + btn + '">구글로 로그인</button>'
     + (err ? '<p style="color:#c0392b;margin-top:14px">' + err + '</p>' : '')
@@ -1020,8 +1020,14 @@ function autoWatch(root){let tok=0,last=0,back=false;
     b.style.position='relative';b.style.overflow='hidden';const bar=document.createElement('i');bar.className='autobar';
     bar.style.cssText='position:absolute;left:0;bottom:0;height:5px;width:0;background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.08);transition:width '+ms+'ms linear;pointer-events:none';
     b.appendChild(bar);requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width='100%'}));
+    // 🐱 닌자 고양이(엄마 11/25 OK): 맞히면 별·정답, 틀리면 돋보기 — 오른쪽 아래에 잠깐
+    root.querySelectorAll('.catpop').forEach(i=>i.remove());const cat=document.createElement('img');cat.className='catpop';cat.alt='';
+    cat.src='icons/cat-'+(b.dataset.auto==='ok'?'ok':'wrong')+'.svg?v=1';
+    cat.style.cssText='position:fixed;right:16px;bottom:96px;width:118px;height:118px;border-radius:26px;box-shadow:0 6px 18px rgba(0,0,0,.25);z-index:50;pointer-events:none;transform:scale(.4);opacity:0;transition:transform .25s ease-out,opacity .25s';
+    root.appendChild(cat);requestAnimationFrame(()=>requestAnimationFrame(()=>{cat.style.transform='scale(1)';cat.style.opacity='1'}));
+    setTimeout(()=>cat.remove(),ms+200);
     setTimeout(()=>{if(my===tok&&b.isConnected&&!b.disabled)b.click()},ms)};
-  root.addEventListener('pointerdown',e=>{tok++;last=Date.now();const t=e.target&&e.target.closest&&e.target.closest('button');back=!!t&&/◀|⏮|이전|처음/.test(t.textContent||'');root.querySelectorAll('.autobar').forEach(i=>i.remove())},true);
+  root.addEventListener('pointerdown',e=>{tok++;last=Date.now();const t=e.target&&e.target.closest&&e.target.closest('button');back=!!t&&/◀|⏮|이전|처음/.test(t.textContent||'');root.querySelectorAll('.autobar').forEach(i=>i.remove());root.querySelectorAll('.catpop').forEach(i=>setTimeout(()=>i.remove(),900))},true);
   new MutationObserver(()=>{root.querySelectorAll('[data-auto]').forEach(arm)}).observe(root,{childList:true,subtree:true})}
 function mountApp(hostId,tplId){
   const host=document.getElementById(hostId);const sr=host.attachShadow({mode:'open'});autoWatch(sr);
@@ -7327,7 +7333,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
         :(M32()?`<button class="go math" data-h="open" data-app="m32">▶ 3-2 이어서 하기</button><button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>`:`<button class="go math" data-h="plan">${st.n?'▶ 큰 수 이어서 하기':'▶ 시작'}</button><button class="go light" data-h="open" data-app="m32">3-2 복습 열기</button>`)+`<button class="go light" data-h="open" data-app="concept">개념 확인 열기</button>`;
       body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.sub}</p>${status(s.k)}${btn}</div>`}
-    $h('#hub').innerHTML=`<div class="hh"><h1>오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
+    $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
       <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
@@ -7451,7 +7457,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       sum=`<div class="cmp"><div>개념<b>${Math.round(T.concept/60)}분</b></div><div>문제<b>${Math.round(T.problem/60)}분</b></div></div><p class="q">오늘 ${st.n}문제 · 힌트 없이 한 번에 ${st.ok}문제</p>`}
     WHYSEL=(r.why||[]).slice();
     $h('#hub').innerHTML=`<div class="hh"><h1>${s.ic} ${s.name} 끝!</h1><div class="d">${dateLabel()}</div></div>
-      <div class="panel">${sum}
+      <div class="panel"><img src="icons/cat-done.svg?v=1" alt="" style="width:150px;height:150px;border-radius:28px;display:block;margin:0 auto 10px">${sum}
       <h2 style="font-size:22px;margin-top:14px">막힌 데가 있었다면, 왜였을까?</h2><p class="note" style="margin-top:0">여러 개 골라도 돼요.</p>
       <div class="chips">${WHY.map(([id,t])=>`<button data-h="why" data-w="${id}" class="${WHYSEL.includes(id)?'sel':''}">${t}</button>`).join('')}</div>
       <button class="go" data-h="whydone">저장하고 다음으로</button>
