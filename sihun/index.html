@@ -550,7 +550,7 @@ ul.cond{margin:8px 0;padding-left:22px;font-size:20px}ul.cond li{margin:3px 0}
 table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#fff}table.dt th,table.dt td{border:1.5px solid var(--ink);padding:5px 10px;text-align:center;min-width:54px}table.dt th{background:#f5f1e6;font-weight:600}
 .disp{min-height:66px;background:#fff;border:2px solid var(--ink);border-radius:14px;padding:8px 12px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px 0 8px;font-variant-numeric:tabular-nums}
 .fld{display:inline-flex;align-items:center;justify-content:center;min-width:70px;height:48px;border:2px dashed #c9c2b0;border-radius:10px;font-size:27px;font-weight:600;padding:0 8px;background:#fdfcf8;cursor:pointer}
-.fld.on{border:2.5px solid var(--accent);background:#fff}.fld.big{height:60px;min-width:60px}
+.fld.on{border:2.5px solid var(--accent);background:#fff}.fld.wbig{height:60px;min-width:60px;font-size:30px}.fld.wopt{min-width:50px;border-color:#e2dccd}
 .ffr{display:inline-flex;flex-direction:column;align-items:center;gap:4px}.ffr .fld{height:42px;min-width:64px;font-size:24px}.fbar{width:84px;height:3px;background:var(--ink);border-radius:2px}
 .un{font-size:20px;color:var(--soft)}
 .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:420px;margin:0 auto}
@@ -3531,10 +3531,13 @@ function fmOptions(p){ const sk=SKILLS[p.sk]; const others=Object.keys(sk.moves)
 function check(p,inp){
   const bugOf=k=>p.bugs.find(b=>b.v===k);
   if(p.type==='num'){ if(inp===''||inp==null||isNaN(inp)) return {empty:true,msg:'답을 써 주세요.'}; const v=Number(inp); if(v===p.answer) return {ok:true}; const b=bugOf(String(v)); return b?{ok:false,bug:b}:{ok:false}; }
-  if(p.type==='frac'){ const w=Number(inp.w||0), n=Number(inp.n), d=Number(inp.d); if(!inp.n||!inp.d) return {empty:true,msg:'분자와 분모를 모두 써 주세요.'}; if(d===0) return {empty:true,msg:'분모에 0은 쓸 수 없어요.'};
+  if(p.type==='frac'){ const hasF=!!(inp.n||inp.d); if(!inp.w&&!hasF) return {empty:true,msg:'답을 써 주세요.'};
+    if(hasF&&(!inp.n||!inp.d)) return {empty:true,msg:'분자와 분모를 모두 써 주세요. (자연수만 쓰려면 분자·분모 칸은 비워요)'};
+    const w=Number(inp.w||0), n=hasF?Number(inp.n):0, d=hasF?Number(inp.d):1; if(d===0) return {empty:true,msg:'분모에 0은 쓸 수 없어요.'};
     const A=p.answer; if(w===(A.w||0)&&n===A.n&&d===A.d) return {ok:true};
     if(p.form==='mixed'&&w>0&&n>=d) return {normalize:true,msg:'대분수의 분수 부분은 진분수여야 해요 (분자 &lt; 분모). 다시 써 볼까?'};
     const same=(w*d+n)*A.d===fval(A)*d; const b=bugOf(`${w}|${n}|${d}`); if(b) return {ok:false,bug:b};
+    if(same&&!hasF) return {normalize:true,msg:'크기는 맞아요! 문제는 <b>분수</b>로 쓰라고 해요.'};
     if(same&&d===A.d) return {normalize:true,msg:p.form==='mixed'?'크기는 맞아요! 문제는 <b>대분수</b>로 쓰라고 해요.':'크기는 맞아요! 문제는 <b>가분수(또는 진분수)</b> 모양으로 쓰라고 해요.'};
     if(same) return {ok:false,bug:{tag:'den-diff',msg:'크기는 같지만, 문제에서 정한 묶음(분모)이 아니에요.'}};
     return {ok:false}; }
@@ -3627,8 +3630,8 @@ async function loadDB(){
   if(!DBH){ clearTimeout(timer); DB_STATE='offline'; refreshTop(); return; }
   try{ const snap=await DBH.doc('m32/progress').get(); if(snap.exists) PROG=mergeProg(snap.data());
     const qs=await DBH.collection('m32att').limit(1000).get(); SAVED_ATT=[]; qs.docs.forEach(d=>{ const x=d.data(); (x.items||[]).forEach(it=>SAVED_ATT.push(it)); }); SAVED_ATT.sort((a,b)=>(a.ts||'').localeCompare(b.ts||''));
-    try{ const ts=await DBH.doc('m32/teach').get(); if(ts.exists) teachMerge(ts.data()); }catch(e){}
-    DB_STATE='ok'; m32Restore(); }catch(e){ DB_STATE='error'; }
+    try{ const ts=await DBH.doc('m32/teach').get(); if(ts.exists) teachMerge(ts.data()); const T=teachP(); if(!T.fix1125&&T.days['2026-11-25']&&!T.days['2026-11-25'].reset){ T.fix1125=1; teachReset('2026-11-25'); } }catch(e){}
+    DB_STATE='ok'; m32Restore(); if(TEACH_DIRTY) autoSave(); }catch(e){ DB_STATE='error'; }
   clearTimeout(timer); if(CUR==='home') home(); else refreshTop(); }
 let SAVING=false;
 async function saveAll(quiet){ quiet=quiet===true; if(SAVING) return; if(!DBH){ if(!quiet) toast('저장할 수 없어요. 인터넷 연결을 확인하고 앱을 다시 열어 주세요.'); return; }
@@ -3726,7 +3729,7 @@ function inputHTML(p){
   if(p.type==='pg'){ const nm=p.units.length===3?['큰','중간','작은']:['큰','작은']; return `<div class="pgin">${p.units.map((u,k)=>`<div class="pgrow"><span class="pgic">${iconPreview(k,p.units.length)}</span><span class="pgl">${nm[k]} 그림 (${u}${p.unitName})</span><button class="pm" data-k="${k}" data-d="-1">−</button><b class="pgn" id="pgn${k}">0</b><button class="pm" data-k="${k}" data-d="1">+</button></div>`).join('')}<div class="pgprev" id="pgprev"></div></div>`; }
   let f=''; if(p.type==='num') f=`<span class="fld" data-f="v"></span>${p.unit?`<span class="un">${p.unit}</span>`:''}`;
   else if(p.type==='lm'){ const [A,b]=UNITS[p.units]; f=`<span class="fld" data-f="a"></span><span class="un">${A}</span><span class="fld" data-f="b"></span><span class="un">${b}</span>`; }
-  else if(p.type==='frac') f=`${p.form==='mixed'?'<span class="fld big" data-f="w"></span>':''}<span class="ffr"><span class="fld" data-f="n"></span><span class="fbar"></span><span class="fld" data-f="d"></span></span>`;
+  else if(p.type==='frac') f=`<span class="fld wbig${p.form==='mixed'?'':' wopt'}" data-f="w"></span><span class="ffr"><span class="fld" data-f="n"></span><span class="fbar"></span><span class="fld" data-f="d"></span></span>`;
   return `<div class="disp">${f}</div><div class="keys">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-d="${d}">${d}</button>`).join('')}<button class="fn" data-d="c">지우기</button><button data-d="0">0</button><button class="fn" data-d="b">⌫</button></div>`; }
 function iconPreview(k,nk){ const r=nk===2?(k===0?16:7):[16,11,7][k]; return `<svg width="36" height="36" viewBox="0 0 36 36">${iconSVG(k,nk,18,18).replace(/cx="18" cy="18" r="\d+"/,`cx="18" cy="18" r="${r}"`)}</svg>`; }
 const setSub=p=>({type:p.item==='frac'?'frac':'num',form:'frac',unit:p.unit});
@@ -3739,15 +3742,15 @@ function mountInput(root,p,state){ // state: 현재 입력값 보관
   if(p.type==='cmp'){ root.querySelectorAll('.chs button').forEach(b=>b.onclick=()=>{ if(state.locked) return; root.querySelectorAll('.chs button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); state.val=b.dataset.v; }); return; }
   if(p.type==='pg'){ state.val=state.val||p.units.map(()=>0); const draw=()=>{ p.units.forEach((u,k)=>root.querySelector('#pgn'+k).textContent=state.val[k]); const [s,x]=rowIcons(state.val,8,22,p.units.length); const v=state.val.reduce((a,c,k)=>a+c*p.units[k],0); root.querySelector('#pgprev').innerHTML=`<svg viewBox="0 0 ${Math.max(300,x+10)} 44" style="max-width:${Math.max(300,x+10)}px;width:100%">${s}</svg><div class="pgv">지금 그린 값: <b>${v}${p.unitName}</b></div>`; };
     root.querySelectorAll('.pm').forEach(b=>b.onclick=()=>{ if(state.locked) return; const k=+b.dataset.k; state.val[k]=Math.max(0,Math.min(19,state.val[k]+ +b.dataset.d)); draw(); }); draw(); return; }
-  const flds=[...root.querySelectorAll('.fld')]; state.val=state.val||{}; state.focus=state.focus||flds[0].dataset.f;
+  const flds=[...root.querySelectorAll('.fld')]; state.val=state.val||{}; const f0=(p.type==='frac'&&p.form!=='mixed')?'n':flds[0].dataset.f; state.focus=state.focus||f0;
   const draw=()=>flds.forEach(f=>{ const k=f.dataset.f; f.textContent=state.val[k]||''; f.classList.toggle('on',k===state.focus&&!state.locked); });
   flds.forEach(f=>f.onclick=()=>{ if(state.locked) return; state.focus=f.dataset.f; draw(); });
   root.querySelectorAll('.keys button').forEach(b=>b.onclick=()=>{ if(state.locked) return; const d=b.dataset.d, k=state.focus; let cur=state.val[k]||'';
-    if(d==='b') cur=cur.slice(0,-1); else if(d==='c'){ flds.forEach(f=>state.val[f.dataset.f]=''); state.focus=flds[0].dataset.f; draw(); return; } else if(cur.length<7) cur=(cur==='0'?'':cur)+d;
+    if(d==='b') cur=cur.slice(0,-1); else if(d==='c'){ flds.forEach(f=>state.val[f.dataset.f]=''); state.focus=f0; draw(); return; } else if(cur.length<7) cur=(cur==='0'?'':cur)+d;
     state.val[k]=cur; draw(); });
   draw(); }
 function readInput(p,state){ if(p.type==='set') return (state.items||[]).slice(); const v=state.val; if(p.type==='num') return v&&v.v?v.v:''; if(p.type==='frac') return {w:v.w||'',n:v.n||'',d:v.d||''}; if(p.type==='lm') return {a:v.a||'',b:v.b||''}; return v; }
-function inputKey(p,inp){ if(p.type==='set') return setKey(p,inp); if(p.type==='frac') return `${Number(inp.w||0)}|${inp.n}|${inp.d}`; if(p.type==='lm') return String(Number(inp.a||0)*1000+Number(inp.b||0)); if(p.type==='pg') return inp.join(','); return String(inp); }
+function inputKey(p,inp){ if(p.type==='set') return setKey(p,inp); if(p.type==='frac') return (inp.n||inp.d)?`${Number(inp.w||0)}|${inp.n}|${inp.d}`:`${Number(inp.w||0)}|0|1`; if(p.type==='lm') return String(Number(inp.a||0)*1000+Number(inp.b||0)); if(p.type==='pg') return inp.join(','); return String(inp); }
 
 // ===== 문제 하나 (문제 풀기·개념 확인·수업에서 같이 씀) =====
 // opts: {onDone(rec), mode, allowSkipHints}
@@ -4232,7 +4235,7 @@ function parentGate(tab){ tab=typeof tab==='string'?tab:'rec'; let ok=false; try
   const m=modal(`<h2>👩 엄마 보기</h2><p>비밀번호를 눌러 주세요.</p><div class="disp"><span class="fld on" id="pw" style="min-width:160px;letter-spacing:6px"></span></div><div class="keys">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-d="${d}">${d}</button>`).join('')}<button class="fn" data-d="x">닫기</button><button data-d="0">0</button><button class="fn" data-d="b">⌫</button></div><div class="fb" id="pwf"></div>`);
   let s=''; m.querySelectorAll('.keys button').forEach(b=>b.onclick=()=>{ const d=b.dataset.d; if(d==='x'){ m.remove(); return; } if(d==='b') s=s.slice(0,-1); else s+=d; m.querySelector('#pw').textContent='●'.repeat(s.length);
     if(s.length===6){ if(s==='503553'){ try{ sessionStorage.setItem('m32:mom','1'); }catch(e){} m.remove(); parent(tab); } else { s=''; m.querySelector('#pw').textContent=''; const f=m.querySelector('#pwf'); f.className='fb show x'; f.textContent='비밀번호가 달라요.'; } } }); }
-const fmtKey=k=>{ const m=String(k).split('|'); if(m.length!==3) return k; return m[0]==='0'?`${m[1]}/${m[2]}`:`${m[0]}과 ${m[1]}/${m[2]}`; };
+const fmtKey=k=>{ const m=String(k).split('|'); if(m.length!==3) return k; if(m[1]==='0'&&m[2]==='1') return m[0]; return m[0]==='0'?`${m[1]}/${m[2]}`:`${m[0]}과 ${m[1]}/${m[2]}`; };
 const WHYL=Object.fromEntries(WHY.map(w=>[w[0],w[1]+' '+w[2]]));
 function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
   const tabs=`<div class="tabs"><button data-t="rec" class="${tab==='rec'?'on':''}">기록</button><button data-t="prev" class="${tab==='prev'?'on':''}">문제 미리보기 (답 포함)</button><button data-t="book" class="${tab==='book'?'on':''}">📘 최상위 문제집 (답 포함)</button><button data-t="teach" class="${tab==='teach'?'on':''}">🧑‍🏫 가르치기</button></div>`;
@@ -4268,7 +4271,8 @@ function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
 var TEACH_MAX=5, TEACHD=null, TEACH_DIRTY=false, TC=null;
 function teachP(){ if(!TEACHD) TEACHD={pool:[],days:{}}; return TEACHD; }
 function teachDone(d){ const x=teachP().days[d||today()]; return !!(x&&x.done); }
-function teachMerge(d){ const T=teachP(); if(!d) return; const have=new Set(T.pool.map(x=>x.key)); T.pool=(Array.isArray(d.pool)?d.pool:[]).filter(x=>x&&!have.has(x.key)).concat(T.pool).slice(-20); T.days=Object.assign({},d.days||{},T.days); }
+function teachReset(d){ const T=teachP(); if(T.days[d]){ T.days[d]={done:false,reset:Date.now(),was:T.days[d].end||null,wasKey:T.days[d].key||null}; TEACH_DIRTY=true; DIRTY=true; refreshTop(); } }
+function teachMerge(d){ const T=teachP(); if(!d) return; if(d.fix1125) T.fix1125=1; const have=new Set(T.pool.map(x=>x.key)); T.pool=(Array.isArray(d.pool)?d.pool:[]).filter(x=>x&&!have.has(x.key)).concat(T.pool).slice(-20); T.days=Object.assign({},d.days||{},T.days); }
 function teachAdd(p,rec){ try{ if(!p||!rec||(rec.res!=='o'&&rec.res!=='h')) return; const T=teachP(); let it;
     if(p.book) it={key:'b:'+p.book,bkey:p.book};
     else { if(!p.text||!p.sol||/^<b>⑤ 처음 문제/.test(p.text)) return; const q=stripTags(p.text); if(!q) return; const svg=p.svg&&p.svg.length<30000?p.svg:''; if(p.svg&&!svg) return;
@@ -4359,7 +4363,7 @@ function teachFinish(end,silent){ if(!TC||TC.end) return; TC.end=end;
   const m=TC.mom; $('#tfin').onclick=()=>{ if(m) teachHome(true); else home(); }; }
 // 엄마 보기 「🧑‍🏫 가르치기」 탭: 직접 해 보기 + 시훈이가 한 대화 전체
 function teachMomHTML(){ return `<button class="big" id="tmom"><div><div class="t">🧑‍🏫 직접 해 보기</div><div class="s">시훈이 화면 그대로 · 시훈이 기록에는 안 남아요 (카츄 AI는 실제로 불러요)</div></div><span class="go">▶</span></button>
-  <p class="note">카츄는 시훈이가 <b>건너뛴 단계</b>("여기서 18은 어떻게 나왔어?")와 <b>순서</b>를 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요. 3~5번 주고받으면 끝나요. 오늘 했는지: <b>${teachDone()?'했어요 ✅':'아직이에요'}</b></p>
+  <p class="note">카츄는 시훈이가 <b>건너뛴 단계</b>("여기서 18은 어떻게 나왔어?")와 <b>순서</b>를 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요. 3~5번 주고받으면 끝나요. 오늘 했는지: <b>${teachDone()?'했어요 ✅':'아직이에요'}</b>${teachDone()?' <button class="pbtn" id="treset">🔄 오늘 것 다시 하게 하기</button>':''}</p>
   <div class="sec">시훈이가 한 가르치기</div><div id="tlogs" class="note">불러오는 중…</div>`; }
 const TEND={done:'✅ 카츄가 이해',max:'✅ 5번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
 const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
@@ -4371,7 +4375,7 @@ function teachLogHTML(x){ const E=picEsc, h=x.have||{};
    <div class="tlog" style="max-height:none">${(x.turns||[]).map(t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>':'🙋 '}${E(t.text)}${t.work?`<div class="twork"><b>카츄 틀린 풀이</b><br>${E(t.work).replace(/\n/g,'<br>')}</div>`:''}</div>`).join('')}</div>
    ${(x.order||[]).length?`<div class="tord"><div class="toh">📝 시훈이가 가르친 순서</div>${x.order.map((o,i)=>`<div class="tos ${o.asked?'asked':''}"><span class="tn">${i+1}</span><span>${E(o.text)}${o.asked?'<small>🔍 카츄가 물어봐서 나옴</small>':''}</span></div>`).join('')}</div>`:''}
    ${(x.mom||[]).length?`<div class="sm">👩 메모: ${x.mom.map(E).join(' / ')}</div>`:''}${x.img?`<div class="penview"><img src="${x.img}" alt="패드"></div>`:''}</details>`; }
-function teachMomBind(){ $('#tmom').onclick=()=>teachHome(true); const el=$('#tlogs'); if(!DBH){ el.textContent='기록을 못 불러왔어요.'; return; }
+function teachMomBind(){ $('#tmom').onclick=()=>teachHome(true); const rs=$('#treset'); if(rs) rs.onclick=()=>{ if(!confirm('오늘 가르치기를 안 한 걸로 되돌릴까요? (대화 기록은 남아요)')) return; teachReset(today()); toast('오늘 가르치기를 다시 할 수 있어요.'); parent('teach'); }; const el=$('#tlogs'); if(!DBH){ el.textContent='기록을 못 불러왔어요.'; return; }
   DBH.collection('m32teach').limit(300).get().then(qs=>{ const L=qs.docs.map(d=>d.data()).filter(x=>x&&x.ts).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,40); if(!$('#tlogs')) return;
     el.className=''; el.innerHTML=L.length?L.map(teachLogHTML).join(''):'<p class="note">아직 기록이 없어요.</p>'; }).catch(()=>{ el.textContent='기록을 못 불러왔어요.'; }); }
 
