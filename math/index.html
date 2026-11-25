@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795650041";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795650208";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -100,6 +100,15 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .dots i.f{background:var(--blue)}
 .dots i.c{border-style:dashed}
 .pitem .path,.next .path{display:block;font-size:12.5px;opacity:.75;grid-column:1/-1;margin-top:2px}
+.tabs{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-block:6px max(8px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--paper)}
+.tabs button{min-height:46px;border-radius:12px;border:0;background:transparent;color:var(--ink-2);font-size:15px;font-weight:700}
+.tabs button.on{background:var(--blue-soft);color:var(--blue)}
+.calhd{display:flex;align-items:center;justify-content:space-between;gap:8px}.calhd b{font-size:20px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal .cw{text-align:center;font-size:13px;color:var(--ink-2)}.cal .cw.sun{color:var(--amber)}
+.cal .cd{aspect-ratio:1/1.15;border:1px solid var(--line);border-radius:10px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;color:var(--ink);min-width:0}
+.cal .cd.off{border:0;background:transparent}.cal .cd i{font-style:normal;font-size:12px;color:var(--ink-2)}.cal .cd b{font-size:13px;min-height:16px;white-space:nowrap}
+.cal .cd:disabled{opacity:.45}.cal .cd.today{border:2px solid var(--blue)}.cal .cd.sel{outline:2px solid var(--amber);outline-offset:1px}
+.cal .cd.l1{background:color-mix(in srgb,var(--blue) 12%,var(--card))}.cal .cd.l2{background:color-mix(in srgb,var(--blue) 24%,var(--card))}.cal .cd.l3{background:color-mix(in srgb,var(--blue) 38%,var(--card))}.cal .cd.l4{background:color-mix(in srgb,var(--blue) 52%,var(--card))}.cal .cd.l4 i,.cal .cd.l4 b{color:#fff}
 .side{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .side button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:64px;display:flex;flex-direction:column;gap:2px}
 .side b{font-family:var(--f-disp);font-weight:400;font-size:19px}
@@ -3055,7 +3064,9 @@ loadLocal();
 const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??99,n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
 const tst=id=>{const t=S.ts[id]||(S.ts[id]={runs:[],start:null,target:null,grad:false,gradDays:[],conceptDone:false,pool:[]});if(!t.facts)t.facts={};return t};
 const lvl=id=>TYPES[id].scaffold?(tst(id).level||0):1;
-const finalPQ=id=>tc(id).sec*(lvl(id)===0?2:1);
+/* 어른 계정은 어른 속도 기준: 아이 기준 시간 × adultK (처음 값 0.6) */
+const spdK=()=>PID==="sihun"?1:Math.min(1,Math.max(.3,S.cfg.adultK||.6));
+const finalPQ=id=>Math.round(tc(id).sec*(lvl(id)===0?2:1)*spdK()*10)/10;
 const D=()=>DAYS[today()];
 
 function ensureToday(){
@@ -3256,11 +3267,13 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam}[view]||vHome;
-  app.innerHTML=f()+(modal?modal():"");
+  const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam}[view]||vHome;
+  app.innerHTML=f()+(TABV[view]&&!PREVIEW&&!(view==="home"&&f!==vHome)?tabs():"")+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
 }
+const TABV={home:1,cal:1,mine:1,fam:1};
+const tabs=()=>`<nav class="tabs noprint">${[["home","오늘","home",""],["cal","달력","go","cal"],["mine","내 기록","go","mine"],["fam","가족 진도","fam",""]].map(([v,t,a,g])=>`<button class="${view===v?"on":""}" data-act="${a}" ${g?`data-arg="${g}"`:""}>${t}</button>`).join("")}</nav>`;
 const bar=(title,right="")=>`${PREVIEW?'<div class="pv">미리 보기 · 기록이 남지 않아요 · <button data-act="pvexit">끝내기</button></div>':""}<div class="bar"><button class="nb" data-act="home">처음으로</button><span class="where">${title}</span><span class="sp"></span>${right}</div>`;
 
 /* 누가 하나 */
@@ -3303,12 +3316,26 @@ function vHome(){
    ${carryN?`<p class="small muted">점선 = 지난번에 남은 판 (${carryN})</p>`:""}
    ${items?`<details class="homeplan"><summary>오늘 할 것 다 보기 (${totalOwed}판)</summary><div class="plan">${items}</div></details>`:'<p class="muted">오늘 계획이 비어 있어요. 부모님 화면에서 정해 주세요.</p>'}
    <div class="side">
-     <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
-     <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
-     <button data-act="fam" style="grid-column:span 2"><b>우리 가족 진도</b><span>시훈, 엄마, 아빠가 어디까지 왔나 본다냥</span></button>
+     <button data-act="go" data-arg="cal" style="grid-column:span 2"><b>달력 · 오늘 ${calMin(calSec(today()))}분</b><span>${(()=>{const ym=today().slice(0,7),ks=Object.keys(DAYS).filter(k=>k.slice(0,7)===ym&&calSec(k)>0);return ks.length?`이번 달 ${ks.length}일, 모두 ${ks.reduce((a,k)=>a+calMin(calSec(k)),0)}분 했다냥`:"푼 날마다 시간이 쌓인다냥"})()}</span></button>
+     <button data-act="pin" style="grid-column:span 2"><b>부모님</b><span>비밀번호</span></button>
      ${gwOn()?`<button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>`:""}
    </div></div>`;
 }
+
+/* 달력: 날마다 그날 푼 시간(분). 남과 견주지 않고 내 기록만 */
+let CALM=null,CALD=null;
+const calSec=k=>((DAYS[k]||{}).sets||[]).reduce((a,x)=>a+(x.t||0),0),calMin=sec=>sec>0?Math.max(1,Math.round(sec/60)):0;
+function vCal(){const t=today();if(!CALM)CALM=t.slice(0,7);const[y,m]=CALM.split("-").map(Number),first=new Date(y,m-1,1).getDay(),nd=new Date(y,m,0).getDate(),key=d=>CALM+"-"+String(d).padStart(2,"0");
+  const mins=Array.from({length:nd},(_,i)=>calMin(calSec(key(i+1)))),mx=Math.max(1,...mins),days=mins.filter(v=>v>0).length,tot=mins.reduce((a,b)=>a+b,0);
+  const cells=[...Array(first).fill('<span class="cd off"></span>'),...mins.map((v,i)=>{const k=key(i+1),lv=v?Math.min(4,Math.ceil(v/mx*4)):0;return `<button class="cd l${lv} ${k===t?"today":""} ${k===CALD?"sel":""}" data-act="cald" data-arg="${k}" ${k>t?"disabled":""}><i>${i+1}</i><b>${v?v+"분":""}</b></button>`})].join("");
+  const sel=CALD&&CALD.slice(0,7)===CALM?CALD:null,ss=sel?((DAYS[sel]||{}).sets||[]):[];
+  const info=sel?`<div class="card"><h3>${dayLabel(sel)}</h3>${ss.length?`<p>${ss.length}세트 · ${fmt(calSec(sel))} 했다냥.</p><p class="small muted">${Object.entries(ss.reduce((o,x)=>{const n=(TYPES[x.type]||{}).name||x.type;o[n]=(o[n]||0)+1;return o},{})).map(([n,c])=>n+(c>1?" "+c:"")).join(", ")}</p>`:`<p class="muted">이날은 쉬었다냥.</p>`}</div>`:"";
+  const nextOk=CALM<t.slice(0,7);
+  return `${bar("달력")}<div class="page">
+   <div class="calhd"><button class="nb" data-act="calm" data-arg="-1" aria-label="지난달">◀</button><b>${y}년 ${m}월</b><button class="nb" data-act="calm" data-arg="1" aria-label="다음 달" ${nextOk?"":"disabled"}>▶</button></div>
+   <div class="cal"><span class="cw sun">일</span><span class="cw">월</span><span class="cw">화</span><span class="cw">수</span><span class="cw">목</span><span class="cw">금</span><span class="cw">토</span>${cells}</div>
+   <p class="small muted" style="text-align:center">${days?`이번 달 ${days}일, 모두 ${tot}분 했다냥. 색이 진할수록 오래 한 날이다옹.`:"아직 이 달 기록이 없다냥."}</p>
+   ${info}</div>`}
 
 /* 시작할 때 한 번: 시계가 왜 있는지 + 근거 있는 응원 */
 let greeted=false;
@@ -3764,6 +3791,7 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
    ${tiredHTML()}
+   ${PID!=="sihun"?`<div class="card"><h3>어른 속도 기준</h3><p class="small muted">${pname()} 계정은 통과 시간을 아이 기준보다 짧게 잡아요. 초등 3학년은 단순한 계산 속도가 어른의 절반쯤이에요. 다만 폰으로 답을 누르는 시간은 어른도 비슷해서 60%에서 시작해요.</p><div class="row" style="align-items:center"><span>아이 기준의</span><button class="nb" data-act="adk" data-arg="-1">−</button><b>${Math.round(spdK()*100)}%</b><button class="nb" data-act="adk" data-arg="1">+</button><span class="small muted">예: 아이 30초 → ${pname()} ${Math.round(30*spdK())}초</span></div></div>`:""}
    <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML()}
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
@@ -3952,6 +3980,9 @@ const ACT={
   mclose2:()=>{modal=null;render()},
   preset2:id=>{delete S.ts[id];modal=null;save();render()},
   clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
+  adk:a=>{if(PID==='sihun')return;S.cfg.adultK=Math.round(Math.min(1,Math.max(.3,spdK()+ +a*.1))*10)/10;save();render()},
+  calm:a=>{const[y,m]=CALM.split('-').map(Number),d=new Date(y,m-1+ +a,1);CALM=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');CALD=null;render()},
+  cald:k=>{CALD=CALD===k?null:k;render()},
   tot:a=>{S.cfg.total=Math.max(5,Math.min(40,(S.cfg.total||20)+ +a));D().plan=planNow();save(today());render()},
   resetme:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>${pname()} 기록을 처음 상태로 돌릴까요?</h3><p class="small muted">${pname()} 계정의 단계·푼 기록·그래프 진도가 모두 처음으로 돌아가요. 시훈이 기록은 건드리지 않아요. 지우기 전 기록은 따로 남겨 둬요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="resetme2">처음부터</button></div></div></div>`;render()},
   resetme2:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>정말 처음부터 할까요?</h3><p class="small muted">한 번 더 물어봐요. 누르면 ${pname()} 기록이 처음 상태가 돼요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">아니요</button><button class="bigbtn" style="flex:1" data-act="resetdo">네, 처음부터</button></div></div></div>`;render()},
