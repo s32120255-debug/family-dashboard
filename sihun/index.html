@@ -7516,7 +7516,7 @@ function viewHW(id){
   if(!id){$('#main').innerHTML=`<div class="card"><h2>📒 워크지 숙제</h2><div class="muted">판서자료에서 필기가 안 된 칸이 숙제예요. 앱에서 생각하고, 종이에는 옮겨 적기만 해요.</div></div>`+HW.map(h=>`<div class="card"><div class="row" style="justify-content:space-between"><div><b style="color:var(--navy);font-size:18px">${h.w}주차 ${h.title}</b><div class="muted">${h.sub} · ${h.items.length}문항</div></div><button class="btn" data-hw="${h.id}">열기</button></div></div>`).join('');
     document.querySelectorAll('[data-hw]').forEach(b=>b.onclick=()=>{HWS=null;viewHW(b.dataset.hw)});return}
   const H=hwSet(id);if(!H){$('#main').innerHTML='<div class="card">숙제가 없어요.</div>';return}
-  if(!HWS||HWS.id!==id){const sv=store(HWK(id));HWS=sv&&sv.res?{id,i:Math.min(sv.i||0,H.items.length-1),res:sv.res,rd:sv.rd||{},t0:Date.now(),sec0:sv.sec||0}:{id,i:0,res:[],rd:{},t0:Date.now(),sec0:0};HWS.fresh=!sv;hwReset()}
+  if(!HWS||HWS.id!==id){let sv=store(HWK(id));if(sv&&sv.rdv!==2&&H.items.some(x=>x.p&&HWSV[x.p])){store(HWK(id)+'_old',sv);store(HWK(id),null);sv=null} /* 11/25 새 읽기(주어·서술어·인과) 전 기록이면 처음부터 */HWS=sv&&sv.res?{id,i:Math.min(sv.i||0,H.items.length-1),res:sv.res,rd:sv.rd||{},t0:Date.now(),sec0:sv.sec||0}:{id,i:0,res:[],rd:{},t0:Date.now(),sec0:0};HWS.fresh=!sv;hwReset()}
   hwDraw()}
 function hwReset(){Object.assign(HWS,{ph:null,miss:0,hint:false,got:[],oi:0,bi:0,fill:[],wi:0,si:0,step1:false,q0:Date.now(),done:false,sp:'ev',spi:false,kwO:null,lvMsg:'',kwMiss:0,evLog:[],an:null,anLog:[],et:0,ci:0,cj:[],ct:0,phint:0,phN:0,evN:0,evFirst:0,evMiss:0,cmpN:0,cmpFirst:0,cmpMiss:0});if(!HWS.rd)HWS.rd={}}
 function hwDone(){return HWS.res.filter(r=>r&&!r.skipped).length}
@@ -7534,7 +7534,7 @@ function hwCopyCard(it){const val=it.copy||(it.k==='ox'?`[ ${it.a} ]`:it.k==='mc
 function hwWhy(it,extra){return `<div class="exp" style="margin-left:0">${extra||''}${it.why||''}</div>`}
 function hwNext(){const H=hwSet(HWS.id);if(HWS.i<H.items.length-1){HWS.i++;hwReset();hwDraw();window.scrollTo(0,0)}else hwFinish()}
 function hwAfterOk(it){hwMark(true);if(it.k==='think'||!it.pg){HWS.ph='copied';hwDraw();return}HWS.ph='copy';hwDraw()}
-function hwKeep(){if(HWS&&HWS.id)store(HWK(HWS.id),{i:HWS.i,res:HWS.res,rd:HWS.rd,sec:HWS.sec0+Math.round((Date.now()-HWS.t0)/1000)})}
+function hwKeep(){if(HWS&&HWS.id)store(HWK(HWS.id),{rdv:2,i:HWS.i,res:HWS.res,rd:HWS.rd,sec:HWS.sec0+Math.round((Date.now()-HWS.t0)/1000)})}
 async function hwRestart(){const id=HWS.id;if(HWS.res.some(Boolean)){HWS.restart=1;await hwSave(false)}store(HWK(id),null);HWS=null;viewHW(id);window.scrollTo(0,0)}
 function hwDraw(){hwKeep();const H=hwSet(HWS.id);const it=H.items[HWS.i];if(biNeedRead(H,it)){biReadDraw(H,it);return}if(!HWS.ph)HWS.ph={ox:'ev',mc:'judge',blank:'fill',pron:it.pre?'pre':'rule',multi:'judge',pick:it.steps?'steps':'pick',think:'pick'}[it.k];
   const already=HWS.res[HWS.i]&&!HWS.res[HWS.i].skipped&&HWS.ph!=='copy'&&HWS.ph!=='copied';
@@ -7659,7 +7659,7 @@ function hwBind(H,it){
 }
 async function hwSave(fin){const H=hwSet(HWS.id);const n=H.items.length;const r=HWS.res;const sec=HWS.sec0+Math.round((Date.now()-HWS.t0)/1000);
   const rec={type:'hw',set:H.id,w:H.w,area:H.area,title:H.title,n,done:fin,restart:!fin&&!!HWS.restart,answered:r.filter(x=>x&&!x.skipped).length,first:r.filter(x=>x&&x.ok).length,copied:r.filter(x=>x&&x.copied).length,items:r.map((x,i)=>x?Object.assign({i},x):{i,skipped:true}),sec};
-  store(HWK(H.id),fin?null:{i:HWS.i,res:r,rd:HWS.rd,sec});
+  store(HWK(H.id),fin?null:{rdv:2,i:HWS.i,res:r,rd:HWS.rd,sec});
   const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,ce:(x.ce||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',m:v.m||0,sec:v.sec||0}:null).filter(Boolean),sv:(x.sv||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',mv:v.mv||0,ms:v.ms||0,sec:v.sec||0}:null).filter(Boolean),sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
   push(rec);await flushPend()}
 function hwFinish(){const H=hwSet(HWS.id);const r=HWS.res;const sk=H.items.map((_,i)=>i).filter(i=>!r[i]||r[i].skipped);
