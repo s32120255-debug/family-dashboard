@@ -147,6 +147,17 @@ details .list{margin-top:6px}
 .lstack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px}
 .lbar span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lock{z-index:45}
+#ttl,#today{user-select:none;-webkit-user-select:none}
+.sec{z-index:46;place-items:start center;overflow:auto}
+.secbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);display:grid;gap:12px;margin-block:24px}
+.secbox h2{margin:0;font-family:var(--display);font-weight:400;font-size:1.6rem;display:flex;align-items:center;gap:8px}
+.secbox h2 .btn{margin-left:auto}
+.secbox textarea{width:100%;min-height:70px;font:inherit;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);resize:vertical}
+.secnote{background:var(--bg);border-radius:8px;padding:10px 12px;display:grid;gap:6px}
+.secnote p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.secnote .meta{display:flex;gap:8px;align-items:center;font-size:.8rem;color:var(--muted)}.secnote .meta span{margin-right:auto}
+.secask{display:flex;gap:6px;width:min(320px,100%);margin-top:30vh}
+.secask input{flex:1;font-size:1.1rem;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--fg)}
 .ltile.card{flex-wrap:wrap}
 .ltile .goal{flex:1 1 100%;font-size:.82rem;color:var(--muted);display:grid;gap:4px}
 .ltile .goal small{font-size:.78rem}
@@ -189,7 +200,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 14</p>
+ <p style="font-size:.75rem">버전 15</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -207,7 +218,7 @@ details .list{margin-top:6px}
 <div class="wrap">
  <header class="top">
   <span id="topCat"></span>
-  <div><h1>서윤 보드</h1><div class="sub" id="today"></div></div>
+  <div><h1 id="ttl">서윤 보드</h1><div class="sub" id="today"></div></div>
   <button class="topadd" id="topAdd" aria-label="적기" title="적기">+</button>
   <div class="who" id="who"></div>
  </header>
@@ -224,6 +235,7 @@ details .list{margin-top:6px}
  <div id="panel" class="panel"></div>
 </div>
 <div id="layer"></div>
+<div class="gate sec" id="sec" hidden><div class="secbox" id="secBody"></div></div>
 
 <script type="module">
 /* ---------- 기본 ---------- */
@@ -651,7 +663,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=14;
+const VERSION=15;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
@@ -709,10 +721,42 @@ if(location.hash==="#demo"){ // 화면 미리 보기용(저장 안 됨)
   try{await reauthenticateWithPopup(auth.currentUser,p);showLock("set")}catch(e){lockErr("구글 계정 확인이 안 됐어요. 다시 눌러 주세요.")}};
  $("lockOff").onclick=async()=>{try{await F.deleteDoc(lockRef());lockCfg=null;hideLock();setLockBtn();toast("비밀번호를 껐어요")}catch(e){lockErr("끄지 못했어요. 다시 해 주세요.")}};
  $("lockCancel").onclick=hideLock;
+ /* ---------- 비밀 칸: 제목을 정한 횟수만큼 빨리 누르고 + 비밀 코드. 코드는 해시만 저장 ---------- */
+ const secRef=()=>F.doc(fs,"seoyun","secret"),secCol=()=>F.collection(fs,"seoyun","main","secret");
+ let secCfg,secTaps=[],secUnsub=null;
+ const secClose=()=>{$("sec").hidden=true;$("secBody").innerHTML="";if(secUnsub){secUnsub();secUnsub=null}};
+ async function secLoad(){try{const d=await F.getDoc(secRef());secCfg=d.exists()?d.data():null}catch(e){secCfg=undefined}}
+ const SPOTS=[["ttl","「서윤 보드」 제목"],["today","제목 아래 날짜"]];
+ SPOTS.forEach(([id])=>$(id).addEventListener("click",async()=>{if(!db||!auth.currentUser)return;if(secCfg===undefined)await secLoad();
+  const spot=secCfg?(secCfg.spot||"ttl"):"ttl";if(id!==spot){secTaps=[];return}
+  const now=Date.now();secTaps=secTaps.filter(t=>now-t<3000);secTaps.push(now);const need=secCfg?Number(secCfg.taps||7):7;
+  if(secTaps.length>=need){secTaps=[];secCfg?secAsk():secSetup()}}));
+ function secSetup(){$("sec").hidden=false;$("secBody").innerHTML=`<h2>비밀 칸 만들기</h2><p class="hint">어디를 몇 번 빨리 누르면 열릴지, 그리고 비밀 코드를 정해요. 코드는 이 기기에도 저장소에도 글자로 남지 않아요.</p>
+  <form id="ssf" style="display:grid;gap:10px"><label>어디를 누를지<select name="sp">${SPOTS.map(([v,l])=>`<option value="${v}"${(secCfg&&secCfg.spot||"ttl")===v?" selected":""}>${l}</option>`).join("")}</select></label><label>몇 번 빨리 누를지 (3~12, 3초 안에)<input name="n" type="number" min="3" max="12" value="${secCfg&&secCfg.taps||7}"></label><label>비밀 코드 (6자 이상, 글자·숫자 아무거나)<input name="c" type="password" autocomplete="off"></label><label>한 번 더<input name="c2" type="password" autocomplete="off"></label>
+  <div class="row"><button type="button" class="btn" id="ssc">닫기</button><button class="btn primary">정하기</button></div></form>`;
+  $("ssc").onclick=secClose;$("ssf").onsubmit=async e=>{e.preventDefault();const f=e.target,n=Math.min(12,Math.max(3,Number(f.n.value)||7)),c=f.c.value;
+   if(c.length<6)return toast("코드는 6자 이상이에요");if(c!==f.c2.value)return toast("두 번 넣은 코드가 달라요");
+   const salt=crypto.getRandomValues(new Uint32Array(4)).join("-");try{secCfg={taps:n,spot:f.sp.value,salt,hash:await hashPin(salt,c),at:Date.now()};await F.setDoc(secRef(),secCfg);secOpen()}catch(err){toast("저장하지 못했어요")}}}
+ function secAsk(){$("sec").hidden=false;$("secBody").innerHTML=`<form class="secask" id="saf"><input name="c" type="password" autocomplete="off" aria-label="코드"><button class="btn primary">→</button></form>`;
+  $("saf").c.focus();$("saf").onsubmit=async e=>{e.preventDefault();const ok=await hashPin(secCfg.salt,e.target.c.value)===secCfg.hash;if(ok)secOpen();else secClose()};
+  $("sec").onclick=e=>{if(e.target.id==="sec")secClose()}}
+ function secOpen(){let notes=[];const draw=()=>{$("secBody").innerHTML=`<h2>비밀 칸<button class="btn small" id="sx">닫기</button></h2>
+  <form id="snf" style="display:grid;gap:8px"><textarea name="t" placeholder="적기"></textarea><div class="row"><button class="btn primary">적기</button></div></form>
+  ${notes.map(x=>`<div class="secnote"><p>${esc(x.t)}</p><div class="meta"><span>${esc(x.d||"")}</span><button class="edit" data-se="${x.id}">수정</button><button class="edit" data-sd="${x.id}">지우기</button></div></div>`).join("")||`<p class="empty" style="margin:0">아직 적은 게 없어요.</p>`}
+  <details><summary class="hint" style="cursor:pointer">여는 방법 바꾸기</summary><div style="margin-top:8px"><button class="btn small" id="sreset">횟수·코드 다시 정하기</button></div></details>`;
+  $("sx").onclick=secClose;$("sreset").onclick=secSetup;
+  $("snf").onsubmit=e=>{e.preventDefault();const t=e.target.t.value.trim();if(!t)return;F.addDoc(secCol(),{t,d:today(),createdAt:Date.now()}).catch(()=>toast("저장하지 못했어요"))};
+  $("secBody").querySelectorAll("[data-sd]").forEach(b=>b.onclick=()=>{if(confirm("지울까요?"))F.deleteDoc(F.doc(secCol(),b.dataset.sd))});
+  $("secBody").querySelectorAll("[data-se]").forEach(b=>b.onclick=()=>{const x=notes.find(n=>n.id===b.dataset.se);const box=b.closest(".secnote");
+   box.innerHTML=`<textarea>${esc(x.t)}</textarea><div class="row"><button class="btn small" data-c>취소</button><button class="btn small primary" data-s>저장</button></div>`;
+   box.querySelector("[data-c]").onclick=draw;box.querySelector("[data-s]").onclick=()=>{const t=box.querySelector("textarea").value.trim();if(t)F.updateDoc(F.doc(secCol(),x.id),{t})}})};
+  $("sec").hidden=false;$("sec").onclick=null;draw();
+  if(secUnsub)secUnsub();secUnsub=F.onSnapshot(secCol(),snap=>{notes=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));draw()},()=>toast("불러오지 못했어요"))}
+ document.addEventListener("visibilitychange",()=>{if(document.hidden&&!$("sec").hidden)secClose()});
  function setLockBtn(){const b=document.getElementById("pinBtn");if(b)b.textContent=lockCfg?"비밀번호 바꾸기":"비밀번호 걸기"}
  document.addEventListener("visibilitychange",()=>{if(document.hidden){hiddenAt=Date.now()}else if(lockCfg&&auth.currentUser&&hiddenAt&&Date.now()-hiddenAt>5*60*1000&&lockMode!=="set")showLock("open")});
  onAuthStateChanged(auth,user=>{if(unsub){unsub();unsub=null}meals={};ate={};pantry=[];ledger=[];ledCfg={};db=null;items=[];render();
-  if(!user){lockCfg=null;hideLock();return gate("서윤 구글 계정으로 들어와요.",true,false)}
+  if(!user){lockCfg=null;hideLock();secCfg=undefined;secClose();return gate("서윤 구글 계정으로 들어와요.",true,false)}
   $("lock").hidden=false;$("lockMsg").textContent="확인하는 중…";$("lockForm").hidden=true;$("lockForgot").hidden=true;
   F.getDoc(lockRef()).then(snap=>{lockCfg=snap.exists()?snap.data():null;$("lockForm").hidden=false;setLockBtn();if(lockCfg)showLock("open");else hideLock()},()=>{$("lockForm").hidden=false;hideLock()});
   gate("불러오는 중…",false,false);
