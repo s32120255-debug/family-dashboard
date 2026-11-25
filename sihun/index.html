@@ -570,6 +570,8 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .fb{margin-top:12px;border-radius:14px;padding:12px 16px;font-size:18px;display:none;line-height:1.7}.fb.show{display:block}
 .fb.o{background:#e9f6ef;border:1.5px solid #b9e2c9}.fb.x{background:#fbefec;border:1.5px solid #f0c9bf}.fb.h{background:var(--hl);border:1.5px solid #f2dfae}
 .fb .tagline{font-size:14px;color:var(--soft);margin-top:4px}
+.kstb{font-family:'Jua';font-size:18px;color:var(--soft);margin:12px 2px 4px}.kstr{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 14px;margin:8px 0;font-size:19px;line-height:1.8}
+.kstr.now{border:2.5px solid var(--ink)}.kstr.kdone{background:#f3faf6;border-color:#b9e2c9}.kstr.kgive{background:#fbf6ec;border-color:#f2dfae}.kstn{font-family:'Jua';margin-right:6px}.kstw{font-size:16px;color:var(--soft)}.kstr .disp{margin-top:6px}
 .sol .st{padding:8px 12px;border-left:4px solid var(--ink);background:#fff;margin:6px 0;border-radius:0 10px 10px 0;font-size:18px;line-height:1.8}
 .fmq{font-family:'Jua';font-size:20px;margin:16px 2px 6px}.fmq small{font-family:'IBM Plex Sans KR';font-size:14px;color:var(--soft);display:block}
 .fmo{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px 16px;margin:7px 0;font-size:18px}
@@ -3210,6 +3212,91 @@ S({id:'part',unit:'분수',title:'분수만큼은 얼마일까',moves:{
 
 // ---------- 3 진분수·가분수·대분수 ----------
 function randProper(d){ return F(0,rnd(1,d-1),d); }
+// 엄마 11/25: "진분수 2단계부터 어려워하네, 문제를 더 쪼개봐야것다" → 2~5단계 문제마다 작은 칸(steps) 2~4개.
+// o.t = 유형 고정, o.small = 쪼갤 때 작은 수(분모 2~5, 자연수 1~3). steps[k]={q,type,form,answer,unit,why}, short = 칸 줄였을 때 남기는 칸.
+const KS=(q,type,answer,why,x)=>Object.assign({q,type,answer,why,form:type==='frac'?'frac':undefined},x||{});
+const IG=n=>numBat(n)?'이':'가';
+function kindGen(lv,o){ o=o||{}; const sm=!!o.small; const T=(n)=>o.t!=null?o.t:rnd(0,n-1); const tag=(p,t,steps,short)=>Object.assign(p,{t,skey:'kind:'+lv+':'+t,steps,short});
+ if(lv===1){ const d=sm?rnd(2,5):rnd(2,9), w=sm?rnd(1,3):rnd(1,6), n=rnd(1,d-1), N=w*d+n; const t=T(3);
+   if(t===0) return tag({text:`${mx(w,n,d)}를 <b>가분수</b>로 나타내세요.`, type:'frac', form:'frac', answer:F(0,N,d), fm:'toImp',
+    hints:[`자연수 ${w}은(는) ${fr(1,d)}이 몇 개일까?`,`${w} = ${fr(w*d,d)}, 여기에 ${fr(n,d)}를 더해요.`], sol:[`${w} × ${d} + ${n} = ${N}`,`<b>${fr(N,d)}</b>`],
+    bugs:[fbug(F(0,w+n,d),'add-whole',`자연수를 분자에 그냥 더했어요. ${w}은 ${fr(1,d)}이 ${w*d}개!`),fbug(F(0,w*n+d,d),'toImp','자연수 × <b>분모</b> + 분자예요.'),fbug(F(0,N,w*d),'den-diff','분모는 그대로예요.')]},t,
+    [KS(`자연수 ${w}은(는) ${fr(1,d)}이 몇 개예요?`,'num',w*d,`1 = ${fr(d,d)} → ${w}은(는) ${fr(1,d)}이 ${d} × ${w} = ${w*d}개`,{unit:'개'}),
+     KS(`${fr(n,d)}만큼 더 있어요. ${fr(1,d)}이 모두 몇 개예요?`,'num',N,`${w*d} + ${n} = ${N}`,{unit:'개'}),
+     KS(`${mx(w,n,d)}를 가분수로 쓰면?`,'frac',F(0,N,d),`${fr(1,d)}이 ${N}개 → ${fr(N,d)}`)],[0,2]);
+   if(t===1) return tag({text:`${fr(N,d)}를 <b>대분수</b>로 나타내세요.`, type:'frac', form:'mixed', answer:F(w,n,d), fm:'toMix',
+    hints:[`${N} 안에 ${d}가 몇 번 들어갈까?`,`${d} × ${w} = ${w*d}, 남는 것 ${n}`], sol:[`${N} = ${d} × ${w} + ${n}`,`<b>${mx(w,n,d)}</b>`],
+    bugs:[fbug(F(n,w,d),'qr-swap','자연수와 분자가 바뀌었어요. 몇 번 들어가는지 → 자연수, 남는 것 → 분자.'),fbug(F(w,n,w*d),'den-diff','분모는 그대로예요.')]},t,
+    [KS(`${N} 안에 ${d}${IG(d)} 몇 번 들어가요?`,'num',w,`${d} × ${w} = ${w*d}, ${d} × ${w+1} = ${(w+1)*d}은(는) ${N}보다 커요 → ${w}번`,{unit:'번'}),
+     KS(`${d} × ${w} = ${w*d}. ${N}에서 남는 것은?`,'num',n,`${N} − ${w*d} = ${n}`),
+     KS(`${fr(N,d)}를 대분수로 쓰면?`,'frac',F(w,n,d),`자연수 ${w}, 남는 ${n} → ${mx(w,n,d)}`,{form:'mixed'})],[0,2]);
+   const k=sm?rnd(2,3):rnd(2,6); return tag({text:`자연수 <big>${k}</big>를 분모가 ${d}인 분수로 나타내세요.`, type:'frac', form:'frac', answer:F(0,k*d,d), fm:'toImp',
+    hints:[`1 = ${fr(d,d)}예요.`,`${k}는 ${fr(d,d)}이 ${k}개.`], sol:[`1 = ${fr(d,d)}`,`${k} = ${fr(k*d,d)}`], bugs:[fbug(F(0,k,d),'add-whole','그건 1보다 작아요. 1 = '+d+'/'+d+'!'),fbug(F(0,k+d,d),'add-whole','더하는 게 아니라 '+k+'번 모아요.')]},t,
+    [KS(`1을 분모가 ${d}인 분수로 쓰면 분자는?`,'num',d,`1 = ${fr(d,d)} (${d}조각 중 ${d}조각)`),
+     KS(`${k}은(는) 1이 ${k}개. 분모가 ${d}인 분수로 쓰면?`,'frac',F(0,k*d,d),`${d} × ${k} = ${k*d} → ${fr(k*d,d)}`)],[1]); }
+ if(lv===2){ const t=T(4);
+   if(t===0){ const d=sm?rnd(3,5):rnd(4,12); return tag({text:`분모가 ${d}인 <b>진분수</b>는 모두 몇 개인가요?`, type:'num', unit:'개', answer:d-1, fm:'list',
+     hints:['분자가 분모보다 작아야 해요. 분자는 1부터!',`${fr(1,d)}, ${fr(2,d)}, … 분자가 ${d}이면?`], sol:[`분자 1, 2, …, ${d-1}`,`<b>${d-1}개</b>`], bugs:[nbug(d,'kind-eq',`${fr(d,d)}는 1과 같아요 → 가분수!`)]},t,
+     [KS(`분모가 ${d}인 진분수에서 가장 작은 분자는?`,'num',1,`분자는 1부터 → ${fr(1,d)}`),
+      KS(`분모가 ${d}인 진분수에서 가장 큰 분자는?`,'num',d-1,`분자가 ${d}이면 ${fr(d,d)} = 1 → 가분수. 그래서 ${d-1}까지`),
+      KS(`분자 1부터 ${d-1}까지, 진분수는 모두 몇 개?`,'num',d-1,`1, 2, …, ${d-1} → ${d-1}개`,{unit:'개'})],[1,2]); }
+   if(t===1){ const k=sm?rnd(4,6):rnd(5,12); return tag({text:`분자가 ${k}인 <b>가분수</b> 중에서 분모가 2 이상인 것은 모두 몇 개인가요?`, type:'num', unit:'개', answer:k-1, fm:'list',
+     hints:['가분수는 분모가 분자와 같거나 작아요.',`분모 2, 3, …, ${k}`], sol:[`분모 2부터 ${k}까지`,`<b>${k-1}개</b>`], bugs:[nbug(k-2,'endpoint',`${fr(k,k)}도 가분수예요 (분자 = 분모).`),nbug(k,'count-cond','분모가 1인 것은 빼야 해요.')]},t,
+     [KS(`가분수는 분자 ≥ 분모. 분자가 ${k}이면 분모는 가장 크게 몇까지 돼요?`,'num',k,`${fr(k,k)}도 가분수(분자 = 분모) → ${k}까지`),
+      KS(`분모 2부터 ${k}까지, 모두 몇 개?`,'num',k-1,`2, 3, …, ${k} → 1을 뺀 ${k} − 1 = ${k-1}개`,{unit:'개'})],[1]); }
+   if(t===2){ const c=shuffle(sm?[2,3,4,5,6]:[2,3,4,5,6,7,8,9]).slice(0,3).sort((a,b)=>a-b); const toMix=c[2]%c[0]!==0&&Math.random()<0.5; const W=Math.floor(c[2]/c[0]), R=c[2]%c[0];
+     const cardTxt=c.map(x=>`<span class="card">${x}</span>`).join(' ');
+     return tag({text:`수 카드 ${cardTxt} 중 2장을 골라 가분수를 만들려고 해요.<br>만들 수 있는 가분수 중 <b>가장 큰</b> 것을 ${toMix?'<b>대분수</b>로 나타내세요.':'쓰세요.'}`, type:'frac', form:toMix?'mixed':'frac', answer:toMix?F(W,R,c[0]):F(0,c[2],c[0]), fm:'cards',
+      hints:['가분수는 분자 ≥ 분모. 크게 만들려면 분자는?','분자는 가장 크게, 분모는 가장 작게 — 같은 양을 더 적게 나누면 한 조각이 커요.'],
+      sol:[`분자 ${c[2]}, 분모 ${c[0]} → ${fr(c[2],c[0])}`,...(toMix?[`${c[2]} = ${c[0]} × ${W} + ${R} → <b>${mx(W,R,c[0])}</b>`]:[`<b>${fr(c[2],c[0])}</b>`])],
+      bugs:[fbug(F(0,c[0],c[2]),'kind-eq','그건 진분수예요. 가분수는 분자가 더 커요.'),fbug(F(0,c[2],c[1]),'cards','분모가 작을수록 커요.'),...(toMix?[fbug(F(0,c[2],c[0]),'stop','가장 큰 가분수를 찾았어요! 대분수로 바꿔요.')]:[])]},t,
+      [KS(`가장 큰 가분수: <b>분자</b>에 놓을 카드는?`,'num',c[2],`분자가 클수록 커요 → 가장 큰 카드 ${c[2]}`),
+       KS(`<b>분모</b>에 놓을 카드는?`,'num',c[0],`분모가 작을수록 한 조각이 커요 → 가장 작은 카드 ${c[0]}`),
+       toMix?KS(`가장 큰 가분수 ${fr(c[2],c[0])}를 대분수로 쓰면?`,'frac',F(W,R,c[0]),`${c[2]} = ${c[0]} × ${W} + ${R} → ${mx(W,R,c[0])}`,{form:'mixed'})
+            :KS(`가장 큰 가분수를 쓰면?`,'frac',F(0,c[2],c[0]),`분자 ${c[2]}, 분모 ${c[0]} → ${fr(c[2],c[0])}`)],[0,2]); }
+   const d=sm?rnd(3,5):rnd(3,9), w=sm?rnd(2,3):rnd(2,7), n=rnd(1,d-1), N=w*d+n; return tag({text:`□ ${fr(n,d)} = ${fr(N,d)}<br>□에 알맞은 자연수는?`, type:'num', answer:w, fm:'toMix',
+    hints:[`${N}에서 ${n}을 빼면 ${N-n}. ${d}가 몇 번?`,`${d} × □ + ${n} = ${N}`], sol:[`${N} − ${n} = ${N-n}`,`${N-n} = ${d} × ${w} → <b>${w}</b>`], bugs:[nbug(N-n,'toMix','분모로 한 번 더 나눠요.'),nbug(Math.floor(N/d)+1,'qr-swap','몇 번 들어가는지 다시 세요.')]},t,
+    [KS(`${fr(N,d)}에서 ${fr(n,d)}을(를) 떼어 내면 분자가 얼마 남아요?`,'num',N-n,`${N} − ${n} = ${N-n}`),
+     KS(`${fr(N-n,d)}는 자연수 몇이에요? (${N-n} 안에 ${d}${IG(d)} 몇 번?)`,'num',w,`${d} × ${w} = ${N-n} → □ = ${w}`)],[1]); }
+ if(lv===3){ const c=shuffle(sm?[1,2,3,4,5,6]:[1,2,3,4,5,6,7,8,9]).slice(0,3).sort((a,b)=>a-b); const t=T(3);
+   const big=F(c[2],c[0],c[1]), small=F(c[0],c[1],c[2]); const cards=c.map(x=>`<span class="card">${x}</span>`).join(' ');
+   if(t===0) return tag({text:`수 카드 ${cards}를 한 번씩 모두 써서 대분수를 만들려고 해요.<br><b>가장 큰</b> 대분수를 쓰세요.`, type:'frac', form:'mixed', answer:big, fm:'cards',
+    hints:['대분수는 자연수가 크면 무조건 커요. 자연수 자리에 어떤 카드?','남은 두 장으로 진분수: 작은 수가 분자!'], sol:[`자연수 = 가장 큰 ${c[2]}`,`남은 ${c[0]}, ${c[1]} → ${fr(c[0],c[1])}`,`<b>${mx(c[2],c[0],c[1])}</b>`],
+    bugs:[fbug(F(c[2],c[1],c[0]),'kind-eq','분수 부분이 가분수가 되면 대분수가 아니에요.'),fbug(F(c[1],c[0],c[2]),'cards','자연수 자리에 가장 큰 카드!')]},t,
+    [KS(`가장 큰 대분수: <b>자연수</b> 자리에 놓을 카드는?`,'num',c[2],`대분수는 자연수가 클수록 커요 → 가장 큰 ${c[2]}`),
+     KS(`남은 두 장(${c[0]}, ${c[1]})으로 진분수를 만들어요. <b>분자</b>는?`,'num',c[0],`진분수는 분자 &lt; 분모 → 작은 ${c[0]}${IG(c[0])} 분자`),
+     KS(`가장 큰 대분수를 쓰면?`,'frac',big,`자연수 ${c[2]}, 진분수 ${fr(c[0],c[1])} → ${mx(c[2],c[0],c[1])}`,{form:'mixed'})],[0,2]);
+   if(t===1) return tag({text:`수 카드 ${cards}를 한 번씩 모두 써서 대분수를 만들려고 해요.<br><b>가장 작은</b> 대분수를 쓰세요.`, type:'frac', form:'mixed', answer:small, fm:'cards',
+    hints:['자연수가 작을수록 작아요.','남은 두 장으로 진분수.'], sol:[`자연수 = 가장 작은 ${c[0]}`,`남은 ${c[1]}, ${c[2]} → ${fr(c[1],c[2])}`,`<b>${mx(c[0],c[1],c[2])}</b>`],
+    bugs:[fbug(F(c[0],c[2],c[1]),'kind-eq','분수 부분이 가분수예요.'),fbug(F(c[1],c[0],c[2]),'cards','자연수 자리에 가장 작은 카드!')]},t,
+    [KS(`가장 작은 대분수: <b>자연수</b> 자리에 놓을 카드는?`,'num',c[0],`자연수가 작을수록 작아요 → 가장 작은 ${c[0]}`),
+     KS(`남은 두 장(${c[1]}, ${c[2]})으로 진분수를 만들어요. <b>분자</b>는?`,'num',c[1],`진분수는 분자 &lt; 분모 → 작은 ${c[1]}${IG(c[1])} 분자`),
+     KS(`가장 작은 대분수를 쓰면?`,'frac',small,`자연수 ${c[0]}, 진분수 ${fr(c[1],c[2])} → ${mx(c[0],c[1],c[2])}`,{form:'mixed'})],[0,2]);
+   const N=big.w*big.d+big.n; return tag({text:`수 카드 ${cards}를 한 번씩 모두 써서 가장 큰 대분수를 만들었어요.<br>이 대분수를 <b>가분수</b>로 나타내세요.`, type:'frac', form:'frac', answer:F(0,N,big.d), fm:'toImp',
+    hints:['먼저 가장 큰 대분수: 자연수에 가장 큰 카드.',`${mx(big.w,big.n,big.d)} → ${big.w} × ${big.d} + ${big.n}`], sol:[`가장 큰 대분수 ${mx(big.w,big.n,big.d)}`,`${big.w} × ${big.d} + ${big.n} = ${N}`,`<b>${fr(N,big.d)}</b>`],
+    bugs:[fbug(F(0,big.w+big.n,big.d),'add-whole','자연수 × 분모 + 분자!'),fbug(big,'stop','대분수까지 왔어요. 이제 가분수로!')]},t,
+    [KS(`가장 큰 대분수: <b>자연수</b> 자리에 놓을 카드는?`,'num',c[2],`대분수는 자연수가 클수록 커요 → 가장 큰 ${c[2]}`),
+     KS(`남은 두 장(${c[0]}, ${c[1]})으로 진분수를 만들어요. <b>분자</b>는?`,'num',c[0],`진분수는 분자 &lt; 분모 → 작은 ${c[0]}${IG(c[0])} 분자`),
+     KS(`가장 큰 대분수를 쓰면?`,'frac',big,`자연수 ${c[2]}, 진분수 ${fr(c[0],c[1])} → ${mx(c[2],c[0],c[1])}`,{form:'mixed'}),
+     KS(`${mx(big.w,big.n,big.d)}를 가분수로 쓰면?`,'frac',F(0,N,big.d),`${big.w} × ${big.d} + ${big.n} = ${N} → ${fr(N,big.d)}`)],[2,3]); }
+ if(lv===4){ const t=o.t!=null?o.t:(Math.random()<0.5?0:1);
+   if(t===0){ const d=sm?rnd(3,5):rnd(3,9), L=sm?rnd(d+2,15):rnd(d+2,40), U=L+(sm?rnd(4,7):rnd(6,14)); let cnt=0, all=0; const mul=[]; for(let k=L+1;k<U;k++){ all++; if(k>d && k%d!==0) cnt++; else mul.push(k); }
+     return tag({text:`분모가 ${d}인 <b>대분수</b> 중에서, 가분수로 나타내면 분자가 ${L}보다 크고 ${U}보다 작은 것은 모두 몇 개인가요?`, type:'num', unit:'개', answer:cnt, fm:'list',
+      hints:[`분자 후보: ${L+1}부터 ${U-1}까지. 모두 대분수가 될까?`,`분자가 ${d}의 배수면 ${fr(d*2,d)} = 2처럼 자연수가 돼요. 빼야 해요.`],
+      sol:[`분자 ${L+1} ~ ${U-1}: ${all}개`,`${d}의 배수(자연수가 됨) 빼기: ${all-cnt}개`,`<b>${cnt}개</b>`],
+      bugs:[nbug(all,'multiple',`${d}로 나누어떨어지는 분자는 자연수가 돼서 대분수가 아니에요.`),nbug(cnt+2,'endpoint',`${L}과 ${U}는 들어가지 않아요 ("보다 크고, 보다 작은").`)]},t,
+      [KS(`분자 후보는 ${L}보다 크고 ${U}보다 작은 수예요. ${L+1}부터 ${U-1}까지 모두 몇 개?`,'num',all,`${L}, ${U}는 빼요 → ${U-1} − ${L+1} + 1 = ${all}개`,{unit:'개'}),
+       KS(`그중 ${d}의 배수는 몇 개? (${d}의 배수면 자연수가 돼서 대분수가 아니에요)`,'num',mul.length,mul.length?`${mul.join(', ')} → ${mul.length}개`:`${L+1}~${U-1} 안에 ${d}의 배수가 없어요 → 0개`,{unit:'개'}),
+       KS(`대분수가 되는 것은 모두 몇 개?`,'num',cnt,`${all} − ${mul.length} = ${cnt}개`,{unit:'개'})],[1,2]); }
+   for(let g=0;g<50;g++){ const d=sm?rnd(2,5):rnd(2,9), n=d*(sm?rnd(1,3):rnd(1,5))+rnd(1,d-1); if(n<=d) continue; const S2=n+d, D=n-d; const w=Math.floor(n/d), r=n%d;
+     return tag({text:`분모와 분자의 합이 ${S2}이고, 분자가 분모보다 ${D} 큰 가분수가 있어요.<br>이 가분수를 <b>대분수</b>로 나타내세요.`, type:'frac', form:'mixed', answer:F(w,r,d), fm:'list',
+      hints:['합과 차: 분모를 □라 하면 분자는 □ + '+D+'.',`□ + □ + ${D} = ${S2} → □ + □ = ${S2-D}`], sol:[`분모 = (${S2} − ${D}) ÷ 2 = ${d}`,`분자 = ${d} + ${D} = ${n}`,`${fr(n,d)} = <b>${mx(w,r,d)}</b>`],
+      bugs:[fbug(F(0,n,d),'stop','가분수까지 찾았어요! 대분수로 바꿔요.'),fbug(F(Math.floor(d/n),d%n,n),'swap','분자가 분모보다 커요. 자리를 바꿔 봐요.')]},1,
+      [KS(`분모를 □라 하면 분자는 □ + ${D}. 합 ${S2}에서 ${D}을(를) 빼면? (□ + □)`,'num',S2-D,`□ + □ + ${D} = ${S2} → □ + □ = ${S2} − ${D} = ${S2-D}`),
+       KS(`분모를 □라 하면 □ + □ = ${S2-D}. 분모 □는?`,'num',d,`${S2-D} ÷ 2 = ${d}`),
+       KS(`분모가 ${d}이고 분자는 분모보다 ${D} 커요. 분자는?`,'num',n,`${d} + ${D} = ${n}`),
+       KS(`가분수 ${fr(n,d)}를 대분수로 쓰면?`,'frac',F(w,r,d),`${n} = ${d} × ${w} + ${r} → ${mx(w,r,d)}`,{form:'mixed'})],[1,3]); } return null; }
+ return null; }
 S({id:'kind',unit:'분수',title:'진분수·가분수·대분수',moves:{
   def:'분자와 분모를 비교한다 (분자 < 분모 → 진분수)', toImp:'자연수 × 분모 + 분자 = 가분수의 분자', toMix:'분자 안에 분모가 몇 번 들어가는지 → 자연수, 나머지 → 분자', list:'조건에 맞는 것을 빠짐없이 하나씩 적는다', cards:'큰 수를 어디에 놓아야 커지는지 먼저 정한다'},
  learn:`<ul><li><b>진분수</b>: 분자 &lt; 분모 (${fr(3,5)}) — 1보다 작아요</li><li><b>가분수</b>: 분자 ≥ 분모 (${fr(5,5)}, ${fr(7,5)}) — 1과 같거나 커요</li><li><b>대분수</b>: 자연수 + 진분수 (${mx(1,2,5)})</li></ul><div class="ex">${mx(2,1,4)} = ${fr(9,4)} ← 2 × 4 + 1 = 9</div>`,
@@ -3223,48 +3310,7 @@ S({id:'kind',unit:'분수',title:'진분수·가분수·대분수',moves:{
    return {text:`색칠한 부분을 <b>대분수</b>로 나타내세요. (원 하나가 1이에요)`, svg:pies(tot,d), type:'frac', form:'mixed', answer:F(w,n,d), fm:'toMix',
     hints:['꽉 찬 원이 몇 개인지 세요. 그게 자연수.',`꽉 찬 원 ${w}개, 남은 원은 ${d}조각 중 ${n}조각`], sol:[`꽉 찬 원 ${w}개 → ${w}`,`나머지 ${fr(n,d)}`,`<b>${mx(w,n,d)}</b>`],
     bugs:[fbug(F(0,tot,d),'kind-eq','그건 가분수예요. 문제는 <b>대분수</b>로!'),fbug(F(w,n,d*(w+1)),'den-diff','분모는 원 하나를 나눈 조각 수예요.')]}; },
-  lv=>{ const d=rnd(2,9), w=rnd(1,6), n=rnd(1,d-1), N=w*d+n; const t=rnd(0,2);
-   if(t===0) return {text:`${mx(w,n,d)}를 <b>가분수</b>로 나타내세요.`, type:'frac', form:'frac', answer:F(0,N,d), fm:'toImp',
-    hints:[`자연수 ${w}은(는) ${fr(1,d)}이 몇 개일까?`,`${w} = ${fr(w*d,d)}, 여기에 ${fr(n,d)}를 더해요.`], sol:[`${w} × ${d} + ${n} = ${N}`,`<b>${fr(N,d)}</b>`],
-    bugs:[fbug(F(0,w+n,d),'add-whole',`자연수를 분자에 그냥 더했어요. ${w}은 ${fr(1,d)}이 ${w*d}개!`),fbug(F(0,w*n+d,d),'toImp','자연수 × <b>분모</b> + 분자예요.'),fbug(F(0,N,w*d),'den-diff','분모는 그대로예요.')]};
-   if(t===1) return {text:`${fr(N,d)}를 <b>대분수</b>로 나타내세요.`, type:'frac', form:'mixed', answer:F(w,n,d), fm:'toMix',
-    hints:[`${N} 안에 ${d}가 몇 번 들어갈까?`,`${d} × ${w} = ${w*d}, 남는 것 ${n}`], sol:[`${N} = ${d} × ${w} + ${n}`,`<b>${mx(w,n,d)}</b>`],
-    bugs:[fbug(F(n,w,d),'qr-swap','자연수와 분자가 바뀌었어요. 몇 번 들어가는지 → 자연수, 남는 것 → 분자.'),fbug(F(w,n,w*d),'den-diff','분모는 그대로예요.')]};
-   const k=rnd(2,6); return {text:`자연수 <big>${k}</big>를 분모가 ${d}인 분수로 나타내세요.`, type:'frac', form:'frac', answer:F(0,k*d,d), fm:'toImp',
-    hints:[`1 = ${fr(d,d)}예요.`,`${k}는 ${fr(d,d)}이 ${k}개.`], sol:[`1 = ${fr(d,d)}`,`${k} = ${fr(k*d,d)}`], bugs:[fbug(F(0,k,d),'add-whole','그건 1보다 작아요. 1 = '+d+'/'+d+'!'),fbug(F(0,k+d,d),'add-whole','더하는 게 아니라 '+k+'번 모아요.')]}; },
-  lv=>{ const t=rnd(0,3);
-   if(t===0){ const d=rnd(4,12); return {text:`분모가 ${d}인 <b>진분수</b>는 모두 몇 개인가요?`, type:'num', unit:'개', answer:d-1, fm:'list',
-     hints:['분자가 분모보다 작아야 해요. 분자는 1부터!',`${fr(1,d)}, ${fr(2,d)}, … 분자가 ${d}이면?`], sol:[`분자 1, 2, …, ${d-1}`,`<b>${d-1}개</b>`], bugs:[nbug(d,'kind-eq',`${fr(d,d)}는 1과 같아요 → 가분수!`)]}; }
-   if(t===1){ const k=rnd(5,12); return {text:`분자가 ${k}인 <b>가분수</b> 중에서 분모가 2 이상인 것은 모두 몇 개인가요?`, type:'num', unit:'개', answer:k-1, fm:'list',
-     hints:['가분수는 분모가 분자와 같거나 작아요.',`분모 2, 3, …, ${k}`], sol:[`분모 2부터 ${k}까지`,`<b>${k-1}개</b>`], bugs:[nbug(k-2,'endpoint',`${fr(k,k)}도 가분수예요 (분자 = 분모).`),nbug(k,'count-cond','분모가 1인 것은 빼야 해요.')]}; }
-   if(t===2){ const c=shuffle([2,3,4,5,6,7,8,9]).slice(0,3).sort((a,b)=>a-b); const toMix=c[2]%c[0]!==0&&Math.random()<0.5; const W=Math.floor(c[2]/c[0]), R=c[2]%c[0];
-     const cardTxt=c.map(x=>`<span class="card">${x}</span>`).join(' ');
-     return {text:`수 카드 ${cardTxt} 중 2장을 골라 가분수를 만들려고 해요.<br>만들 수 있는 가분수 중 <b>가장 큰</b> 것을 ${toMix?'<b>대분수</b>로 나타내세요.':'쓰세요.'}`, type:'frac', form:toMix?'mixed':'frac', answer:toMix?F(W,R,c[0]):F(0,c[2],c[0]), fm:'cards',
-      hints:['가분수는 분자 ≥ 분모. 크게 만들려면 분자는?','분자는 가장 크게, 분모는 가장 작게 — 같은 양을 더 적게 나누면 한 조각이 커요.'],
-      sol:[`분자 ${c[2]}, 분모 ${c[0]} → ${fr(c[2],c[0])}`,...(toMix?[`${c[2]} = ${c[0]} × ${W} + ${R} → <b>${mx(W,R,c[0])}</b>`]:[`<b>${fr(c[2],c[0])}</b>`])],
-      bugs:[fbug(F(0,c[0],c[2]),'kind-eq','그건 진분수예요. 가분수는 분자가 더 커요.'),fbug(F(0,c[2],c[1]),'cards','분모가 작을수록 커요.'),...(toMix?[fbug(F(0,c[2],c[0]),'stop','가장 큰 가분수를 찾았어요! 대분수로 바꿔요.')]:[])]}; }
-   const d=rnd(3,9), w=rnd(2,7), n=rnd(1,d-1), N=w*d+n; return {text:`□ ${fr(n,d)} = ${fr(N,d)}<br>□에 알맞은 자연수는?`, type:'num', answer:w, fm:'toMix',
-    hints:[`${N}에서 ${n}을 빼면 ${N-n}. ${d}가 몇 번?`,`${d} × □ + ${n} = ${N}`], sol:[`${N} − ${n} = ${N-n}`,`${N-n} = ${d} × ${w} → <b>${w}</b>`], bugs:[nbug(N-n,'toMix','분모로 한 번 더 나눠요.'),nbug(Math.floor(N/d)+1,'qr-swap','몇 번 들어가는지 다시 세요.')]}; },
-  lv=>{ const c=shuffle([1,2,3,4,5,6,7,8,9]).slice(0,3).sort((a,b)=>a-b); const t=rnd(0,2);
-   const big=F(c[2],c[0],c[1]), small=F(c[0],c[1],c[2]);
-   if(t===0) return {text:`수 카드 ${c.map(x=>`<span class="card">${x}</span>`).join(' ')}를 한 번씩 모두 써서 대분수를 만들려고 해요.<br><b>가장 큰</b> 대분수를 쓰세요.`, type:'frac', form:'mixed', answer:big, fm:'cards',
-    hints:['대분수는 자연수가 크면 무조건 커요. 자연수 자리에 어떤 카드?','남은 두 장으로 진분수: 작은 수가 분자!'], sol:[`자연수 = 가장 큰 ${c[2]}`,`남은 ${c[0]}, ${c[1]} → ${fr(c[0],c[1])}`,`<b>${mx(c[2],c[0],c[1])}</b>`],
-    bugs:[fbug(F(c[2],c[1],c[0]),'kind-eq','분수 부분이 가분수가 되면 대분수가 아니에요.'),fbug(F(c[1],c[0],c[2]),'cards','자연수 자리에 가장 큰 카드!')]};
-   if(t===1) return {text:`수 카드 ${c.map(x=>`<span class="card">${x}</span>`).join(' ')}를 한 번씩 모두 써서 대분수를 만들려고 해요.<br><b>가장 작은</b> 대분수를 쓰세요.`, type:'frac', form:'mixed', answer:small, fm:'cards',
-    hints:['자연수가 작을수록 작아요.','남은 두 장으로 진분수.'], sol:[`자연수 = 가장 작은 ${c[0]}`,`남은 ${c[1]}, ${c[2]} → ${fr(c[1],c[2])}`,`<b>${mx(c[0],c[1],c[2])}</b>`],
-    bugs:[fbug(F(c[0],c[2],c[1]),'kind-eq','분수 부분이 가분수예요.'),fbug(F(c[1],c[0],c[2]),'cards','자연수 자리에 가장 작은 카드!')]};
-   const N=big.w*big.d+big.n; return {text:`수 카드 ${c.map(x=>`<span class="card">${x}</span>`).join(' ')}를 한 번씩 모두 써서 가장 큰 대분수를 만들었어요.<br>이 대분수를 <b>가분수</b>로 나타내세요.`, type:'frac', form:'frac', answer:F(0,N,big.d), fm:'toImp',
-    hints:['먼저 가장 큰 대분수: 자연수에 가장 큰 카드.',`${mx(big.w,big.n,big.d)} → ${big.w} × ${big.d} + ${big.n}`], sol:[`가장 큰 대분수 ${mx(big.w,big.n,big.d)}`,`${big.w} × ${big.d} + ${big.n} = ${N}`,`<b>${fr(N,big.d)}</b>`],
-    bugs:[fbug(F(0,big.w+big.n,big.d),'add-whole','자연수 × 분모 + 분자!'),fbug(big,'stop','대분수까지 왔어요. 이제 가분수로!')]}; },
-  lv=>{ if(Math.random()<0.5){ const d=rnd(3,9), L=rnd(d+2,40), U=L+rnd(6,14); let cnt=0, all=0; for(let k=L+1;k<U;k++){ all++; if(k>d && k%d!==0) cnt++; }
-     return {text:`분모가 ${d}인 <b>대분수</b> 중에서, 가분수로 나타내면 분자가 ${L}보다 크고 ${U}보다 작은 것은 모두 몇 개인가요?`, type:'num', unit:'개', answer:cnt, fm:'list',
-      hints:[`분자 후보: ${L+1}부터 ${U-1}까지. 모두 대분수가 될까?`,`분자가 ${d}의 배수면 ${fr(d*2,d)} = 2처럼 자연수가 돼요. 빼야 해요.`],
-      sol:[`분자 ${L+1} ~ ${U-1}: ${all}개`,`${d}의 배수(자연수가 됨) 빼기: ${all-cnt}개`,`<b>${cnt}개</b>`],
-      bugs:[nbug(all,'multiple',`${d}로 나누어떨어지는 분자는 자연수가 돼서 대분수가 아니에요.`),nbug(cnt+2,'endpoint',`${L}과 ${U}는 들어가지 않아요 ("보다 크고, 보다 작은").`)]}; }
-   for(let t=0;t<50;t++){ const d=rnd(2,9), n=d*rnd(1,5)+rnd(1,d-1); if(n<=d) continue; const S2=n+d, D=n-d; const w=Math.floor(n/d), r=n%d;
-     return {text:`분모와 분자의 합이 ${S2}이고, 분자가 분모보다 ${D} 큰 가분수가 있어요.<br>이 가분수를 <b>대분수</b>로 나타내세요.`, type:'frac', form:'mixed', answer:F(w,r,d), fm:'list',
-      hints:['합과 차: 분모를 □라 하면 분자는 □ + '+D+'.',`□ + □ + ${D} = ${S2} → □ + □ = ${S2-D}`], sol:[`분모 = (${S2} − ${D}) ÷ 2 = ${d}`,`분자 = ${d} + ${D} = ${n}`,`${fr(n,d)} = <b>${mx(w,r,d)}</b>`],
-      bugs:[fbug(F(0,n,d),'stop','가분수까지 찾았어요! 대분수로 바꿔요.'),fbug(F(Math.floor(d/n),d%n,n),'swap','분자가 분모보다 커요. 자리를 바꿔 봐요.')]}; } return null; }
+  lv=>kindGen(1), lv=>kindGen(2), lv=>kindGen(3), lv=>kindGen(4)
  ]});
 
 // ---------- 4 분수 크기 비교 ----------
@@ -3522,9 +3568,9 @@ S({id:'pgdraw',unit:'그림그래프',title:'그림그래프 그리기와 해석
 // ===== 문제 만들기 / 채점 =====
 const setKey=(p,a)=>a.map(x=>p.item==='frac'?fkey(x):String(x)).sort().join(',');
 function keyOf(p,v){ if(p.type==='set') return setKey(p,v); if(p.type==='frac') return fkey(v); if(p.type==='pg') return v.join(','); return String(v); }
-function makeProblem(si,lv){ const sk=SKILLS[si];
-  for(let t=0;t<80;t++){ let p=null; try{ p=sk.gen[lv](lv); }catch(e){ if(typeof console!=='undefined') console.error(sk.id,lv,e); p=null; }
-    if(p&&p.answer!==undefined&&p.answer!==null){ p.sk=si; p.lv=lv; p.text=fixJosa(p.text); p.hints=p.hints.map(fixJosa); p.sol=p.sol.map(fixJosa); (p.bugs||[]).forEach(b=>{if(b)b.msg=fixJosa(b.msg);}); const ak=keyOf(p,p.answer); const seen=new Set(); p.bugs=(p.bugs||[]).filter(b=>b&&b.v!==ak&&((p.type!=='num'&&p.type!=='lm')||(/^\d+$/.test(b.v)&&Number(b.v)>0))&&!seen.has(b.v)&&seen.add(b.v)); return p; } }
+function makeProblem(si,lv,g){ const sk=SKILLS[si];
+  for(let t=0;t<80;t++){ let p=null; try{ p=g?g():sk.gen[lv](lv); }catch(e){ if(typeof console!=='undefined') console.error(sk.id,lv,e); p=null; }
+    if(p&&p.answer!==undefined&&p.answer!==null){ p.sk=si; p.lv=lv; p.text=fixJosa(p.text); p.hints=p.hints.map(fixJosa); p.sol=p.sol.map(fixJosa); (p.steps||[]).forEach(x=>{x.q=fixJosa(x.q); x.why=fixJosa(x.why);}); (p.bugs||[]).forEach(b=>{if(b)b.msg=fixJosa(b.msg);}); const ak=keyOf(p,p.answer); const seen=new Set(); p.bugs=(p.bugs||[]).filter(b=>b&&b.v!==ak&&((p.type!=='num'&&p.type!=='lm')||(/^\d+$/.test(b.v)&&Number(b.v)>0))&&!seen.has(b.v)&&seen.add(b.v)); return p; } }
   throw new Error('gen fail '+sk.id+' '+lv); }
 function fmOptions(p){ const sk=SKILLS[p.sk]; const others=Object.keys(sk.moves).filter(k=>k!==p.fm).map(k=>sk.moves[k]); const pool=shuffle(others).slice(0,2); while(pool.length<2) pool.push(pick(GENERIC.filter(g=>!pool.includes(g)))); return shuffle([{t:sk.moves[p.fm],ok:true},...pool.map(t=>({t,ok:false}))]); }
 // input: num {v} / frac {w,n,d} / lm {a,b} / choice,cmp string / pg array
@@ -3619,11 +3665,11 @@ const LESSONS={
 const WHY=[['understand','📘','이해가 안 됐어'],['speed','🌊','머리가 느리게 돌았어 / 피곤해'],['attention','🎯','처음에 잘못 봤어'],['retrieval','🗣️','아는데 생각이 안 났어'],['fatigue','🔋','뒤로 갈수록 집중이 안 됐어'],['none','😀','안 막혔어']];
 const EMBED=typeof HUB!=='undefined'; // 오늘의 공부 안에 들어가 있으면 true
 const SID=Date.now().toString(36); let SEQ=0;
-function freshProg(){ const sk={}; SKILLS.forEach(s=>sk[s.id]={lv:0,st:[0,0,0,0,0],lesson:0,check:0}); return {sk,whys:[],ctime:[],penOnly:false,book:{}}; }
+function freshProg(){ const sk={}; SKILLS.forEach(s=>sk[s.id]={lv:0,st:[0,0,0,0,0],lesson:0,check:0}); return {sk,whys:[],ctime:[],penOnly:false,book:{},kstep:{}}; }
 let PROG=freshProg(), SAVED_ATT=[], UNSAVED=[], DIRTY=false, DBH=null, DB_STATE='loading';
 const today=()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const allAtt=()=>SAVED_ATT.concat(UNSAVED);
-function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; f.pf=d.pf||{}; f.pfrev=d.pfrev||{}; if(d.pfday) f.pfday=d.pfday; return f; }
+function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; f.pf=d.pf||{}; f.pfrev=d.pfrev||{}; if(d.pfday) f.pfday=d.pfday; f.kstep=d.kstep||{}; return f; }
 async function loadDB(){
   const timer=setTimeout(()=>{ if(DB_STATE==='loading'){ DB_STATE='offline'; refreshTop(); } },10000);
   try{ DBH=EMBED?await HUB.db:await claude.use('db'); }catch(e){ DBH=null; }
@@ -4137,6 +4183,49 @@ function phShrink(file){ return new Promise((ok,no)=>{ const u=URL.createObjectU
 // ===== 문제 풀기 =====
 let C=null, PAD=null;
 const PER=12;
+// ===== 쪼갠 칸 (엄마 11/25: "진분수 2단계부터 어려워하네, 문제를 더 쪼개봐야것다") =====
+// 유형(kind:단계:유형)마다 stage 0 = 칸 전부 → 3번 연속 칸마다 한 번에 맞히면 stage 1 = 칸 줄임 → 또 3번이면 stage 2 = 혼자 풀기. 혼자 풀다 틀리면 stage 1로.
+// 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 쪼갠 칸으로 맞힌 건 ★ 안 줌.
+function kstGet(key){ PROG.kstep=PROG.kstep||{}; return PROG.kstep[key]||(PROG.kstep[key]={stage:0,ok:0}); }
+function kstAfter(key,stepRun,rec){ const s=kstGet(key); DIRTY=true; let up=0;
+  if(stepRun){ if(stepRun.clean){ s.ok++; if(s.ok>=3){ s.stage=Math.min(2,s.stage+1); s.ok=0; up=s.stage; } } else s.ok=0; }
+  else if(rec&&rec.res==='x'){ s.stage=1; s.ok=0; }
+  return up; }
+function mountSteps(box,p,stage,opts){
+  const idx=stage===0||!p.short?p.steps.map((_,k)=>k):p.short.slice(); const NUM='①②③④⑤';
+  const st={tries:0,hints:0,wrong:[],tags:[],t0:Date.now(),done:false,miss:[],clean:true}; let cur=0, att=0; const rows=[];
+  box.innerHTML=`${problemCard(p)}<div id="inp"><div class="kstb">🪜 작은 칸으로 나눠서 풀어요</div><div id="kstl"></div></div>
+   <div class="acts" id="macts"><button class="ok" id="okb">확인</button></div><div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="after"></div>`;
+  const fb=box.querySelector('#fb'), list=box.querySelector('#kstl'); const show=(cls,html)=>{ fb.className='fb show '+cls; fb.innerHTML=html; };
+  const sp=s=>({type:s.type,form:s.form||'frac',answer:s.answer,unit:s.unit,bugs:[]}); let ist={};
+  const ansTxt=s=>s.type==='frac'?fh(s.answer):String(s.answer)+(s.unit?' '+s.unit:'');
+  function draw(){ list.innerHTML=rows.map((r,i)=>{ const s=p.steps[r.k]; return `<div class="kstr ${r.ok?'kdone':'kgive'}"><span class="kstn">${NUM[i]}</span>${s.q} → <b>${ansTxt(s)}</b> ${r.ok?'✓':''}${r.ok?'':`<div class="kstw">${s.why}</div>`}</div>`; }).join('')
+      +(cur<idx.length?`<div class="kstr now"><span class="kstn">${NUM[cur]}</span>${p.steps[idx[cur]].q}<div id="kin">${inputHTML(sp(p.steps[idx[cur]]))}</div></div>`:'');
+    if(cur<idx.length){ ist={}; mountInput(list.querySelector('#kin'),sp(p.steps[idx[cur]]),ist); } }
+  draw();
+  if(!opts.noCircle){ if(!condCheck(box,p,st,()=>{ if(!qCircle(box,p,st)){ box.querySelector('#inp').style.display=''; box.querySelector('#macts').style.display=''; } })) qCircle(box,p,st); }
+  const nextStep=ok=>{ rows.push({k:idx[cur],ok}); cur++; att=0; fb.className='fb'; fb.innerHTML=''; draw(); if(cur>=idx.length) finish(); };
+  box.querySelector('#okb').onclick=()=>{ if(st.done) return; const s=p.steps[idx[cur]], q=sp(s); const inp=readInput(q,ist); const r=check(q,inp);
+    if(r.empty||r.normalize){ show('h',r.msg); return; }
+    st.tries++; if(r.ok){ nextStep(true); return; }
+    st.clean=false; st.wrong.push((cur+1)+': '+stripTags(fmtStepKey(q,inp)));
+    if(att===0){ att=1; show('x','🤔 다시 한 번 생각해 볼까?'); draw(); return; }
+    st.miss.push(cur); nextStep(false); };
+  function finish(){ st.done=true; const sec=Math.round((Date.now()-st.t0)/1000); box.querySelector('#macts').style.display='none';
+    const res=st.miss.length?'x':'h';
+    const rec={d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:0,wrong:[],tags:[],sec,fm:p.fm,qc:st.qc||null,cond:st.cond||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),
+      pen:penSnap(st),penAsk:null,solSeen:true,fixed:false,learn:null,tutor:null,stepMode:1,
+      steps:{stage,n:idx.length,all:p.steps.length,clean:st.clean,miss:st.miss.map(i=>({i:i+1,q:stripTags(p.steps[idx[i]].q).slice(0,80)})),wrong:st.wrong}};
+    const up=p.skey?kstAfter(p.skey,{clean:st.clean},rec):0; rec.steps.up=up||0;
+    show(res==='h'?'o':'x', res==='h'?`⭕ 작은 칸을 모두 풀었어요!${st.clean?'':' (다시 해서 맞힌 칸도 있어요)'}${up===1?'<div class="tagline">🎉 잘했어요! 다음부터 칸을 줄여 볼게요.</div>':up===2?'<div class="tagline">🎉 잘했어요! 다음엔 혼자 풀어 봐요.</div>':''}`
+      :`정답은 <b>${answerText(p)}</b> 이에요. 막힌 칸은 풀이를 봐 두고, 다음 문제로 가요.`);
+    box.querySelector('#sol').innerHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
+    opts.onDone&&opts.onDone(rec); if(res==='h') teachAdd(p,rec); DIRTY=true; refreshTop();
+    const af=box.querySelector('#after'); af.innerHTML=`<div class="acts"><button class="next" id="nx" data-auto="${res==='h'?'ok':'x'}">다음 문제 ▶</button></div>`;
+    af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
+  return st; }
+const stepsTxt=s=>{ const N='①②③④⑤', e=t=>String(t).replace(/[<&]/g,''); return `🪜 쪼갠 칸으로 풂(${s.n}칸${s.n<s.all?', 줄인 칸':''}) · ${(s.miss||[]).length?'막힌 칸: '+s.miss.map(m=>(N[m.i-1]||m.i)+' '+e(m.q)).join(' / ')+' (답 보여 줌)':s.clean?'칸마다 한 번에 맞힘':'다시 해서 모두 맞힘'}${s.up===1?' · 다음부터 칸 줄임':s.up===2?' · 다음부터 혼자 풀기':''}`; };
+const fmtStepKey=(q,inp)=>q.type==='frac'?(inp.n||inp.d?(Number(inp.w||0)?inp.w+'과 ':'')+inp.n+'/'+inp.d:String(inp.w||'')):String(inp);
 function startSolve(si,lv){ CUR='solve'; C={si,lv,list:[],idx:-1,t0:Date.now()};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right')); newProblem(); }
 function solveBar(){ const s=SKILLS[C.si], r=PROG.sk[s.id], n=r.st[C.lv]||0; const done=C.list.filter(x=>x.rec).length;
@@ -4148,15 +4237,19 @@ function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } 
     if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
   $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<(window.HUBTRY?4:Math.min(4,PROG.sk[SKILLS[C.si].id].lv))){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
-  C.list.push({p:makeProblem(C.si,C.lv),rec:null}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
+  let p=makeProblem(C.si,C.lv), kst=null;
+  if(p.skey&&p.steps){ const s=kstGet(p.skey); if(s.stage<2){ const t=p.t, lv=C.lv; p=makeProblem(C.si,lv,()=>kindGen(lv,{t,small:true})); kst=s.stage; } } // 엄마 11/25: 쪼갠 칸
+  C.list.push({p,rec:null,kst}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   L.innerHTML=`${solveBar()}<div id="pbox"></div>${navRow()}`; bindNav();
   const box=$('#pbox');
   if(it.rec){ pfApply(it); box.innerHTML=`${problemCard(it.p)}<div class="fb show ${it.rec.res==='x'?'x':it.rec.res==='s'?'h':'o'}">${it.rec.res==='s'?'건너뛴 문제예요.':it.rec.res==='x'?'틀린 문제예요.':'맞힌 문제예요.'} 정답: <b>${answerText(it.p)}</b></div><div class="sol">${it.p.sol.map(x=>`<div class="st">${x}</div>`).join('')}</div>`; return; }
+  const onNext=()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
+  if(it.kst!=null){ pfApply(it); it.st=mountSteps(box,it.p,it.kst,{onDone:rec=>{ it.rec=rec; recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext}); return; }
   if(!it.fr) pfNew(it); pfApply(it);
-  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
+  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; if(it.p.skey&&it.p.steps) kstAfter(it.p.skey,null,rec); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
-function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true;
+function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
   if(rec.res==='o') r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
   if(r.st[l]>=5&&r.lv<=l&&l<4){ r.lv=l+1; levelUp(l); } else if(r.st[l]>=5&&l===4&&r.lv<5){ r.lv=5; levelUp(l); } }
 function modal(html){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="mbox">${html}</div>`; document.body.appendChild(m); return m; }
@@ -4248,7 +4341,7 @@ function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
     const days={}; A.forEach(x=>{ (days[x.d]=days[x.d]||[]).push(x); });
     const drows=Object.keys(days).sort().reverse().slice(0,14).map(d=>{ const a=days[d].filter(x=>x.mode==='solve'&&x.res!=='s'); const o=a.filter(x=>x.res==='o').length; const sec=days[d].reduce((s,x)=>s+(x.sec||0),0); const w=PROG.whys.filter(x=>x.d===d).flatMap(x=>x.why).map(k=>WHYL[k]||k);
       return `<tr><td>${d}</td><td>${a.length}</td><td>${a.length?Math.round(o/a.length*100)+'%':'–'}</td><td>${Math.round(sec/60)}분</td><td class="sm">${uniq(w).join(', ')||'–'}</td></tr>`; }).join('');
-    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||bookName(x.sk)} · ${LVM[x.lv]||'책'}${x.mode!=='solve'?` (${({check:'확인',lesson:'수업',review:'🖼 그림 복습',twin:'🔁 쌍둥이'})[x.mode]||x.mode})`:''}${x.frame?`<br>🖼 ${PF[x.frame.k]?PF[x.frame.k][0]:x.frame.k} · ${PF_STAGE[x.frame.stage]||''}${x.frame.stage===1?(x.frame.pickOk===1?' · 맞는 틀 고름':x.frame.pickOk===0?' · 다른 틀 고름('+(PF[x.frame.pick]||['?'])[0]+')':' · 직접 그림'):''}${x.frame.out?' · 틀 꺼냄':''}`:''}${x.bh?`<details><summary>🖼 그림판</summary><div class="pfb ro">${x.bh}</div></details>`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}${x.penAsk==='wrote'?' · 틀린 뒤 씀':''}<br>`:x.penAsk==='blank'?'✍️ 「생각이 안 나요」<br>':''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.solSeen?'<br>📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<details><summary>🧑‍🏫 AI 대화 ${x.tutor.turns.length}줄 (${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</summary>${x.tutor.read?`<div>읽은 식: ${x.tutor.read}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${t.text}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${x.tutor.mom.join(' / ')}</div>`:''}${x.tutor.shorter?`<div>💡 ${picEsc(x.tutor.shorter)}</div>${renderPic(x.tutor.pic)}`:''}${x.learn?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</details>`:''}${x.fixed?'<br>✏️ 스스로 고침':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
+    const recent=A.slice(-30).reverse().map(x=>`<tr><td class="sm">${x.d} ${x.ts?x.ts.slice(11,16):''}</td><td class="sm">${(SKILLS[SKI(x.sk)]||{}).title||bookName(x.sk)} · ${LVM[x.lv]||'책'}${x.mode!=='solve'?` (${({check:'확인',lesson:'수업',review:'🖼 그림 복습',twin:'🔁 쌍둥이'})[x.mode]||x.mode})`:''}${x.frame?`<br>🖼 ${PF[x.frame.k]?PF[x.frame.k][0]:x.frame.k} · ${PF_STAGE[x.frame.stage]||''}${x.frame.stage===1?(x.frame.pickOk===1?' · 맞는 틀 고름':x.frame.pickOk===0?' · 다른 틀 고름('+(PF[x.frame.pick]||['?'])[0]+')':' · 직접 그림'):''}${x.frame.out?' · 틀 꺼냄':''}`:''}${x.bh?`<details><summary>🖼 그림판</summary><div class="pfb ro">${x.bh}</div></details>`:''}</td><td>${{o:'⭕',h:'△',x:'❌',s:'⏭'}[x.res]}</td><td class="sm">${x.q}</td><td class="sm">${x.ans}${x.wrong.length?`<br><span class="wr">쓴 답: ${x.wrong.map(fmtKey).join(', ')}</span>`:''}</td><td class="sm">${x.pen?`<button class="penbtn" data-pen="${x.pen.id}">✍️ 손풀이</button><br>${penInfo(x)}${x.penAsk==='wrote'?' · 틀린 뒤 씀':''}<br>`:x.penAsk==='blank'?'✍️ 「생각이 안 나요」<br>':''}${x.tags.map(t=>TAGS[t]||t).join(', ')}${x.why?`<br>${WHYL[x.why]}`:''}${x.steps?'<br>'+stepsTxt(x.steps):x.solSeen?'<br>📖 풀이 봄':''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<details><summary>🧑‍🏫 AI 대화 ${x.tutor.turns.length}줄 (${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</summary>${x.tutor.read?`<div>읽은 식: ${x.tutor.read}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${t.text}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${x.tutor.mom.join(' / ')}</div>`:''}${x.tutor.shorter?`<div>💡 ${picEsc(x.tutor.shorter)}</div>${renderPic(x.tutor.pic)}`:''}${x.learn?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</details>`:''}${x.fixed?'<br>✏️ 스스로 고침':''}</td><td class="sm">${x.sec}초 · 힌트 ${x.hints}</td></tr>`).join('');
     body=`<div class="sec">기능별</div><div class="tw"><table class="ptab"><tr><th>기능</th><th>개념/확인</th><th>지금 단계</th><th>푼 문제</th><th>한 번에 정답</th><th>시간(중간값)</th><th>많이 나온 틀린 이유</th></tr>${rows}</table></div>
      ${penSummaryHTML(A)}${pfMomHTML()}<div class="sec">날짜별</div><div class="tw"><table class="ptab"><tr><th>날짜</th><th>문제</th><th>한 번에 정답</th><th>공부 시간</th><th>시훈이가 고른 막힌 이유</th></tr>${drows||'<tr><td colspan="5">아직 기록이 없어요</td></tr>'}</table></div>
      <div class="sec">최근 30문제</div><div class="tw"><table class="ptab"><tr><th>시각</th><th>기능</th><th></th><th>문제</th><th>정답 / 쓴 답</th><th>손풀이 · 틀린 이유</th><th>시간</th></tr>${recent||'<tr><td colspan="7">아직 기록이 없어요</td></tr>'}</table></div>
