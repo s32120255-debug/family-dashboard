@@ -4654,7 +4654,12 @@ async function teachCands(){ const T=teachP(), t=today(), out=[], seen=new Set()
     out.push({key:q,kind:'new',d:t,q,html:p.text,svg:p.svg||'',ans:stripTags(answerText(p)),sol:p.sol.map(stripTags),lv:p.lv,sk:SKILLS[p.sk].id,src:'new',res:null,cond:0,strat:''}); }
   return out; }
 function teachSay(txt){ try{ const u=new SpeechSynthesisUtterance(txt); u.lang='ko-KR'; u.rate=1; u.pitch=1.25; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
-function teachHome(mom){ mom=mom===true; CUR='teach'; TC=null;
+// 엄마 11/25 "그거 해 줘": 가르치기 화면을 열면 서버를 미리 깨워 둬요(빈 요청 하나, AI는 안 불러서 값 거의 0).
+// at 칸이 없어서 하루 횟수·리포트에는 안 잡혀요. 5분에 한 번만.
+let TEACH_WARM=0;
+function teachWarm(){ if(!DBH||DB_STATE!=='ok'||Date.now()-TEACH_WARM<300000) return; TEACH_WARM=Date.now();
+  const id='warm-'+Date.now().toString(36); try{ DBH.doc('m32teachai/'+id).set({warm:1}).then(()=>setTimeout(()=>{ try{ DBH.doc('m32teachai/'+id).delete().catch(()=>{}); }catch(e){} },20000)).catch(()=>{}); }catch(e){} }
+function teachHome(mom){ mom=mom===true; CUR='teach'; TC=null; teachWarm();
   app().innerHTML=`<div class="wrap">${topBar('🧑‍🏫 AI에게 가르치기',mom?'👩 엄마 직접 해 보기 · 시훈이 기록에 안 남아요':'오늘 1문제 · 카츄에게 설명해 줘요')}<div id="tch" class="note">문제 고르는 중…</div></div>`; bindCommon();
   teachCands().then(cs=>{ const el=$('#tch'); if(!el||CUR!=='teach') return; el.className='';
     if(!cs.length){ el.innerHTML='<p class="note">가르칠 문제를 못 찾았어요. 인터넷을 확인하고 다시 들어와 주세요.</p>'; return; }
