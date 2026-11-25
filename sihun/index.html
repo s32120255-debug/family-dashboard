@@ -7317,7 +7317,38 @@ function biWords(p,pi){const R=HWREAD[p];const P=HWP[p];const W=(R&&R.paras[pi].
   return P.s[pi].map((t,si)=>{let s=t;W.forEach(x=>{if(used.has(x.k))return;const j=s.indexOf(x.w);if(j<0)return;used.add(x.k);s=s.slice(0,j)+'\u0001'+x.k+'\u0002'+s.slice(j+x.w.length)});
     s=esc1(s).replace(/\u0001(\d+)\u0002/g,(_,k)=>`<span class="bw" data-bw="${k}">${esc1(R.paras[pi].w[+k][0])}</span>`);
     return `<span class="hs" data-hs="${pi}.${si}">${s}</span>`}).join(' ')}
-function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=HWS.rd[p]||{i:0,miss:[],sec:0};st.t0=st.t0||Date.now();const n=R.paras.length;
+/* 쪼개 읽기: 문단마다 한 문장 주어·서술어 찾기 (서술어 = 맨 끝 → 주어 = 누가/무엇이). c.join(' ')===원문 */
+const HWSV={
+music:[
+ {k:0,c:['음악은','시간 예술이다.'],s:0,v:1},
+ {k:2,c:['모방은','돌림 노래와','비슷하다.'],s:0,v:2},
+ {k:0,c:['바로크 시대가 되자','모방은','더 이상','쓸모 있는 방법이','아니었다.'],s:1,v:4},
+ {k:2,c:['이런 마지막 악장에는',"'론도 형식'이",'잘','어울린다.'],s:1,v:3},
+ {k:1,c:['시대마다','모습은','달랐지만,','음악은','언제나','반복을','기본 원리로 삼아','만들어졌다.'],s:3,v:7,sx:{1:'「모습은」은 가운데 있는 「달랐지만」과 짝이에요. 맨 끝 「만들어졌다」의 주인을 찾아요.'}}],
+ppl:[
+ {k:1,c:['광고에는','두 종류가','있다.'],s:1,v:2,sx:{0:'「광고에는」은 "어디에"를 말해요. 무엇이 있는지 찾아요.'}},
+ {k:4,c:['시청자들은','배경에 있는 상품보다','출연자가 직접 쓰는 상품에','더','눈길을','준다.'],s:0,v:5},
+ {k:0,c:['우리나라는','1990년대 중반부터','협찬 제도를','운영해 왔다.'],s:0,v:3},
+ {k:0,c:['그러다','광고주와 방송사의 요구에 따라','2010년부터','간접 광고 제도가','새로','생겼다.'],s:3,v:5},
+ {k:0,c:['이처럼','간접 광고는','시청자도 모르게','마음속으로','파고든다.'],s:1,v:4,sx:{2:'「시청자도 모르게」는 "어떻게"를 말해요. 무엇이 파고드는지 찾아요.'}}]};
+function svData(p,i){const a=HWSV[p];return a&&a[i]}
+function svHTML(p,i,st){const d=svData(p,i);const x=st.sv[i]=st.sv[i]||{st:'v',mv:0,ms:0};
+  const btn=(c,j)=>{let cl='anch',tag='';if(x.st!=='v'&&j===d.v){cl+=' anv';tag='<span class="antag">서술어</span>'}if(x.st==='ok'&&j===d.s){cl+=' ans';tag='<span class="antag">주어</span>'}
+    const hl=(x.st==='v'&&x.mv>=2&&j===d.v)||(x.st==='s'&&x.ms>=2&&j===d.s);return `<button class="${cl}${hl?' anhint':''}" data-sv="${j}" ${x.st==='ok'?'disabled':''}>${esc1(c)}${tag}</button>`};
+  let h=`<div class="qt">🔍 노란 문장을 뜯어봐요</div>`;
+  if(x.st==='v')h+=`<div style="font-size:17px;margin:4px 0">① 문장 <b>맨 끝</b>을 봐요. <b style="color:#c06f00">서술어</b>(어떻다·했다)를 눌러요.</div>`;
+  else if(x.st==='s')h+=`<div style="font-size:17px;margin:4px 0">② 「${esc1(d.c[d.v].replace(/[.,]$/,''))}」 — <b>누가? 무엇이?</b> <b style="color:#2f7de1">주어</b>를 눌러요.</div>`;
+  h+=`<div class="anrow">${d.c.map(btn).join('')}</div><div id="svfb"></div>`;
+  if(x.st==='ok')h=`<div class="exp" style="margin-left:0">✅ <b style="color:#2f7de1">${esc1(d.c[d.s])}</b> ➜ <b style="color:#c06f00">${esc1(d.c[d.v])}</b></div>`;
+  return h}
+function svBind(p,i,st,redraw){const d=svData(p,i);const x=st.sv[i];if(!d||!x||x.st==='ok')return;x.t0=x.t0||Date.now();
+  document.querySelectorAll('[data-sv]').forEach(b=>b.onclick=()=>{const j=+b.dataset.sv;const f=$('#svfb');
+    if(x.st==='v'){if(j===d.v){x.st='s';redraw();return}
+      x.mv++;f.innerHTML=`<div class="cgloss" style="margin-top:8px">🙂 서술어는 늘 문장 <b>맨 끝</b>에 있어요. ${x.mv>=2?'빛나는 걸 눌러 봐요.':''}</div>`;if(x.mv>=2){const keep=f.innerHTML;redraw();const g=$('#svfb');if(g)g.innerHTML=keep}}
+    else if(x.st==='s'){if(j===d.s){x.st='ok';x.sec=Math.round((Date.now()-x.t0)/1000);redraw();return}
+      x.ms++;const why=(d.sx&&d.sx[j])||`「${esc1(d.c[d.v].replace(/[.,]$/,''))}」 하는 게 누구(무엇)인지 찾아요. 「은·는·이·가」가 붙은 말을 봐요.`;
+      f.innerHTML=`<div class="cgloss" style="margin-top:8px">🙂 ${why}${x.ms>=2?' 빛나는 걸 눌러 봐요.':''}</div>`;if(x.ms>=2){const keep=f.innerHTML;redraw();const g=$('#svfb');if(g)g.innerHTML=keep}}})}
+function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=HWS.rd[p]||{i:0,miss:[],sec:0};st.sv=st.sv||[];st.t0=st.t0||Date.now();const n=R.paras.length;
   const tag=`<div class="row" style="gap:6px;margin-bottom:6px"><span class="chip">${H.area}</span><span class="chip ok">📖 쪼개 읽기</span><span class="muted">${P.title} · 교재 ${P.pg}쪽</span></div>`;
   if(st.i>=n){
     $('#main').innerHTML=hwHead(H)+`<div class="card">${tag}<h2 style="margin:6px 0">🗺️ 글 지도 완성!</h2><div class="muted">문단마다 고른 말이 모여서 글 전체가 한눈에 보여요. 문제 풀 때 지문 위 「🗺️ 글 지도」를 누르면 다시 볼 수 있어요.</div>${biMap(p,true)}
@@ -7326,7 +7357,15 @@ function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=H
   const x=R.paras[st.i];st._o=st._o||{};const ord=st._o[st.i]=st._o[st.i]||shuffle(x.o.map((_,k)=>k));const ok=st.okNow;
   const prev=R.paras.slice(0,st.i).map((y,k)=>`<div class="bimr done"><b class="pno">${k+1}</b><div><div class="bimrole">${y.role}</div><div>${esc1(y.o[0])}</div></div></div>`).join('');
   const L=`<div class="hwp"><div class="hwpt">📖 ${P.title} <span class="muted">· ${st.i+1}번째 문단 / ${n}</span></div>${prev?`<div class="biprev">${prev}</div>`:''}<p class="bicur"><b class="pno">${st.i+1}</b> ${biWords(p,st.i)}</p><div id="bwm" class="muted" style="font-size:15px">밑줄 친 낱말을 누르면 쉬운 뜻이 나와요.</div></div>`;
-  let Q=tag+`<div class="qt">${st.i+1}번째 문단은 무슨 말을 하고 있을까?</div><div class="muted" style="margin-bottom:6px">왼쪽 문단만 천천히 읽고 골라요.</div>`;
+  const svd=svData(p,st.i);const svx=svd&&(st.sv[st.i]=st.sv[st.i]||{st:'v',mv:0,ms:0});const svOn=svd&&svx.st!=='ok';
+  let Q=tag+(svd?svHTML(p,st.i,st):'');
+  if(svOn){Q+=`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="biskip">문제 먼저 볼래요</button></div>`;
+    $('#main').innerHTML=hwHead(H)+`<div class="hwsplit"><div class="card hwl">${L}</div><div class="card hwr">${Q}</div></div>`;hwBind(H,it);
+    const se=document.querySelector(`.hs[data-hs="${st.i}.${svd.k}"]`);if(se)se.classList.add('hint');
+    document.querySelectorAll('[data-bw]').forEach(b=>b.onclick=()=>{const w=x.w[+b.dataset.bw];document.querySelectorAll('.bw.on').forEach(y=>y.classList.remove('on'));b.classList.add('on');$('#bwm').innerHTML=`<div class="cgloss">📖 <b>${esc1(w[0])}</b> = ${esc1(w[1])}</div>`;st.words=(st.words||0)+1});
+    const sk=$('#biskip');if(sk)sk.onclick=()=>{st.skip=true;st.sec=(st.sec||0)+Math.round((Date.now()-st.t0)/1000);st.t0=null;HWS.q0=Date.now();hwDraw()};
+    svBind(p,st.i,st,()=>biReadDraw(H,it));return}
+  Q+=`<div class="qt">${st.i+1}번째 문단은 무슨 말을 하고 있을까?</div><div class="muted" style="margin-bottom:6px">왼쪽 문단만 천천히 읽고 골라요.</div>`;
   if(!ok)Q+=`<div class="blocks" style="flex-direction:column;align-items:stretch">${ord.map(k=>`<button class="blk" style="text-align:left" data-bs="${k}">${esc1(x.o[k])}</button>`).join('')}</div><div id="hwfb"></div>`;
   else Q+=`<div class="exp" style="margin-left:0">✅ <b>${x.role}</b><br>${esc1(x.o[0])}</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="binx">${st.i<n-1?'다음 문단 →':'🗺️ 글 지도 보기 →'}</button></div>`;
   Q+=`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="biskip">문제 먼저 볼래요</button></div>`;
@@ -7375,7 +7414,7 @@ function biEvBind(it,ev){const hh=$('#hwhint');const pOf=()=>+ev[0].split('.')[0
   const lv2=()=>{HWS.phint=2;document.querySelectorAll('.hs').forEach(s=>{if(ev.includes(s.dataset.hs))s.classList.add('hint')})};
   if(hh)hh.onclick=()=>{HWS.hint=true;if(HWS.phint<1){lv1();$('#hwfb').innerHTML=`<div class="cgloss">💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.</div>`}else{lv2();$('#hwfb').innerHTML='<div class="cgloss">노랗게 빛나는 문장 중에서 골라 눌러요.</div>'}};
   document.querySelectorAll('.hs.tap').forEach(s=>s.onclick=()=>{const k=s.dataset.hs;
-    if(ev.includes(k)){HWS.evN++;if(HWS.et===0)HWS.evFirst++;biLvAfter();HWS.got=[k];HWS.sp=anStart(it,k)?'an':'cmp';HWS.ci=0;HWS.cj=[];HWS.ct=0;hwDraw();return}
+    if(ev.includes(k)){HWS.evN++;if(HWS.et===0)HWS.evFirst++;biLvAfter();HWS.got=[k];HWS.sp='cmp';/* 문장 쪼개기(anStart)는 엄마 11/25 '어려워' → 끔 */HWS.ci=0;HWS.cj=[];HWS.ct=0;hwDraw();return}
     HWS.et++;HWS.evMiss++;
     if(HWS.et===1)hwBad(s,'다른 문장이에요. 선지 <b>앞 조각</b>에 나온 낱말이 들어 있는 문장을 찾아봐요.',3);
     else if(HWS.et===2){hwBad(s,`💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.`,3);lv1()}
@@ -7535,7 +7574,7 @@ function hwBind(H,it){
 async function hwSave(fin){const H=hwSet(HWS.id);const n=H.items.length;const r=HWS.res;const sec=HWS.sec0+Math.round((Date.now()-HWS.t0)/1000);
   const rec={type:'hw',set:H.id,w:H.w,area:H.area,title:H.title,n,done:fin,restart:!fin&&!!HWS.restart,answered:r.filter(x=>x&&!x.skipped).length,first:r.filter(x=>x&&x.ok).length,copied:r.filter(x=>x&&x.copied).length,items:r.map((x,i)=>x?Object.assign({i},x):{i,skipped:true}),sec};
   store(HWK(H.id),fin?null:{i:HWS.i,res:r,rd:HWS.rd,sec});
-  const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
+  const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,sv:(x.sv||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',mv:v.mv||0,ms:v.ms||0,sec:v.sec||0}:null).filter(Boolean),sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
   push(rec);await flushPend()}
 function hwFinish(){const H=hwSet(HWS.id);const r=HWS.res;const sk=H.items.map((_,i)=>i).filter(i=>!r[i]||r[i].skipped);
   const first=r.filter(x=>x&&x.ok).length,ans=r.filter(x=>x&&!x.skipped).length;
