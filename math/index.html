@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795643336";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795643632";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -2994,7 +2994,7 @@ function ensureToday(){
   if(S.cfg.carryOn&&S.lastDay&&DAYS[S.lastDay]){const L=DAYS[S.lastDay];
     Object.keys({...L.plan,...L.carry}).forEach(id=>{const owe=(L.plan[id]||0)+(L.carry[id]||0)-(L.done[id]||0);if(owe>0&&!tc(id).home&&(S.cfg.plan[id]||0)>0)carry[id]=Math.min(owe,(S.cfg.plan[id]||1)*3)})}
   if(!DAYS[t])DAYS[t]={plan:{},carry,done:{},sets:[],savedAt:0};
-  DAYS[t].plan=planNow();S.lastDay=t;save(t);
+  DAYS[t].plan=planNow();S.lastDay=t;{const sa=S.savedAt||0,hadSets=(DAYS[t].sets||[]).length;save(t);S.savedAt=sa;if(!hadSets)DAYS[t].savedAt=0;persistLocal()}
 }
 /* 대기 줄: 지금 학기 → 지난 학기(가까운 것부터) → 다음 학기. 잠긴 것·통과한 것은 빠짐 */
 const semIx=id=>SEMS.indexOf((CUR[id]||["보충"])[0]);
@@ -3019,9 +3019,27 @@ function persistLocal(){bakNow();
   try{localStorage.setItem(kCore(),JSON.stringify(S))}catch(e){}
   try{const keys=Object.keys(DAYS).sort(),cut=keys.length-45,slim={};keys.forEach((k,i)=>{slim[k]=i<cut?{...DAYS[k],sets:DAYS[k].sets.map(s=>({...s,items:undefined}))}:DAYS[k]});localStorage.setItem(kDays(),JSON.stringify(slim))}catch(e){}
 }
-function save(dayKey){S.savedAt=Date.now();try{Object.keys(S.ts).forEach(id=>{const T=TYPES[id],st=S.ts[id];if(T&&T.lv&&st.step!=null)st.stepLab=T.lv[Math.min(st.step,T.lv.length-1)]})}catch(e){}dirty.add("core");if(dayKey&&DAYS[dayKey]){DAYS[dayKey].savedAt=Date.now();dirty.add("d:"+dayKey)}persistLocal();if(DB){clearTimeout(flushT);flushT=setTimeout(flush,1200)}}
+let CFGJ=null;
+function save(dayKey){S.savedAt=Date.now();try{const j=JSON.stringify(S.cfg);if(CFGJ!==null&&j!==CFGJ)S.cfgAt=S.savedAt;CFGJ=j}catch(e){}try{Object.keys(S.ts).forEach(id=>{const T=TYPES[id],st=S.ts[id];if(T&&T.lv&&st.step!=null)st.stepLab=T.lv[Math.min(st.step,T.lv.length-1)]})}catch(e){}dirty.add("core");if(dayKey&&DAYS[dayKey]){DAYS[dayKey].savedAt=Date.now();dirty.add("d:"+dayKey)}persistLocal();if(DB){clearTimeout(flushT);flushT=setTimeout(flush,1200)}}
+/* 두 기기 기록 합치기: 유형마다 더 최근에 푼 쪽, 설정은 더 최근에 바꾼 쪽 */
+const coreW=c=>Object.values((c&&c.ts)||{}).reduce((a,t)=>a+((t.runs||[]).length+(t.runs0||[]).length+(t.grad?1:0)),0);
+function mergeCore(L,R){if(!R||!R.cfg)return L;if(!coreW(L))return clone(R);if(!coreW(R))return L;
+  const tAt=t=>t?(t.at||0):-1,tN=t=>t?(t.runs||[]).length+(t.runs0||[]).length:-1,O=clone((L.savedAt||0)>=(R.savedAt||0)?L:R);
+  O.cfg=clone((L.cfgAt||0)>=(R.cfgAt||0)?L.cfg:R.cfg);O.cfgAt=Math.max(L.cfgAt||0,R.cfgAt||0);O.ts={};
+  new Set([...Object.keys(L.ts),...Object.keys(R.ts)]).forEach(id=>{const a=L.ts[id],b=R.ts[id];O.ts[id]=clone(!b?a:!a?b:tAt(a)!==tAt(b)?(tAt(a)>tAt(b)?a:b):tN(a)>=tN(b)?a:b)});
+  if(L.gw||R.gw)O.gw=clone(((L.gw||{}).i||0)>=((R.gw||{}).i||0)?L.gw:R.gw);
+  O.lastDay=[L.lastDay,R.lastDay].filter(Boolean).sort().pop()||null;O.savedAt=Math.max(L.savedAt||0,R.savedAt||0);return O}
+const dayNewer=(v,l)=>!l||(v.sets||[]).length>(l.sets||[]).length||((v.sets||[]).length===(l.sets||[]).length&&(v.savedAt||0)>(l.savedAt||0));
+const mergeDay=(l,v)=>{if(!l)return clone(v);const ls=l.sets||[],vs=v.sets||[];if(![...ls,...vs].every(x=>x.at))return dayNewer(v,l)?clone(v):l;
+  const m=new Map();[...ls,...vs].forEach(x=>{const k=x.at+"|"+x.type;if(!m.has(k))m.set(k,x)});const o=clone((v.savedAt||0)>(l.savedAt||0)?v:l);o.sets=[...m.values()].sort((a,b)=>a.at-b.at);
+  const c={};o.sets.forEach(x=>{c[x.type]=(c[x.type]||0)+1});o.done={};new Set([...Object.keys(l.done||{}),...Object.keys(v.done||{}),...Object.keys(c)]).forEach(k=>{o.done[k]=Math.max((l.done||{})[k]||0,(v.done||{})[k]||0,c[k]||0)});return o};
+let REMAT=0;
 async function flush(){if(!DB)return;if(flushing){flushT=setTimeout(flush,1200);return}flushing=true;
-  try{for(const k of [...dirty]){dirty.delete(k);try{if(k==="core")await DB.doc(dCore()).set(clone(S));else{const d=k.slice(2);await DB.doc(dDays()+"/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
+  try{for(const k of [...dirty]){dirty.delete(k);try{
+    if(k==="core"){const r=await DB.doc(dCore()).get(),c=r.exists?r.data():null;
+      if(c&&c.cfg&&(c.savedAt||0)>REMAT&&(c.savedAt||0)!==(S.savedAt||0)){const at=Date.now();S=mergeCore(S,c);loadFix();S.savedAt=at;CFGJ=JSON.stringify(S.cfg);persistLocal()}
+      await DB.doc(dCore()).set(clone(S));REMAT=S.savedAt||0}
+    else{const d=k.slice(2);await DB.doc(dDays()+"/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
 /* 부모님이 Claude에게 보낼 짧은 기록 (최근 7일) */
 function sumText(){const days=Object.keys(DAYS).filter(k=>(DAYS[k].sets||[]).length).sort().slice(-7),L=[`[${pname()} 연산 기록] ${today()} 복사 · 최근 ${days.length}일`];
   days.forEach(k=>{const d=DAYS[k],own=Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0);L.push("",`■ ${k} · ${d.sets.length}세트${own?" / 계획 "+own:""} · ${d.sets.reduce((a,x)=>a+x.n,0)}문제${tiredTxt(k)?" · 평소 대비 "+tiredTxt(k):""}`);
@@ -3032,24 +3050,52 @@ function sumText(){const days=Object.keys(DAYS).filter(k=>(DAYS[k].sets||[]).len
   return L.join("\n")}
 let HASCUR=false;try{if(/^https?:/.test(location.protocol))fetch("curriculum.html",{method:"HEAD",cache:"no-store"}).then(r=>{if(r.ok&&/html/.test(r.headers.get("content-type")||"")){HASCUR=true;try{if(view==="parent")render()}catch(e){}}}).catch(()=>{})}catch(e){}
 let DBH=null;
-async function connectDB(){
-  try{if(!DBH){if(!window.claude||!window.claude.use)return;DBH=await window.claude.use("db");if(!DBH)return}const db=DBH;
-    const core=await db.doc(dCore()).get();let changed=false;
-    if(core.exists){const c=core.data();if((c.savedAt||0)>(S.savedAt||0)&&c.cfg){S=clone(c);V20.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});mig20();migNS();changed=true}}
-    const ds=await db.collection(dDays()).limit(1000).get();
-    ds.docs.forEach(d=>{const v=d.data();if(!v)return;if(!DAYS[d.id]||(v.savedAt||0)>(DAYS[d.id].savedAt||0)){DAYS[d.id]=clone(v);changed=true}});
+async function connectDB(light){
+  try{if(!DBH){if(!window.claude||!window.claude.use)return;DBH=await window.claude.use("db");if(!DBH)return}const db=DBH,pid=PID;
+    const core=await db.doc(dCore()).get();let changed=false;if(pid!==PID)return;
+    if(core.exists){const c=core.data();if(c&&c.cfg){REMAT=c.savedAt||0;const lj=JSON.stringify(S.ts)+JSON.stringify(S.cfg);S=mergeCore(S,c);loadFix();CFGJ=JSON.stringify(S.cfg);
+      if(JSON.stringify(S.ts)+CFGJ!==lj)changed=true;if(JSON.stringify(S.ts)!==JSON.stringify(c.ts)||(S.cfgAt||0)>(c.cfgAt||0))dirty.add("core")}}
+    let docs=[];
+    if(light){const t=today(),r=await db.doc(dDays()+"/"+t).get();if(r.exists)docs=[{id:t,data:()=>r.data()}]}
+    else docs=(await db.collection(dDays()).limit(1000).get()).docs;
+    if(pid!==PID)return;
+    docs.forEach(d=>{const v=d.data();if(!v)return;const l=DAYS[d.id],m=mergeDay(l,v);if(m!==l){DAYS[d.id]=m;changed=true}if((m.sets||[]).length>(v.sets||[]).length)dirty.add("d:"+d.id)});
     DB=db;sync="db";
     if(!core.exists){dirty.add("core");Object.keys(DAYS).forEach(k=>dirty.add("d:"+k))}
-    else{const remote=new Set(ds.docs.map(d=>d.id));Object.keys(DAYS).forEach(k=>{if(!remote.has(k))dirty.add("d:"+k)})}
+    else if(!light){const rem={};docs.forEach(d=>{rem[d.id]=d.data()});Object.keys(DAYS).forEach(k=>{if((DAYS[k].sets||[]).length&&(!rem[k]||dayNewer(DAYS[k],rem[k])))dirty.add("d:"+k)})}
     S.lastDay=S.lastDay||null;ensureToday();persistLocal();flush();
     if(changed&&(view==="home"||view==="parent"||view==="report"||view==="mine"))render();
-  }catch(e){sync="local"}
+  }catch(e){sync=FBU?"err":"local"}
 }
+/* 구글 로그인 + 가족 저장소(Firestore). 로그인 안 해도 앱은 그대로 됨 */
+let FB=null,FBU=null,FBMSG="",FBBUSY=false;
+const fbCan=()=>/^https?:/.test(location.protocol)&&!(window.claude&&window.claude.use);
+const FBV="https://www.gstatic.com/firebasejs/10.14.1/firebase-";
+function fbDB(F,fs){const R=["mathApp","family"],CH=700000,pk=o=>{const j=JSON.stringify(o),n=Math.ceil(j.length/CH)||1;return Array.from({length:n},(_,i)=>i?{j:j.slice(i*CH,(i+1)*CH)}:{j:j.slice(0,CH),parts:n,savedAt:o.savedAt||0})};
+  const rd=async p=>{const s=await F.getDoc(F.doc(fs,...R,...p.split("/")));if(!s.exists())return null;const d=s.data();let j=d.j||"";for(let i=1;i<(d.parts||1);i++){const x=await F.getDoc(F.doc(fs,...R,...(p+"~"+i).split("/")));j+=x.exists()?x.data().j:""}try{return JSON.parse(j)}catch(e){return null}};
+  const un=d=>{try{return d&&d.j&&(d.parts||1)===1?JSON.parse(d.j):null}catch(e){return null}};
+  return{doc:p=>({get:async()=>{const v=await rd(p);return{exists:!!v,data:()=>v}},set:async o=>{const P=pk(o),b=F.writeBatch(fs);P.forEach((x,i)=>b.set(F.doc(fs,...R,...(i?p+"~"+i:p).split("/")),x));await b.commit()}}),
+    collection:p=>({limit:n=>({get:async()=>{const s=await F.getDocs(F.query(F.collection(fs,...R,...p.split("/")),F.limit(n)));return{docs:s.docs.filter(d=>!d.id.includes("~")).map(d=>({id:d.id,data:()=>un(d.data())}))}}})})}}
+async function fbStart(){if(!fbCan()||FB)return;
+  try{const [A,U,F,C]=await Promise.all([import(FBV+"app.js"),import(FBV+"auth.js"),import(FBV+"firestore.js"),import("../config.js")]);
+    const ap=A.initializeApp(C.firebaseConfig),auth=U.getAuth(ap),fs=F.getFirestore(ap);FB={U,F,auth,fs};
+    U.onAuthStateChanged(auth,async u=>{FBU=u||null;FBBUSY=false;
+      if(!u){DBH=null;DB=null;sync="local";fbPaint();return}
+      try{await F.getDoc(F.doc(fs,"mathApp","family"));FBMSG="";DBH=fbDB(F,fs);fbPaint();await connectDB();fbPaint()}
+      catch(e){DBH=null;DB=null;sync="local";FBMSG=e&&e.code==="permission-denied"?"이 구글 계정은 아직 가족 목록에 없어요.":"지금은 계정 저장소에 못 들어갔어요. 이 기기에는 저장돼요.";fbPaint()}})
+  }catch(e){FBMSG=""}}
+const fbPaint=()=>{try{if(view==="who"||view==="parent")render()}catch(e){}};
+async function fbLogin(){if(!FB){FBMSG="인터넷에 이어지면 다시 눌러 주세요.";await fbStart();if(!FB){fbPaint();return}}
+  FBBUSY=true;FBMSG="";fbPaint();try{const p=new FB.U.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});await FB.U.signInWithPopup(FB.auth,p)}catch(e){FBBUSY=false;FBMSG="로그인이 안 됐어요. 다시 눌러 주세요. ("+((e&&e.code)||"")+")";fbPaint()}}
+async function fbLogout(){if(!FB)return;try{if(DB){clearTimeout(flushT);await flush()}await FB.U.signOut(FB.auth)}catch(e){}}
+function fbHTML(kid){if(!fbCan())return "";
+  if(FBU)return `<p class="small muted" style="text-align:center">☁ ${DB?"기록이 구글 계정에 저장되고 있어요":FBMSG?esc(FBMSG):"계정 저장소에 잇는 중…"}<br>${esc(FBU.email||"")} ${kid?"":`<button class="nb" data-act="fbout">로그아웃</button>`}${FBMSG?` <button class="nb" data-act="fbout">다른 계정으로</button>`:""}</p>`;
+  return `<button class="nb pri" style="align-self:center" data-act="fbin" ${FBBUSY?"disabled":""}>${FBBUSY?"로그인 창을 여는 중…":"구글로 로그인 (기록을 계정에 보관)"}</button>${FBMSG?`<p class="small muted" style="text-align:center">${esc(FBMSG)}</p>`:`<p class="small muted" style="text-align:center">로그인하면 폰을 바꿔도 기록이 남아요.</p>`}`}
 
 async function switchTo(pid){
   if(DB){clearTimeout(flushT);await flush()}
   PID=pid;try{localStorage.setItem("sihun-app-pid",pid)}catch(e){}
-  loadLocal();DB=null;sync="local";dirty.clear();ensureToday();
+  REMAT=0;CFGJ=null;loadLocal();DB=null;sync="local";dirty.clear();ensureToday();
   view="home";render();connectDB();
 }
 /* ───────── 화면 ───────── */
@@ -3069,7 +3115,7 @@ const bar=(title,right="")=>`${PREVIEW?'<div class="pv">미리 보기 · 기록�
 /* 누가 하나 */
 function vWho(){return `<div class="page" style="justify-content:center;gap:14px"><h1 style="text-align:center">누가 할 거냥?</h1>
   ${PROFILES.map(p=>`<button class="next" style="align-items:center" data-act="who" data-arg="${p.id}"><span class="v">${p.icon} ${p.name}</span></button>`).join("")}
-  <p class="small muted" style="text-align:center">기록은 사람마다 따로 남아요.</p></div>`}
+  <p class="small muted" style="text-align:center">기록은 사람마다 따로 남아요.</p>${fbHTML(true)}</div>`}
 /* 홈 */
 const curTxt=id=>{const c=CUR[id];return c?`${c[0]} ${c[1].split(" (")[0]}`:""};
 const afterOf=id=>{const k=Object.keys(PRE).find(k=>PRE[k].includes(id)&&TYPES[k]&&CUR[k]&&!passedT(k));return k?TYPES[k].name:""};
@@ -3326,7 +3372,7 @@ function finishSet(){
   /* 다지기: 이틀 이상 지난 통과 단계 문제를 세트에 3개 섞어 확인 */
   if(RUN.rev&&!PREVIEW){const r=(st.rev||[]).find(x=>x.s===RUN.rev.s);const ok=RUN.rev.idx.every(k=>RUN.items[k].ok1);if(r){if(ok){st.rev=st.rev.filter(x=>x!==r);out.revOk=stepLabel(T,r.s)}else{r.miss++;r.d=today();if(r.miss>=2&&(st.step||0)>r.s){st.step=r.s;st.rev=st.rev.filter(x=>x.s<r.s);out.revBack=stepLabel(T,r.s)}else out.revMiss=stepLabel(T,r.s)}}}
   if(T.scaffold&&lvl(id)===0&&valid&&(out.pass||out.quick||(st.target==null&&pq<=fin))){out.levelUp=true}
-  st.runs.push({d:today(),t:rec.t,w,n,pass:rec.pass});if(st.runs.length>200)st.runs=st.runs.slice(-200);
+  st.runs.push({d:today(),t:rec.t,w,n,pass:rec.pass});st.at=Date.now();if(st.runs.length>200)st.runs=st.runs.slice(-200);
   updateFacts(id,RUN.probs,RUN.items);st.pool=[];
   if(out.levelUp){st.runs0=(st.runs0||[]).concat(st.runs);st.runs=[];st.level=1;st.start=null;st.target=null;st.gradDays=[];st.grad=false;out.grad=false;out.quick=false}
   rec.lab=STEPT(T)?stepLabel(T,rec.step||0):undefined;rec.up=!!out.stepUp||undefined;rec.rv=out.revOk?"ok":out.revBack?"back":out.revMiss?"miss":undefined;
@@ -3547,7 +3593,7 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
    ${tiredHTML()}
-   <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>
+   <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML(false)}
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
@@ -3659,7 +3705,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){S=clone(B[d].core);loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
@@ -3744,6 +3790,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
 document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok");else if(e.key==="&")typeKey("amp");else if(e.key==="\\"||e.key==="/")typeKey("bs");else if(e.key==="n")typeKey("n")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&view==="play"&&RUN&&!modal){ACT.pause()}});
 
-ensureToday();render();connectDB();
+ensureToday();render();connectDB();fbStart();
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&DB&&["who","home","parent","report","mine"].includes(view))connectDB(true)});
 </script>
 </body></html>
