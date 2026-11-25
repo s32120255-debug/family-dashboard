@@ -301,7 +301,7 @@ td,th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertic
 .pool,.built{display:flex;flex-wrap:wrap;gap:8px;min-height:56px;border-radius:14px;padding:10px;margin-top:10px}
 .pool{background:#f1f4fa}.built{border:2px dashed #c3cbe0;background:#fff}
 .chip{border:none;border-radius:10px;padding:9px 13px;font:800 17px 'Noto Sans KR';background:#3b6cf6;color:#fff;cursor:pointer}
-.built .chip{background:#1f2330}
+.built .chip{background:#1f2330;touch-action:none;user-select:none;-webkit-user-select:none}
 .notice{background:#fff3df;border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
 .mins{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}.mins .chip{background:#eef1f7;color:var(--ink);padding:12px 4px}
 .chip.sel,.mins .chip.sel{background:#3b6cf6;color:#fff}.chip:disabled{cursor:default}
@@ -1593,7 +1593,7 @@ function recHTML(){const R=rc.rec;let h=`<div class="tip" style="text-align:cent
 function recSave(){const R=rc.rec;if(!R)return;const r=st(rc.id);const hh=r.hist&&r.hist[r.hist.length-1];if(hh&&hh.d===today())hh.rec={sec:R.sec,heard:R.heard,n:R.n};
   const D=dayRec(today());D.rec=(D.rec||0)+(R.n===1?1:0);if(recOK())rc.q.rec=1;save()}
 function blockHTML(){
-  return `<div class="built">${rc.built.map((c,k)=>`<button class="chip" data-act="unpickB" data-k="${k}">${esc(c.w)}</button>`).join('')}${rc.built.length?`<span style="font-size:22px;font-weight:800;align-self:center">${rc.end}</span>`:'<span class="tip" style="align-self:center">여기에 쌓여요</span>'}</div>
+  return `<div class="built">${rc.built.map((c,k)=>`<button class="chip" data-act="unpickB" data-k="${k}">${esc(c.w)}</button>`).join('')}${rc.built.length?`<span style="font-size:22px;font-weight:800;align-self:center">${rc.end}</span>${rc.built.length>1?'<span class="tip" style="width:100%;font-size:12px">↔ 블록을 꾹 눌러 끌면 순서가 바뀌어요 · 살짝 누르면 빠져요</span>':''}`:'<span class="tip" style="align-self:center">여기에 쌓여요</span>'}</div>
   <div class="pool">${rc.pool.map((c,k)=>`<button class="chip" data-act="pickB" data-k="${k}">${esc(c.w)}</button>`).join('')}</div>`}
 // 틀린 곳 찾기 → 그 포인트 힌트만 (kind=be↔do · form=동사 모양 · num=주어 수 · tense=현재/과거 · pol=순서(의문/부정) · wh=의문사 자리)
 function trapHintHTML(it,cat){const fr=frameOf(it),L=blkToks(it).map(w=>w.toLowerCase());
@@ -1776,7 +1776,19 @@ const ACT={
     DIC.start().catch(e=>{rc.phase2=null;rc.recFail=(e&&e.code)||'x';render()});render();clearTimeout(rc.recMax);rc.recMax=setTimeout(()=>{if(rc&&rc.phase2==='rec')DIC.stop().catch(()=>{})},30000)},
   recStop:()=>{if(rc.phase2==='rec')DIC.stop().catch(()=>{})}
 };
-document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;const f=ACT[t.dataset.act];if(f)f(t)});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;if(BDRAG.eat&&t.dataset.act==='unpickB'){BDRAG.eat=false;return}const f=ACT[t.dataset.act];if(f)f(t)});
+// 엄마 11/25: 놓은 블록 순서를 끌어서 바꾸기 (손가락·S펜·마우스). 살짝 누르면 예전처럼 빼기
+const BDRAG={d:null,eat:false};
+document.addEventListener('pointerdown',e=>{const c=e.target.closest&&e.target.closest('[data-act="unpickB"]');if(!c||!rc||!rc.built)return;BDRAG.d={c,k:+c.dataset.k,x:e.clientX,y:e.clientY,on:false,id:e.pointerId};BDRAG.eat=false});
+document.addEventListener('pointermove',e=>{const d=BDRAG.d;if(!d||e.pointerId!==d.id)return;const dx=e.clientX-d.x,dy=e.clientY-d.y;
+  if(!d.on){if(Math.hypot(dx,dy)<10)return;d.on=true;try{d.c.setPointerCapture(e.pointerId)}catch(_){}d.c.style.zIndex='5';d.c.style.position='relative';d.c.style.opacity='.85';d.c.style.boxShadow='0 6px 14px rgba(0,0,0,.25)'}
+  e.preventDefault();d.c.style.transform=`translate(${dx}px,${dy}px) scale(1.08)`;
+  const cs=[...d.c.parentNode.querySelectorAll('[data-act="unpickB"]')].filter(x=>x!==d.c);let to=cs.length;
+  for(let i=0;i<cs.length;i++){const r=cs[i].getBoundingClientRect();if(e.clientY<r.top-4||(e.clientY<=r.bottom+4&&e.clientX<r.left+r.width/2)){to=i;break}}
+  cs.forEach((x,i)=>{x.style.boxShadow=i===to?'-4px 0 0 #3b6cf6':''});if(to===cs.length&&cs.length)cs[cs.length-1].style.boxShadow='4px 0 0 #3b6cf6';d.to=to},{passive:false});
+const bEnd=e=>{const d=BDRAG.d;if(!d||e.pointerId!==d.id)return;BDRAG.d=null;if(!d.on)return;BDRAG.eat=true;setTimeout(()=>{BDRAG.eat=false},400);
+  if(e.type==='pointerup'&&d.to!=null){const it=rc.built.splice(d.k,1)[0];rc.built.splice(d.to,0,it);rc.note=''}render()};
+document.addEventListener('pointerup',bEnd);document.addEventListener('pointercancel',bEnd);
 document.addEventListener('input',e=>{if(e.target&&e.target.id==='vin')vShowLive()});
 document.addEventListener('keydown',e=>{const t=e.target;if(e.key!=='Enter'||!t||!t.dataset||!t.dataset.enter)return;e.preventDefault();const f=ACT[t.dataset.enter];if(f)f(t)});
 function dicDone(){clearTimeout(stopTimer);clearTimeout(rc.maxT);const j=judge(rc.it.en,rc.heard);
