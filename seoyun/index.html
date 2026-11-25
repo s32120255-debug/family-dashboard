@@ -147,6 +147,10 @@ details .list{margin-top:6px}
 .lstack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px}
 .lbar span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lock{z-index:45}
+.note{flex:1 1 100%;font-size:.85rem;color:var(--muted);padding-left:34px;overflow-wrap:anywhere}
+.solved summary{cursor:pointer;color:var(--muted);padding:4px 0}
+.solved .list{margin-top:6px}
+.solved .item.done .t{text-decoration:none;color:var(--fg)}
 .fab{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);color:var(--card);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(15,27,45,.25);z-index:30;display:grid;place-items:center;padding:0}
 .fab:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 .wrap{padding-bottom:96px!important}
@@ -261,7 +265,7 @@ const amountPill=x=>x.amount?`<span class="pill ${flowOf(x)}">${{in:"+",plan:"�
 const homePill=x=>(x.sentHome&&x.sentHome.length)?`<span class="pill home">우리집 ${esc(x.sentHome.join("·"))}</span>`:"";
 function row(x,{sub=false}={}){
  return`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-done="${x.id}" aria-label="${x.done?"안 한 걸로":"끝"}">${x.done?"✓":""}</button>
- <button class="t" data-open="${x.id}">${esc(x.text)}</button>${sub&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}${homePill(x)}</li>`}
+ <button class="t" data-open="${x.id}">${esc(x.text)}</button>${sub&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}${homePill(x)}${x.done&&x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`}
 function listWithDone(arr,opts){
  const open=arr.filter(x=>!x.done).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const done=arr.filter(x=>x.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
@@ -374,8 +378,11 @@ function renderOpen(){const t=today();
  const fr=x=>{const n=dd(x);return`<li class="item"><button class="check" data-peat="${x.id}" aria-label="먹었어요"></button><button class="t" data-popen="${x.id}">${esc(x.name)}</button><span class="pill out">${n<0?-n+"일 지남":n?"D-"+n:"오늘까지"}</span></li>`};
  const G=[["sihoon","시훈",by("sihoon"),r],["work","서윤 회사",by("work"),r],["home","집안일",by("home"),r],["money","돈",money,mr],["home","기한 다 된 먹을거리",food,fr]];
  const total=G.reduce((s,g)=>s+g[2].length,0);
+ const solved=items.filter(x=>x.done&&x.decided!=="no"&&["sihoon","work","home"].includes(x.tab)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)).slice(0,60);
+ const md=x=>{const v=x.doneDate||(x.doneAt?ymd(new Date(x.doneAt)):"");return v?v.slice(5).replace("-","/"):""};
+ const solvedHtml=solved.length?`<details class="solved"><summary>해결한 일 ${solved.length}개</summary><ul class="list">${solved.map(x=>`<li class="item done"><button class="check on" data-done="${x.id}" aria-label="안 한 걸로">✓</button><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(x.tab==="home"?(x.sub||"집안일"):TABNAME[x.tab])}</span>${md(x)?`<span class="pill">${md(x)}</span>`:""}${x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`).join("")}</ul></details>`:"";
  $("openBoard").innerHTML=`<h2>미해결 ${total?`<span class="big">${total}</span>`:""}</h2>
- ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<div class="ogrp"><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3><ul class="list">${l.map(f).join("")}</ul></div>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}`}
+ ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<div class="ogrp"><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3><ul class="list">${l.map(f).join("")}</ul></div>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}${solvedHtml}`}
 
 function render(){
  // 적는 도중 다시 그려져도 커서가 그 자리에 남게
@@ -393,6 +400,15 @@ function askAmount(title,flow,cb){
  ${segHtml(flow)}
  <div class="row"><button type="button" class="btn" id="ac">취소</button><button class="btn primary">확인</button></div></form>`);
  $("ac").onclick=closeForm;$("af").onsubmit=e=>{e.preventDefault();const a=toNum(e.target.a.value);closeForm();cb(a,e.target.f.value)}}
+function askDone(x,ask){
+ modal(`<form class="modal" id="dfm"><h3>해결했어요</h3><p class="hint">「${esc(x.text)}」</p>
+ <label>어떻게 됐어요? (선택)<input name="n" placeholder="예: 전화해서 다음 주 화요일로 잡음" autocomplete="off"></label>
+ ${ask?`<label>${esc(ask.q)}<input name="a" inputmode="numeric" placeholder="모르면 비워도 돼요"></label>`:""}
+ <div class="row"><button type="button" class="btn" id="dfc">취소</button><button class="btn primary">해결한 일로</button></div></form>`);
+ $("dfc").onclick=closeForm;
+ $("dfm").onsubmit=e=>{e.preventDefault();const f=e.target;const n=f.n.value.trim();const d={done:true,doneAt:Date.now(),doneDate:today(),note:n||null};
+  let ok="해결한 일로 옮겼어요";if(ask){const a=toNum(f.a.value);if(a){d.amount=a;d.flow=ask.flow;d.date=today();ok=`${FLOWNAME[ask.flow]} ${won(a)} 적었어요`}}
+  closeForm();upd(x.id,d,ok)}}
 function askGroup(x){
  modal(`<div class="modal"><h3>집안일 어디에?</h3><p class="hint">「${esc(x.text)}」</p>${GROUPS.map(g=>`<div><div class="hint" style="margin-bottom:4px">${g.n}</div><div class="chips">${(g.subs.length?g.subs:[""]).map(s=>`<button class="btn small" data-pick="${g.k}/${esc(s)}">${s||g.n}</button>`).join("")}</div></div>`).join("")}<div class="row"><button class="btn" id="gc">취소</button></div></div>`);
  $("gc").onclick=closeForm;
@@ -449,10 +465,9 @@ document.addEventListener("keydown",e=>{const td=e.target.closest&&e.target.clos
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||!db)return;const d=b.dataset;
  if(d.open){const x=byId(d.open);if(x)openItem(x);return}
  if(d.done){const x=byId(d.done);if(!x)return;
-  if(x.done)return upd(x.id,{done:false,doneAt:null,decided:null});
+  if(x.done)return upd(x.id,{done:false,doneAt:null,doneDate:null,decided:null});
   const ask=ASK_ON_DONE[x.sub];
-  if(ask&&!x.amount)return askAmount(`${x.text} · ${ask.q}`,ask.flow,(a,f)=>upd(x.id,{done:true,doneAt:Date.now(),amount:a,flow:a?f:null,date:today()},a?`${FLOWNAME[f]} ${won(a)} 적었어요`:null));
-  return upd(x.id,{done:true,doneAt:Date.now()})}
+  return askDone(x,ask&&!x.amount?ask:null)}
  if(d.popen){const x=pantry.find(y=>y.id===d.popen);if(x)editPantry(x);return}
  if(d.peat){const x=pantry.find(y=>y.id===d.peat);if(!x)return;const m=String(x.qty||"").match(/^(\d+)(.*)$/);
   if(m&&Number(m[1])>1){const q=(Number(m[1])-1)+m[2];return run(db.famUpd("pantry",x.id,{qty:q}),`${x.name} ${q} 남았어요`)}
