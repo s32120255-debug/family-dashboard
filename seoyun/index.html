@@ -5,18 +5,18 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>서윤 보드</title>
-<link rel="manifest" href="manifest.json?v=2">
-<link rel="icon" href="icon-192.png?v=2">
-<link rel="apple-touch-icon" href="icon-192.png?v=2">
-<meta name="theme-color" content="#1f3a5f">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<link rel="manifest" href="manifest.json?v=3">
+<link rel="icon" href="icon-192.png?v=3">
+<link rel="apple-touch-icon" href="icon-192.png?v=3">
+<meta name="theme-color" content="#f7f9fb">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=Orbit&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
 /* 서윤 보드: 맨 위 「일단 적기」 + 아래 4개 탭(시훈 학습 · 서윤 회사 · 집안일 · 돈). 금액을 적은 항목은 전부 「돈」 탭으로 모여요. */
 :root{
- --bg:#eef2f6;--grid:transparent;--card:#ffffff;--fg:#17212f;--muted:#5f6c7d;--line:#d6dee8;--accent:#1f3a5f;--accent-soft:#e2e9f2;
- --warn:#b23a48;--warn-soft:#f7e4e7;--in:#2b6c8c;--in-soft:#e0eef5;
- --t-sihoon:#e6ecf4;--t-work:#e1e9f3;--t-home:#e4ecef;--t-money:#e9ebf3;--t-inbox:#f5f7fa;
- --display:"Noto Sans KR",system-ui,sans-serif;--body:"Noto Sans KR",system-ui,sans-serif;
+ --bg:#f7f9fb;--grid:transparent;--card:#ffffff;--fg:#0f1b2d;--muted:#6b7a8c;--line:#e3e8ee;--accent:#3d6e9e;--accent-soft:#eaf1f8;
+ --warn:#c0485a;--warn-soft:#fbecef;--in:#2f7c9b;--in-soft:#e6f2f7;
+ --t-sihoon:#ffffff;--t-work:#edf2f8;--t-home:#ffffff;--t-money:#ffffff;--t-inbox:#f3f5f8;
+ --display:"Orbit","IBM Plex Sans KR",sans-serif;--body:"IBM Plex Sans KR","Noto Sans KR",system-ui,sans-serif;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
  --bg:#0f1520;--grid:transparent;--card:#172030;--fg:#e6ebf2;--muted:#9aa6b6;--line:#2a3547;--accent:#8fb3dd;--accent-soft:#1d2a3d;
@@ -159,7 +159,14 @@ details .list{margin-top:6px}
 .moneyopt summary{cursor:pointer;color:var(--muted)}
 .card,.gate .box,.modal{border-width:1px!important}
 .card h2,.top h1,.gate h1,.modal h3{letter-spacing:-.02em;font-weight:700}
-.tab{font-size:1rem!important;font-weight:500}
+.tab{font-size:1.1rem!important;font-weight:400;border-radius:8px!important}
+.card{box-shadow:0 1px 2px rgba(15,27,45,.04)}
+.item{border-radius:8px}
+.check{border-radius:50%!important;border-width:1.5px!important}
+.top h1{font-size:2.6rem!important;font-weight:400!important;letter-spacing:-.01em!important}
+.card h2{font-size:1.7rem;font-weight:400!important}.ogrp h3{font-weight:400}.modal h3,.gate h1{font-weight:400!important}
+.open{border-top:1px solid var(--line)!important}
+.top h1,.card h2,.ogrp h3,.tab,.modal h3,.gate h1,.monthnav b{word-spacing:-.25em}
 .tab[aria-selected="true"],.tab.on{font-weight:700}
 .lock input{font-size:1.4rem;letter-spacing:.3em;text-align:center;width:12em;max-width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--fg)}
 .lock form{display:grid;gap:10px;justify-items:center;width:100%}
@@ -174,7 +181,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 10</p>
+ <p style="font-size:.75rem">버전 11</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -624,7 +631,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=10;
+const VERSION=11;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
