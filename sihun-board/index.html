@@ -691,19 +691,22 @@ $("mustList").addEventListener("click",async e=>{const b=e.target.closest("[data
   if(!on)toast(`고마워! 💗${pts}`);renderAll()}catch(err){toast("저장하지 못했어요: "+(err.code||""))}});
 
 /* ---------- 앱 열기 전 체크(엄마 11/25 「어플 열기 전에 체크할 것들 누르고 어플 가동」) ----------
-   엄마가 설정에 적은 startChecks(한 줄에 하나). 다 체크하면 그날은 다시 안 뜸(엄마·관리자는 앱 열 때마다 뜸, 11/25)(이 기기에 날짜 기억, 「체크되면 안 뜨는 걸로」). 엄마·관리자는 건너뛰기 가능 */
-const gateKey=()=>today()+"|"+(board.startChecks||[]).join("|");
-// 엄마·관리자도 똑같이 뜸(엄마 11/25). 건너뛰기는 이 창에서만(그날 끝낸 걸로 치지 않음)
-let gateSkip=false;const gateDoneNow=()=>{if(gateSkip)return true;if(momAcct||pinOpen)return false;try{return localStorage.getItem("sbGate")===gateKey()}catch(e){return false}};
-function startGate(){const l=(board.startChecks||[]).filter(Boolean);if(!l.length||gateDoneNow()||$("sgate"))return;
+   엄마가 설정에 적은 startChecks(한 줄에 하나). 다 체크 안 해도 시작 가능(엄마 11/25). 체크한 것만 그날 빠지고,
+   안 한 건 해결할 때까지 열 때마다 또 뜸(이 기기에 날짜·체크한 항목 기억). 엄마·관리자는 열 때마다 전부 뜸, 건너뛰기 가능 */
+const gateGet=()=>{try{const o=JSON.parse(localStorage.getItem("sbGateDone")||"null");return o&&o.d===today()?o.l||[]:[]}catch(e){return[]}};
+let gateSkip=false;
+function gateLeft(){const l=(board.startChecks||[]).filter(Boolean);if(momAcct||pinOpen)return l;const d=gateGet();return l.filter(t=>!d.includes(t))}
+function startGate(){if(gateSkip||$("sgate"))return;const l=gateLeft();if(!l.length)return;
  const el=document.createElement("div");el.className="layer";el.id="sgate";el.style.background="rgba(10,10,16,.96)";
- el.innerHTML=`<form style="max-width:420px;width:100%;display:grid;gap:10px"><h3 style="margin:0;font-family:var(--hand);font-size:1.7rem">시작 전에 체크!</h3><p class="meta" style="margin:0">다 누르면 열려요.</p>${l.map((t,i)=>`<button type="button" class="mchip" data-g="${i}" style="font-size:1.25rem;padding:12px 16px;justify-content:flex-start"><span class="ck">⬜</span>${esc(t)}</button>`).join("")}<button class="btn primary" id="sgo" disabled style="font-size:1.3rem;padding:12px">시작하기</button><button type="button" class="btn small" id="sskip"${momAcct||pinOpen?"":" hidden"}>엄마: 건너뛰기</button></form>`;
+ el.innerHTML=`<form style="max-width:420px;width:100%;display:grid;gap:10px"><h3 style="margin:0;font-family:var(--hand);font-size:1.7rem">시작 전에 체크!</h3><p class="meta" style="margin:0;font-size:1.05rem;line-height:1.5">한 것만 체크해. 아직 안 한 건 체크하지 말고, 하고 나서 체크하자.<br>안 한 건 다음에 열 때 또 떠.</p>${l.map((t,i)=>`<button type="button" class="mchip" data-g="${i}" style="font-size:1.25rem;padding:12px 16px;justify-content:flex-start"><span class="ck">⬜</span>${esc(t)}</button>`).join("")}<button class="btn primary" id="sgo" style="font-size:1.3rem;padding:12px">시작하기</button><button type="button" class="btn small" id="sskip"${momAcct||pinOpen?"":" hidden"}>엄마: 건너뛰기</button></form>`;
  document.body.appendChild(el);document.body.classList.add("noscroll");
- const done=()=>{gateSkip=!!(momAcct||pinOpen);try{localStorage.setItem("sbGate",gateKey())}catch(e){}el.remove();document.body.classList.remove("noscroll")};
- el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const on=!b.classList.contains("on");b.classList.toggle("on",on);b.style.textDecoration="none";b.style.opacity=on?".6":"1";b.querySelector(".ck").textContent=on?"✅":"⬜";$("sgo").disabled=[...el.querySelectorAll("[data-g]")].some(x=>!x.classList.contains("on"))});
- el.querySelector("form").onsubmit=e=>{e.preventDefault();if(!$("sgo").disabled){done();toast("좋아, 시작! 🥷")}};
- const sk=$("sskip");if(sk)sk.onclick=()=>{gateSkip=true;el.remove();document.body.classList.remove("noscroll")}}
-function gatePreview(){gateSkip=false;try{localStorage.removeItem("sbGate")}catch(e){}const g=$("sgate");if(g)g.remove();startGate();if(!(board.startChecks||[]).length)toast("먼저 체크할 것을 적고 저장해 주세요")}
+ const close=()=>{gateSkip=true;el.remove();document.body.classList.remove("noscroll")};
+ el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const on=!b.classList.contains("on");b.classList.toggle("on",on);b.style.textDecoration="none";b.style.opacity=on?".6":"1";b.querySelector(".ck").textContent=on?"✅":"⬜"});
+ el.querySelector("form").onsubmit=e=>{e.preventDefault();const got=[...el.querySelectorAll("[data-g].on")].map(b=>l[+b.dataset.g]);
+  if(!(momAcct||pinOpen)){try{localStorage.setItem("sbGateDone",JSON.stringify({d:today(),l:[...new Set([...gateGet(),...got])]}))}catch(e){}}
+  const left=l.length-got.length;close();toast(left?`좋아, 시작! 남은 ${left}개는 하고 나서 체크하자 🥷`:"좋아, 시작! 🥷")};
+ const sk=$("sskip");if(sk)sk.onclick=close}
+function gatePreview(){gateSkip=false;const g=$("sgate");if(g)g.remove();startGate();if(!(board.startChecks||[]).length)toast("먼저 체크할 것을 적고 저장해 주세요")}
 
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT=atob("aHR0cHM6Ly9zaXRlcy5nb29nbGUuY29tL3ZpZXcvbWFlYW4zNS8="); // 학교 알림장 기본 주소(검색에 학교 이름이 안 걸리게 감춰 둠)(설정에 넣으면 그 주소가 먼저)
@@ -973,7 +976,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=72;
+const VERSION=73;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1018,7 +1021,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=72").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=73").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
