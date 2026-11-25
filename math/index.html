@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795604084";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795604554";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -1315,11 +1315,11 @@ const TYPES={
  SR:{optional:true,name:"닮음비",code:"중2-2",ex:"닮음비 2 : 3, 넓이의 비 4 : 9",sec:8,why:"축척, 그림자 길이, 삼각비로 이어져요.",idea:"닮음비 a : b 이면 넓이의 비 a² : b², 부피의 비 a³ : b³ 이다냥.",
   lv:["대응변의 길이","넓이의 비","부피의 비","삼각형과 평행선 (□ 구하기)"],
   rand:L=>{let a,b;do{a=ri(1,6);b=ri(2,7)}while(a===b||GCD(a,b)!==1);return{L,a,b,k:ri(2,6)}},key:p=>JSON.stringify(p),
-  make:({L,a,b,k})=>{if(L===0)return{html:`<span class="sub">닮음비 ${a} : ${b}</span><span class="sub">작은 쪽 변 ${a*k}이면 대응변 [[0]]</span>`,a:[String(b*k)],kind:"num",cls:"mid stack",text:`${a}:${b}, ${a*k}→`};
+  make:({L,a,b,k})=>{if(L===0)return{html:`<span class="sub">닮음비 ${a} : ${b}</span><span class="sub">앞 도형의 변 ${a*k}이면 뒤 도형의 대응변 [[0]]</span>`,a:[String(b*k)],kind:"num",cls:"mid stack",text:`${a}:${b}, ${a*k}→`};
     if(L===1)return{html:`닮음비 ${a} : ${b} → 넓이의 비 ${a*a} : [[0]]`,a:[String(b*b)],kind:"num",cls:"mid",text:`${a}:${b} 넓이`};
     if(L===2)return{html:`닮음비 ${a} : ${b} → 부피의 비 ${a**3} : [[0]]`,a:[String(b**3)],kind:"num",cls:"mid",text:`${a}:${b} 부피`};
     return{html:`<span class="sub">평행선이 변을 ${a*k} : ${b*k}로 나누면</span><span class="sub">다른 변도 ${a*2} : [[0]]</span>`,a:[String(b*2)],kind:"num",cls:"mid stack",text:`평행선 ${a*k}:${b*k}`}},
-  steps:p=>{const q=TYPES.SR.make(p),{L,a,b,k}=p;return{head:q.text,list:L===0?[{h:`몇 배? ${a*k} ÷ ${a} = [[0]]`,a:[String(k)],hints:["작은 쪽 비로 나눠."]},{h:`${b} × ${k} = [[0]]`,a:q.a,hints:["같은 배."]}]:L===3?[{h:`비를 간단히: [[0]] : [[1]]`,a:[String(a),String(b)],hints:["최대공약수로 나눠."]},{h:`답 [[0]]`,a:q.a,hints:["같은 비."]}]:[{h:`${b}<sup>${L===1?2:3}</sup> = [[0]]`,a:q.a,hints:[L===1?"제곱.":"세제곱."]}]}},
+  steps:p=>{const q=TYPES.SR.make(p),{L,a,b,k}=p;return{head:q.text,list:L===0?[{h:`몇 배? ${a*k} ÷ ${a} = [[0]]`,a:[String(k)],hints:[`앞 도형의 비 ${a}로 나눠.`]},{h:`${b} × ${k} = [[0]]`,a:q.a,hints:["같은 배."]}]:L===3?[{h:`비를 간단히: [[0]] : [[1]]`,a:[String(a),String(b)],hints:["최대공약수로 나눠."]},{h:`답 [[0]]`,a:q.a,hints:["같은 비."]}]:[{h:`${b}<sup>${L===1?2:3}</sup> = [[0]]`,a:q.a,hints:[L===1?"제곱.":"세제곱."]}]}},
   pat:()=>"닮음비"},
 
  TR:{optional:true,name:"피타고라스와 삼각비",code:"중3-2",ex:"3, 4 → 빗변 5,  sin A = 3/5",sec:9,why:"고등 삼각함수의 바탕이에요.",idea:"빗변² = 밑변² + 높이². sin = 높이/빗변, cos = 밑변/빗변, tan = 높이/밑변 이다냥.",
