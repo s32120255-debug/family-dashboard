@@ -140,25 +140,28 @@
       else if(S.phase==='scene')h+=`<div class="scene"><div class="t">🎬 이런 상황이에요</div>${esc(x.scene)}</div><div class="row"><button class="big" data-k="ready">알겠어 👍</button></div>`;
       else if(S.phase==='talk'){h+=`<div class="kat"><div class="av">⚡</div><div class="bub">${esc(x.say)}${showKo?`<div class="ko">${esc(x.ko)}</div>`:''}</div></div>
         <div class="row"><button class="g" data-k="again">🔊 다시 듣기</button><button class="g" data-k="slow">🐢 더 느리게</button>${showKo?'':'<button class="g" data-k="ko">🇰🇷 뜻</button>'}</div>
-        ${last==='quiet'?'<div class="hint">🔈 잘 안 들렸어요. 한 번 더 말하거나 써 봐요.</div>':''}
+        ${last==='quiet'?'<div class="hint">🔈 잘 안 들렸어요. 한 번 더 말하거나 써 봐요.</div>':last==='hint'?`<div class="hint">🔁 조금 달라요. 첫 단어는 <b>${esc(x.en[0].split(' ')[0])}</b> · 한 번 더 말해 봐요</div>`:''}
         <textarea rows="2" placeholder="영어로 대답해요 (🎤 말로 해도 돼요)"></textarea><div class="row"><button data-k="send">보내기 →</button><button class="g" data-k="mic">🎤 말로 하기</button><button class="g" data-k="pass">넘어가기</button></div>`}
       else if(S.phase==='ok')h+=`<div class="kat"><div class="av">⚡</div><div class="bub">${esc(x.en[0])} <button class="g" data-k="sayans" style="padding:4px 8px">🔊</button><div class="ko">카츄가 형아 말을 따라 했어요</div></div></div><div class="row"><button class="big" data-k="next">${S.i+1<L.length?'다음 ▶':'끝 ▶'}</button></div>`;
-      else if(S.phase==='fix')h+=`<div class="fix">🗣️ 카츄가 이렇게 말해요. <b>따라 말해</b> 봐요<div style="font:800 24px 'Noto Sans KR';margin:8px 0">${esc(x.en[0])} <button class="g" data-k="sayans">🔊</button></div></div><textarea rows="2" placeholder="말하거나 써요"></textarea><div class="row"><button class="g" data-k="mic">🎤 말로 하기</button><button data-k="next">따라 했어 ▶</button></div>`;
+      else if(S.phase==='fix')h+=`<div class="fix">🗣️ 카츄가 이렇게 말해요. <b>따라 말해</b> 봐요<div style="font:800 24px 'Noto Sans KR';margin:8px 0">${esc(x.en[0])} <button class="g" data-k="sayans">🔊</button></div></div>${S.fixN?`<div class="hint">🔁 한 번 더 · 카츄 말을 보고 그대로 말하거나 써요</div>`:''}<textarea rows="2" placeholder="말하거나 써요"></textarea><div class="row"><button class="g" data-k="mic">🎤 말로 하기</button><button data-k="fixchk">확인 ▶</button>${(S.fixN||0)>=3?'<button class="g" data-k="next">넘어가기</button>':''}</div>`;
       else h+=`<div class="ok" style="text-align:center;font-size:20px;margin:10px 0">오늘 문장 ${S.used.length} / ${L.length}개를 카츄한테 썼어요!</div><div class="row"><button class="big" data-k="finish">끝 ▶</button></div>`;
       box.innerHTML=h+'</div>';box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>act(b.dataset.k))}
     function judgeSend(v){const x=L[S.i];const r=x.en.map(e=>close(e,v));const res=r.includes('ok')?'ok':r.includes('diff')?'diff':'quiet';
       if(res==='quiet'){last='quiet';draw();return}S.replies++;S.turns.push({who:'me',text:v});last='';
-      if(res==='ok'){if(!S.used.includes(S.i+1))S.used.push(S.i+1);S.phase='ok'}else{S.fixes.push({heard:v,fix:x.en[0]});S.phase='fix'}
+      // 엄마 11/25: 정확히 말해야 끝남 → 처음 틀리면 첫 단어 힌트로 한 번 더, 또 틀리면 정답 보고 말하거나 써서 맞아야 다음(3번 안 되면 넘어가기)
+      if(res!=='ok'&&!S.hinted){S.hinted=true;last='hint';keep();draw();return}
+      if(res==='ok'){if(!S.used.includes(S.i+1))S.used.push(S.i+1);S.phase='ok'}else{S.fixes.push({heard:v,fix:x.en[0]});S.phase='fix';S.fixN=0}
       S.turns.push({who:'ai',text:x.en[0]});keep();draw();say(x.en[0],0.85)}
     function act(k){const ta=box.querySelector('textarea'),x=L[S.i];if(k!=='mic'&&MIC){MIC.stop();MIC=null}
       if(k==='go'){S.phase='scene';keep();draw()}
-      else if(k==='ready'){S.phase='talk';showKo=false;last='';S.turns.push({who:'ai',text:x.say});keep();draw();say(x.say,0.85)}
+      else if(k==='ready'){S.phase='talk';showKo=false;last='';S.hinted=false;S.fixN=0;S.turns.push({who:'ai',text:x.say});keep();draw();say(x.say,0.85)}
       else if(k==='again')say(x.say,0.85);else if(k==='slow')say(x.say,0.6);else if(k==='sayans')say(x.en[0],0.8);
       else if(k==='ko'){showKo=true;S.help[1]=(S.help[1]||0)+1;S.helpMax=Math.max(S.helpMax,1);draw()}
       else if(k==='send'){const v=(ta&&ta.value||'').trim();judgeSend(v)}
-      else if(k==='pass'){S.fixes.push({heard:'(넘어감)',fix:x.en[0]});S.phase='fix';keep();draw();say(x.en[0],0.85)}
+      else if(k==='pass'){S.fixes.push({heard:'(넘어감)',fix:x.en[0]});S.phase='fix';S.fixN=0;keep();draw();say(x.en[0],0.85)}
+      else if(k==='fixchk'){const v=(ta&&ta.value||'').trim();if(!v)return;if(x.en.some(e=>close(e,v)==='ok')){S.fixed=(S.fixed||0)+1;if(S.i+1<L.length){S.i++;S.phase='scene'}else{S.phase='end';S.done=true}}else S.fixN=(S.fixN||0)+1;keep();draw()}
       else if(k==='mic'){if(MIC&&MIC.isOn()){MIC.stop();return}
-        MIC=window.liveMic&&window.liveMic(ta,on=>{const b=box.querySelector('[data-k="mic"]');if(b)b.textContent=on?'⏹ 그만 듣기':'🎤 말로 하기';if(!on){MIC=null;if(S.phase==='talk'&&ta&&ta.value.trim())judgeSend(ta.value.trim())}},'en-US');
+        MIC=window.liveMic&&window.liveMic(ta,on=>{const b=box.querySelector('[data-k="mic"]');if(b)b.textContent=on?'⏹ 그만 듣기':'🎤 말로 하기';if(!on){MIC=null;if(S.phase==='talk'&&ta&&ta.value.trim())judgeSend(ta.value.trim());else if(S.phase==='fix'&&ta&&ta.value.trim())act('fixchk')}},'en-US');
         if(!MIC){const b=box.querySelector('[data-k="mic"]');if(b){b.textContent='🎤 이 기기에선 안 돼요 · 자판으로 써요';b.disabled=true}}}
       else if(k==='next'){if(S.i+1<L.length){S.i++;S.phase='scene'}else{S.phase='end';S.done=true}keep();draw()}
       else if(k==='finish'){S.done=true;keep();ctx.onDone&&ctx.onDone(sum())}}
