@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795565759";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795566483";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -464,7 +464,7 @@ const TYPES={
   pat:(p,g)=>+g[0]===p.a*p.b?"분자를 곱함":"분자 계산 틀림"}
 };
 const ORDER0=["A1","A3","B5","A6","T12","T19","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1"];
-const PLAN0={A1:3,A3:2,B5:2,A6:1,T12:1,FR:1,OF:1,CO:1};
+const PLAN0={A1:3,A3:2,B5:2,A6:1,T12:1,FR:1,OF:1,CO:1,E1:1,C2:1,D1:1};
 
 /* ───────── 상태 ───────── */
 const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
@@ -483,6 +483,7 @@ function loadLocal(){S=freshCore();DAYS={};
   ORDER0.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});
   S.cfg.order=S.cfg.order.filter(id=>TYPES[id]);
   if(!S.cfg.coAdded){S.cfg.coAdded=true;if(!S.cfg.plan.CO)S.cfg.plan.CO=1}
+  if(!S.cfg.all3){S.cfg.all3=true;["E1","C2","D1"].forEach(id=>{if(!S.cfg.plan[id])S.cfg.plan[id]=1});if(DAYS[today()])DAYS[today()].plan=planNow()}
   if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
 loadLocal();
 
@@ -622,7 +623,8 @@ function padHTML(kind,canSubmit){
   if(kind==="ox")return `<div class="ox"><button data-act="ox" data-arg="O" aria-label="맞아요">O</button><button data-act="ox" data-arg="X" aria-label="아니에요">X</button></div>`;
   if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
   const K=n=>`<button class="key" data-key="${n}">${n}</button>`;
-  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음">n</button>${K(7)}${K(8)}${K(9)}<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button><button class="key" data-key="0" style="grid-column:span 3">0</button></div>`;
+  const okk=S&&S.cfg&&S.cfg.okKey;
+  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음" ${okk?"":'style="grid-row:span 3;height:auto"'}>n</button>${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':""}<button class="key" data-key="0" style="grid-column:span 3">0</button></div>`;
 }
 function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
 
@@ -797,7 +799,7 @@ function vResult(){
    <div class="facts">${facts.map(([s,t])=>`<p class="${s?"star":""}">${t}</p>`).join("")}</div>
    <div class="card"><p class="small muted">문제별 시간</p><div class="bars">${bars}</div></div>
    ${wrongs.length?`<button class="bigbtn ${rec.w>c.allow?"":"ghost"}" data-act="review">틀린 ${wrongs.length}문제 같이 보기</button>`:""}
-   ${left>0?`<button class="bigbtn" data-act="again">한 판 더 (${left}판 남음)</button>`:""}
+   ${left>0?`<button class="bigbtn" data-act="again">한 판 더 (${left}판 남음)</button>`:nextItem()&&!PREVIEW?`<button class="bigbtn" data-act="open" data-arg="${nextItem()}">다음: ${TYPES[nextItem()].name} ▶</button>`:""}
    <button class="bigbtn ghost" data-act="home">처음으로</button></div>`;
 }
 
@@ -949,6 +951,7 @@ function vParent(){
    ${MSG?`<div class="notice good">${esc(MSG)}</div>`:""}
    <div class="card"><h3>${pname()} 하루 계획 · ${total}세트</h3><p class="small muted">+/− 세트 수 · 미리 보기는 기록 안 남음</p>${rows}</div>
    <div class="card"><h3>밀린 세트</h3><p>지금 밀린 세트: <b>${carryN}</b>${carryN?" ("+Object.entries(d.carry).map(([k,v])=>TYPES[k].name+" "+v).join(", ")+")":""}</p>
+     <label class="row"><input id="okkey" type="checkbox" ${S.cfg.okKey?"checked":""} data-ch="okkey"> 확인 키 보이기 (끄면 답 자리 수를 채우면 바로 넘어가고, n이 확인 역할)</label>
      <label class="row"><input id="carry" type="checkbox" ${S.cfg.carryOn?"checked":""} data-ch="carry"> 못 한 세트를 다음 날로 넘기기 (앱을 연 날 기준)</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
    <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>
@@ -1005,7 +1008,7 @@ const ACT={
   mclose2:()=>{modal=null;render()},
   preset2:id=>{delete S.ts[id];modal=null;save();render()},
   clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
-  resetplan:()=>{S.cfg.plan=clone(PLAN0);D().plan=planNow();save(today());MSG="하루 계획을 처음 값(10세트)으로 돌렸어요.";render()},
+  resetplan:()=>{S.cfg.plan=clone(PLAN0);D().plan=planNow();save(today());MSG="하루 계획을 처음 값으로 돌렸어요.";render()},
   export:async()=>{const data=JSON.stringify({app:"sihun-yeonsan",v:1,core:S,days:DAYS});
     if(!window.claude){try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=`시훈-연산-기록-${today()}.json`;document.body.appendChild(a);a.click();a.remove();MSG="파일로 저장했어요.";render();return}catch(e){}}
     try{const dl=await window.claude?.use?.("downloads");if(!dl)throw 0;await dl.save({filename:`시훈-연산-기록-${today()}.json`,data});MSG="파일로 저장했어요."}
@@ -1025,6 +1028,7 @@ app.addEventListener("pointerdown",e=>{
 });
 app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)return;const k=el.dataset.ch,id=el.dataset.arg;
   if(k==="carry"){S.cfg.carryOn=el.checked;save();return}
+  if(k==="okkey"){S.cfg.okKey=el.checked;save();return}
   if(k==="io"){IMPORT_TXT=el.value;return}
   const c=S.cfg.tc[id]=S.cfg.tc[id]||{};
   if(k==="sec"){const v=parseFloat(el.value);if(v>0){c.sec=v;const st=tst(id);if(st.target!=null)st.target=Math.max(v,st.target)}}
