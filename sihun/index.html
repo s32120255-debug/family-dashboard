@@ -1137,7 +1137,7 @@ function lesson(){const d=g2day(),L=lessonOf(d.k);let h=topbar('📌 오늘의 �
   else{const qi=d.qi[LZ.qn],q=L.qs[qi],pk=d.quiz.picks[LZ.qn];
     h+=`<div class="tip">문제 ${LZ.qn+1} / ${d.qi.length}</div><div class="prompt" style="font-size:20px">${esc(q.ko)}</div><div class="ans" style="text-align:center;font-size:24px;margin:10px 0">${esc(q.s).replace('___','<span style="display:inline-block;min-width:60px;border-bottom:3px solid #3b6cf6;color:#3b6cf6">'+(pk?esc(pk.v):'&nbsp;')+'</span>')}</div>
       <div class="row" style="justify-content:center">${q.o.map(o=>`<button class="chip" data-act="lpick" data-v="${esc(o)}" ${pk?'disabled':''} style="font-size:20px;${pk&&o===q.a?'background:var(--ok)':''}">${esc(o)}</button>`).join('')}</div>`;
-    if(pk)h+=`<div class="res ${pk.ok?'ok':'slow'}">${pk.ok?'⭕ 맞았어요!':'❌ 정답은 <b>'+esc(q.a)+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="lnext" data-auto="${pk.ok?'ok':'x'}">${LZ.qn<d.qi.length-1?'다음 문제 ▶':'5문장 시작 ▶'}</button></div>`}
+    if(pk)h+=`<div class="res ${pk.ok?'ok':'slow'}">${pk.ok?'⭕ 맞았어요!':'🔁 정답은 <b>'+esc(q.a)+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="lnext" data-auto="${pk.ok?'ok':'x'}">${LZ.qn<d.qi.length-1?'다음 문제 ▶':'5문장 시작 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>'}
 function lessonDone(){const d=g2day();d.lessonAt=new Date().toISOString();save();startSession(true)}
 // ===== 🧩 틈새 코너 (엄마 11/25): 덩어리 표현 하루 1개 · 듣고 따라 말하기 → 뜻 (혼자 만들기 없음) =====
@@ -1246,7 +1246,9 @@ function mapRevPick(k,dt){const M=mapS(),A=MAPALL(),cur=new Set(((MAPSET[k]||{})
 function mapRevCells(d){const A=MAPALL();return ((d&&d.revK)||[]).map(k=>A[k]).filter(Boolean)}
 function mapRevLeft(d){return mapRevCells(d).some(c=>!(d.rev||{})[c.k])}
 function mapSrCell(k,col){const M=mapS();M.sr=M.sr||{};const r=M.sr[k],t=today();if(!r){M.sr[k]={st:0,due:addDays(t,1)};return}if(r.done||r.due>t)return;
-  if(col==='green'){const st=(r.st||0)+1;M.sr[k]=st>=SRI.length?{st,done:t}:{st,due:addDays(t,SRI[st])}}else M.sr[k]={st:0,due:addDays(t,1)}}
+  const st0=r.st||0;if(col==='green'){const st=st0+1;M.sr[k]=st>=SRI.length?{st,done:t}:{st,due:addDays(t,SRI[st])};return}
+  if(col==='yellow'){M.sr[k]={st:st0,due:addDays(t,SRI[st0])};return}
+  const wn=(r.wn||0)+1;if(wn>=2){M.sr[k]={st:0,due:addDays(t,1),relearn:true};return}const st=Math.max(0,st0-1);M.sr[k]={st,wn,due:addDays(t,SRI[st])}}
 const mapAn=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');
 function mapWordsToday(){const k=mapSetToday();const S=k&&MAPSET[k];return S&&S.words?S.words.map(x=>x[0]):[]}
 function mapColor(c){return !c?'':!c.ok?'gray':c.sec<=MAP_FAST?'green':'yellow'}
@@ -1332,7 +1334,9 @@ const ACT_MAP={
   mapEn:t=>{const v=t&&t.dataset.skip?'(모르겠어)':($('#mwr').value||'').trim();if(!v)return;const d=mapDay();d.write.en=v;d.write.sec=Math.max(1,Math.round((Date.now()-(d.write.t0||Date.now()))/1000));d.write.at=new Date().toISOString();save();render()},
   mapWriteDone:()=>{const d=mapDay();if((d.quiz||[]).length<mapQuiz().length){MZ.step='quiz';MZ.qi=(d.quiz||[]).length;render()}else mapFinish()},
   mapWhy:t=>{const d=mapDay();d.why=d.why||{};const k=t.dataset.k,w=t.dataset.w;if(d.why[k]===w)delete d.why[k];else d.why[k]=w;save();render()}};
-let mapDicOn=false;
+let mapDicOn=false,vDicOn=false;
+function vDicWire(){if(vDicOn||!DIC)return;vDicOn=true;DIC.onFinal(({text})=>{if(!vc||!vc.recOn||V.view!=='vocab')return;vc.recHeard=((vc.recHeard||'')+' '+text).trim();if(vnorm(vc.recHeard).includes(vnorm(vc.w.w))){clearTimeout(vc.recT);DIC.stop().catch(()=>{})}render()});
+  DIC.onState(({state})=>{if(state!=='idle'||!vc||!vc.recOn||V.view!=='vocab')return;clearTimeout(vc.recT);vc.recOn=false;render()})}
 function mapMicStop(){if(MZ){clearInterval(MZ.micT);clearTimeout(MZ.okT);if(MZ.listen){MZ.listen=false;try{DIC&&DIC.stop().catch(()=>{})}catch(e){}}}}
 // 🎤 말하기 자동 넘김(엄마 11/25): 들린 말을 정답과 비교(judge: 주어 첫소리 흐림은 봐줌). 맞으면 저절로 다음. 안 들림 · 다름은 틀림 아님 → 다시 말하기 / 넘어가기
 // 엄마 11/25 「인식은 급하게 되면 안 돼, 최고급으로」: 시훈이는 꺼내는 데 15~47초, 중간에 멈칫함.
@@ -1542,7 +1546,9 @@ function SES(){const s=RLOG.session;return s&&s.date===today()?s:null}
 // ---------- 단어 체크 (vocab/words, vocab/check — 나중에 어휘앱에서도 씀) ----------
 // 엄마 11/24: 하루 10개(새 7 + 전에 틀린 3, 철자가 헷갈리는 단어 섞기). 뜻 보고 단어 전체 쓰기 → 모르면 🔊 소리 → 그래도 모르면 💡 힌트(헷갈리는 글자만) → 그래도 틀리면 따라 쓰기 → 가리고 쓰기 → 품사 고르기.
 // 몰라요(또는 빈칸 틀림) 단어는 다음 날 빈칸 채우기로 다시 나옴. 맞히면 '알게 됨'.
-const VDAILY=10,VNEW=7,VRE=3;let VW=null,VC=null,vc=null;
+const VDAILY=10,VNEW=7,VRE=3,VTEST=12;
+// 엄마 11/25: 새 단어 첫날은 시험 없이 익히기(품사 · 외우는 방법 → 따라 쓰기 → 소리 내 녹음 → 예문), 다음 날부터 시험 + 망각곡선. 졸업 = 30일 간격까지 빠르게 맞힘
+const VTIP={"decision": "decide(결정하다) → decision: -sion이 붙어 \"결정하는 것\" = 명사", "surprise": "sur(위에서) + prise(잡다) → 갑자기 덮쳐 잡으니 깜짝! \"서프라이즈 파티\"", "everyone": "every(모든) + one(사람) = 모든 사람", "problem": "수학 문제집의 \"프라블럼\" · pro + blem 두 마디", "kindness": "kind(친절한) + ness(~함) = 친절함 → -ness는 명사 표시", "friendship": "friend(친구) + ship(사이) = 우정 → -ship은 명사 표시", "important": "im(안으로) + port(나르다) → 꼭 안으로 실어 와야 할 만큼 중요한", "rise": "sunrise(해돋이)의 rise = 떠오르다", "realize": "real(진짜) + ize(~하게 되다) → 진짜인 걸 알게 되다 = 깨닫다", "mistake": "mis(잘못) + take(잡다) → 잘못 잡다 = 실수", "wear": "스포츠웨어의 \"웨어\" · ea를 \"에어\"로 읽어요", "helmet": "소리 그대로 \"헬멧\" · hel + met", "celebrate": "cel-e-brate 세 마디 · celebrity(셀럽) = 축하받는 사람", "arrive": "ar(~로) + rive(강가) → 강가에 닿다 = 도착하다 · r 두 개", "famous": "fame(명성) + ous(~한) = 유명한 → -ous는 형용사 표시", "useful": "use(쓰다) + ful(가득한) = 쓸모 있는 → -ful은 형용사 표시", "friendly": "friend + ly → \"친구 같은\" = 다정한. -ly여도 형용사!", "carefully": "care(조심) + ful + ly → 조심스럽게 (형용사 careful + ly = 부사)", "sadly": "sad(슬픈) + ly → 슬프게, 안타깝게도 (부사)", "always": "al(= all 모든) + ways(때) → 모든 때 = 항상", "never": "n(= not) + ever(언제든) → 언제든 아니다 = 절대 안", "during": "dur(계속되다) + ing → 계속되는 동안", "inside": "in(안) + side(쪽) = 안쪽에서", "until": "un + til · l은 하나만! \"언틸\"", "ring": "따르릉 = ring · 과거는 rang", "rain": "레인코트(raincoat)의 rain", "light": "\"라이트\"(전등) · gh는 소리가 안 나요", "candle": "can + dle 두 마디 · 캔들(향초)", "hard": "하드(딱딱한) 아이스크림 → 딱딱한 · 어려운", "hardly": "hard + ly인데 뜻이 바뀌어요! = 거의 ~않다", "lately": "late(늦은) + ly → 최근에, 요즘", "question": "quest(찾다) + ion → 답을 찾는 것 = 질문", "buy": "\"바이\" · bye(안녕)와 소리가 같고 철자는 u가 들어가요", "smell": "s + mell · l 두 개", "soup": "\"수프\" · ou를 \"우\"로 읽어요", "cousin": "cou + sin · ou를 \"어\"로 읽어요", "picture": "pic + ture 두 마디 · \"픽처\"", "call": "콜(전화 콜) · l 두 개", "taste": "\"테이스트\" · a_e가 \"에이\" 소리", "sweet": "\"스위트\" · e 두 개", "sound": "\"사운드\" · ou가 \"아우\" 소리", "leaf": "\"리프\" · ea가 \"이\" 소리, 여럿은 leaves (f → ves)", "turn": "유턴(U-turn)의 turn = 돌다, 변하다", "angry": "anger(화) + y = 화난", "become": "be(되다) + come(오다) → ~이 되다", "something": "some(어떤) + thing(것) = 무언가", "special": "spec(보다) + ial → 눈에 띄어 보이는 = 특별한", "borrow": "bor + row · r 두 개 · 빌려 오기(↔ lend 빌려주기)", "library": "libr(책) + ary(곳) = 책이 있는 곳 = 도서관", "place": "pl + ace · \"플레이스\"", "stay": "홈스테이(homestay)의 stay = 머무르다", "bench": "공원 벤치 · ben + ch", "grandparents": "grand(할) + parents(부모님) = 조부모님", "happen": "hap(우연) + pen → 우연히 생기다 · p 두 개", "accident": "ac + cid(떨어지다) + ent → 갑자기 떨어진 일 = 사고 · c 두 개", "nurse": "\"너스\" · ur을 \"어\"로 읽어요", "quiet": "qu-i-et 세 소리 \"콰이엇\" (quite와 헷갈리지 않기)", "cry": "\"크라이\" · 과거는 cried (y → ied)", "gift": "기프티콘(gift + icon)의 gift = 선물", "send": "\"센드\" · 과거는 sent", "letter": "\"레터\" · t 두 개 · 글자도 편지도 letter", "name": "\"네임\" · 이름 / 이름을 짓다", "news": "new(새로운) + s = 새 소식", "warm": "웜업(warm-up)의 warm · ar을 \"오\"로 읽어요", "tall": "톨 사이즈의 tall = 키가 큰 · l 두 개", "hungry": "hunger(배고픔) + y = 배고픈", "tired": "tire(지치다) + d = 피곤한", "busy": "\"비지\" · u를 \"이\"로 읽어요", "desk": "안내 데스크의 desk = 책상"};let VW=null,VC=null,vc=null;
 const POS={n:'명사',v:'동사',a:'형용사',d:'부사',p:'대명사',q:'의문사',r:'전치사'};
 const POSHINT={n:'이름을 나타내는 말',v:'하는 일을 나타내는 말',a:'어떤지를 나타내는 말',d:'언제·어떻게·얼마나를 꾸며 주는 말',p:'이름 대신 쓰는 말',q:'물어볼 때 쓰는 말',r:'다른 말 앞에서 관계를 나타내는 말'};
 const VPOS={sleepy:'a',diary:'n',horror:'n',treasure:'n',spicy:'a',true:'a',interesting:'a',lock:'v',wolf:'n',forest:'n',classroom:'n',dinosaur:'n',invent:'v',telephone:'n',subway:'n',quiet:'a',break:'v',vase:'n',wallet:'n',lose:'v',huge:'a',usually:'d',early:'d',desert:'n',remember:'v',late:'a',map:'n',mine:'p',sell:'v',fresh:'a',tower:'n',island:'n',fridge:'n',difficult:'a',climb:'v',top:'n',meat:'n',medal:'n',castle:'n',build:'v',
@@ -1582,15 +1588,16 @@ function vTricky(w){return vNeed(w)>=2||/(gh|kn|wr|ph|ea|ou|ie|ei|ck|ture|tion)/
 // 엄마 11/25 「하나로 통일」: 복습 단어도 따로 뜻 고르기 하지 않고, 새 단어와 같은 흐름(쓰기 → 소리 → 힌트 → 따라 쓰기 → 품사)으로.
 // 하루 10개 = 다시 볼 단어 3개(전에 틀린 단어 먼저, 그다음 망각곡선 1·3·7·14·30일이 된 단어) + 새 단어 7개.
 function vReview(dt){dt=dt||today();if(!VW||!VC)return [];const K=VC.words||{};
-  const wrong=VW.words.filter(w=>w.map&&K[w.w]&&K[w.w].known===false&&HUB.dkey(K[w.w].ts)<dt).sort((a,b)=>(K[a.w].ts||'').localeCompare(K[b.w].ts||'')).map(w=>w.w);
+  const wrong=VW.words.filter(w=>w.map&&K[w.w]&&K[w.w].known===false&&!(K[w.w].sr&&K[w.w].sr.due>dt)&&HUB.dkey(K[w.w].ts)<dt).sort((a,b)=>(K[a.w].ts||'').localeCompare(K[b.w].ts||'')).map(w=>w.w);
   const sr=VW.words.filter(w=>w.map&&K[w.w]&&K[w.w].known!==false).map(w=>[w.w,srOf(w.w)]).filter(([w,r])=>r&&!r.done&&r.due<=dt).sort((a,b)=>a[1].due.localeCompare(b[1].due)).map(x=>x[0]);
   return wrong.concat(sr)}
-function vPickQueue(dt){const due=vReview(dt),re=due.slice(0,VRE);const K=VC.words||{};
-  // 같은 단원을 한 번 더 하는 날: 새 단어 대신 그 단원 단어를 다시(같은 흐름) + 복습
-  {const TW=mapWordsToday().filter(w=>VW.words.some(x=>x.w===w));if(TW.length&&TW.every(w=>K[w])){const q=TW.concat(due.filter(w=>!TW.includes(w))).slice(0,VDAILY);return {queue:q,re:q}}}
-  const TW=mapWordsToday();const pool=VW.words.filter(w=>w.map&&!K[w.w]).sort((a,b)=>{const x=TW.indexOf(a.w),y=TW.indexOf(b.w);return (x<0?999:x)-(y<0?999:y)||a.first-b.first});const tr=TW.length?[]:pool.slice(0,25).filter(vTricky).slice(0,3);
-  const fresh=tr.concat(pool.filter(w=>!tr.includes(w))).slice(0,VDAILY-re.length).map(w=>w.w);
-  let q=re.concat(fresh);if(q.length<VDAILY)q=q.concat(due.slice(VRE)).slice(0,VDAILY);return {queue:q,re:q.filter(w=>due.includes(w))}}
+function vPickQueue(dt){const K=VC.words||{};const due=vReview(dt).slice(0,VTEST);
+  const TW=mapWordsToday().filter(w=>VW.words.some(x=>x.w===w));
+  // 같은 단원을 한 번 더 하는 날: 새 단어 없이 그 단원 단어 시험 + 복습
+  if(TW.length&&TW.every(w=>K[w])){const q=TW.filter(w=>!(K[w].sr||{}).done).concat(due.filter(w=>!TW.includes(w))).slice(0,VTEST);return {queue:q,re:q.filter(w=>!K[w].relearn),learn:q.filter(w=>K[w].relearn)}}
+  const pool=VW.words.filter(w=>w.map&&!K[w.w]).sort((a,b)=>{const x=TW.indexOf(a.w),y=TW.indexOf(b.w);return (x<0?999:x)-(y<0?999:y)||a.first-b.first});
+  const fresh=pool.slice(0,VNEW).map(w=>w.w);const q=due.concat(fresh);
+  return {queue:q,re:due.filter(w=>!(K[w]||{}).relearn),learn:fresh.concat(due.filter(w=>(K[w]||{}).relearn))}}
 // 엄마 11/24 저녁: 시작할 때 복습할 단어 스펠링 보고 뜻 고르기 → 그다음 오늘 단어. 망각곡선 간격 1·3·7·14·30일, 틀리면 처음(1일)부터 + 다시 쓰기 복습. 하루 최대 15개
 const SRI=[1,3,7,14,30],SRMAX=15;
 function addDays(d,n){const t=new Date(d+'T12:00:00');t.setDate(t.getDate()+n);return HUB.dkey(t)}
@@ -1603,27 +1610,32 @@ function vrev(){const s=VS(),w=vr.w,n=s.rev.length,r=(s.revRes||{})[w.w];
   let h=topbar('🔤 복습 단어 뜻 확인',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.revRes||{}).length/n*100)}%"></i></div><div class="nav"><span>${vr.i+1} / ${n} · 다 하면 오늘 단어로 가요</span></div>`;
   h+=`<div class="card"><div class="tip" style="text-align:center">이 단어 뜻은?</div><div class="prompt" style="font-size:32px">${esc(w.w)} <button class="btn light sm" data-act="vrsay">🔊</button></div>
    <div class="row" style="justify-content:center">${vr.opts.map(o=>{const on=r&&(o===w.ko||o===r.pick);return `<button class="chip" data-act="vrpick" data-v="${esc(o)}" ${r?'disabled':''} style="flex:1;min-width:130px;max-width:220px;padding:12px 8px;${on?(o===w.ko?'background:var(--ok)':'background:var(--no)'):'background:#eef1f7;color:#1f2330'}">${esc(o)}</button>`}).join('')}</div>`;
-  if(r)h+=`<div class="res ${r.ok?'ok':'slow'}">${r.ok?'⭕ 맞았어요!':'❌ 정답: <b>'+esc(w.ko)+'</b> · 다시 써 보는 단어로 나오고, 내일 뜻도 다시 확인해요.'}</div><div class="row" style="justify-content:center"><button class="btn" data-act="vrnext" data-auto="${r.ok?'ok':'x'}">다음 ▶</button></div>`;
+  if(r)h+=`<div class="res ${r.ok?'ok':'slow'}">${r.ok?'⭕ 맞았어요!':'🔁 정답: <b>'+esc(w.ko)+'</b> · 다시 써 보는 단어로 나오고, 내일 뜻도 다시 확인해요.'}</div><div class="row" style="justify-content:center"><button class="btn" data-act="vrnext" data-auto="${r.ok?'ok':'x'}">다음 ▶</button></div>`;
   $('#main').innerHTML=h+'</div>'}
 function vStart(){let s=VS();
   // 엄마 11/25 「수비수 뜨는데?」: MARK로 바꾸기 전에 만들어진 오늘 단어 묶음에 예전 단어가 남아 있으면, 아직 안 한 예전 단어를 MARK 단어로 바꿈
-  if(s&&VW){const isM=w=>VW.words.some(x=>x.w===w&&x.map);const old=s.queue.filter(w=>!s.res[w]&&!isM(w));if(old.length){const keep=s.queue.filter(w=>s.res[w]);const p=vPickQueue();s.queue=keep.concat(p.queue.filter(w=>!keep.includes(w))).slice(0,Math.max(VDAILY,keep.length));s.re=(s.re||[]).filter(w=>s.queue.includes(w)).concat(p.re.filter(w=>s.queue.includes(w)));s.i=0;vsave()}}
+  if(s&&VW){const isM=w=>VW.words.some(x=>x.w===w&&x.map);const old=s.queue.filter(w=>!s.res[w]&&!isM(w));if(old.length){const keep=s.queue.filter(w=>s.res[w]);const p=vPickQueue();s.queue=keep.concat(p.queue.filter(w=>!keep.includes(w))).slice(0,Math.max(VDAILY,keep.length));s.re=(s.re||[]).filter(w=>s.queue.includes(w)).concat(p.re.filter(w=>s.queue.includes(w)));s.learn=(p.learn||[]).filter(w=>s.queue.includes(w));s.i=0;vsave()}}
   if(s&&s.v!==2){const done=s.queue.filter(w=>(s.res||{})[w]);if(done.length<VDAILY){const p=vPickQueue();s.queue=done.concat(p.queue.filter(w=>!done.includes(w))).slice(0,VDAILY);s.re=[...new Set((s.re||[]).concat(p.re))].filter(w=>s.queue.includes(w))}else s.queue=done;s.v=2;vsave()}
-  if(!s){const p=vPickQueue();s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
+  if(!s){const p=vPickQueue();s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,learn:p.learn||[],i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
   if(s.rev===undefined){s.rev=[];s.revRes={};vsave()}
   // 👀 직접 해 보기: 오늘 단어를 이미 다 했으면 내일 나올 단어로 보여 줌(기록 안 남음, 끝내기 누르면 원래대로)
-  if(window.HUBTRY&&!s.sim&&!s.queue.some(w=>!s.res[w])&&!(s.rev||[]).some(w=>!(s.revRes||{})[w])){const p=vPickQueue(addDays(today(),1));s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,i:0,res:{},start:Date.now(),rev:[],revRes:{},sim:true}}
+  if(window.HUBTRY&&!s.sim&&!s.queue.some(w=>!s.res[w])&&!(s.rev||[]).some(w=>!(s.revRes||{})[w])){const p=vPickQueue(addDays(today(),1));s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,learn:p.learn||[],i:0,res:{},start:Date.now(),rev:[],revRes:{},sim:true}}
   const ri=(s.rev||[]).findIndex(w=>!(s.revRes||{})[w]);if(ri>=0)return vRevOpen(ri);
   const f=s.queue.findIndex(w=>!s.res[w]);vOpen(f>=0?f:Math.min(s.i,s.queue.length-1))}
 function vIsRe(w){const s=VS();return !!(s&&(s.re||[]).includes(w))}
 function vOpen(i){const s=VS();if(i<0)return;if(i>=s.queue.length)return vFinish();s.i=i;const w=VW.words.find(x=>x.w===s.queue[i]);const r=s.res[w.w];
-  vc={i,w,phase:r?'result':'spell',pred:vIsRe(w.w)?'re':'new',t0:Date.now(),heard:false,tries:[],hintN:0,copyN:0,recallN:0,msg:''};V={view:'vocab'};vsave();render()}
+  const LRN=!!(s.learn&&s.learn.includes(w.w));vc={i,w,lrn:LRN,phase:r?'result':LRN?'learn1':'spell',pred:LRN?'learn':vIsRe(w.w)?'re':'new',t0:Date.now(),heard:false,tries:[],hintN:0,copyN:0,recallN:0,msg:''};V={view:'vocab'};vsave();render();if(LRN&&!r)say(w.w)}
 const VLV={self:'뜻만 보고 씀',sound:'소리 듣고 씀',hint:'힌트 보고 씀',copy:'따라 쓰고 기억해서 씀',gave:'두 번 틀려 정답 봄'};
 function vToPos(known){vc.known=known;if(posOf(vc.w)){vc.phase='pos';vc.msg='';render()}else vDone(known,vc.gave)}
+function vLearnDone(){const s=VS(),w=vc.w;s.res[w.w]={learn:true,lvl:'learn',pred:'learn',heard:vc.recHeard||'',copyTry:vc.copyN||0,sec:Math.round((Date.now()-vc.t0)/100)/10};
+  VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={sr:{st:(prev&&prev.sr&&prev.sr.st)||0,due:addDays(today(),1)},wn:0,relearn:false,mc:(prev&&prev.mc)||[],known:null,ko:w.ko,ts:new Date().toISOString(),pred:'learn',how:'learn',lvl:'learn',learnAt:today(),hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:'learn',lvl:'learn'}]).slice(-10)};
+  const D=vday();D.n=Object.keys(s.res).length;D.learn=Object.values(s.res).filter(x=>x.learn).length;vc.phase='result';vsave();render()}
 function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,lvl:vc.lvl||(known?'self':'gave'),heard:!!vc.heard,tries:vc.tries.join(' / '),hintN:vc.hintN||0,copyN:vc.copyN,recallN:vc.recallN,posPick:vc.posPick||null,posOk:vc.posOk==null?null:vc.posOk,posAns:posOf(w),mask:vMask(w),fixN:vc.fixN||0,badSyl:vc.bad?vc.bad.map(i=>sylOf(w.w)[i].t):null,cut:vc.cutRes?{ok:vc.cutRes.ok}:null,sec:Math.round((Date.now()-vc.t0)/100)/10};
-  VC.words=VC.words||{};const prev=VC.words[w.w];const psr=prev&&prev.sr;let nsr={st:0,due:addDays(today(),1)};
-  if(known&&prev&&prev.known!==false&&psr&&vc.pred==='re'){const st=(psr.st||0)+1;nsr=st>=SRI.length?{st,done:today()}:{st,due:addDays(today(),SRI[st])}}
-  VC.words[w.w]={sr:nsr,mc:(prev&&prev.mc)||[],known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
+  VC.words=VC.words||{};const prev=VC.words[w.w];const psr=prev&&prev.sr;let nsr={st:0,due:addDays(today(),1)},wn=0,relearn=false;
+  // 엄마가 맡김(11/25): 빠르게 맞힘 → 다음 간격 · 맞았지만 느림(소리 듣고 · 15초 넘음) → 같은 간격 · 틀림 → 한 칸 뒤로 · 두 번 연속 틀리면 다음 날 다시 배우기(시험 없이)
+  if(psr){const st0=psr.st||0,secs=(Date.now()-vc.t0)/1000,fast=known&&vc.lvl==='self'&&secs<=15;let st=fast?st0+1:known?st0:Math.max(0,st0-1);wn=known?0:((prev.wn||0)+1);if(wn>=2){relearn=true;wn=0;st=0}
+    nsr=st>=SRI.length?{st,done:today()}:{st,due:addDays(today(),relearn?1:SRI[st])}}
+  VC.words[w.w]={sr:nsr,wn,relearn,mc:(prev&&prev.mc)||[],known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
   const D=vday();const r=Object.values(s.res);D.n=r.length;D.known=r.filter(x=>x.known).length;D.re=r.filter(x=>x.pred==='re').length;D.reOk=r.filter(x=>x.pred==='re'&&x.known).length;D.gave=r.filter(x=>x.gave).length;
   D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;D.posBad=Object.entries(s.res).filter(([,x])=>x.posOk===false).map(([ww,x])=>({w:ww,pick:x.posPick,ans:x.posAns||posOf(VW.words.find(z=>z.w===ww)||{w:ww})}));
   vc.phase='result';vsave();render();say(w.w)}
@@ -1635,7 +1647,7 @@ function vBoxes(word,shown){return `<div style="display:flex;justify-content:cen
 function vFullBoxes(word){return `<div class="vfull" style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:10px 0">${[...word].map(c=>c===' '?'<span style="width:14px"></span>':`<span data-f="1" style="width:30px;height:38px;border-bottom:3px solid #c3cbe0;display:inline-flex;align-items:flex-end;justify-content:center;font:800 24px 'Noto Sans KR';color:#3b6cf6"></span>`).join('')}</div>`}
 function vInput(act,label){return `<div class="row" style="justify-content:center"><input id="vin" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="${act}" data-full="1" style="font:800 24px 'Noto Sans KR';padding:10px 14px;border:2px solid #c3cbe0;border-radius:14px;width:min(100%,340px);text-align:center"><button class="btn" data-act="${act}">${label}</button></div>`}
 function vDup(w){return VW.words.filter(x=>x.ko===w.ko&&x.w!==w.w)}
-// 엄마 11/25: 품사 틀리면 그냥 넘어가서 틀린 줄 모름 → ❌ + 정답 + 한 줄 이유 보여 주고 「알겠어」 눌러야 넘어감
+// 엄마 11/25: 품사 틀리면 그냥 넘어가서 틀린 줄 모름 → 🔁 + 정답 + 한 줄 이유 보여 주고 「알겠어」 눌러야 넘어감
 function posWhy(word,k){const w=(word||'').toLowerCase();
   if(k==='a'){if(/ed$/.test(w))return '동사에 -ed가 붙어서 "그런 상태인"을 말해요 → 형용사';if(/ing$/.test(w))return '동사에 -ing가 붙어서 "그렇게 만드는"을 말해요 → 형용사';
     const m=w.match(/(ful|ous|ive|able|ible|less|ic|al)$/);if(m)return `-${m[1]}로 끝나는 말은 대부분 형용사예요`}
@@ -1644,16 +1656,29 @@ function posWhy(word,k){const w=(word||'').toLowerCase();
   return POSHINT[k]+' → '+POS[k]}
 function vPosQ(){const k=posOf(vc.w);const o=['n','v','a','d'];if(!o.includes(k))o.push(k);const bad=vc.posPick&&vc.posOk===false;
   const chip=p=>{const st=!bad?'background:#eef1f7;color:#1f2330':p===k?'background:#e3f6ea;color:#1f2330;border:3px solid #2e9e5b':p===vc.posPick?'background:#fde8e4;color:#1f2330;border:3px solid #e4572e':'background:#eef1f7;color:#8a90a0;opacity:.6';
-    return `<button class="chip" ${bad?'disabled':`data-act="vpos" data-v="${p}"`} style="flex:1;min-width:130px;max-width:200px;${st};padding:10px 8px;white-space:normal;line-height:1.4"><b style="font-size:18px">${bad&&p===k?'✅ ':bad&&p===vc.posPick?'❌ ':''}${POS[p]}</b><div style="font-size:12px;font-weight:400">${POSHINT[p]}</div></button>`};
+    return `<button class="chip" ${bad?'disabled':`data-act="vpos" data-v="${p}"`} style="flex:1;min-width:130px;max-width:200px;${st};padding:10px 8px;white-space:normal;line-height:1.4"><b style="font-size:18px">${bad&&p===k?'✅ ':bad&&p===vc.posPick?'🔁 ':''}${POS[p]}</b><div style="font-size:12px;font-weight:400">${POSHINT[p]}</div></button>`};
   return `<div class="res ok" style="text-align:center"><div class="ans">${esc(vc.w.w)} = ${esc(vc.w.ko)} <button class="btn light sm" data-act="vsay">🔊</button></div></div>
   <div class="tip" style="text-align:center;margin-top:12px">🏷️ 이 단어는 무슨 품사야?</div><div class="row" style="justify-content:center;align-items:stretch">${o.map(chip).join('')}</div>`+
-  (bad?`<div class="res slow" style="text-align:center;margin-top:10px"><div style="font-size:18px;font-weight:800">❌ 품사가 틀렸어요</div><div style="margin-top:6px"><b>${esc(vc.w.w)}</b>은(는) <b style="color:#2e9e5b">${POS[k]}</b>예요 (고른 것: ${POS[vc.posPick]||vc.posPick})</div><div class="tip" style="margin-top:4px">💡 ${posWhy(vc.w.w,k)}</div></div><div class="row" style="justify-content:center"><button class="btn" data-act="vposok">알겠어 ▶</button></div>`:'')}
+  (bad?`<div class="res slow" style="text-align:center;margin-top:10px"><div style="font-size:18px;font-weight:800">🔁 품사 다시 보기</div><div style="margin-top:6px"><b>${esc(vc.w.w)}</b>은(는) <b style="color:#2e9e5b">${POS[k]}</b>예요 (고른 것: ${POS[vc.posPick]||vc.posPick})</div><div class="tip" style="margin-top:4px">💡 ${posWhy(vc.w.w,k)}</div></div><div class="row" style="justify-content:center"><button class="btn" data-act="vposok">알겠어 ▶</button></div>`:'')}
 function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
-  let h=topbar('🔤 단어 10개',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.res).length/n*100)}%"></i></div><div class="nav"><button data-act="vgo" data-i="0" ${vc.i?'':'disabled'}>⏮ 처음으로</button><button data-act="vgo" data-i="${vc.i-1}" ${vc.i?'':'disabled'}>◀ 이전</button><span>${vc.i+1} / ${n}${vIsRe(w.w)?(((VC.words||{})[w.w]||{}).known===false?' · 전에 틀린 단어':' · 다시 보는 단어'):''}</span><button data-act="vgo" data-i="${vc.i+1}">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`;
+  let h=topbar('🔤 단어',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.res).length/n*100)}%"></i></div><div class="nav"><button data-act="vgo" data-i="0" ${vc.i?'':'disabled'}>⏮ 처음으로</button><button data-act="vgo" data-i="${vc.i-1}" ${vc.i?'':'disabled'}>◀ 이전</button><span>${vc.i+1} / ${n}${vIsRe(w.w)?(((VC.words||{})[w.w]||{}).known===false?' · 전에 틀린 단어':' · 다시 보는 단어'):''}</span><button data-act="vgo" data-i="${vc.i+1}">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`;
   h+=`<div class="card"><div class="tip" style="text-align:center">영어로 뭐지?</div><div class="prompt">${esc(w.ko)}</div>`;
   const note=vc.msg?`<div class="notice">${vc.msg}</div>`:'';const dup=vDup(w);
   if(dup.length&&vc.phase==='spell')h+=`<div class="tip" style="text-align:center">같은 뜻 단어가 또 있어요 · 여기선 <b>${esc(w.w[0])}</b>로 시작하는 <b>${w.w.replace(/ /g,'').length}글자</b> 단어</div>`;
-  if(vc.phase==='spell'){
+  const ex=VDATA[w.w]||[],pk=posOf(w);
+  if(String(vc.phase).startsWith('learn'))h=h.replace('<div class="tip" style="text-align:center">영어로 뭐지?</div>','<div class="tip" style="text-align:center">🌱 새 단어 · 오늘은 시험 없이 익히기만</div>');
+  if(vc.phase==='learn1'){
+    h+=`<div class="prompt" style="font-size:40px;letter-spacing:1px">${esc(w.w)} <button class="btn light sm" data-act="vsay">🔊</button></div>${posHTML(w)}${sylHTML(w.w,{})}${VTIP[w.w]?`<div class="res ok" style="text-align:left;margin-top:8px"><b>🧠 외우는 방법</b><div style="margin-top:4px">${esc(VTIP[w.w])}</div></div>`:''}
+     <div class="row" style="justify-content:center"><button class="btn big" data-act="vlearn" data-to="learn2">알겠어 · 따라 쓰기 ▶</button></div>`}
+  else if(vc.phase==='learn2'){h+=note+`<div class="prompt" style="font-size:34px">${esc(w.w)} <button class="btn light sm" data-act="vsay">🔊</button></div><div class="tip" style="text-align:center">✍️ 보면서 그대로 따라 써요${pk?' · '+POS[pk]:''}</div>`+vInput('vlcopy','다 썼어')}
+  else if(vc.phase==='learn3'){h+=`<div class="prompt" style="font-size:34px">${esc(w.w)} <button class="btn light sm" data-act="vsay">🔊</button></div><div class="tip" style="text-align:center">🎙️ 🔊 듣고 소리 내어 말해요. 🎤를 누르면 녹음해서 들린 말을 보여 줘요</div>
+     ${vc.recOn?'<div class="res ok" style="text-align:center">🎤 듣고 있어요… 단어를 말해요</div>':vc.recHeard!=null?`<div class="res ok" style="text-align:center">들린 말: <b>${esc(vc.recHeard||'(잘 안 들렸어요)')}</b>${vnorm(vc.recHeard||'').includes(vnorm(w.w))?' 👍':''}</div>`:''}
+     <div class="row" style="justify-content:center">${DIC&&!vc.recOn?`<button class="btn big" data-act="vlrec">🎤 ${vc.recHeard!=null?'다시 녹음':'녹음하기'}</button>`:''}<button class="btn ${DIC?'light':'big'}" data-act="vlearn" data-to="learn4">${DIC?'말했어 · 예문으로 ▶':'소리 내어 말했어 ▶'}</button></div>`}
+  else if(vc.phase==='learn4'){h+=`<div class="prompt" style="font-size:30px">${esc(w.w)}</div><div class="tip" style="text-align:center">📖 이 단어가 들어간 예문 · 듣고 따라 말해요</div>
+     ${ex[2]?`<div class="res ok" style="text-align:center"><div class="ans" style="font-size:22px">${esc(ex[2]).replace(new RegExp('\\b('+w.w.replace(/[^a-z ]/gi,'')+'\\w*)','i'),'<u><b>$1</b></u>')} <button class="btn light sm" data-act="vlexsay">🔊</button></div><div class="tip">${esc(ex[3]||'')}</div></div>`:''}
+     <div class="row" style="justify-content:center"><button class="btn big" data-act="vldone">따라 말했어 · 다음 단어 ▶</button></div>`}
+  else if(vc.phase==='result'&&r&&r.learn){h+=`<div class="res ok" style="text-align:center"><div style="font-size:20px;font-weight:800">🌱 익히기 끝! 내일 시험 봐요</div><div class="ans">${esc(w.w)} = ${esc(w.ko)} <button class="btn light sm" data-act="vsay">🔊</button></div></div><div class="row" style="justify-content:center"><button class="btn" data-act="vgo" data-i="${vc.i+1}" data-auto="ok">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
+  else if(vc.phase==='spell'){
     h+=note+`<div class="tip" style="text-align:center;margin-top:10px">${vc.heard?'👂 들은 소리를 잘 생각하며 <b>단어 전체</b>를 써요':'✍️ 뜻을 보고 <b>영어 단어 전체</b>를 써요'}</div>`+vFullBoxes(w.w)+vInput('vspell','확인')+
      `<div class="row" style="justify-content:center">${vc.heard?`<button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button><button class="btn light" data-act="vhint">💡 힌트</button>`:`<button class="btn light" data-act="vlisten2">🔊 모르겠으면 소리 듣기</button>`}</div>`}
   else if(vc.phase==='hint'){
@@ -1717,7 +1742,7 @@ function browse(){const m=V.mode||'w',pg=V.pg||0;const K=(VC&&VC.words)||{},I=RL
   let h=topbar('👀 미리보기 (엄마용)',true)+`<div class="card"><div class="row" style="margin-top:0"><button class="btn ${m==='w'?'':'light'}" data-act="bmode" data-m="w">🔤 단어 ${VW?VW.words.length:0}개</button><button class="btn ${m==='s'?'':'light'}" data-act="bmode" data-m="s">🗣️ 문장 ${BANK.items.length}개</button></div>
    <p class="tip">보기만 하는 화면이에요. 여기서 넘겨도 시훈이 기록에는 아무것도 안 남아요.</p></div>
    <div class="nav"><button data-act="bpg" data-i="0" ${P?'':'disabled'}>⏮ 처음으로</button><button data-act="bpg" data-i="${P-1}" ${P?'':'disabled'}>◀ 이전</button><span>${P+1}쪽 (${P*per+1}~${Math.min(list.length,P*per+per)}) · ${P+1} / ${n}</span><button data-act="bpg" data-i="${P+1}" ${P<n-1?'':'disabled'}>다음 ▶</button></div><div class="card"><div class="scroll"><table class="grid">`;
-  if(m==='w')h+=`<tr><th>#</th><th>한국어</th><th>영어</th><th>체크 결과</th></tr>`+rows.map((w,k)=>{const r=K[w.w];return `<tr><td>${P*per+k+1}</td><td>${esc(w.ko)}</td><td><b>${esc(w.w)}</b></td><td>${!r?'<span class="tip">아직</span>':r.known?'⭕ 알았음':'❌ 몰랐음'}</td></tr>`}).join('');
+  if(m==='w')h+=`<tr><th>#</th><th>한국어</th><th>영어</th><th>체크 결과</th></tr>`+rows.map((w,k)=>{const r=K[w.w];return `<tr><td>${P*per+k+1}</td><td>${esc(w.ko)}</td><td><b>${esc(w.w)}</b></td><td>${!r?'<span class="tip">아직</span>':r.known?'⭕ 알았음':'🔁 몰랐음'}</td></tr>`}).join('');
   else h+=`<tr><th>#</th><th>한국어 / 영어</th><th>구조 · 함정 블록</th><th>시훈</th></tr>`+rows.map((x,k)=>{const r=I[x.id];return `<tr><td>${P*per+k+1}</td><td>${esc(x.ko)}<div><b>${esc(x.en[0])}</b>${x.en.length>1?`<span class="tip"> (또는 ${x.en.slice(1).map(esc).join(' / ')})</span>`:''}</div>${x.word?`<div class="tip">단어: ${esc(x.word)}</div>`:''}${x.hold?`<div class="tip" style="color:#b91c1c">⏸ 지금은 안 나와요 (모르는 개념)</div>`:''}${x.nc?`<div class="tip" style="color:#b45309">🆕 ${x.nc.map(c=>esc(c[0])).join(' · ')}</div>`:''}</td><td class="tip">${TAGS[x.tag]}<br>${x.vb?`문장 종류: <b>${x.vb.k==='do'?'🏃 행동':'🧍 상태'}</b> · <b>${frameOf(x).pol} · ${frameOf(x).tense}</b>${x.vb.en?` (${esc(x.vb.en)} = ${esc(x.vb.ko)})`:''}<br>`:''}함정: ${trapCands(x).slice(0,TRAPMAX).map((t,j)=>`<b>${esc(t.w)}</b> <span style="font-size:11px">(${TRAPCAT[t.cat]}${j>=TRAP0?' · 레벨 오르면':''})</span>`).join(', ')||'-'}</td><td style="white-space:nowrap">${r&&r.seen?CLS[r.last]:'<span class="tip">아직</span>'}</td></tr>`}).join('');
   $('#main').innerHTML=h+'</table></div></div>'}
 
@@ -1857,10 +1882,10 @@ function blockDiag(it,built){const A=blkToks(it).map(w=>w.toLowerCase()),B=built
   const fr=frameOf(it);if(hasWh(it)&&B[0]!==A[0])return {cats:['wh'],hit:[]};
   return {cats:['pol'],hit:[],order:true}}
 function finishBuild(ok,diag){const s=SES(),r=st(rc.id),it=rc.it;
-  if(rc.again){if(ok){rc.phase='result';render();say(it.en[0])}else{rc.tries++;rc.hk=[...new Set((rc.hk||[]).concat((diag&&diag.cats)||[]))];rc.lastBuilt=rc.built.map(c=>c.w).join(' ')+rc.end;if(rc.tries>=2){rc.phase='answer';render();say(it.en[0])}else{rc.note='❌ 아직 달라요. 💡 힌트를 보고 고쳐 봐요.';render()}}return}
+  if(rc.again){if(ok){rc.phase='result';render();say(it.en[0])}else{rc.tries++;rc.hk=[...new Set((rc.hk||[]).concat((diag&&diag.cats)||[]))];rc.lastBuilt=rc.built.map(c=>c.w).join(' ')+rc.end;if(rc.tries>=2){rc.phase='answer';render();say(it.en[0])}else{rc.note='🔁 아직 달라요. 💡 힌트를 보고 고쳐 봐요.';render()}}return}
   if(!ok){rc.tries++;(diag.hit||[]).forEach(c=>rc.hitAll.push(c));if(diag.order)rc.hitAll.push('order');rc.attempts.push(rc.built.map(c=>c.w).join(' '));
     const add=(diag.cats||[]).filter(k=>!(rc.hk||[]).includes(k));rc.hk=(rc.hk||[]).concat(add);
-    if(rc.tries<2){rc.note='❌ 아직 달라요. 💡 힌트를 보고 고쳐 봐요.';save();render();return}}
+    if(rc.tries<2){rc.note='🔁 아직 달라요. 💡 힌트를 보고 고쳐 봐요.';save();render();return}}
   const lat=rc.tSub!=null?rc.tSub:Math.round((Date.now()-rc.t0)/100)/10;
   const pre=(rc.preH||0)>0;const first=rc.typedOk?rc.typeN===1:(rc.tries===0&&!pre&&!rc.typeN);rc.cls=ok?(first?'ok':'access'):'unknown';
   capStep(it,rc.cls==='ok');
@@ -1976,11 +2001,16 @@ const ACT={
   typeChk:()=>{if(rc.phase!=='type')return;const i=$('#tin');const t=i?i.value.trim():'';if(!tnorm(t))return;rc.typeN++;rc.typed.push(t);if(rc.typeLat==null)rc.typeLat=Math.round((Date.now()-rc.t0)/100)/10;
     if(rc.it.en.some(e=>tnorm(e)===tnorm(t))){rc.typedOk=true;rc.traps=[];rc.tSub=rc.typeLat;finishBuild(true);return}
     const sp=spellOnly(t,rc.it.en);if(sp&&rc.typeN<2){rc.typeErr='spell';rc.note=`✏️ 거의 맞았어요! <b>${sp.got.map(esc).join(', ')}</b> 철자만 달라요. 고쳐서 다시 써 봐요.`;save();render();return}
-    if(!rc.typeErr)rc.typeErr=sp?'spell':'grammar';rc.note=`❌ 내가 쓴 문장: <b>${esc(t)}</b><br>아직 달라요. 이제 <b>블록으로 고쳐</b> 봐요.`;rc.phase='build';rc.t0b=Date.now();save();render()},
+    if(!rc.typeErr)rc.typeErr=sp?'spell':'grammar';rc.note=`🔁 내가 쓴 문장: <b>${esc(t)}</b><br>아직 달라요. 이제 <b>블록으로 고쳐</b> 봐요.`;rc.phase='build';rc.t0b=Date.now();save();render()},
   check:()=>{if(!rc.built.length)return;if(rc.tSub==null)rc.tSub=Math.round((Date.now()-rc.t0)/100)/10;const B=rc.built.map(c=>c.w.toLowerCase());
     const ok=rc.it.en.some(e=>{const A=blkToks({en:[e]}).map(w=>w.toLowerCase());return A.length===B.length&&A.every((w,k)=>w===B[k])});
     if(ok){finishBuild(true);return}const d=blockDiag(rc.it,rc.built);if(d.short){rc.note='아직 안 쓴 블록이 있어요. 문장을 끝까지 만들어 봐요.';render();return}finishBuild(false,d)},
   vgo:t=>vOpen(+t.dataset.i),
+  vlearn:t=>{vc.phase=t.dataset.to;vc.msg='';render();if(vc.phase==='learn4'){const e=VDATA[vc.w.w];if(e&&e[2])say(e[2])}else say(vc.w.w)},
+  vlcopy:()=>{const v=vVal();if(!vnorm(v))return;vc.copyN=(vc.copyN||0)+1;if(vnorm(v)===vnorm(vc.w.w)){vc.phase='learn3';vc.msg='';render();say(vc.w.w)}else{vc.msg=`글자를 하나씩 보면서 그대로 써 봐요 (쓴 것: <b>${esc(v)}</b>)`;render()}},
+  vlrec:()=>{if(!DIC||vc.recOn)return;vDicWire();try{speechSynthesis.cancel()}catch(e){}vc.recOn=true;vc.recHeard='';render();DIC.start().catch(()=>{vc.recOn=false;vc.recHeard=null;render()});clearTimeout(vc.recT);vc.recT=setTimeout(()=>{if(vc&&vc.recOn)DIC.stop().catch(()=>{})},7000)},
+  vlexsay:()=>{const e=VDATA[vc.w.w];if(e&&e[2])say(e[2])},
+  vldone:()=>{vLearnDone()},
   commit:()=>commit(),
   savehub:()=>{commit();ACT.hub()},
   browse:()=>HUB.gate($('#main'),()=>{V={view:'browse',mode:'w',pg:0};render()},true),
@@ -1990,15 +2020,15 @@ const ACT={
   send:()=>finishSession(true),
   vlisten2:()=>{vc.heard=true;vc.msg='';render();say(vc.w.w)},
   vspell:()=>{const v=vVal();if(!vnorm(v))return;if(vDup(vc.w).some(x=>vnorm(x.w)===vnorm(v))){vc.msg=`⭕ <b>${esc(v)}</b>도 같은 뜻이에요! 그런데 여기선 칸 수에 맞는 다른 단어를 써요.`;render();return}vc.tries.push(v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl=vc.heard?'sound':'self';vToPos(true);return}
-    if(!vc.heard){vc.heard=true;vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 🔊 소리를 듣고 다시 써 봐요.`;render();say(vc.w.w);return}
-    vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 💡 힌트를 줄게요.`;vc.phase='hint';render()},
+    if(!vc.heard){vc.heard=true;vc.msg=`🔁 <b>${esc(v)}</b> 가 아니에요. 🔊 소리를 듣고 다시 써 봐요.`;render();say(vc.w.w);return}
+    vc.msg=`🔁 <b>${esc(v)}</b> 가 아니에요. 💡 힌트를 줄게요.`;vc.phase='hint';render()},
   vhint:()=>{vc.heard=true;vc.msg='';vc.phase='hint';render()},
   vhintchk:()=>{const t=vVal();if(!vnorm(t))return;const v=vFill(t);vc.hintN++;vc.tries.push('💡'+v);if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='hint';vToPos(false);return}
-    vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 이제 단어를 <b>마디로 끊어서</b> 보여 줄게요.`;vc.phase=vCutReady()&&sylN(vc.w.w)>1?'cut':'copy';vc.cutMarks=[];vc.cutRes=null;render();say(vc.w.w)},
+    vc.msg=`🔁 <b>${esc(v)}</b> 가 아니에요. 이제 단어를 <b>마디로 끊어서</b> 보여 줄게요.`;vc.phase=vCutReady()&&sylN(vc.w.w)>1?'cut':'copy';vc.cutMarks=[];vc.cutRes=null;render();say(vc.w.w)},
   vcopy:()=>{const v=vVal();if(!vnorm(v))return;vc.copyN++;if(vnorm(v)===vnorm(vc.w.w)){VC.cutN=(VC.cutN||0)+1;vc.msg='';vc.phase='recall';vc.recallN=0;render()}else{vc.msg=vDiffMsg(v,vc.w.w);render()}},
   vrecall:()=>{const v=vVal();if(!vnorm(v))return;vc.recallN++;vc.tries.push('🙈'+v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='copy';vToPos(false);return}
-    if(vc.recallN<2&&sylN(vc.w.w)>1){vc.bad=sylBad(vc.w.w,v);vc.fixI=0;vc.fixN=0;vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 틀린 마디만 다시 써 봐요.`;vc.phase='fix';render();return}
-    if(vc.recallN<2){vc.msg=`❌ <b>${esc(v)}</b> 가 아니에요. 한 번 더 기억해 봐요.`;render();return}vc.lvl='gave';vc.gave=true;vToPos(false)},
+    if(vc.recallN<2&&sylN(vc.w.w)>1){vc.bad=sylBad(vc.w.w,v);vc.fixI=0;vc.fixN=0;vc.msg=`🔁 <b>${esc(v)}</b> 가 아니에요. 틀린 마디만 다시 써 봐요.`;vc.phase='fix';render();return}
+    if(vc.recallN<2){vc.msg=`🔁 <b>${esc(v)}</b> 가 아니에요. 한 번 더 기억해 봐요.`;render();return}vc.lvl='gave';vc.gave=true;vToPos(false)},
   vsyl:t=>{const S=sylOf(vc.w.w),x=S[+t.dataset.i];if(x)say(x.t)},
   vcutg:t=>{if(vc.cutRes)return;const i=+t.dataset.i,M=vc.cutMarks||(vc.cutMarks=[]);const k=M.indexOf(i);if(k>=0)M.splice(k,1);else M.push(i);render()},
   vcutchk:()=>{const S=sylOf(vc.w.w),ans=[];let pos=0;const W=vc.w.w;S.forEach((s,i)=>{pos+=s.t.length;if(W[pos]===' ')pos++;else if(i<S.length-1)ans.push(pos-1)});const M=(vc.cutMarks||[]).slice().sort((a,b)=>a-b);
@@ -2006,7 +2036,7 @@ const ACT={
   vcutnext:()=>{vc.msg='';vc.phase='copy';render()},
   vfix:()=>{const v=vVal();if(!vnorm(v))return;const S=sylOf(vc.w.w),bi=vc.bad[vc.fixI];vc.fixN++;vc.tries.push('🔧'+v.trim());
     if(vnorm(v)===vnorm(S[bi].t)){vc.msg='';if(vc.fixI<vc.bad.length-1){vc.fixI++;render()}else{vc.phase='recall2';render()}return}
-    vc.msg=`❌ 이 마디는 <b>${esc(S[bi].t)}</b>예요. 보고 한 번 더 써요.`;render()},
+    vc.msg=`🔁 이 마디는 <b>${esc(S[bi].t)}</b>예요. 보고 한 번 더 써요.`;render()},
   vrecall2:()=>{const v=vVal();if(!vnorm(v))return;vc.tries.push('🙈'+v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='copy';vToPos(false);return}vc.lvl='gave';vc.gave=true;vToPos(false)},
   vpos:t=>{if(vc.phase!=='pos'||vc.posOk===false)return;vc.posPick=t.dataset.v;vc.posOk=vc.posPick===posOf(vc.w);if(vc.posOk)vDone(vc.known,vc.gave);else render()},
   vposok:()=>{if(vc.phase!=='pos'||vc.posOk!==false)return;vDone(vc.known,vc.gave)},
