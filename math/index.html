@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795644468";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795644621";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3696,7 +3696,7 @@ function vParent(){
 
 /* ───────── 동작 ───────── */
 /* ══════ 오늘의 그래프 (11/26 sy): 화면에서 표 → 점 → 선을 끝내고, 종이에는 옮겨 그리기만. 일차함수부터 ══════ */
-const GWG=["기본 (오른쪽 위로 올라가는 직선)","내려가는 직선","0보다 작은 수까지 (네 칸 좌표)","기울기가 분수","두 점을 지나는 직선","두 직선과 만나는 점","평행이동"];
+const GWG=["기본 (오른쪽 위로 올라가는 직선)","내려가는 직선","0보다 작은 수까지 (네 칸 좌표)","기울기가 분수","두 점을 지나는 직선","두 직선과 만나는 점","평행이동","이차함수 기본 (y = ax² + q)","이차함수 옮기기 (y = a(x − p)² + q)","포물선과 직선이 만나는 점"];
 const GWL=(()=>{const L=[],add=(g,o)=>L.push({g,...o});let sd=7;const rnd=()=>(sd=(sd*1103515245+12345)%2147483648)/2147483648,shuf=A=>{for(let i=A.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[A[i],A[j]]=[A[j],A[i]]}return A};
   for(let a=1;a<=5;a++)add(0,{a,b:0,q:1});for(let b=1;b<=8;b++)add(0,{a:1,b,q:1});for(let a=2;a<=4;a++)for(let b=1;a*2+b<=10;b++)add(0,{a,b,q:1});
   for(let a=1;a<=3;a++)for(let b=2*a;b<=10;b++)add(1,{a:-a,b,q:1});
@@ -3705,12 +3705,19 @@ const GWL=(()=>{const L=[],add=(g,o)=>L.push({g,...o});let sd=7;const rnd=()=>(s
   const G6=[];for(const a of[1,-1,2,-2,3,-3])for(let b=-4;b<=4;b++)for(const [x1,x2] of [[0,1],[-1,1],[-2,1]])if(Math.abs(a*x1+b)<=6&&Math.abs(a*x2+b)<=6)G6.push({a,b,x1,x2});shuf(G6).forEach(o=>add(4,o));
   const G4=[],A=[1,-1,2,-2,3,-3];for(let i=0;i<6;i++)for(let j=i+1;j<6;j++)for(let r=-3;r<=3;r++)for(let s=-3;s<=3;s++){const a=A[i],a2=A[j],b=s-a*r,b2=s-a2*r;if(Math.abs(b)<=5&&Math.abs(b2)<=5&&Math.abs(r)+Math.abs(s)>0)G4.push({a,b,a2,b2,r,s})}shuf(G4).forEach(o=>add(5,o));
   const G5=[];for(const a of[1,-1,2,-2,3,-3])for(let p=-2;p<=2;p++)for(let u=-2;u<=2;u++)if(p||u)G5.push({a,b:0,p,u});G5.sort((x,y)=>(!!x.p+!!x.u)-(!!y.p+!!y.u));const k=G5.findIndex(o=>o.p&&o.u);shuf(G5.slice(0,k)).concat(shuf(G5.slice(k))).forEach(o=>add(6,o));
+  /* 이차함수: y = c(x − p)² + u. 점은 꼭짓점 좌우 2칸까지, 모눈(−6~6) 안에 3개 이상 */
+  const qn=o=>[-2,-1,0,1,2].filter(k=>Math.abs(o.p+k)<=6&&Math.abs(o.c*k*k+o.u)<=6).length;
+  for(const c of[1,-1,2,-2,3,-3])add(7,{c,p:0,u:0});const G7=[];for(const c of[1,-1,2,-2])for(let u=-5;u<=5;u++)if(u&&qn({c,p:0,u})>=3)G7.push({c,p:0,u});G7.sort((x,y)=>Math.abs(x.c)-Math.abs(y.c)||(x.c<0)-(y.c<0)||Math.abs(x.u)-Math.abs(y.u)).forEach(o=>add(7,o));
+  const G8=[];for(const c of[1,-1,2,-2])for(let p=-3;p<=3;p++)for(let u=-4;u<=4;u++)if(p&&qn({c,p,u})>=3)G8.push({c,p,u});const k8=G8.filter(o=>!o.u),r8=G8.filter(o=>o.u);shuf(k8).concat(shuf(r8)).forEach(o=>add(8,o));
+  const G9=[];for(const c of[1,-1])for(let p=-2;p<=2;p++)for(let u=-4;u<=4;u++)for(let i=-2;i<=2;i++)for(let j=i+1;j<=2;j++){const x1=p+i,x2=p+j,y1=c*i*i+u,y2=c*j*j+u,a=(y2-y1)/(x2-x1),b=y1-a*x1;if(a&&Math.abs(a)<=3&&Math.abs(b)<=5&&Math.abs(y1)<=6&&Math.abs(y2)<=6&&qn({c,p,u})>=4)G9.push({c,p,u,a,b,x1,x2})}shuf(G9).slice(0,160).forEach(o=>add(9,o));
   return L})();
 const gwS=()=>{if(!S.gw)S.gw={i:0,per:3,log:{}};if(!S.gw.log)S.gw.log={};S.gw.i=Math.max(0,Math.min(S.gw.i||0,GWL.length-1));return S.gw};
-const gwY=(l,x)=>l.a*x/(l.d||1)+l.b;
-const gwF=l=>{const d=l.d||1,A=Math.abs(l.a);if(l.q&&l.a<0)return `y = ${l.b} − ${A===1?"":A}x`;return `y = ${l.a<0?"−":""}${d>1?fr(A,d):A===1?"":A}x${l.b?` ${l.b<0?"−":"+"} ${Math.abs(l.b)}`:""}`};
-const gwLines=s=>s.g===5?[{a:s.a,b:s.b},{a:s.a2,b:s.b2}]:s.g===6?[{a:s.a,b:0},{a:s.a,b:s.u-s.a*s.p}]:[s];
-const gwXs=(l,s,j)=>{if(s.q){const xs=[];for(let x=0;x<=10&&xs.length<4;x++){const y=gwY(l,x);if(y>=0&&y<=10)xs.push(x)}return xs}
+const gwY=(l,x)=>l.c?l.c*(x-l.p)*(x-l.p)+l.u:l.a*x/(l.d||1)+l.b;
+const gwF=l=>{if(l.c){const C=Math.abs(l.c);return `y = ${l.c<0?"−":""}${C===1?"":C}${l.p?`(x ${l.p<0?"+":"−"} ${Math.abs(l.p)})²`:"x²"}${l.u?` ${l.u<0?"−":"+"} ${Math.abs(l.u)}`:""}`}const d=l.d||1,A=Math.abs(l.a);if(l.q&&l.a<0)return `y = ${l.b} − ${A===1?"":A}x`;return `y = ${l.a<0?"−":""}${d>1?fr(A,d):A===1?"":A}x${l.b?` ${l.b<0?"−":"+"} ${Math.abs(l.b)}`:""}`};
+const gwLines=s=>s.g===9?[{c:s.c,p:s.p,u:s.u},{a:s.a,b:s.b}]:s.g===5?[{a:s.a,b:s.b},{a:s.a2,b:s.b2}]:s.g===6?[{a:s.a,b:0},{a:s.a,b:s.u-s.a*s.p}]:[s];
+const gwXs=(l,s,j)=>{if(l.c)return [-2,-1,0,1,2].map(k=>l.p+k).filter(x=>Math.abs(x)<=6&&Math.abs(gwY(l,x))<=6);
+  if(s.g===9)return [...new Set([s.x1-1,s.x1,s.x2,s.x2+1])].filter(x=>Math.abs(x)<=6&&Math.abs(gwY(l,x))<=6).sort((a,b)=>a-b);
+  if(s.q){const xs=[];for(let x=0;x<=10&&xs.length<4;x++){const y=gwY(l,x);if(y>=0&&y<=10)xs.push(x)}return xs}
   if(s.g===6&&j===1)return [-1,0,1].map(x=>x+s.p);const d=l.d||1,c=s.g===5?s.r:0;
   return [0,1,-1,2,-2,3,-3].map(k=>c+k*d).filter(x=>Math.abs(x)<=6&&Math.abs(gwY(l,x))<=6).slice(0,s.g===5?3:4).sort((a,b)=>a-b)};
 const gwPts=(s,j)=>{if(s.g===4)return [[s.x1,gwY(s,s.x1)],[s.x2,gwY(s,s.x2)]];const l=gwLines(s)[j];return gwXs(s.g===6&&j===0?l:l,s.g===6&&j===0?{...s,g:2}:s,j).map(x=>[x,gwY(l,x)])};
@@ -3720,7 +3727,7 @@ function gwSVG(s,o={}){const q=!!s.q,lo=q?0:-6,hi=q?10:6,W=320,m=q?24:16,u=(W-2*
   for(let i=lo;i<=hi;i++)h+=`<line x1="${X(i)}" y1="${Y(lo)}" x2="${X(i)}" y2="${Y(hi)}" stroke="${gc}" stroke-width="1"/><line x1="${X(lo)}" y1="${Y(i)}" x2="${X(hi)}" y2="${Y(i)}" stroke="${gc}" stroke-width="1"/>`;
   h+=`<line x1="${X(lo)}" y1="${Y(0)}" x2="${X(hi)+8}" y2="${Y(0)}" stroke="${ik}" stroke-width="2"/><line x1="${X(0)}" y1="${Y(lo)}" x2="${X(0)}" y2="${Y(hi)-8}" stroke="${ik}" stroke-width="2"/>`+svgT(X(hi)+2,Y(0)-7,"x",14,ik)+svgT(X(0)+11,Y(hi)-1,"y",14,ik)+svgT(X(0)-8,Y(0)+13,"0",11,ik,"end");
   for(let i=lo;i<=hi;i++)if(i&&i%2===0)h+=svgT(X(i),Y(0)+13,MN(i),11,ik)+svgT(X(0)-5,Y(i)+4,MN(i),11,ik,"end");
-  (o.lines||[]).forEach(([l,c])=>{const d=l.d||1,P=[[lo,gwY(l,lo)],[hi,gwY(l,hi)],[(lo-l.b)*d/l.a,lo],[(hi-l.b)*d/l.a,hi]].filter(p=>p[0]>=lo-1e-9&&p[0]<=hi+1e-9&&p[1]>=lo-1e-9&&p[1]<=hi+1e-9).sort((a,b)=>a[0]-b[0]);if(P.length>1){const A=P[0],B=P[P.length-1];h+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`}});
+  (o.lines||[]).forEach(([l,c])=>{if(l.c){let dd="";for(let x=lo;x<=hi+1e-9;x+=.1){const y=gwY(l,x);if(y<lo-.3||y>hi+.3)continue;dd+=(dd?"L":"M")+X(x).toFixed(1)+" "+Y(Math.max(lo-.3,Math.min(hi+.3,y))).toFixed(1)}if(dd)h+=`<path d="${dd}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;return}const d=l.d||1,P=[[lo,gwY(l,lo)],[hi,gwY(l,hi)],[(lo-l.b)*d/l.a,lo],[(hi-l.b)*d/l.a,hi]].filter(p=>p[0]>=lo-1e-9&&p[0]<=hi+1e-9&&p[1]>=lo-1e-9&&p[1]<=hi+1e-9).sort((a,b)=>a[0]-b[0]);if(P.length>1){const A=P[0],B=P[P.length-1];h+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`}});
   (o.pts||[]).forEach(([x,y,c,lab])=>{h+=`<circle cx="${X(x)}" cy="${Y(y)}" r="5.5" fill="${c}"/>`;if(lab)h+=svgT(X(x)+(x>=hi-2?-8:8),Y(y)-7,`(${MN(x)}, ${MN(y)})`,11,c,x>=hi-2?"end":"start")});
   if(o.tap)for(let x=lo;x<=hi;x++)for(let y=lo;y<=hi;y++)h+=`<circle cx="${X(x)}" cy="${Y(y)}" r="${u/2}" fill="transparent" data-act="gwpt" data-arg="${x},${y}"/>`;
   return h+"</svg>"}
@@ -3729,13 +3736,15 @@ function gwSteps(s){const L=gwLines(s),st=[];
   if(s.g===6)st.push({k:"tab",ln:0},{k:"plot",ln:0},{k:"line",ln:0},{k:"plot",ln:1,shift:1},{k:"line",ln:1},{k:"ask",h:`옮긴 직선: y = ${TM(s.a,"x")} + [[0]]`,a:[L[1].b],hint:"옮긴 직선이 y축과 만나는 곳을 본다냥."});
   else if(s.g===4)st.push({k:"plot",ln:0},{k:"line",ln:0},{k:"ask",h:`y = [[0]]x + [[1]]`,a:[s.a,s.b],hint:"옆으로 1칸 갈 때 위아래로 가는 칸 수가 x 앞의 수, y축과 만나는 곳이 뒤의 수다냥."});
   else{L.forEach((l,j)=>st.push({k:"tab",ln:j},{k:"plot",ln:j},{k:"line",ln:j}));
-    if(s.g===5)st.push({k:"ask",h:`만나는 점 ( [[0]] , [[1]] )`,a:[s.r,s.s],hint:"두 직선이 겹치는 한 점을 읽는다냥. 옆으로 먼저, 위아래는 다음이다옹."});
+    if(s.g===9)st.push({k:"ask",h:`<span class="sub">만나는 점의 x좌표 (작은 것부터)</span><span class="sub">x = [[0]] 또는 x = [[1]]</span>`,a:[s.x1,s.x2],hint:"곡선과 직선이 겹치는 두 점을 찾아 옆으로 몇 칸인지 읽는다냥."});
+    else if(s.c)st.push({k:"ask",h:`<span class="sub">꼭짓점 ( [[0]] , [[1]] )</span><span class="sub">접는 세로줄 x = [[2]]</span>`,a:[s.p,s.u,s.p],hint:`가장 ${s.c>0?"낮은":"높은"} 점이 꼭짓점이다냥. 그 점을 지나는 세로줄로 접으면 양쪽이 겹친다옹.`});
+    else if(s.g===5)st.push({k:"ask",h:`만나는 점 ( [[0]] , [[1]] )`,a:[s.r,s.s],hint:"두 직선이 겹치는 한 점을 읽는다냥. 옆으로 먼저, 위아래는 다음이다옹."});
     else if(s.q&&s.a<0)st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 1 늘면 y는 [[1]]씩 준다</span>`,a:[s.b,-s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 한 칸 갈 때 몇 칸 내려가는지 센다옹."});
     else st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 ${s.d||1} 늘면 y는 [[1]]씩 변한다</span>`,a:[s.b,s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 갈 때 위아래로 몇 칸 가는지 센다옹. 내려가면 −다냥."})}
   st.push({k:"paper"});return st}
-function gwLoad(i){const s=GWL[i];GS={i,s,steps:gwSteps(s),si:0,vals:[],ok:[],act:0,found:[[],[]],drawn:[false,false],say:s.g===4?"두 점을 찍는다냥. 옆으로 x, 위로 y다옹.":"x 자리에 수를 넣어 y를 구한다냥."}}
+function gwLoad(i){const s=GWL[i];GS={i,s,steps:gwSteps(s),si:0,vals:[],ok:[],act:0,found:[[],[]],drawn:[false,false],say:s.g===4?"두 점을 찍는다냥. 옆으로 x, 위로 y다옹.":s.c?"x 자리에 수를 넣어 y를 구한다냥. 괄호 → 제곱 → 곱하기다옹.":"x 자리에 수를 넣어 y를 구한다냥."}}
 const gwAns=st=>st.k==="tab"?gwPts(GS.s,st.ln).map(p=>p[1]):st.a||[];
-function gwNext(){GS.si++;GS.vals=[];GS.ok=[];GS.act=0;const st=GS.steps[GS.si];GS.say=st.k==="tab"?"두 번째 식도 표를 채운다냥.":st.k==="plot"?(st.shift?`점을 모두 ${GS.s.p?`옆으로 ${MN(GS.s.p)}칸`:""}${GS.s.p&&GS.s.u?", ":""}${GS.s.u?`위로 ${MN(GS.s.u)}칸`:""} 옮겨 찍는다냥. (−는 왼쪽·아래다옹)`:"표의 짝을 점으로 찍는다냥. 옆으로 x, 위로 y다옹."):st.k==="line"?"점이 한 줄로 섰다냥. 자를 대고 이어 보자옹.":st.k==="ask"?"그래프를 보고 답한다냥.":"";render()}
+function gwNext(){GS.si++;GS.vals=[];GS.ok=[];GS.act=0;const st=GS.steps[GS.si];GS.say=st.k==="tab"?"두 번째 식도 표를 채운다냥.":st.k==="plot"?(st.shift?`점을 모두 ${GS.s.p?`옆으로 ${MN(GS.s.p)}칸`:""}${GS.s.p&&GS.s.u?", ":""}${GS.s.u?`위로 ${MN(GS.s.u)}칸`:""} 옮겨 찍는다냥. (−는 왼쪽·아래다옹)`:"표의 짝을 점으로 찍는다냥. 옆으로 x, 위로 y다옹."):st.k==="line"?(gwLines(GS.s)[st.ln].c?"점을 부드러운 곡선으로 잇는다냥. 자는 안 쓴다옹.":"점이 한 줄로 섰다냥. 자를 대고 이어 보자옹."):st.k==="ask"?"그래프를 보고 답한다냥.":"";render()}
 function gwKey(k){const st=GS&&GS.steps[GS.si];if(!st||(st.k!=="tab"&&st.k!=="ask"))return;const A=gwAns(st);let v=GS.vals[GS.act]||"";
   if(k==="del"){GS.vals[GS.act]=v.slice(0,-1);render();return}
   if(k==="mn"){if(!v){GS.vals[GS.act]="-";render()}return}
@@ -3743,7 +3752,7 @@ function gwKey(k){const st=GS&&GS.steps[GS.si];if(!st||(st.k!=="tab"&&st.k!=="as
   if(!/^\d$/.test(k)||v.length>=3)return;v=GS.vals[GS.act]=v+k;if(v.length>=String(A[GS.act]).length)gwCheck();else render()}
 function gwCheck(){const st=GS.steps[GS.si],A=gwAns(st),v=GS.vals[GS.act];if(!v||v==="-")return;
   if(v===String(A[GS.act])){GS.ok[GS.act]=1;GS.say=pick(["맞다냥!","좋다옹!","그렇다냥!"]);const nx=A.findIndex((_,j)=>!GS.ok[j]);if(nx<0){gwNext();return}GS.act=nx}
-  else{GS.vals[GS.act]="";if(st.k==="tab"){const p=gwPts(GS.s,st.ln)[GS.act];GS.say=`x 자리에 ${MN(p[0])}${eul(Math.abs(p[0]))} 넣고 천천히 계산한다냥. 곱하기 먼저다옹.`}else GS.say=st.hint}
+  else{GS.vals[GS.act]="";if(st.k==="tab"){const p=gwPts(GS.s,st.ln)[GS.act];GS.say=`x 자리에 ${MN(p[0])}${eul(Math.abs(p[0]))} 넣고 천천히 계산한다냥. ${gwLines(GS.s)[st.ln].c?"괄호 → 제곱 → 곱하기 순서다옹.":"곱하기 먼저다옹."}`}else GS.say=st.hint}
   render()}
 function gwTap(a){const st=GS&&GS.steps[GS.si];if(!st||st.k!=="plot")return;const [x,y]=a.split(",").map(Number),need=gwPts(GS.s,st.ln),F=GS.found[st.ln];
   if(F.some(p=>p[0]===x&&p[1]===y))return;if(need.some(p=>p[0]===x&&p[1]===y)){F.push([x,y]);GS.say=`(${MN(x)}, ${MN(y)}) 찍었다냥!`;if(F.length>=need.length){gwNext();return}}
@@ -3768,9 +3777,9 @@ function vGraph(){const g=gwS();if(!GS)gwLoad(g.i);
   const kind=s.q?"num":"signed";let body="",foot="";
   if(st.k==="tab"){body=`<div class="qline sm stack">${head}</div><div class="qline">${boxesHTML(gwTable(s,st.ln,1),GS.vals,GS.act,GS.ok.map(v=>v?"ok":""))}</div>`;foot=padHTML(kind)}
   else if(st.k==="plot"){const need=gwPts(s,st.ln),F=GS.found[st.ln];body=`<div class="qline sm">${need.map(p=>`<span class="sub" style="${F.some(q=>q[0]===p[0]&&q[1]===p[1])?"opacity:.35;text-decoration:line-through":""}">(${MN(p[0])}, ${MN(p[1])})</span>`).join(" ")}</div><div class="fig">${gwSVG(s,{pts,lines,tap:1})}</div>`}
-  else if(st.k==="line"){body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="line">자를 대고 잇기</button></div>`}
+  else if(st.k==="line"){body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="line">${L[st.ln].c?"부드럽게 잇기":"자를 대고 잇기"}</button></div>`}
   else if(st.k==="ask"){body=`<div class="fig">${gwSVG(s,{pts,lines})}</div><div class="qline sm stack">${boxesHTML(st.h.startsWith("<span")?st.h:`<span class="sub">${st.h}</span>`,GS.vals,GS.act,GS.ok.map(v=>v?"ok":""))}</div>`;foot=padHTML(kind)}
-  else{body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div><div class="notice" style="text-align:left;font-size:15px"><b>이제 종이에 똑같이 옮겨 그린다냥.</b><br>① 식을 쓴다 ② 표를 옮겨 적는다 ③ 점을 찍고 옆에 좌표를 쓴다 ④ 자를 대고 선을 긋는다 ⑤ 아래 칸을 채운다</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="done">다 그렸다냥</button></div>`}
+  else{body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div><div class="notice" style="text-align:left;font-size:15px"><b>이제 종이에 똑같이 옮겨 그린다냥.</b><br>① 식을 쓴다 ② 표를 옮겨 적는다 ③ 점을 찍고 옆에 좌표를 쓴다 ④ ${s.c?"점을 부드러운 곡선으로 잇는다":"자를 대고 선을 긋는다"} ⑤ 아래 칸을 채운다</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="done">다 그렸다냥</button></div>`}
   return `${bar(`오늘의 그래프 · ${GS.i+1} / ${GWL.length}`,`<span class="small muted">오늘 ${g.log[today()]||0}/${g.per||3}장</span>`)}<div class="stage">${body}<div class="say blue">${GS.say||""}</div></div>${foot}`}
 /* 종이용 양식 (A4 한 쪽에 2장) */
 let GP=null;
@@ -3779,13 +3788,13 @@ function gwSheetHTML(s,no){const L=s?gwLines(s):[],two=L.length>1,row=(t,v="")=>
   return `<section class="psheet"><div class="phd"><b>그래프 시트 ${no||""}</b><span>${s?GWG[s.g]:"빈 양식"}</span><span>날짜 ______ 이름 ______</span></div>
    <div class="pb"><div class="pl">${s?L.map((l,j)=>`<p class="pf">${two?(j?"② ":"① "):""}${s.g===4?`두 점 (${MN(s.x1)}, ${MN(gwY(s,s.x1))}), (${MN(s.x2)}, ${MN(gwY(s,s.x2))})를 지나는 직선<br>y = __________`:s.g===6&&j===1?`①을 x축 방향으로 ${MN(s.p)}, y축 방향으로 ${MN(s.u)}만큼 옮긴 직선`:gwF(s.g===6?l:{...l,q:s.q})}</p>${tab(l,j)}`).join(""):`<p class="pf">식: y = ____________</p>${tab()}`}
      <p class="pk">찍은 점의 좌표를 그래프 위에 쓴다냥.</p>
-     <table class="pz">${row("y축과 만나는 곳 (y절편)","y = ")}${row("x축과 만나는 곳 (x절편)","x = ")}${row("x가 1 늘 때 y의 변화 (기울기)")}${row("범위","x가 ___ 에서 ___ 까지일 때<br>y는 ___ 에서 ___ 까지")}${!s||two?row(s&&s.g===6?"옮긴 직선의 식":"두 직선이 만나는 점 (교점)",s&&s.g===6?"y = ":"( &nbsp;&nbsp;&nbsp; , &nbsp;&nbsp;&nbsp; )"):""}</table></div>
+     <table class="pz">${s&&s.c?row("꼭짓점","( &nbsp;&nbsp;&nbsp; , &nbsp;&nbsp;&nbsp; )")+row("접으면 겹치는 세로줄 (축)","x = ")+row("y축과 만나는 곳 (y절편)","y = ")+(s.g===9?"":row("범위","y는 ___ 보다 "+(s.c>0?"크거나":"작거나")+" 같다"))+(s.g===9?row("직선과 만나는 점 (교점)","( &nbsp;&nbsp; , &nbsp;&nbsp; ) , ( &nbsp;&nbsp; , &nbsp;&nbsp; )"):""):row("y축과 만나는 곳 (y절편)","y = ")+row("x축과 만나는 곳 (x절편)","x = ")+row("x가 1 늘 때 y의 변화 (기울기)")+row("범위","x가 ___ 에서 ___ 까지일 때<br>y는 ___ 에서 ___ 까지")+(!s||two?row(s&&s.g===6?"옮긴 직선의 식":"두 직선이 만나는 점 (교점)",s&&s.g===6?"y = ":"( &nbsp;&nbsp;&nbsp; , &nbsp;&nbsp;&nbsp; )"):"")}</table></div>
     <div class="pg">${gwSVG(s||{g:2},{print:1})}</div></div></section>`}
 function vGprint(){const P=GP||{from:0,n:6},list=P.blank?Array.from({length:P.n},()=>null):GWL.slice(P.from,P.from+P.n);
   return `<div class="page gprint"><div class="noprint">${bar("그래프 양식 인쇄")}<div class="notice">A4 세로, 한 쪽에 2장씩 나와요. 아래 버튼을 누른 뒤 "인쇄" 또는 "PDF로 저장"을 고르면 돼요.</div><div class="row" style="margin-top:8px"><button class="bigbtn" style="flex:1" data-act="gw" data-arg="doprint">인쇄 / PDF로 저장</button><button class="bigbtn ghost" style="flex:1" data-act="go" data-arg="parent">돌아가기</button></div></div>
    ${list.map((s,k)=>gwSheetHTML(s,s?"#"+(P.from+k+1):"")).join("")}</div>`}
 function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,tot=Object.values(g.log).reduce((a,b)=>a+b,0);
-  return `<div class="card"><h3>오늘의 그래프 (손으로 그리기)</h3><p class="small muted">화면에서 표 → 점 → 선을 먼저 끝내고, 종이에는 옮겨 그리기만 해요. 일차함수 ${GWL.length}장.</p>
+  return `<div class="card"><h3>오늘의 그래프 (손으로 그리기)</h3><p class="small muted">화면에서 표 → 점 → 선을 먼저 끝내고, 종이에는 옮겨 그리기만 해요. 일차함수 890장 뒤에 이차함수가 이어져요. 모두 ${GWL.length}장.</p>
    <p>지금 <b>${g.i+1} / ${GWL.length}장</b> · ${GWG[s.g]} · 지금까지 ${tot}장 (${days}일)</p>
    <div class="prow"><div class="top"><span class="nm">하루 장수</span><div class="stepper"><button data-act="gw" data-arg="per-" aria-label="줄이기">−</button><b>${g.per||3}</b><button data-act="gw" data-arg="per+" aria-label="늘리기">+</button></div></div>
    <div class="row small"><button class="nb" data-act="gw" data-arg="prev">앞 단계로</button><button class="nb" data-act="gw" data-arg="nextg">다음 단계로</button></div></div>
