@@ -1012,8 +1012,19 @@ const HUB=(()=>{
     btn.onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};setTimeout(()=>inp.focus(),50)}
   return {today:()=>dkey(),dkey,db,back:k=>window.__hubBack&&window.__hubBack(k),gate};
 })();
+// ⏩ 자동으로 다음(엄마 11/25: "누르는 게 은근 일이야"): data-auto 단 버튼은 저절로 눌림.
+// ok = 맞힘 1.5초, x = 틀림·설명 있음 4초(정답 보고 넘어감). 그사이 화면 아무 데나 누르면(🔊·풀이 보기·펜) 자동은 멈추고 직접 눌러요.
+// 방금 답한 결과에서만 자동(◀ 이전·처음으로로 지난 문제를 다시 볼 땐 안 넘어감)
+function autoWatch(root){let tok=0,last=0,back=false;
+  const arm=b=>{if(b._armed)return;b._armed=1;if(Date.now()-last>3000||back)return;const my=++tok;const ms=+(b.dataset.ms)||(b.dataset.auto==='ok'?1500:4000);
+    b.style.position='relative';b.style.overflow='hidden';const bar=document.createElement('i');bar.className='autobar';
+    bar.style.cssText='position:absolute;left:0;bottom:0;height:5px;width:0;background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.08);transition:width '+ms+'ms linear;pointer-events:none';
+    b.appendChild(bar);requestAnimationFrame(()=>requestAnimationFrame(()=>{bar.style.width='100%'}));
+    setTimeout(()=>{if(my===tok&&b.isConnected&&!b.disabled)b.click()},ms)};
+  root.addEventListener('pointerdown',e=>{tok++;last=Date.now();const t=e.target&&e.target.closest&&e.target.closest('button');back=!!t&&/◀|⏮|이전|처음/.test(t.textContent||'');root.querySelectorAll('.autobar').forEach(i=>i.remove())},true);
+  new MutationObserver(()=>{root.querySelectorAll('[data-auto]').forEach(arm)}).observe(root,{childList:true,subtree:true})}
 function mountApp(hostId,tplId){
-  const host=document.getElementById(hostId);const sr=host.attachShadow({mode:'open'});
+  const host=document.getElementById(hostId);const sr=host.attachShadow({mode:'open'});autoWatch(sr);
   sr.appendChild(document.getElementById(tplId).content.cloneNode(true));
   const body=sr.querySelector('.body');
   return {querySelector:s=>sr.querySelector(s),querySelectorAll:s=>sr.querySelectorAll(s),getElementById:i=>sr.getElementById(i),
@@ -1095,7 +1106,7 @@ function lesson(){const d=g2day(),L=lessonOf(d.k);let h=topbar('📌 오늘의 �
   else{const qi=d.qi[LZ.qn],q=L.qs[qi],pk=d.quiz.picks[LZ.qn];
     h+=`<div class="tip">문제 ${LZ.qn+1} / ${d.qi.length}</div><div class="prompt" style="font-size:20px">${esc(q.ko)}</div><div class="ans" style="text-align:center;font-size:24px;margin:10px 0">${esc(q.s).replace('___','<span style="display:inline-block;min-width:60px;border-bottom:3px solid #3b6cf6;color:#3b6cf6">'+(pk?esc(pk.v):'&nbsp;')+'</span>')}</div>
       <div class="row" style="justify-content:center">${q.o.map(o=>`<button class="chip" data-act="lpick" data-v="${esc(o)}" ${pk?'disabled':''} style="font-size:20px;${pk&&o===q.a?'background:var(--ok)':''}">${esc(o)}</button>`).join('')}</div>`;
-    if(pk)h+=`<div class="res ${pk.ok?'ok':'slow'}">${pk.ok?'⭕ 맞았어요!':'❌ 정답은 <b>'+esc(q.a)+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="lnext">${LZ.qn<d.qi.length-1?'다음 문제 ▶':'5문장 시작 ▶'}</button></div>`}
+    if(pk)h+=`<div class="res ${pk.ok?'ok':'slow'}">${pk.ok?'⭕ 맞았어요!':'❌ 정답은 <b>'+esc(q.a)+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="lnext" data-auto="${pk.ok?'ok':'x'}">${LZ.qn<d.qi.length-1?'다음 문제 ▶':'5문장 시작 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>'}
 function lessonDone(){const d=g2day();d.lessonAt=new Date().toISOString();save();startSession(true)}
 // ===== 🧩 틈새 코너 (엄마 11/25): 덩어리 표현 하루 1개 · 듣고 따라 말하기 → 뜻 (혼자 만들기 없음) =====
@@ -1354,7 +1365,7 @@ function vrev(){const s=VS(),w=vr.w,n=s.rev.length,r=(s.revRes||{})[w.w];
   let h=topbar('🔤 복습 단어 뜻 확인',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.revRes||{}).length/n*100)}%"></i></div><div class="nav"><span>${vr.i+1} / ${n} · 다 하면 오늘 단어로 가요</span></div>`;
   h+=`<div class="card"><div class="tip" style="text-align:center">이 단어 뜻은?</div><div class="prompt" style="font-size:32px">${esc(w.w)} <button class="btn light sm" data-act="vrsay">🔊</button></div>
    <div class="row" style="justify-content:center">${vr.opts.map(o=>{const on=r&&(o===w.ko||o===r.pick);return `<button class="chip" data-act="vrpick" data-v="${esc(o)}" ${r?'disabled':''} style="flex:1;min-width:130px;max-width:220px;padding:12px 8px;${on?(o===w.ko?'background:var(--ok)':'background:var(--no)'):'background:#eef1f7;color:#1f2330'}">${esc(o)}</button>`}).join('')}</div>`;
-  if(r)h+=`<div class="res ${r.ok?'ok':'slow'}">${r.ok?'⭕ 맞았어요!':'❌ 정답: <b>'+esc(w.ko)+'</b> · 다시 써 보는 단어로 나오고, 내일 뜻도 다시 확인해요.'}</div><div class="row" style="justify-content:center"><button class="btn" data-act="vrnext">다음 ▶</button></div>`;
+  if(r)h+=`<div class="res ${r.ok?'ok':'slow'}">${r.ok?'⭕ 맞았어요!':'❌ 정답: <b>'+esc(w.ko)+'</b> · 다시 써 보는 단어로 나오고, 내일 뜻도 다시 확인해요.'}</div><div class="row" style="justify-content:center"><button class="btn" data-act="vrnext" data-auto="${r.ok?'ok':'x'}">다음 ▶</button></div>`;
   $('#main').innerHTML=h+'</div>'}
 function vStart(){let s=VS();
   if(s&&s.v!==2){const done=s.queue.filter(w=>(s.res||{})[w]);if(done.length<VDAILY){const p=vPickQueue();s.queue=done.concat(p.queue.filter(w=>!done.includes(w))).slice(0,VDAILY);s.re=[...new Set((s.re||[]).concat(p.re))].filter(w=>s.queue.includes(w))}else s.queue=done;s.v=2;vsave()}
@@ -1398,7 +1409,7 @@ function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
   else if(vc.phase==='cut'){const L=[...w.w],M=vc.cutMarks||[];
     h+=note+`<div class="tip" style="text-align:center;margin-top:10px">✂️ <b>어디서 끊을까?</b> 소리 마디가 나뉘는 곳을 눌러요</div><div style="text-align:center;margin:6px 0"><button class="btn light sm" data-act="vsay">🔊 듣기</button></div>
      <div style="display:flex;justify-content:center;align-items:center;flex-wrap:wrap;margin:12px 0">${L.map((c,i)=>`<span style="font:800 28px 'Noto Sans KR';padding:0 1px">${esc(c)}</span>`+(i<L.length-1&&c!==' '&&L[i+1]!==' '?`<button data-act="vcutg" data-i="${i}" style="width:22px;height:40px;border:none;border-radius:6px;margin:0 1px;cursor:pointer;background:${M.includes(i)?'#e4572e':'#e6ecf7'};color:#fff;font-weight:800">${M.includes(i)?'|':''}</button>`:'')).join('')}</div>`;
-    if(vc.cutRes){h+=`<div class="res ${vc.cutRes.ok?'ok':'slow'}">${vc.cutRes.ok?'⭕ 딱 맞게 끊었어요!':'이렇게 끊어요'}</div>`+sylHTML(w.w,{noTip:true})+`<div class="row" style="justify-content:center"><button class="btn" data-act="vcutnext">따라 쓰기 ▶</button></div>`}
+    if(vc.cutRes){h+=`<div class="res ${vc.cutRes.ok?'ok':'slow'}">${vc.cutRes.ok?'⭕ 딱 맞게 끊었어요!':'이렇게 끊어요'}</div>`+sylHTML(w.w,{noTip:true})+`<div class="row" style="justify-content:center"><button class="btn" data-act="vcutnext" data-auto="${vc.cutRes.ok?'ok':'x'}">따라 쓰기 ▶</button></div>`}
     else h+=`<div class="row" style="justify-content:center"><button class="btn" data-act="vcutchk">✔ 다 끊었어</button></div>`}
   else if(vc.phase==='fix'){const S=sylOf(w.w),bi=vc.bad[vc.fixI];
     h+=note+`<div class="tip" style="text-align:center;margin-top:10px">🔧 <b>틀린 마디만</b> 다시 써요 (${vc.fixI+1} / ${vc.bad.length})</div>`+sylHTML(w.w,{hide:bi,noTip:true,noMorph:true})+`<div style="text-align:center"><button class="btn light sm" data-act="vsyl" data-i="${bi}">🔊 이 마디 듣기</button></div>`+vInput('vfix','확인')}
@@ -3821,7 +3832,7 @@ function mountProblem(box,p,opts){
       box.querySelector('#sol').innerHTML=solHTML; }
     opts.onDone&&opts.onDone(rec); if(solve) teachAdd(p,rec); DIRTY=true; refreshTop();
     const af=box.querySelector('#after');
-    const nextBtn=()=>{ af.insertAdjacentHTML('beforeend',`<div class="acts"><button class="next" id="nx">${opts.nextLabel||'다음 문제 ▶'}</button></div>`); af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); af.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}); };
+    const nextBtn=()=>{ af.insertAdjacentHTML('beforeend',`<div class="acts"><button class="next" id="nx" data-auto="${res==='o'?'ok':'x'}">${opts.nextLabel||'다음 문제 ▶'}</button></div>`); af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); af.querySelector('#nx').scrollIntoView({behavior:'smooth',block:'nearest'}); };
     if(false){ /* 엄마 11/23: 풀고 나서 '어떻게 풀었어?' 묻기 없앰 */ const mv=fmOptions(p); af.innerHTML=`<div class="fmq">어떻게 풀었어?<small>내가 쓴 방법을 골라 봐요</small></div>${mv.map((m,k)=>`<button class="fmo" data-k="${k}">${m.t}</button>`).join('')}<button class="skipq" id="mvs">건너뛰기</button>`;
       const doneMv=ok=>{ rec.mv=ok; af.querySelectorAll('.fmo').forEach((b,k)=>{ b.disabled=true; if(mv[k].ok) b.classList.add('good'); }); af.querySelector('#mvs').remove(); af.insertAdjacentHTML('beforeend',`<div class="move">${ok===true?'👍 맞아, 이 문제의 핵심 방법이에요.':ok===false?`이 문제의 핵심 방법은 초록색이에요: <b>${SKILLS[p.sk].moves[p.fm]}</b>`:''}</div>`); nextBtn(); };
       af.querySelectorAll('.fmo').forEach((b,k)=>b.onclick=()=>{ if(!mv[k].ok) b.classList.add('bad'); doneMv(mv[k].ok); });
@@ -5711,7 +5722,7 @@ function drawCard(){
     if(st.b<c.blanks.length){render();return}
     render();
     const ok=st.miss===0;
-    $('#cfb').innerHTML=`<div class="alert" style="margin-top:14px;${ok?'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a':''}">${ok?'⭕ 한 번에 맞혔어!':'⭕ 맞았어. 다음엔 한 번에!'}</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="cnext">다음 →</button></div>`;
+    $('#cfb').innerHTML=`<div class="alert" style="margin-top:14px;${ok?'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a':''}">${ok?'⭕ 한 번에 맞혔어!':'⭕ 맞았어. 다음엔 한 번에!'}</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="cnext" data-auto="${ok?'ok':'x'}">다음 →</button></div>`;
     R.res[R.i]=({id:c.id,ok,miss:st.miss,mode:mode==='type'&&!st.blockFallback?'type':'block',sec:Math.round((Date.now()-st.t0)/1000)});
     if(ok&&!st.blockFallback){const pc=PROG.cards[c.id]=PROG.cards[c.id]||{days:[]};if(!pc.days.includes(R.date))pc.days.push(R.date)}
     else if(mode==='type'){const pc=PROG.cards[c.id];if(pc)pc.days=pc.days.slice(0,1)}
@@ -6028,7 +6039,7 @@ function drawGram(){
       if(st.miss===2)$('#gfb').innerHTML=`<div class="cgloss" style="margin-top:14px">💡 ${M.tip}</div>`}});
   };
   const fin=()=>{render();const ok=st.miss===0;
-    $('#gfb').innerHTML=`<div class="alert" style="margin-top:14px;${ok?'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a':''}">${ok?'⭕ 한 번에!':'⭕ 맞았어.'}</div>${ok?'':`<div class="cgloss">💡 ${M.tip}</div>`}<div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="gnext">다음 →</button></div>`;
+    $('#gfb').innerHTML=`<div class="alert" style="margin-top:14px;${ok?'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a':''}">${ok?'⭕ 한 번에!':'⭕ 맞았어.'}</div>${ok?'':`<div class="cgloss">💡 ${M.tip}</div>`}<div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="gnext" data-auto="${ok?'ok':'x'}">다음 →</button></div>`;
     GR.res[GR.i]={show:q.show,ok,miss:st.miss};$('#gnext').onclick=()=>{GR.i++;drawGram()}};
   render();
 }
@@ -6356,7 +6367,7 @@ function drawLit(){
   <h2 style="margin:8px 0">${c.han}</h2>${c.pic}
   <div class="ltext">${c.def}</div><div class="cgloss">📌 ${c.ex}</div>
   ${stepsHTML(st,c.steps)}
-  ${st.done?`<div class="alert" style="margin-top:12px;${st.miss?'':'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a'}">${st.miss?'맞았어! 다음엔 한 번에 💪':'⭕ 한 번에 맞혔어!'}</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="lnext">다음 →</button></div>`:''}</div>`;
+  ${st.done?`<div class="alert" style="margin-top:12px;${st.miss?'':'background:var(--okbg);border-color:#9fd0b1;color:#1d5e3a'}">${st.miss?'맞았어! 다음엔 한 번에 💪':'⭕ 한 번에 맞혔어!'}</div><div class="row" style="justify-content:center;margin-top:10px"><button class="btn" id="lnext" data-auto="${st.miss?'x':'ok'}">다음 →</button></div>`:''}</div>`;
   bindQnav(()=>{LT=null;viewLit()},()=>{LT.i=Math.max(0,LT.i-1);drawLit()},()=>{if(!LT.res[LT.i])LT.res[LT.i]={id:c.id,skipped:true};LT.i++;drawLit()},restartLit);
   litBindSub();
   litSteps(st,c.steps,()=>{litMark(c.id,!st.miss);LT.res[LT.i]={id:c.id,miss:st.miss};push({type:'lit',part:'con',id:c.id,stage:c.st,miss:st.miss,ok:!st.miss,try:LT.try||1});litNeedSave()},drawLit);
@@ -6933,7 +6944,7 @@ function hwDraw(){hwKeep();const H=hwSet(HWS.id);const it=H.items[HWS.i];if(biNe
   const already=HWS.res[HWS.i]&&!HWS.res[HWS.i].skipped&&HWS.ph!=='copy'&&HWS.ph!=='copied';
   let L='',Q='';const ph=HWS.ph;
   const tag=`<div class="row" style="gap:6px;margin-bottom:6px"><span class="chip">${H.area}</span>${it.no?`<span class="chip warn">교재 ${it.pg}쪽 · ${it.no}번</span>`:'<span class="chip ok">🧠 생각 준비</span>'}</div>`;
-  const nextBtn=`<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="hwnx">${HWS.i<H.items.length-1?'다음 문항 →':'숙제 끝내기 →'}</button></div>`;
+  const nextBtn=`<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="hwnx" data-auto="x">${HWS.i<H.items.length-1?'다음 문항 →':'숙제 끝내기 →'}</button></div>`;
   if(already&&ph!=='copy'){HWS.ph=(it.k==='think'||!it.pg)?'copied':'copy'}
   const P=HWS.ph;
   if(it.k==='ox'&&biOn(H,it)&&P==='ev'){if(!HWS.spi)biStartSp(H,it);const sp=HWS.sp;
@@ -7022,13 +7033,13 @@ function hwBind(H,it){
     if(HWS.sp==='ev')biEvBind(it,op.ev);
     else if(HWS.sp==='cmp')biCmpBind(it,op.t,biOpBad(op),op.why||'');
     document.querySelectorAll('[data-bj]').forEach(b=>b.onclick=()=>{const say=b.dataset.bj==='1';
-      if(say===op.ok){const f=$('#hwfb');f.innerHTML=`<div class="exp" style="margin-left:0">${op.ok?'⭕':'❌'} ${op.why}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="hwj">${HWS.oi<it.opts.length-1?'다음 선지 →':'답 고르기 →'}</button></div>`;document.querySelectorAll('[data-bj]').forEach(x=>x.disabled=true);
+      if(say===op.ok){const f=$('#hwfb');f.innerHTML=`<div class="exp" style="margin-left:0">${op.ok?'⭕':'❌'} ${op.why}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="hwj" data-auto="x">${HWS.oi<it.opts.length-1?'다음 선지 →':'답 고르기 →'}</button></div>`;document.querySelectorAll('[data-bj]').forEach(x=>x.disabled=true);
         $('#hwj').onclick=()=>{Object.assign(HWS,{sp:'ev',spi:false,kwO:null,lvMsg:'',got:[],ci:0,cj:[],ct:0,et:0,phint:0});if(HWS.oi<it.opts.length-1)HWS.oi++;else HWS.ph='final';hwDraw()}}
       else hwBad(b,`방금 비교한 걸 봐요. 두 조각이 <b>다 같으면</b> 「${it.jl[0]}」, 하나라도 <b>다르면</b> 「${it.jl[1]}」.`)})}
   else if(it.k==='mc'){
     if(hh)hh.onclick=()=>{HWS.hint=true;const op=it.opts[HWS.oi];document.querySelectorAll('.hs').forEach(s=>{if((op.ev||[]).includes(s.dataset.hs)){s.classList.add('hint');s.scrollIntoView({block:'center',behavior:'smooth'})}})};
     document.querySelectorAll('[data-jg]').forEach(b=>b.onclick=()=>{const op=it.opts[HWS.oi];const say=b.dataset.jg==='1';
-      if(say===op.ok){const f=$('#hwfb');f.innerHTML=`<div class="exp" style="margin-left:0">${op.ok?'⭕':'❌'} ${op.why}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="hwj">${HWS.oi<it.opts.length-1?'다음 선지 →':'답 고르기 →'}</button></div>`;document.querySelectorAll('[data-jg]').forEach(x=>x.disabled=true);
+      if(say===op.ok){const f=$('#hwfb');f.innerHTML=`<div class="exp" style="margin-left:0">${op.ok?'⭕':'❌'} ${op.why}</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="hwj" data-auto="x">${HWS.oi<it.opts.length-1?'다음 선지 →':'답 고르기 →'}</button></div>`;document.querySelectorAll('[data-jg]').forEach(x=>x.disabled=true);
         $('#hwj').onclick=()=>{if(HWS.oi<it.opts.length-1)HWS.oi++;else HWS.ph='final';hwDraw()}}
       else{hwBad(b,`다시! 💡 ${op.why}`);document.querySelectorAll('.hs').forEach(s=>{if((op.ev||[]).includes(s.dataset.hs))s.classList.add('hint')})}});
     document.querySelectorAll('[data-fn]').forEach(b=>b.onclick=()=>{if(+b.dataset.fn===it.a)hwAfterOk(it);else hwBad(b,`${N[+b.dataset.fn]}은 ${it.opts[+b.dataset.fn].ok?'⭕':'❌'}이었어요. 문제가 찾는 건 ${it.want?'⭕':'❌'}!`)})}
