@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795568258";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795568551";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -110,6 +110,8 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .ph{display:inline-block;width:.6em;height:.9em}
 .box .fr{font-size:.7em}
 .box:has(.fr){width:auto;min-width:72px;height:auto;min-height:64px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px}
+.bk h4{margin:10px 0 4px;font-size:15px}.bk ol{margin:0;padding-left:22px}.bk li{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;padding:3px 0;border-bottom:1px dashed var(--line)}.bk li b{color:var(--blue)}.bk li.bad b{color:var(--ink)}.bk li.bad{background:rgba(230,120,40,.08)}
+details.card summary{cursor:pointer;padding:4px 0}
 .ftab{border-collapse:collapse;font-size:24px}.ftab th{font-size:15px;font-family:var(--f-body,inherit);padding:4px 6px;text-align:left;color:var(--ink-2)}.ftab td{border:2px solid var(--line);min-width:48px;height:52px;text-align:center;padding:2px;background:var(--card)}
 .ftab .box{width:46px;height:46px;font-size:24px}
 .qline.stack{flex-direction:column;gap:10px}
@@ -543,7 +545,7 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord}[view]||vHome;
+  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord}[view]||vHome;
   app.innerHTML=f()+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
@@ -937,6 +939,26 @@ function vWord(){
 
 /* 부모님 화면 */
 let IMPORT_TXT="",MSG="";
+/* 부모: 문제 전체 보기 (단계별 · 세트별) + 푼 세트 */
+let BANK={tab:"all"};
+function bankSet(id,L){const T=TYPES[id];if(T.seq)return T.seq(L).list.map(p=>T.make(p));const seen=new Set(),out=[];let g=0;
+  while(out.length<tc(id).n&&g++<500){const p=T.rand(L),k=T.key(p);if(seen.has(k))continue;seen.add(k);out.push(T.make(p,1))}return out}
+function ansTxt(q){return q.need?q.need.join(", "):(q.a||[]).map(fview).join(" , ")}
+function vBank(){
+  const ids=S.cfg.order.filter(id=>TYPES[id]);
+  const typeHTML=id=>{const T=TYPES[id],st=tst(id),nL=STEPT(T)?stepMax(T)+1:1;
+    return `<details class="card"><summary><b>${T.name}</b> <span class="small muted">${STEPT(T)?`지금 ${stepLabel(T,st.step||0)}`:T.ex}</span></summary>
+      <p class="small">올라가는 법: ${STEPT(T)?`한 세트를 <b>${fmt(finalPQ(id)*(T.seq?T.seq(0).list.length:tc(id).n))}</b> 안에 끝내면 다음 단계 → 마지막 단계에서 서로 다른 날 2번 기준 안이면 졸업.`:`처음 3판 평균에서 출발해 통과할 때마다 목표를 10%씩 줄여요. 최종 기준 <b>${fmt(finalPQ(id)*tc(id).n)}</b> 안에 서로 다른 날 2번이면 졸업.`} 빠르게 두 번 맞힌 문제는 7일 쉬고, 틀리거나 느린 문제는 더 자주 나와요.</p>
+      ${Array.from({length:nL},(_,L)=>`<div class="bk"><h4>${STEPT(T)?(L+1)+"단계 · "+esc(stepLabel(T,L)):"문제"}${STEPT(T)&&(st.step||0)===L?' <span class="pill new">지금</span>':""}</h4>
+        <ol>${bankSet(id,L).map(q=>`<li><span>${esc(q.text)}</span><b>${ansTxt(q)}</b></li>`).join("")}</ol></div>`).join("")}
+      <button class="nb" data-act="bankre">다른 세트 보기</button></details>`};
+  const days=Object.keys(DAYS).filter(k=>(DAYS[k].sets||[]).length).sort().reverse().slice(0,7);
+  const doneHTML=days.map(k=>`<details class="card"><summary><b>${dayLabel(k)}</b> <span class="small muted">${DAYS[k].sets.length}세트</span></summary>
+    ${DAYS[k].sets.map((x,j)=>`<div class="bk"><h4>${j+1}. ${esc((TYPES[x.type]||{}).name||x.type)} · ${fmt(x.t)} · 오답 ${x.w}</h4><ol>${(x.items||[]).slice().sort((a,b)=>a.o-b.o).map(it=>`<li class="${it.ok1?"":"bad"}"><span>${esc(it.q)}</span><b>${(it.a||"").split("|").map(fview).join(", ")}</b><span class="small muted">${it.ok1?"✓":"✗ "+(it.g||[]).map(v=>String(v).split("|").map(fview).join(",")).join(" → ")} · ${(it.ms/1000).toFixed(1)}초</span></li>`).join("")}</ol></div>`).join("")}</details>`).join("")||`<p class="muted small">아직 푼 세트가 없어요.</p>`;
+  return `${bar("문제 전체 보기")}<div class="page">
+    <div class="row"><button class="nb ${BANK.tab==="all"?"pri":""}" data-act="banktab" data-arg="all">유형·단계별 문제</button><button class="nb ${BANK.tab==="done"?"pri":""}" data-act="banktab" data-arg="done">푼 세트 (7일)</button></div>
+    ${BANK.tab==="all"?`<p class="small muted">단계마다 한 세트씩 만들어 보여줘요. 정답은 굵은 글씨.</p>${ids.map(typeHTML).join("")}`:doneHTML}
+    <button class="nb" data-act="go" data-arg="parent">부모 화면으로</button></div>`}
 function vParent(){
   const d=D(),carryN=Object.values(d.carry).reduce((a,b)=>a+b,0),total=Object.values(planNow()).reduce((a,b)=>a+b,0);
   const rows=S.cfg.order.map((id,ix)=>{const T=TYPES[id],c=tc(id),st=tst(id),n=S.cfg.plan[id]||0,n20=c.n,open=parentOpen[id];
@@ -964,7 +986,7 @@ function vParent(){
      <label class="row"><input id="carry" type="checkbox" ${S.cfg.carryOn?"checked":""} data-ch="carry"> 못 한 세트를 다음 날로 넘기기 (앱을 연 날 기준)</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
    <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>
-     <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button></div>
+     <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
      <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button></div></div>
    <div class="card"><h3>기준</h3><p class="small">10문제 · 오답 1개까지 · 처음 3판 평균에서 10%씩 줄임 · 기준 안 2일이면 졸업 · <a href="${TREE}" target="_blank" rel="noopener">계통표</a></p></div>
@@ -973,6 +995,7 @@ function vParent(){
 
 /* ───────── 동작 ───────── */
 const ACT={
+  banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
     RUN=null;CON=null;MSG="";go("home")},
