@@ -3579,40 +3579,40 @@ S({id:'group',unit:'분수',title:'묶어서 분수로 나타내기',moves:{
  learn:`<p>낱개가 아니라 <b>묶음</b>으로 세요.</p><div class="ex">12를 3씩 묶으면 4묶음 → 6은 2묶음 → 6은 12의 ${fr(2,4)}</div><ul><li>분모 = 전체 묶음 수</li><li>분자 = 부분 묶음 수</li><li>몇씩 묶느냐에 따라 같은 6도 ${fr(2,4)}, ${fr(3,6)}, ${fr(1,2)}…로 달라져요</li></ul>`,
  gen:[
   lv=>{ const g=rnd(2,5), b=rnd(3,6), N=g*b; if(N>30) return null; const a=rnd(1,b-1);
-   return {text:`구슬 ${N}개를 ${g}개씩 묶었어요.<br>색칠한 구슬은 전체의 몇 분의 몇인가요?`, svg:marbles(N,g,a), type:'frac', form:'frac', answer:F(0,a,b), fm:'count',
+   return {steps:[KS(`구슬 ${N}개를 ${g}개씩 묶으면 모두 몇 묶음이에요?`,'num',b,`${N} ÷ ${g} = ${b}묶음`,{unit:'묶음'}),KS(`색칠한 구슬은 몇 묶음이에요?`,'num',a,`색칠한 구슬 ${a*g}개 ÷ ${g} = ${a}묶음`,{unit:'묶음'}),KS(`전체 ${b}묶음 중 ${a}묶음. 분수로 쓰면?`,'frac',F(0,a,b),`분모 = 전체 묶음 ${b}, 분자 = 색칠한 묶음 ${a} → ${fr(a,b)}`)], text:`구슬 ${N}개를 ${g}개씩 묶었어요.<br>색칠한 구슬은 전체의 몇 분의 몇인가요?`, svg:marbles(N,g,a), type:'frac', form:'frac', answer:F(0,a,b), fm:'count',
     hints:['묶음이 모두 몇 개인지 세어 봐요. 그게 분모예요.',`전체 ${b}묶음 중 색칠한 건 ${a}묶음이에요.`],
     sol:[`${g}개씩 묶으면 ${b}묶음`,`색칠한 것은 ${a}묶음`,`전체 ${b}묶음 중 ${a}묶음 → <b>${fr(a,b)}</b>`],
     bugs:[fbug(F(0,a*g,N),'count-items','구슬 개수로 썼어요. 분수는 <b>묶음 수</b>로 나타내요.'),fbug(F(0,b,a),'swap','분자와 분모가 바뀌었어요. 분모는 전체 묶음 수!'),fbug(F(0,a,b-a),'part-rest','분모는 남은 묶음이 아니라 <b>전체</b> 묶음 수예요.')]}; },
   lv=>{ const g=rnd(2,9), b=rnd(3,8), N=g*b; if(N>60) return null; const a=rnd(1,b-1), M=a*g;
-   if(Math.random()<0.5) return {text:`<big>${N}</big>을(를) <big>${g}</big>씩 묶으면 <big>${M}</big>은(는) ${N}의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,a,b), fm:'count',
+   if(Math.random()<0.5) return {steps:[KS(`${N}을(를) ${g}씩 묶으면 모두 몇 묶음?`,'num',b,`${N} ÷ ${g} = ${b}`,{unit:'묶음'}),KS(`${M}은(는) 몇 묶음?`,'num',a,`${M} ÷ ${g} = ${a}`,{unit:'묶음'}),KS(`${b}묶음 중 ${a}묶음. 분수로 쓰면?`,'frac',F(0,a,b),`분모 ${b}, 분자 ${a} → ${fr(a,b)}`)], text:`<big>${N}</big>을(를) <big>${g}</big>씩 묶으면 <big>${M}</big>은(는) ${N}의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,a,b), fm:'count',
     hints:[`${N}을 ${g}씩 묶으면 몇 묶음일까? 그게 분모.`,`${N} ÷ ${g} = ${b}묶음, ${M}은 ${M} ÷ ${g} = ${a}묶음`],
     sol:[`${N}을 ${g}씩 묶으면 ${b}묶음`,`${M}은 ${a}묶음`,`<b>${fr(a,b)}</b>`],
     bugs:[fbug(F(0,M,N),'count-items','낱개 수로 썼어요. 묶음 수로 바꿔요.'),fbug(F(0,b,a),'swap','분자와 분모가 바뀌었어요.'),fbug(F(0,a,g),'gsize','분모는 한 묶음에 든 수가 아니라 <b>묶음의 개수</b>예요.')]};
-   return {text:`<big>${N}</big>을(를) <big>${g}</big>씩 묶으면 ${fr(a,b)}는 얼마인가요?`, type:'num', answer:M, fm:'count',
+   return {steps:[KS(`${N}을(를) ${g}씩 묶으면 모두 몇 묶음?`,'num',b,`${N} ÷ ${g} = ${b}`,{unit:'묶음'}),KS(`${fr(a,b)}는 ${b}묶음 중 ${a}묶음. ${g}씩 ${a}묶음은 얼마?`,'num',M,`${g} × ${a} = ${M}`)], text:`<big>${N}</big>을(를) <big>${g}</big>씩 묶으면 ${fr(a,b)}는 얼마인가요?`, type:'num', answer:M, fm:'count',
     hints:[`${N}을 ${g}씩 묶으면 ${b}묶음이에요.`,`${fr(a,b)}는 ${b}묶음 중 ${a}묶음 → 한 묶음은 ${g}`],
     sol:[`${b}묶음 중 ${a}묶음`,`${g} × ${a} = <b>${M}</b>`], bugs:[nbug(a,'gsize','묶음 수가 아니라 그 안에 든 수를 물어요.'),nbug(N-M,'remain','그건 나머지 묶음이에요.')]}; },
   lv=>{ const g=rnd(2,9), b=rnd(3,8), N=g*b; if(N>72) return null; let a; do{a=rnd(1,b-1);}while(false); const M=a*g;
-   return {text:`${N}을(를) □씩 묶으면 ${M}은(는) ${N}의 ${fr(a,b)}입니다.<br>□에 알맞은 수는?`, type:'num', answer:g, fm:'back',
+   return {steps:[KS(`분모가 ${b}. 그러면 ${N}은(는) 모두 몇 묶음?`,'num',b,`분모 = 전체 묶음 수 → ${b}묶음`,{unit:'묶음'}),KS(`${N}을(를) ${b}묶음으로 똑같이 나누면 한 묶음은 얼마?`,'num',g,`${N} ÷ ${b} = ${g}`)], text:`${N}을(를) □씩 묶으면 ${M}은(는) ${N}의 ${fr(a,b)}입니다.<br>□에 알맞은 수는?`, type:'num', answer:g, fm:'back',
     hints:[`분모가 ${b}이니까 ${N}은 모두 ${b}묶음이에요.`,`${N}을 ${b}묶음으로 똑같이 나누면 한 묶음에 몇 개?`],
     sol:[`분모 ${b} → ${N}은 ${b}묶음`,`${N} ÷ ${b} = <b>${g}</b>`,`확인: ${M} ÷ ${g} = ${a}묶음 ✓`],
     bugs:[nbug(b,'gsize','묶음의 개수가 아니라, 한 묶음에 몇 개씩인지를 물어요.'),nbug(a,'gsize','분자는 묶음 수예요. □는 한 묶음에 든 수!')]}; },
   lv=>{ const g=rnd(2,6), b=rnd(4,8), N=g*b; const a=rnd(1,b-2), c=rnd(1,b-1-a); const thing=pick(['사탕','딱지','구슬','카드']);
-   if(Math.random()<0.5) return {text:`${thing} ${N}개를 ${g}개씩 묶었어요. 그중 ${a}묶음을 동생에게, ${c}묶음을 친구에게 주었어요.<br>남은 ${thing}은 전체의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,b-a-c,b), fm:'remain',
+   if(Math.random()<0.5) return {steps:[KS(`${N}개를 ${g}개씩 묶으면 모두 몇 묶음?`,'num',b,`${N} ÷ ${g} = ${b}`,{unit:'묶음'}),KS(`준 것은 모두 몇 묶음?`,'num',a+c,`${a} + ${c} = ${a+c}`,{unit:'묶음'}),KS(`남은 것은 몇 묶음?`,'num',b-a-c,`${b} − ${a+c} = ${b-a-c}`,{unit:'묶음'}),KS(`전체 ${b}묶음 중 남은 ${b-a-c}묶음. 분수로 쓰면?`,'frac',F(0,b-a-c,b),`→ ${fr(b-a-c,b)}`)], text:`${thing} ${N}개를 ${g}개씩 묶었어요. 그중 ${a}묶음을 동생에게, ${c}묶음을 친구에게 주었어요.<br>남은 ${thing}은 전체의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,b-a-c,b), fm:'remain',
     hints:[`전체는 ${N} ÷ ${g} = ${b}묶음이에요.`,`준 것은 ${a}+${c} = ${a+c}묶음. 남은 건?`],
     sol:[`전체 ${b}묶음`,`준 것 ${a+c}묶음, 남은 것 ${b-a-c}묶음`,`<b>${fr(b-a-c,b)}</b>`],
     bugs:[fbug(F(0,a+c,b),'remain','그건 준 것이에요. 묻는 건 남은 것!'),fbug(F(0,N-(a+c)*g,N),'count-items','낱개 수예요. 묶음 수로!'),fbug(F(0,b-a-c,b-a),'base','분모는 처음 전체 묶음 수 그대로예요.')]};
-   return {text:`${thing} ${N}개를 ${g}개씩 묶었어요. 동생에게 전체의 ${fr(a,b)}, 친구에게 전체의 ${fr(c,b)}를 주었어요.<br>남은 ${thing}은 몇 개인가요?`, type:'num', unit:'개', answer:N-(a+c)*g, fm:'remain',
+   return {steps:[KS(`준 것은 모두 몇 묶음? (${fr(a,b)}는 ${a}묶음, ${fr(c,b)}는 ${c}묶음)`,'num',a+c,`${a} + ${c} = ${a+c}`,{unit:'묶음'}),KS(`${g}개씩 ${a+c}묶음은 몇 개?`,'num',(a+c)*g,`${g} × ${a+c} = ${(a+c)*g}`,{unit:'개'}),KS(`남은 것은 몇 개?`,'num',N-(a+c)*g,`${N} − ${(a+c)*g} = ${N-(a+c)*g}`,{unit:'개'})], text:`${thing} ${N}개를 ${g}개씩 묶었어요. 동생에게 전체의 ${fr(a,b)}, 친구에게 전체의 ${fr(c,b)}를 주었어요.<br>남은 ${thing}은 몇 개인가요?`, type:'num', unit:'개', answer:N-(a+c)*g, fm:'remain',
     hints:[`분모 ${b}: 전체가 ${b}묶음, 한 묶음은 ${g}개.`,`준 것은 ${a+c}묶음 = ${(a+c)*g}개`],
     sol:[`한 묶음 ${g}개`,`준 것 ${a}+${c} = ${a+c}묶음 = ${(a+c)*g}개`,`${N} − ${(a+c)*g} = <b>${N-(a+c)*g}개</b>`],
     bugs:[nbug((a+c)*g,'remain','그건 준 개수예요.'),nbug(b-a-c,'count-items','묶음 수예요. 몇 개인지 물어요.'),nbug(N-a-c,'gsize','분자만큼 빼면 안 돼요. 묶음 하나는 '+g+'개!')]}; },
   lv=>{ if(Math.random()<0.5){ const g=rnd(2,6), b=rnd(3,8), N=g*b, a=rnd(1,b-1);
      const hs=[]; for(let h=2;h<N;h++) if(N%h===0&&h!==g) hs.push(h); if(!hs.length) return null; const h=pick(hs), B=N/h; if(B<2) return null; const k=rnd(1,B-1), K=k*h;
-     return {text:`어떤 수를 ${g}씩 묶으면 ${a*g}은(는) 어떤 수의 ${fr(a,b)}입니다.<br>어떤 수를 ${h}씩 묶으면 ${K}은(는) 어떤 수의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,k,B), fm:'chain',
+     return {steps:[KS(`어떤 수를 ${g}씩 묶으면 ${b}묶음이에요(분모 ${b}). 어떤 수는?`,'num',N,`${g} × ${b} = ${N}`),KS(`${N}을(를) ${h}씩 묶으면 몇 묶음?`,'num',B,`${N} ÷ ${h} = ${B}`,{unit:'묶음'}),KS(`${K}은(는) 몇 묶음?`,'num',k,`${K} ÷ ${h} = ${k}`,{unit:'묶음'}),KS(`${B}묶음 중 ${k}묶음. 분수로 쓰면?`,'frac',F(0,k,B),`→ ${fr(k,B)}`)], text:`어떤 수를 ${g}씩 묶으면 ${a*g}은(는) 어떤 수의 ${fr(a,b)}입니다.<br>어떤 수를 ${h}씩 묶으면 ${K}은(는) 어떤 수의 몇 분의 몇인가요?`, type:'frac', form:'frac', answer:F(0,k,B), fm:'chain',
       hints:[`먼저 어떤 수부터: 분모가 ${b}이니까 ${g}씩 ${b}묶음.`,`어떤 수는 ${N}. 이제 ${N}을 ${h}씩 묶어요.`],
       sol:[`어떤 수 = ${g} × ${b} = ${N}`,`${N}을 ${h}씩 묶으면 ${B}묶음, ${K}은 ${k}묶음`,`<b>${fr(k,B)}</b>`],
       bugs:[fbug(F(0,a,b),'stop','앞 조건 답을 그대로 썼어요. 두 번째는 '+h+'씩 묶어요.'),fbug(F(0,K,N),'count-items','낱개 수로 썼어요.'),fbug(F(0,k,h),'gsize','분모는 묶음 개수예요.')]}; }
    const g=rnd(2,7), b=rnd(3,6), N=g*b; const ds=[]; for(let d=2;d<=N;d++) if(N%d===0&&d!==b&&d<N) ds.push(d); if(!ds.length) return null; const d=pick(ds), c=rnd(1,d-1), ans=N/d*c;
-   return {text:`구슬을 ${g}개씩 묶었더니 ${b}묶음이 되었어요.<br>이 구슬의 ${fr(c,d)}는 몇 개인가요?`, type:'num', unit:'개', answer:ans, fm:'chain',
+   return {steps:[KS(`구슬은 모두 몇 개?`,'num',N,`${g} × ${b} = ${N}`,{unit:'개'}),KS(`${N}의 ${fr(1,d)}은(는) 몇 개?`,'num',N/d,`${N} ÷ ${d} = ${N/d}`,{unit:'개'}),KS(`${fr(c,d)}는 그 ${c}배. 몇 개?`,'num',ans,`${N/d} × ${c} = ${ans}`,{unit:'개'})], text:`구슬을 ${g}개씩 묶었더니 ${b}묶음이 되었어요.<br>이 구슬의 ${fr(c,d)}는 몇 개인가요?`, type:'num', unit:'개', answer:ans, fm:'chain',
     hints:[`먼저 구슬이 모두 몇 개인지 구해요.`,`${g} × ${b} = ${N}개. 이제 ${N}의 ${fr(c,d)}`],
     sol:[`전체 ${g} × ${b} = ${N}개`,`${N}을 ${d}묶음으로 나누면 한 묶음 ${N/d}개`,`${N/d} × ${c} = <b>${ans}개</b>`],
     bugs:[nbug(g*c,'stop',`처음 묶음(${g}개씩)과 새 분모(${d})는 달라요. 전체 개수부터!`),nbug(N,'stop','전체 개수까지 왔어요. 이제 '+c+'/'+d+'만큼!'),nbug(N/d,'only-unit','그건 1/'+d+'만큼이에요. '+c+'배 해요.')]}; }
@@ -3624,33 +3624,33 @@ S({id:'part',unit:'분수',title:'분수만큼은 얼마일까',moves:{
  learn:`<p>${fr(3,4)}만큼 = <b>4묶음으로 나눈 것 중 3묶음</b></p><div class="ex">12의 ${fr(3,4)} → 12를 4묶음으로 → 한 묶음 3 → 3 × 3 = 9</div><ul><li>먼저 분모로 나누고, 분자만큼 곱해요</li><li>1 m의 ${fr(1,4)} = 100 cm의 ${fr(1,4)} = 25 cm</li></ul>`,
  gen:[
   lv=>{ const b=rnd(2,6), u=rnd(2,6), N=b*u; if(N>30) return null;
-   return {text:`구슬 ${N}개의 ${fr(1,b)}은(는) 몇 개인가요?`, svg:marbles(N,null), type:'num', unit:'개', answer:u, fm:'split',
+   return {steps:[KS(`${fr(1,b)}은(는) 몇 묶음으로 똑같이 나눈 것 중 하나예요?`,'num',b,`분모 ${b} → ${b}묶음`,{unit:'묶음'}),KS(`구슬 ${N}개를 ${b}묶음으로 똑같이 나누면 한 묶음은 몇 개?`,'num',u,`${N} ÷ ${b} = ${u}`,{unit:'개'})], text:`구슬 ${N}개의 ${fr(1,b)}은(는) 몇 개인가요?`, svg:marbles(N,null), type:'num', unit:'개', answer:u, fm:'split',
     hints:[`구슬을 ${b}묶음으로 똑같이 나눠 봐요. 패드에 동그라미를 그려도 좋아요.`,`${N}개를 ${b}묶음 → 한 묶음에 몇 개?`],
     sol:[`${N}개를 ${b}묶음으로 똑같이 나누면`,`한 묶음 <b>${u}개</b>`], bugs:[nbug(b,'gsize','그건 묶음 개수예요. 한 묶음에 몇 개인지 물어요.'),nbug(N-b,'wrong-split','분모만큼 빼는 게 아니라 분모만큼 나눠요.')]}; },
   lv=>{ const b=rnd(3,9), u=rnd(2,9), N=b*u, a=rnd(2,b-1);
-   return {text:`<big>${N}</big>의 ${fr(a,b)}은(는) 얼마인가요?`, type:'num', answer:u*a, fm:'times',
+   return {steps:[KS(`${N}을(를) ${b}묶음으로 나누면 한 묶음(${fr(1,b)})은?`,'num',u,`${N} ÷ ${b} = ${u}`),KS(`${fr(a,b)}는 ${a}묶음. 얼마?`,'num',u*a,`${u} × ${a} = ${u*a}`)], text:`<big>${N}</big>의 ${fr(a,b)}은(는) 얼마인가요?`, type:'num', answer:u*a, fm:'times',
     hints:[`먼저 ${N}의 ${fr(1,b)}을 구해요.`,`${N}의 ${fr(1,b)} = ${u}. ${fr(a,b)}는 그것의 ${a}배.`],
     sol:[`${N} ÷ ${b} = ${u} (한 묶음)`,`${u} × ${a} = <b>${u*a}</b>`],
     bugs:[nbug(u,'only-unit',`그건 ${fr(1,b)}만큼이에요. ${fr(a,b)}는 그 ${a}배!`),...(N%a===0?[nbug(N/a,'wrong-split','분자로 나누면 안 돼요. 분모로 나눠요.')]:[]),nbug(N-u*a,'remain','그건 남은 부분이에요.')]}; },
   lv=>{ const k=rnd(0,3);
-   if(k===0){ const b=pick([2,4,5,10,20,25]), a=rnd(1,b-1), ans=100/b*a; return {text:`1 m의 ${fr(a,b)}는 몇 cm인가요?`, type:'num', unit:'cm', answer:ans, fm:'unit',
+   if(k===0){ const b=pick([2,4,5,10,20,25]), a=rnd(1,b-1), ans=100/b*a; return {steps:[KS(`1 m는 몇 cm?`,'num',100,`1 m = 100 cm`,{unit:'cm'}),KS(`100 cm의 ${fr(1,b)}은(는) 몇 cm?`,'num',100/b,`100 ÷ ${b} = ${100/b}`,{unit:'cm'}),KS(`${fr(a,b)}는 ${a}묶음. 몇 cm?`,'num',ans,`${100/b} × ${a} = ${ans}`,{unit:'cm'})], text:`1 m의 ${fr(a,b)}는 몇 cm인가요?`, type:'num', unit:'cm', answer:ans, fm:'unit',
      hints:['1 m는 100 cm예요.',`100의 ${fr(1,b)} = ${100/b}`], sol:['1 m = 100 cm',`100 ÷ ${b} = ${100/b}`,`${100/b} × ${a} = <b>${ans} cm</b>`],
      bugs:[nbug(100/b,'only-unit',`그건 ${fr(1,b)}만큼이에요.`),nbug(100-ans,'remain','남은 길이예요.')]}; }
-   if(k===1){ const b=pick([2,3,4,5,6,10,12,15,20,30]), a=rnd(1,b-1), ans=60/b*a; return {text:`1시간의 ${fr(a,b)}는 몇 분인가요?`, type:'num', unit:'분', answer:ans, fm:'unit',
+   if(k===1){ const b=pick([2,3,4,5,6,10,12,15,20,30]), a=rnd(1,b-1), ans=60/b*a; return {steps:[KS(`1시간은 몇 분?`,'num',60,`1시간 = 60분`,{unit:'분'}),KS(`60분의 ${fr(1,b)}은(는) 몇 분?`,'num',60/b,`60 ÷ ${b} = ${60/b}`,{unit:'분'}),KS(`${fr(a,b)}는 ${a}묶음. 몇 분?`,'num',ans,`${60/b} × ${a} = ${ans}`,{unit:'분'})], text:`1시간의 ${fr(a,b)}는 몇 분인가요?`, type:'num', unit:'분', answer:ans, fm:'unit',
      hints:['1시간은 60분이에요.',`60의 ${fr(1,b)} = ${60/b}`], sol:['1시간 = 60분',`60 ÷ ${b} = ${60/b}`,`${60/b} × ${a} = <b>${ans}분</b>`],
      bugs:[nbug(60/b,'only-unit',`그건 ${fr(1,b)}만큼이에요.`),nbug(100/b*a,'unit','1시간은 100분이 아니라 60분!'),nbug(60-ans,'remain','남은 시간이에요.')]}; }
-   if(k===2){ const b=pick([2,3,4,6,8,12]), a=rnd(1,b-1), ans=24/b*a; return {text:`하루(24시간)의 ${fr(a,b)} 동안 잠을 잤어요. 몇 시간 잤나요?`, type:'num', unit:'시간', answer:ans, fm:'unit',
+   if(k===2){ const b=pick([2,3,4,6,8,12]), a=rnd(1,b-1), ans=24/b*a; return {steps:[KS(`24시간의 ${fr(1,b)}은(는) 몇 시간?`,'num',24/b,`24 ÷ ${b} = ${24/b}`,{unit:'시간'}),KS(`${fr(a,b)}는 ${a}묶음. 몇 시간?`,'num',ans,`${24/b} × ${a} = ${ans}`,{unit:'시간'})], text:`하루(24시간)의 ${fr(a,b)} 동안 잠을 잤어요. 몇 시간 잤나요?`, type:'num', unit:'시간', answer:ans, fm:'unit',
      hints:['하루는 24시간.',`24의 ${fr(1,b)} = ${24/b}`], sol:[`24 ÷ ${b} = ${24/b}`,`${24/b} × ${a} = <b>${ans}시간</b>`], bugs:[nbug(24/b,'only-unit',`${fr(1,b)}만큼만 구했어요.`),nbug(24-ans,'remain','깨어 있던 시간이에요.')]}; }
-   const b=rnd(3,8), u=rnd(3,9), N=b*u, a=rnd(1,b-1), th=pick(['쿠키','사탕','젤리']); return {text:`${th} ${N}개 중에서 ${fr(a,b)}를 먹었어요. 남은 ${th}은 몇 개인가요?`, type:'num', unit:'개', answer:N-u*a, fm:'times',
+   const b=rnd(3,8), u=rnd(3,9), N=b*u, a=rnd(1,b-1), th=pick(['쿠키','사탕','젤리']); return {steps:[KS(`${N}개의 ${fr(1,b)}은(는) 몇 개?`,'num',u,`${N} ÷ ${b} = ${u}`,{unit:'개'}),KS(`먹은 것(${fr(a,b)})은 몇 개?`,'num',u*a,`${u} × ${a} = ${u*a}`,{unit:'개'}),KS(`남은 것은 몇 개?`,'num',N-u*a,`${N} − ${u*a} = ${N-u*a}`,{unit:'개'})], text:`${th} ${N}개 중에서 ${fr(a,b)}를 먹었어요. 남은 ${th}은 몇 개인가요?`, type:'num', unit:'개', answer:N-u*a, fm:'times',
      hints:[`먹은 개수부터: ${N}의 ${fr(a,b)}`,`먹은 것 ${u*a}개. 남은 것은?`], sol:[`${N} ÷ ${b} × ${a} = ${u*a}개 먹음`,`${N} − ${u*a} = <b>${N-u*a}개</b>`],
      bugs:[nbug(u*a,'remain','먹은 개수예요. 묻는 건 남은 것!'),nbug(N-a,'only-unit','분자만큼 빼면 안 돼요.')]}; },
   lv=>{ if(Math.random()<0.5){ const b=rnd(3,9), a=rnd(2,b-1), u=rnd(2,9), K=u*a, N=u*b;
-     return {text:`어떤 수의 ${fr(a,b)}는 <big>${K}</big>입니다. 어떤 수는 얼마인가요?`, type:'num', answer:N, fm:'back',
+     return {steps:[KS(`${fr(a,b)}는 ${a}묶음이에요. 한 묶음(${fr(1,b)})은?`,'num',u,`${K} ÷ ${a} = ${u}`),KS(`전체는 ${b}묶음. 어떤 수는?`,'num',N,`${u} × ${b} = ${N}`)], text:`어떤 수의 ${fr(a,b)}는 <big>${K}</big>입니다. 어떤 수는 얼마인가요?`, type:'num', answer:N, fm:'back',
       hints:[`${fr(a,b)}가 ${K}이면 ${fr(1,b)}은 얼마일까?`,`${K} ÷ ${a} = ${u} → 한 묶음. 전체는 ${b}묶음.`],
       sol:[`${fr(1,b)} = ${K} ÷ ${a} = ${u}`,`어떤 수 = ${u} × ${b} = <b>${N}</b>`],
       bugs:[nbug(K*b,'only-unit',`${K}는 ${a}묶음이에요. 한 묶음부터 구해요.`),nbug(u,'stop','한 묶음까지 왔어요! 전체는 '+b+'묶음.'),nbug(K/b*a===Math.floor(K/b*a)?K/b*a:-1,'wrong-split','거꾸로 문제예요. 어떤 수를 구해요.')]}; }
    const b=rnd(3,8), a=rnd(1,b-1), u=rnd(2,9), N=u*b, K=u*a; const ds=[]; for(let d=2;d<=12;d++) if(N%d===0&&d!==b) ds.push(d); if(!ds.length) return null; const d=pick(ds), c=rnd(1,d-1), ans=N/d*c;
-   return {text:`어떤 수의 ${fr(a,b)}는 ${K}입니다.<br>어떤 수의 ${fr(c,d)}는 얼마인가요?`, type:'num', answer:ans, fm:'back',
+   return {steps:[KS(`${fr(a,b)}가 ${K}. 한 묶음(${fr(1,b)})은?`,'num',u,`${K} ÷ ${a} = ${u}`),KS(`어떤 수는? (${b}묶음)`,'num',N,`${u} × ${b} = ${N}`),KS(`${N}의 ${fr(1,d)}은(는)?`,'num',N/d,`${N} ÷ ${d} = ${N/d}`),KS(`${N}의 ${fr(c,d)}는?`,'num',ans,`${N/d} × ${c} = ${ans}`)], text:`어떤 수의 ${fr(a,b)}는 ${K}입니다.<br>어떤 수의 ${fr(c,d)}는 얼마인가요?`, type:'num', answer:ans, fm:'back',
     hints:['먼저 어떤 수를 구해요.',`${K} ÷ ${a} × ${b} = ${N}`], sol:[`어떤 수 = ${K} ÷ ${a} × ${b} = ${N}`,`${N} ÷ ${d} × ${c} = <b>${ans}</b>`],
     bugs:[nbug(N,'stop','어떤 수까지 왔어요! 이제 '+c+'/'+d+'만큼.'),...(K%d===0?[nbug(K/d*c,'base',''+K+'의 '+c+'/'+d+'이 아니라 어떤 수의 '+c+'/'+d+'예요.')]:[])]}; },
   lv=>{ const ctx=pick([{N:60,u:'분',w:'1시간',a1:'수학',a2:'국어'},{N:100,u:'cm',w:'1 m 끈',a1:'리본',a2:'매듭'},{N:0,u:'개',w:'구슬',a1:'동생',a2:'친구'}]);
@@ -3660,7 +3660,7 @@ S({id:'part',unit:'분수',title:'분수만큼은 얼마일까',moves:{
    else if(ctx.N===100) text=`${ctx.w}의 ${fr(a,b)}로 리본을 만들고, 남은 끈의 ${fr(c,d)}로 매듭을 만들었어요. 남은 끈은 몇 cm인가요?`;
    else text=`구슬 ${N}개 중 ${fr(a,b)}를 동생에게 주고, 남은 구슬의 ${fr(c,d)}를 친구에게 주었어요. 남은 구슬은 몇 개인가요?`;
    const bugs=[nbug(R1,'stop','첫 번째만 하고 멈췄어요. 한 번 더 남은 걸 구해요.')]; if(N%d===0) bugs.push(nbug(N-N/b*a-N/d*c,'base','두 번째는 <b>남은 것의</b> '+c+'/'+d+'이에요. 전체의 '+c+'/'+d+'가 아니라!'));
-   return {text, type:'num', unit:ctx.u, answer:R2, fm:'steps', hints:[`첫 번째 다음에 남은 양부터 구해요: ${N}의 ${fr(a,b)} = ${N/b*a}`,`남은 양 ${R1}의 ${fr(c,d)} = ${R1/d*c}`],
+   return {steps:[KS(`처음: ${N}의 ${fr(a,b)}는?`,'num',N/b*a,`${N} ÷ ${b} × ${a} = ${N/b*a}`,{unit:ctx.u}),KS(`처음 쓰고 남은 것은?`,'num',R1,`${N} − ${N/b*a} = ${R1}`,{unit:ctx.u}),KS(`두 번째: <b>남은 것</b> ${R1}의 ${fr(c,d)}는?`,'num',R1/d*c,`${R1} ÷ ${d} × ${c} = ${R1/d*c}`,{unit:ctx.u}),KS(`마지막에 남은 것은?`,'num',R2,`${R1} − ${R1/d*c} = ${R2}`,{unit:ctx.u})], text, type:'num', unit:ctx.u, answer:R2, fm:'steps', hints:[`첫 번째 다음에 남은 양부터 구해요: ${N}의 ${fr(a,b)} = ${N/b*a}`,`남은 양 ${R1}의 ${fr(c,d)} = ${R1/d*c}`],
     sol:[`${N} − ${N/b*a} = ${R1}`,`${R1}의 ${fr(c,d)} = ${R1/d*c}`,`${R1} − ${R1/d*c} = <b>${R2}${ctx.u}</b>`], bugs}; }
  ]});
 
@@ -3756,12 +3756,12 @@ S({id:'kind',unit:'분수',title:'진분수·가분수·대분수',moves:{
  learn:`<ul><li><b>진분수</b>: 분자 &lt; 분모 (${fr(3,5)}) — 1보다 작아요</li><li><b>가분수</b>: 분자 ≥ 분모 (${fr(5,5)}, ${fr(7,5)}) — 1과 같거나 커요</li><li><b>대분수</b>: 자연수 + 진분수 (${mx(1,2,5)})</li></ul><div class="ex">${mx(2,1,4)} = ${fr(9,4)} ← 2 × 4 + 1 = 9</div>`,
  gen:[
   lv=>{ if(Math.random()<0.6){ const d=rnd(2,9); const t=rnd(0,3); let o,ans; if(t===0){o=randProper(d);ans='진분수';} else if(t===1){o=F(0,rnd(d,3*d),d);ans='가분수';} else if(t===2){o=F(0,d,d);ans='가분수';} else {o=F(rnd(1,4),rnd(1,d-1),d);ans='대분수';}
-     return {text:`${fh(o)}는 어떤 분수인가요?`, type:'choice', options:['진분수','가분수','대분수'], answer:ans, fm:'def',
+     return {steps:[KS(`${fh(o)}에 자연수가 붙어 있어요?`,'choice',t===3?'네':'아니요',t===3?`자연수 ${o.w}이(가) 앞에 있어요`:'자연수 없이 분수만 있어요',{options:['네','아니요']}),...(t===3?[KS(`자연수 + 진분수 모양이에요. 어떤 분수?`,'choice','대분수','자연수 + 진분수 → 대분수',{options:['진분수','가분수','대분수']})]:[KS(`분자 ${o.n}와(과) 분모 ${d}, 어느 쪽이 커요?`,'choice',o.n<d?'분모가 커요':o.n===d?'같아요':'분자가 커요',`${o.n} ${o.n<d?'&lt;':o.n===d?'=':'&gt;'} ${d}`,{options:['분자가 커요','같아요','분모가 커요']}),KS(`그럼 어떤 분수?`,'choice',ans,o.n<d?'분자 &lt; 분모 → 진분수':'분자 ≥ 분모 → 가분수',{options:['진분수','가분수','대분수']})])], text:`${fh(o)}는 어떤 분수인가요?`, type:'choice', options:['진분수','가분수','대분수'], answer:ans, fm:'def',
       hints:['자연수가 붙어 있나요? 아니면 분자와 분모를 비교해요.',t===3?'자연수와 진분수가 같이 있어요.':`분자 ${o.n}, 분모 ${o.d}`],
       sol:[t===3?'자연수 + 진분수 → <b>대분수</b>':`분자 ${o.n} ${o.n<d?'&lt;':o.n===d?'=':'&gt;'} 분모 ${d} → <b>${ans}</b>`],
       bugs:t===2?[{v:'진분수',tag:'kind-eq',msg:'분자와 분모가 같으면 1과 같아요. 1과 같거나 크면 <b>가분수</b>!'}]:[]}; }
    const d=pick([2,3,4,6]), w=rnd(1,3), n=rnd(1,d-1); const tot=w*d+n;
-   return {text:`색칠한 부분을 <b>대분수</b>로 나타내세요. (원 하나가 1이에요)`, svg:pies(tot,d), type:'frac', form:'mixed', answer:F(w,n,d), fm:'toMix',
+   return {steps:[KS(`꽉 찬 원은 몇 개?`,'num',w,`꽉 찬 원 ${w}개 → 자연수 ${w}`,{unit:'개'}),KS(`남은 원은 ${d}조각 중 몇 조각?`,'num',n,`색칠한 조각 ${n}개 → ${fr(n,d)}`,{unit:'조각'}),KS(`대분수로 쓰면?`,'frac',F(w,n,d),`${w}와 ${fr(n,d)} → ${mx(w,n,d)}`,{form:'mixed'})], text:`색칠한 부분을 <b>대분수</b>로 나타내세요. (원 하나가 1이에요)`, svg:pies(tot,d), type:'frac', form:'mixed', answer:F(w,n,d), fm:'toMix',
     hints:['꽉 찬 원이 몇 개인지 세요. 그게 자연수.',`꽉 찬 원 ${w}개, 남은 원은 ${d}조각 중 ${n}조각`], sol:[`꽉 찬 원 ${w}개 → ${w}`,`나머지 ${fr(n,d)}`,`<b>${mx(w,n,d)}</b>`],
     bugs:[fbug(F(0,tot,d),'kind-eq','그건 가분수예요. 문제는 <b>대분수</b>로!'),fbug(F(w,n,d*(w+1)),'den-diff','분모는 원 하나를 나눈 조각 수예요.')]}; },
   lv=>kindGen(1), lv=>kindGen(2), lv=>kindGen(3), lv=>kindGen(4)
@@ -3775,37 +3775,37 @@ S({id:'cmp',unit:'분수',title:'분모가 같은 분수의 크기 비교',moves
  gen:[
   lv=>{ const d=rnd(3,9); let A,B; if(Math.random()<0.5){ A=F(0,rnd(d,4*d),d); B=F(0,rnd(d,4*d),d); } else { A=F(rnd(1,5),rnd(1,d-1),d); B=F(Math.random()<0.5?A.w:rnd(1,5),rnd(1,d-1),d); }
    if(fval(A)===fval(B)) return null; const ans=cmpS(fval(A),fval(B));
-   return {text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${fh(A)} ○ ${fh(B)}</big>`, type:'cmp', answer:ans, fm:A.w?'mix':'imp',
+   return {steps:A.w?[KS(`${fh(A)}를 가분수로 쓰면 분자는?`,'num',fval(A),`${A.w} × ${d} + ${A.n} = ${fval(A)}`),KS(`${fh(B)}를 가분수로 쓰면 분자는?`,'num',fval(B),`${B.w} × ${d} + ${B.n} = ${fval(B)}`),KS(`${fr(fval(A),d)} ○ ${fr(fval(B),d)}`,'cmp',ans,`분자 ${fval(A)}와(과) ${fval(B)}를 비교`)]:[KS(`분모가 같아요. 분자 ${A.n}와(과) ${B.n} 중 큰 수는?`,'num',Math.max(A.n,B.n),`${Math.max(A.n,B.n)}이(가) 더 커요`),KS(`${fh(A)} ○ ${fh(B)}`,'cmp',ans,`분자가 큰 쪽이 커요`)], text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${fh(A)} ○ ${fh(B)}</big>`, type:'cmp', answer:ans, fm:A.w?'mix':'imp',
     hints:[A.w?'자연수부터 비교해요.':'분모가 같아요. 분자를 비교!',A.w&&A.w===B.w?'자연수가 같으면 분자를 비교해요.':'큰 쪽이 어느 쪽?'], sol:[`<b>${fh(A)} ${ans==='>'?'&gt;':'&lt;'} ${fh(B)}</b>`],
     bugs:[{v:ans==='>'?'<':'>',tag:'cmp-dir',msg:'방향이 거꾸로예요. 벌린 쪽이 큰 수!'}]}; },
   lv=>{ const d=rnd(3,9), w=rnd(1,5), n=rnd(1,d-1), V=w*d+n; const t=rnd(0,4); const N2=t===0?V:V+pick([-2,-1,1,2]); if(N2<=d) return null; const A=F(w,n,d), B=F(0,N2,d); const swap=Math.random()<0.5;
    const L=swap?B:A, R=swap?A:B; const ans=cmpS(fval(L),fval(R));
-   return {text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${fh(L)} ○ ${fh(R)}</big>`, type:'cmp', answer:ans, fm:'imp',
+   return {steps:[KS(`${mx(w,n,d)}를 가분수로 쓰면 분자는?`,'num',V,`${w} × ${d} + ${n} = ${V}`),KS(`${fr(V,d)}와(과) ${fr(N2,d)}를 비교해요. ${fh(L)} ○ ${fh(R)}`,'cmp',ans,`분자 ${V}와(과) ${N2}를 비교`)], text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${fh(L)} ○ ${fh(R)}</big>`, type:'cmp', answer:ans, fm:'imp',
     hints:['모양이 달라요. 대분수를 가분수로 바꿔요.',`${mx(w,n,d)} = ${fr(V,d)}`], sol:[`${mx(w,n,d)} = ${fr(V,d)}`,`${fr(V,d)} vs ${fr(N2,d)}`,`<b>${fh(L)} ${ans==='>'?'&gt;':ans==='<'?'&lt;':'='} ${fh(R)}</b>`],
     bugs:ans==='='?[{v:'>',tag:'cmp-form',msg:'바꿔 보면 크기가 같아요!'},{v:'<',tag:'cmp-form',msg:'바꿔 보면 크기가 같아요!'}]:[{v:ans==='>'?'<':'>',tag:'cmp-form',msg:'같은 모양으로 바꾼 뒤 비교해요.'},{v:'=',tag:'cmp-form',msg:'정말 같은지 가분수로 바꿔 확인해요.'}]}; },
   lv=>{ const d=rnd(3,9);
    if(Math.random()<0.5){ const vals=new Set(); while(vals.size<4) vals.add(rnd(d+1,5*d)); const arr=[...vals].map(v=>Math.random()<0.5&&v%d?F(Math.floor(v/d),v%d,d):F(0,v,d)); const big=Math.random()<0.5;
      const tgt=arr.reduce((m,o)=>(big?fval(o)>fval(m):fval(o)<fval(m))?o:m); const opts=arr.map((o,i)=>`${LBL[i]} ${fh(o)}`);
-     return {text:`${big?'가장 큰':'가장 작은'} 분수를 고르세요.`, type:'choice', options:opts, answer:opts[arr.indexOf(tgt)], fm:'imp',
+     return {steps:[KS(`모두 분모가 ${d}인 가분수로 바꾸면, 분자가 ${big?'가장 큰':'가장 작은'} 것의 분자는?`,'num',fval(tgt),arr.map((o,i)=>`${LBL[i]} ${fr(fval(o),d)}`).join(', ')),KS(`그럼 ${big?'가장 큰':'가장 작은'} 분수는?`,'choice',opts[arr.indexOf(tgt)],`분자 ${fval(tgt)} → ${opts[arr.indexOf(tgt)]}`,{options:opts})], text:`${big?'가장 큰':'가장 작은'} 분수를 고르세요.`, type:'choice', options:opts, answer:opts[arr.indexOf(tgt)], fm:'imp',
       hints:['모두 가분수로 바꿔 봐요.',arr.map((o,i)=>`${LBL[i]} ${fr(fval(o),d)}`).join(', ')], sol:[arr.map((o,i)=>`${LBL[i]} ${fr(fval(o),d)}`).join(', '),`<b>${opts[arr.indexOf(tgt)]}</b>`],
       bugs:[]}; }
-   const w=rnd(1,5), n=rnd(1,d-1), V=w*d+n; if(Math.random()<0.5) return {text:`□/${d} 꼴의 분수가 ${mx(w,n,d)}보다 작아요. □에 들어갈 수 있는 자연수 중 <b>가장 큰 수</b>는?<br><big>${fr('□',d)} &lt; ${mx(w,n,d)}</big>`, type:'num', answer:V-1, fm:'range',
+   const w=rnd(1,5), n=rnd(1,d-1), V=w*d+n; if(Math.random()<0.5) return {steps:[KS(`${mx(w,n,d)}를 가분수로 쓰면 분자는?`,'num',V,`${w} × ${d} + ${n} = ${V}`),KS(`□ &lt; ${V}. 가장 큰 □는?`,'num',V-1,`${V}보다 작은 수 중 가장 큰 수 → ${V-1}`)], text:`□/${d} 꼴의 분수가 ${mx(w,n,d)}보다 작아요. □에 들어갈 수 있는 자연수 중 <b>가장 큰 수</b>는?<br><big>${fr('□',d)} &lt; ${mx(w,n,d)}</big>`, type:'num', answer:V-1, fm:'range',
     hints:[`${mx(w,n,d)}를 가분수로 바꿔요.`,`${fr(V,d)}보다 작아야 해요. ${V}은 될까?`], sol:[`${mx(w,n,d)} = ${fr(V,d)}`,`□ &lt; ${V} → 가장 큰 수 <b>${V-1}</b>`], bugs:[nbug(V,'endpoint','같으면 "작다"가 아니에요.'),nbug(w+n-1,'add-whole','가분수로 바꿀 땐 자연수 × 분모 + 분자.')]};
-   return {text:`□에 들어갈 수 있는 자연수 중 <b>가장 작은 수</b>는?<br><big>${fr('□',d)} &gt; ${mx(w,n,d)}</big>`, type:'num', answer:V+1, fm:'range',
+   return {steps:[KS(`${mx(w,n,d)}를 가분수로 쓰면 분자는?`,'num',V,`${w} × ${d} + ${n} = ${V}`),KS(`□ &gt; ${V}. 가장 작은 □는?`,'num',V+1,`${V}보다 큰 수 중 가장 작은 수 → ${V+1}`)], text:`□에 들어갈 수 있는 자연수 중 <b>가장 작은 수</b>는?<br><big>${fr('□',d)} &gt; ${mx(w,n,d)}</big>`, type:'num', answer:V+1, fm:'range',
     hints:[`${mx(w,n,d)}를 가분수로.`,`${fr(V,d)}보다 커야 해요.`], sol:[`${mx(w,n,d)} = ${fr(V,d)}`,`□ &gt; ${V} → <b>${V+1}</b>`], bugs:[nbug(V,'endpoint','같으면 "크다"가 아니에요.')]}; },
   lv=>{ const d=rnd(3,9);
    if(Math.random()<0.5){ const w1=rnd(1,4), n1=rnd(1,d-1), V1=w1*d+n1, V2=V1+rnd(3,12); const w2=Math.floor(V2/d), n2=V2%d; if(!n2) return null; const cnt=V2-V1-1;
-     return {text:`□에 들어갈 수 있는 자연수는 모두 몇 개인가요?<br><big>${mx(w1,n1,d)} &lt; ${fr('□',d)} &lt; ${mx(w2,n2,d)}</big>`, type:'num', unit:'개', answer:cnt, fm:'range',
+     return {steps:[KS(`${mx(w1,n1,d)}를 가분수로 쓰면 분자는?`,'num',V1,`${w1} × ${d} + ${n1} = ${V1}`),KS(`${mx(w2,n2,d)}를 가분수로 쓰면 분자는?`,'num',V2,`${w2} × ${d} + ${n2} = ${V2}`),KS(`${V1} &lt; □ &lt; ${V2}. □는 모두 몇 개?`,'num',cnt,`${V1+1}부터 ${V2-1}까지 → ${cnt}개 (양 끝은 빼요)`,{unit:'개'})], text:`□에 들어갈 수 있는 자연수는 모두 몇 개인가요?<br><big>${mx(w1,n1,d)} &lt; ${fr('□',d)} &lt; ${mx(w2,n2,d)}</big>`, type:'num', unit:'개', answer:cnt, fm:'range',
       hints:['양쪽을 가분수로 바꿔요.',`${fr(V1,d)} &lt; ${fr('□',d)} &lt; ${fr(V2,d)}`], sol:[`${fr(V1,d)} &lt; ${fr('□',d)} &lt; ${fr(V2,d)}`,`□ = ${V1+1} ~ ${V2-1}`,`<b>${cnt}개</b>`],
       bugs:[nbug(cnt+1,'endpoint','끝 값 하나를 넣었어요. 같은 건 안 돼요.'),nbug(cnt+2,'endpoint','양 끝은 들어가지 않아요.')]}; }
    const w=rnd(1,5), K=w*d+rnd(1,d-1); let c=0; const ok=[]; for(let x=1;x<d;x++) if(w*d+x<K){c++;ok.push(x);} if(!c||c===d-1) return null;
-   return {text:`□에 들어갈 수 있는 자연수는 모두 몇 개인가요? (왼쪽은 대분수예요. □에는 분수 부분의 분자가 들어가요)<br><big>${mx(w,'□',d)} &lt; ${fr(K,d)}</big>`, type:'num', unit:'개', answer:c, fm:'range',
+   return {steps:[KS(`${fr(K,d)}를 대분수로 쓰면 분수 부분의 분자는? (자연수는 ${w})`,'num',K%d,`${K} = ${d} × ${w} + ${K%d}`),KS(`□ &lt; ${K%d}인 자연수는 몇 개?`,'num',c,`${ok.join(', ')} → ${c}개`,{unit:'개'})], text:`□에 들어갈 수 있는 자연수는 모두 몇 개인가요? (왼쪽은 대분수예요. □에는 분수 부분의 분자가 들어가요)<br><big>${mx(w,'□',d)} &lt; ${fr(K,d)}</big>`, type:'num', unit:'개', answer:c, fm:'range',
     hints:['대분수의 분수 부분은 진분수 → □는 1부터 '+(d-1)+'까지만.',`${fr(K,d)} = ${mx(Math.floor(K/d),K%d,d)}`], sol:[`${fr(K,d)} = ${mx(w,K%d,d)}`,`□ &lt; ${K%d} → ${ok.join(', ')}`,`<b>${c}개</b>`],
     bugs:[nbug(c+1,'endpoint','같은 수는 안 돼요.'),nbug(K-w*d-1+0===c?-1:K-w*d-1,'kind-eq','대분수의 분수 부분은 진분수여야 해요.')]}; },
   lv=>{ for(let t=0;t<50;t++){ const d=rnd(3,8), lo=rnd(1,3), hw=lo+rnd(1,2), hn=rnd(1,d-1); const loV=lo*d, hiV=hw*d+hn; const par=pick(['짝수','홀수']);
      let c=0, c0=0, ce=0; for(let k=loV+1;k<hiV;k++){ c0++; if((k%2===0)===(par==='짝수')) c++; } for(let k=loV;k<=hiV;k++) if((k%2===0)===(par==='짝수')) ce++;
      if(c<2) continue;
-     return {text:`분모가 ${d}인 가분수 중에서 다음 조건을 모두 만족하는 분수는 몇 개인가요?<ul class="cond"><li>${lo}보다 큽니다.</li><li>${mx(hw,hn,d)}보다 작습니다.</li><li>분자는 ${par}입니다.</li></ul>`, type:'num', unit:'개', answer:c, fm:'list',
+     return {steps:[KS(`${lo}을(를) 분모가 ${d}인 가분수로 쓰면 분자는?`,'num',loV,`${lo} × ${d} = ${loV}`),KS(`${mx(hw,hn,d)}를 가분수로 쓰면 분자는?`,'num',hiV,`${hw} × ${d} + ${hn} = ${hiV}`),KS(`분자는 ${loV+1}부터 ${hiV-1}까지. 모두 몇 개?`,'num',c0,`${hiV-1} − ${loV+1} + 1 = ${c0}개`,{unit:'개'}),KS(`그중 분자가 ${par}인 것은 몇 개?`,'num',c,`→ ${c}개`,{unit:'개'})], text:`분모가 ${d}인 가분수 중에서 다음 조건을 모두 만족하는 분수는 몇 개인가요?<ul class="cond"><li>${lo}보다 큽니다.</li><li>${mx(hw,hn,d)}보다 작습니다.</li><li>분자는 ${par}입니다.</li></ul>`, type:'num', unit:'개', answer:c, fm:'list',
       hints:[`${lo}와 ${mx(hw,hn,d)}를 분모가 ${d}인 가분수로 바꿔요.`,`${fr(loV,d)} &lt; □ &lt; ${fr(hiV,d)}, 분자 ${loV+1} ~ ${hiV-1} 중 ${par}`],
       sol:[`${lo} = ${fr(loV,d)}, ${mx(hw,hn,d)} = ${fr(hiV,d)}`,`분자 ${loV+1} ~ ${hiV-1} (${c0}개) 중 ${par}`,`<b>${c}개</b>`],
       bugs:[nbug(c0,'count-cond',`세 번째 조건(분자가 ${par})을 빠뜨렸어요.`),...(ce!==c?[nbug(ce,'endpoint','"보다 크고, 보다 작은"은 끝 값을 넣지 않아요.')]:[])]}; } return null; }
@@ -4022,9 +4022,12 @@ S({id:'pgdraw',unit:'그림그래프',title:'그림그래프 그리기와 해석
 // ===== 문제 만들기 / 채점 =====
 const setKey=(p,a)=>a.map(x=>p.item==='frac'?fkey(x):String(x)).sort().join(',');
 function keyOf(p,v){ if(p.type==='set') return setKey(p,v); if(p.type==='frac') return fkey(v); if(p.type==='pg') return v.join(','); return String(v); }
+// 숫자·분수 뒤 이(가)·와(과) 고르기(계단 문제 글)
+function fixJ2(h){ if(typeof h!=='string') return h; const P={'이(가)':['이','가'],'와(과)':['과','와'],'과(와)':['과','와']};
+  return h.replace(/(<span class="fr"><span>([^<]+)<\/span><span>\d+<\/span><\/span>|(\d+)((?:<\/(?:big|b|span)>)*))(이\(가\)|와\(과\)|과\(와\))/g,(m,all,fn,dn,ct,pr)=>{ const bat=numBat(fn||dn); return all+P[pr][bat?0:1]; }); }
 function makeProblem(si,lv,g){ const sk=SKILLS[si];
   for(let t=0;t<80;t++){ let p=null; try{ p=g?g():sk.gen[lv](lv); }catch(e){ if(typeof console!=='undefined') console.error(sk.id,lv,e); p=null; }
-    if(p&&p.answer!==undefined&&p.answer!==null){ p.sk=si; p.lv=lv; p.text=fixJosa(p.text); p.hints=p.hints.map(fixJosa); p.sol=p.sol.map(fixJosa); (p.steps||[]).forEach(x=>{x.q=fixJosa(x.q); x.why=fixJosa(x.why);}); (p.bugs||[]).forEach(b=>{if(b)b.msg=fixJosa(b.msg);}); const ak=keyOf(p,p.answer); const seen=new Set(); p.bugs=(p.bugs||[]).filter(b=>b&&b.v!==ak&&((p.type!=='num'&&p.type!=='lm')||(/^\d+$/.test(b.v)&&Number(b.v)>0))&&!seen.has(b.v)&&seen.add(b.v)); return p; } }
+    if(p&&p.answer!==undefined&&p.answer!==null){ p.sk=si; p.lv=lv; p.text=fixJosa(p.text); p.hints=p.hints.map(fixJosa); p.sol=p.sol.map(fixJosa); (p.steps||[]).forEach(x=>{x.q=fixJosa(fixJ2(x.q)); x.why=fixJosa(fixJ2(x.why));}); (p.bugs||[]).forEach(b=>{if(b)b.msg=fixJosa(b.msg);}); const ak=keyOf(p,p.answer); const seen=new Set(); p.bugs=(p.bugs||[]).filter(b=>b&&b.v!==ak&&((p.type!=='num'&&p.type!=='lm')||(/^\d+$/.test(b.v)&&Number(b.v)>0))&&!seen.has(b.v)&&seen.add(b.v)); return p; } }
   throw new Error('gen fail '+sk.id+' '+lv); }
 function fmOptions(p){ const sk=SKILLS[p.sk]; const others=Object.keys(sk.moves).filter(k=>k!==p.fm).map(k=>sk.moves[k]); const pool=shuffle(others).slice(0,2); while(pool.length<2) pool.push(pick(GENERIC.filter(g=>!pool.includes(g)))); return shuffle([{t:sk.moves[p.fm],ok:true},...pool.map(t=>({t,ok:false}))]); }
 // input: num {v} / frac {w,n,d} / lm {a,b} / choice,cmp string / pg array
@@ -4194,6 +4197,8 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   const big= t.kind==='book'?{t:`📘 최상위 문제집 · ${BOOK.units[t.ui].title} · ${BOOK.units[t.ui].groups[t.gi].title}`,s:`문제집 문제를 그대로 · 막히면 💡 힌트`}: t.kind==='lesson'?{t:`📘 ${s.title} · 개념 수업`,s:`그림을 직접 만지면서 배워요`}: t.kind==='check'?{t:`✅ ${s.title} · 개념 확인`,s:`5문제 중 4개 맞히면 문제로 넘어가요`}:{t:`✏️ ${s.title} · ${LV[t.lv]}`,s:`지난번 하던 데서 이어서, 되는 만큼 풀어요`};
   let units=''; let lastU='';
   SKILLS.forEach((sk,i)=>{ if(sk.unit!==lastU){ if(lastU) units+='</div>'; units+=`<div class="day">${sk.unit}</div><div class="grid">`; lastU=sk.unit; } units+=skCard(sk,i); if(!SKILLS[i+1]||SKILLS[i+1].unit!==sk.unit) units+=bookCard(sk.unit); }); units+='</div>';
+  // 엄마 11/26: 그림그래프 다음에 4학년 1학기 큰 수 단원을 잠긴 모습으로(3-2를 빨리 끝내고 싶은 마음 들게)
+  units+=`<div class="day">4학년 1학기</div><div class="grid"><button class="sk g4c" style="${allPassed()?'':'opacity:.55'}"><h3>${allPassed()?'':'🔒 '}큰 수</h3><div class="pips"><span class="pip ${allPassed()?'now':''}">${allPassed()?'열렸어요! 오늘의 공부 → 수학에서 시작해요':'3-2 문제를 1~5단계까지 다 하면 열려요'}</span></div></button></div>`;
   app().innerHTML=`<div class="wrap">${topBar('시훈 수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
    ${pfReviewHome()}<button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
@@ -4205,7 +4210,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   const tgo=$('#tgo'); if(tgo) tgo.onclick=()=>{ if(teachDone()){ toast('오늘 가르치기는 끝! 내일 또 해요.'); return; } teachHome(); };
   if($('#pfgo')) $('#pfgo').onclick=startReview;
   $('#go').onclick=()=>{ if(t.kind==='book') bookStart(t.ui,t.gi); else if(t.kind==='lesson') startLesson(t.i); else if(t.kind==='check') startCheck(t.i); else startSolve(t.i,t.lv); };
-  document.querySelectorAll('.sk:not(.bkc)').forEach(b=>b.onclick=()=>skillPage(+b.dataset.i)); $('#parent').onclick=parentGate; bindCommon(); }
+  document.querySelectorAll('.sk:not(.bkc):not(.g4c)').forEach(b=>b.onclick=()=>skillPage(+b.dataset.i)); document.querySelectorAll('.g4c').forEach(b=>b.onclick=()=>toast(allPassed()?'오늘의 공부 첫 화면 → 수학에서 큰 수를 시작해요.':'3-2 문제를 모두 1~5단계까지 하면 4학년 큰 수가 열려요. 조금만 더!')); $('#parent').onclick=parentGate; bindCommon(); }
 function bookCard(u){ const BOOK=bookObj(); if(!BOOK) return ''; const U=BOOK.units.find(x=>x.title===u); if(!U) return ''; const D=PROG.book||{};
   const all=U.groups.flatMap(g=>g.items), d=all.filter(it=>D[U.id+'/'+it.id]).length, open=unitDone(u);
   return `<button class="sk bkc ${open?'':'lock'}" data-u="${U.id}"><h3>📘 최상위 문제집 · ${u}</h3><div class="pips"><span class="pip ${d===all.length?'done':open?'now':''}">${open?`${d} / ${all.length}`:'🔒 5단계까지 다 하면 열려요'}</span></div></button>`; }
@@ -4637,24 +4642,21 @@ function phShrink(file){ return new Promise((ok,no)=>{ const u=URL.createObjectU
 // ===== 문제 풀기 =====
 let C=null, PAD=null;
 const PER=12;
-// ===== 쪼갠 칸 (엄마 11/25: "진분수 2단계부터 어려워하네, 문제를 더 쪼개봐야것다") =====
-// 유형(kind:단계:유형)마다 stage 0 = 칸 전부 → 3번 연속 칸마다 한 번에 맞히면 stage 1 = 칸 줄임 → 또 3번이면 stage 2 = 혼자 풀기. 혼자 풀다 틀리면 stage 1로.
-// 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 쪼갠 칸으로 맞힌 건 ★ 안 줌.
-// 엄마 11/25 저녁: 너무 빡빡함 → 유형별이 아니라 단계 전체(kind:단계)로 세고, 답을 안 보고 다 채우면(다시 해서 맞힌 칸 포함) 인정, KST_N번이면 다음.
-const KST_N=2, KST_STAR=false;
-function kstGet(key){ PROG.kstep=PROG.kstep||{}; const k=String(key).split(':').slice(0,2).join(':'); if(PROG.kstep[k]) return PROG.kstep[k];
-  const old=Object.keys(PROG.kstep).filter(x=>x.startsWith(k+':')).map(x=>PROG.kstep[x].stage||0); return (PROG.kstep[k]={stage:old.length?Math.max(...old):0,ok:0}); }
-function kstAfter(key,stepRun,rec){ const s=kstGet(key); DIRTY=true; let up=0;
-  if(stepRun){ if(stepRun.pass){ s.ok++; if(s.ok>=KST_N){ s.stage=Math.min(2,s.stage+1); s.ok=0; up=s.stage; } } else s.ok=0; }
-  else if(rec&&rec.res==='x'){ s.stage=1; s.ok=0; }
-  return up; }
+// ===== 계단 문제 (엄마 11/25 → 11/26 확정) =====
+// 기능·단계마다: 혼자 풀기 → 연달아 2문제 틀리면 계단 → 계단 4개(앞 2개 칸 전부, 뒤 2개 칸 줄임)를 답 안 보고 채우면 다시 혼자. ★는 혼자 풀어 맞힐 때만.
+// 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 최상위 문제집은 그대로.
+const KST_MISS=2, KST_N=4, KST_HALF=2;
+function kstGet(si,lv){ PROG.kstep=PROG.kstep||{}; const k='st:'+SKILLS[si].id+':'+lv; return PROG.kstep[k]||(PROG.kstep[k]={mode:'a',miss:0,ok:0}); }
+function kstAlone(si,lv,rec){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='x'){ s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } else s.miss=0; }
+function kstStep(si,lv,pass){ const s=kstGet(si,lv); DIRTY=true; if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
+const kstShort=p=>p.short||(p.steps.length>=3?p.steps.map((_,k)=>k).slice(1):p.steps.map((_,k)=>k));
 function mountSteps(box,p,stage,opts){
-  const idx=stage===0||!p.short?p.steps.map((_,k)=>k):p.short.slice(); const NUM='①②③④⑤';
+  const idx=stage===0?p.steps.map((_,k)=>k):kstShort(p).slice(); const NUM='①②③④⑤';
   const st={tries:0,hints:0,wrong:[],tags:[],t0:Date.now(),done:false,miss:[],clean:true}; let cur=0, att=0; const rows=[];
-  box.innerHTML=`${problemCard(p)}<div id="inp"><div class="kstb">🪜 작은 칸으로 나눠서 풀어요</div><div id="kstl"></div></div>
+  box.innerHTML=`${problemCard(p)}<div id="inp"><div class="kstb">🪜 계단 문제: 작은 칸으로 나눠서 풀어요</div><div id="kstl"></div></div>
    <div class="acts" id="macts"><button class="ok" id="okb">확인</button></div><div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="after"></div>`;
   const fb=box.querySelector('#fb'), list=box.querySelector('#kstl'); const show=(cls,html)=>{ fb.className='fb show '+cls; fb.innerHTML=html; };
-  const sp=s=>({type:s.type,form:s.form||'frac',answer:s.answer,unit:s.unit,bugs:[]}); let ist={};
+  const sp=s=>({type:s.type,form:s.form||'frac',answer:s.answer,unit:s.unit,options:s.options,units:s.units,bugs:[]}); let ist={};
   const ansTxt=s=>s.type==='frac'?fh(s.answer):String(s.answer)+(s.unit?' '+s.unit:'');
   function draw(){ list.innerHTML=rows.map((r,i)=>{ const s=p.steps[r.k]; return `<div class="kstr ${r.ok?'kdone':'kgive'}"><span class="kstn">${NUM[i]}</span>${s.q} → <b>${ansTxt(s)}</b> ${r.ok?'✓':''}${r.ok?'':`<div class="kstw">${s.why}</div>`}</div>`; }).join('')
       +(cur<idx.length?`<div class="kstr now"><span class="kstn">${NUM[cur]}</span>${p.steps[idx[cur]].q}<div id="kin">${inputHTML(sp(p.steps[idx[cur]]))}</div></div>`:'');
@@ -4673,15 +4675,15 @@ function mountSteps(box,p,stage,opts){
     const rec={d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:0,wrong:[],tags:[],sec,fm:p.fm,qc:st.qc||null,cond:st.cond||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),
       pen:penSnap(st),penAsk:null,solSeen:true,fixed:false,learn:null,tutor:null,stepMode:1,
       steps:{stage,n:idx.length,all:p.steps.length,clean:st.clean,miss:st.miss.map(i=>({i:i+1,q:stripTags(p.steps[idx[i]].q).slice(0,80)})),wrong:st.wrong}};
-    const up=p.skey?kstAfter(p.skey,{pass:!st.miss.length},rec):0; rec.steps.up=up||0;
-    show(res==='h'?'o':'x', res==='h'?`⭕ 작은 칸을 모두 풀었어요!${st.clean?'':' (다시 해서 맞힌 칸도 있어요)'}${up===1?'<div class="tagline">🎉 잘했어요! 다음부터 칸을 줄여 볼게요.</div>':up===2?'<div class="tagline">🎉 잘했어요! 다음엔 혼자 풀어 봐요.</div>':''}`
+    const up=kstStep(p.sk,p.lv,!st.miss.length); rec.steps.up=up||0;
+    show(res==='h'?'o':'x', res==='h'?`⭕ 작은 칸을 모두 풀었어요!${st.clean?'':' (다시 해서 맞힌 칸도 있어요)'}${up===1?'<div class="tagline">🎉 잘했어요! 다음부터 칸을 줄여 볼게요.</div>':up===2?'<div class="tagline">🎉 계단 4개 끝! 다음부터 혼자 풀어 봐요.</div>':''}`
       :`정답은 <b>${answerText(p)}</b> 이에요. 막힌 칸은 풀이를 봐 두고, 다음 문제로 가요.`);
     box.querySelector('#sol').innerHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
     opts.onDone&&opts.onDone(rec); if(res==='h') teachAdd(p,rec); DIRTY=true; refreshTop();
     const af=box.querySelector('#after'); af.innerHTML=`<div class="acts"><button class="next" id="nx" data-auto="${res==='h'?'ok':'x'}">다음 문제 ▶</button></div>`;
     af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
   return st; }
-const stepsTxt=s=>{ const N='①②③④⑤', e=t=>String(t).replace(/[<&]/g,''); return `🪜 쪼갠 칸으로 풂(${s.n}칸${s.n<s.all?', 줄인 칸':''}) · ${(s.miss||[]).length?'막힌 칸: '+s.miss.map(m=>(N[m.i-1]||m.i)+' '+e(m.q)).join(' / ')+' (답 보여 줌)':s.clean?'칸마다 한 번에 맞힘':'다시 해서 모두 맞힘'}${s.up===1?' · 다음부터 칸 줄임':s.up===2?' · 다음부터 혼자 풀기':''}`; };
+const stepsTxt=s=>{ const N='①②③④⑤', e=t=>String(t).replace(/[<&]/g,''); return `🪜 계단 문제로 풂(${s.n}칸${s.n<s.all?', 줄인 칸':''}) · ${(s.miss||[]).length?'막힌 칸: '+s.miss.map(m=>(N[m.i-1]||m.i)+' '+e(m.q)).join(' / ')+' (답 보여 줌)':s.clean?'칸마다 한 번에 맞힘':'다시 해서 모두 맞힘'}${s.up===1?' · 다음부터 칸 줄임':s.up===2?' · 다음부터 혼자 풀기':''}`; };
 const fmtStepKey=(q,inp)=>q.type==='frac'?(inp.n||inp.d?(Number(inp.w||0)?inp.w+'과 ':'')+inp.n+'/'+inp.d:String(inp.w||'')):String(inp);
 function startSolve(si,lv){ CUR='solve'; C={si,lv,list:[],idx:-1,t0:Date.now()};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right')); newProblem(); }
@@ -4695,7 +4697,7 @@ function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } 
   $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<(window.HUBTRY?4:Math.min(4,PROG.sk[SKILLS[C.si].id].lv))){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
   let p=makeProblem(C.si,C.lv), kst=null;
-  if(p.skey&&p.steps){ const s=kstGet(p.skey); if(s.stage<2){ const t=p.t, lv=C.lv; p=makeProblem(C.si,lv,()=>kindGen(lv,{t,small:true})); kst=s.stage; } } // 엄마 11/25: 쪼갠 칸
+  const ks=kstGet(C.si,C.lv); if(ks.mode==='s'){ if(p.skey&&p.steps){ const t=p.t, lv=C.lv; p=makeProblem(C.si,lv,()=>kindGen(lv,{t,small:true})); } if(p.steps&&p.steps.length) kst=ks.ok>=KST_HALF?1:0; } // 계단 문제
   C.list.push({p,rec:null,kst}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   L.innerHTML=`${solveBar()}<div id="pbox"></div>${navRow()}`; bindNav();
@@ -4704,10 +4706,10 @@ function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   const onNext=()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
   if(it.kst!=null){ pfApply(it); it.st=mountSteps(box,it.p,it.kst,{onDone:rec=>{ it.rec=rec; recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext}); return; }
   if(!it.fr) pfNew(it); pfApply(it);
-  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; if(it.p.skey&&it.p.steps) kstAfter(it.p.skey,null,rec); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
+  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; kstAlone(C.si,C.lv,rec); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
-function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode&&!(KST_STAR&&rec.res==='h')) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
-  if(rec.res==='o'||rec.stepMode) r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
+function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
+  if(rec.res==='o') r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
   if(r.st[l]>=5&&r.lv<=l&&l<4){ r.lv=l+1; levelUp(l); } else if(r.st[l]>=5&&l===4&&r.lv<5){ r.lv=5; levelUp(l); } }
 function modal(html){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="mbox">${html}</div>`; document.body.appendChild(m); return m; }
 function levelUp(l){ const s=SKILLS[C.si]; const m=modal(`<div class="lvup"><div class="em">${l>=4?'🏆':'🎉'}</div><h2>${s.title} · ${LV[l]} 통과!</h2><p>${l<4?`다음 단계 「${LV[l+1]}」가 열렸어요.`:'마지막 단계까지 모두 통과!'}</p><div class="acts">${l<4?`<button class="ok" id="mup">${LV[l+1]}로 올라가기</button>`:''}<button class="hint" id="mst" style="flex:1">이 단계 계속</button></div></div>`);
