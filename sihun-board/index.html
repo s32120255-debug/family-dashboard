@@ -693,15 +693,17 @@ $("mustList").addEventListener("click",async e=>{const b=e.target.closest("[data
 /* ---------- 앱 열기 전 체크(엄마 11/25 「어플 열기 전에 체크할 것들 누르고 어플 가동」) ----------
    엄마가 설정에 적은 startChecks(한 줄에 하나). 다 체크하면 그날은 다시 안 뜸(이 기기에 날짜 기억, 「체크되면 안 뜨는 걸로」). 엄마·관리자는 건너뛰기 가능 */
 const gateKey=()=>today()+"|"+(board.startChecks||[]).join("|");
-const gateDoneNow=()=>{try{return localStorage.getItem("sbGate")===gateKey()}catch(e){return false}};
+// 엄마·관리자도 똑같이 뜸(엄마 11/25). 건너뛰기는 이 창에서만(그날 끝낸 걸로 치지 않음)
+let gateSkip=false;const gateDoneNow=()=>{if(gateSkip)return true;try{return localStorage.getItem("sbGate")===gateKey()}catch(e){return false}};
 function startGate(){const l=(board.startChecks||[]).filter(Boolean);if(!l.length||gateDoneNow()||$("sgate"))return;
  const el=document.createElement("div");el.className="layer";el.id="sgate";el.style.background="rgba(10,10,16,.96)";
- el.innerHTML=`<form style="max-width:420px;width:100%;display:grid;gap:10px"><h3 style="margin:0;font-family:var(--hand);font-size:1.7rem">시작 전에 체크!</h3><p class="meta" style="margin:0">다 누르면 열려요.</p>${l.map((t,i)=>`<button type="button" class="mchip" data-g="${i}" style="font-size:1.25rem;padding:12px 16px;justify-content:flex-start"><span class="ck">⬜</span>${esc(t)}</button>`).join("")}<button class="btn primary" id="sgo" disabled style="font-size:1.3rem;padding:12px">시작하기</button>${momAcct||pinOpen?`<button type="button" class="btn small" id="sskip">엄마: 건너뛰기</button>`:""}</form>`;
+ el.innerHTML=`<form style="max-width:420px;width:100%;display:grid;gap:10px"><h3 style="margin:0;font-family:var(--hand);font-size:1.7rem">시작 전에 체크!</h3><p class="meta" style="margin:0">다 누르면 열려요.</p>${l.map((t,i)=>`<button type="button" class="mchip" data-g="${i}" style="font-size:1.25rem;padding:12px 16px;justify-content:flex-start"><span class="ck">⬜</span>${esc(t)}</button>`).join("")}<button class="btn primary" id="sgo" disabled style="font-size:1.3rem;padding:12px">시작하기</button><button type="button" class="btn small" id="sskip"${momAcct||pinOpen?"":" hidden"}>엄마: 건너뛰기</button></form>`;
  document.body.appendChild(el);document.body.classList.add("noscroll");
  const done=()=>{try{localStorage.setItem("sbGate",gateKey())}catch(e){}el.remove();document.body.classList.remove("noscroll")};
  el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{const on=!b.classList.contains("on");b.classList.toggle("on",on);b.style.textDecoration="none";b.style.opacity=on?".6":"1";b.querySelector(".ck").textContent=on?"✅":"⬜";$("sgo").disabled=[...el.querySelectorAll("[data-g]")].some(x=>!x.classList.contains("on"))});
  el.querySelector("form").onsubmit=e=>{e.preventDefault();if(!$("sgo").disabled){done();toast("좋아, 시작! 🥷")}};
- const sk=$("sskip");if(sk)sk.onclick=done}
+ const sk=$("sskip");if(sk)sk.onclick=()=>{gateSkip=true;el.remove();document.body.classList.remove("noscroll")}}
+function gatePreview(){gateSkip=false;try{localStorage.removeItem("sbGate")}catch(e){}const g=$("sgate");if(g)g.remove();startGate();if(!(board.startChecks||[]).length)toast("먼저 체크할 것을 적고 저장해 주세요")}
 
 /* ---------- 학교 알림장 ---------- */
 const NOTICE_DEFAULT=atob("aHR0cHM6Ly9zaXRlcy5nb29nbGUuY29tL3ZpZXcvbWFlYW4zNS8="); // 학교 알림장 기본 주소(검색에 학교 이름이 안 걸리게 감춰 둠)(설정에 넣으면 그 주소가 먼저)
@@ -905,17 +907,18 @@ function renderMom(){
  else if(momTab==="play"){const g={};for(const m of S.play)(g[m.sid]=g[m.sid]||[]).push(m);
   const ss=Object.values(g).map(l=>l.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0))).sort((a,b)=>(b[0].createdAt||0)-(a[0].createdAt||0));
   h=ss.map(l=>`<div class="q"><div class="meta">${fmtAt(l[0].createdAt)} 놀이 · 시훈이 ${l.filter(m=>m.role==="user").length}번</div><div class="list">${l.map(m=>`<div class="bub ${m.role==="user"?"me":"ai"}">${esc(m.text)}</div>`).join("")}</div></div>`).join("")||`<p class="empty">놀이 기록이 없어요.</p>`}
- else{h=`<form id="setForm" style="display:grid;gap:10px;max-width:560px"><label style="display:grid;gap:4px">학교 알림장 주소<input type="url" name="noticeUrl" value="${esc(board.noticeUrl||"")}" placeholder="https://"></label><label style="display:grid;gap:4px">AI 이야기 하루 마디 수 (시훈이가 보내는 말, 5번 남으면 알려 줘요)<input type="number" name="playLimit" min="6" max="100" value="${playLimit()}"></label><label style="display:grid;gap:4px">체스 하루 판 수<input type="number" name="chessLimit" min="1" max="20" value="${chessLimit()}"></label><label class="row"><input type="checkbox" name="gateTasks" ${gateOn()?"checked":""} style="width:22px;height:22px"> 오늘 과제를 다 해야 놀이·체스 열기</label><label class="row"><input type="checkbox" name="aiOn" ${board.aiOn?"checked":""} style="width:22px;height:22px"> AI 이야기 켜기</label><label style="display:grid;gap:4px">앱 열기 전에 체크할 것 (한 줄에 하나, 비우면 안 나와요)<textarea name="startChecks" rows="4" maxlength="600">${esc((board.startChecks||[]).join("\n"))}</textarea></label><div><button class="btn primary">저장</button></div></form>`}
+ else{h=`<form id="setForm" style="display:grid;gap:10px;max-width:560px"><label style="display:grid;gap:4px">학교 알림장 주소<input type="url" name="noticeUrl" value="${esc(board.noticeUrl||"")}" placeholder="https://"></label><label style="display:grid;gap:4px">AI 이야기 하루 마디 수 (시훈이가 보내는 말, 5번 남으면 알려 줘요)<input type="number" name="playLimit" min="6" max="100" value="${playLimit()}"></label><label style="display:grid;gap:4px">체스 하루 판 수<input type="number" name="chessLimit" min="1" max="20" value="${chessLimit()}"></label><label class="row"><input type="checkbox" name="gateTasks" ${gateOn()?"checked":""} style="width:22px;height:22px"> 오늘 과제를 다 해야 놀이·체스 열기</label><label class="row"><input type="checkbox" name="aiOn" ${board.aiOn?"checked":""} style="width:22px;height:22px"> AI 이야기 켜기</label><label style="display:grid;gap:4px">앱 열기 전에 체크할 것 (한 줄에 하나, 비우면 안 나와요)<textarea name="startChecks" rows="4" maxlength="600">${esc((board.startChecks||[]).join("\n"))}</textarea></label><div><button type="button" class="btn small" id="gatePrev">👀 체크 화면 지금 보기</button></div><div><button class="btn primary">저장</button></div></form>`}
  $("momBox").innerHTML=h;
+ const gp=$("gatePrev");if(gp)gp.onclick=gatePreview;
  const sf=$("setForm");if(sf)sf.onsubmit=async e=>{e.preventDefault();const fd=new FormData(sf);const u=String(fd.get("noticeUrl")||"").trim();
   if(u&&!/^https?:\/\//i.test(u))return toast("https:// 로 시작하는 주소를 넣어 주세요");
   const data={noticeUrl:u||null,aiOn:fd.get("aiOn")==="on",gateTasks:fd.get("gateTasks")==="on",playLimit:Math.max(6,Math.min(100,Number(fd.get("playLimit"))||30)),chessLimit:Math.max(1,Math.min(20,Number(fd.get("chessLimit"))||3)),startChecks:String(fd.get("startChecks")||"").split("\n").map(t=>t.trim()).filter(Boolean).slice(0,10).map(t=>t.slice(0,40))};
   const b=F.writeBatch(fs);b.set(F.doc(fs,"sihunBoard","main"),data,{merge:true});
   b.set(F.doc(sub("log")),{at:Date.now(),by:myName(),uid:user.uid,col:"main",docId:"main",action:"수정",summary:`알림장 주소 ${u?"넣음":"비움"} · 놀이 ${data.playLimit}마디 · 체스 ${data.chessLimit}판 · 과제 먼저 ${data.gateTasks?"켬":"끔"} · AI ${data.aiOn?"켬":"끔"}`,before:board,after:data});
-  try{await b.commit();toast("저장했어요")}catch(err){toast("저장하지 못했어요: "+(err.code||""))}};
+  try{await b.commit();toast("저장했어요");if(data.startChecks.length){board={...board,...data};gatePreview()}}catch(err){toast("저장하지 못했어요: "+(err.code||""))}};
 }
 
-function renderAll(){
+function renderAll(){{const sk=$("sskip");if(sk)sk.hidden=!(momAcct||pinOpen)}
  const d=new Date();$("today").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 ${DAYNAME[dayKey(d)]}요일`;
  renderSched();renderMust();renderTasks();renderNotice();renderMoney();renderMemory();renderAsk();renderPlay();renderHb();renderWc();renderMom();renderShop();renderMail();if(curTab==="mail")mailSeenNow();if(chessApi)chessApi.render();
 }
@@ -970,11 +973,11 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=70;
+const VERSION=71;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
-checkVersion();document.addEventListener("visibilitychange",()=>{if(!document.hidden){checkVersion();renderAll()}});setInterval(checkVersion,10*60*1000);
+checkVersion();document.addEventListener("visibilitychange",()=>{if(!document.hidden){checkVersion();renderAll();try{startGate()}catch(e){}}});setInterval(checkVersion,10*60*1000);
 // 날짜가 바뀌면 오늘로 돌아오고, 1분마다 '지금' 표시 갱신
 setInterval(()=>{const t=today();if(lastDay!==t){lastDay=t;schedDate=t;moneyMonth=t.slice(0,7);ensureTasks();renderAll()}else{renderSched();renderTasks()}},60*1000);
 
@@ -1015,7 +1018,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=70").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=71").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
