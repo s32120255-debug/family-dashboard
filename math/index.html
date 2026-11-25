@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795644621";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795646034";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3001,7 +3001,7 @@ const ROT=["NS","A2","KN","GP","GS","GV","GR","OF","CO","E1","D1","MJ","DJ","MN"
 const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
 function freshCore(){return{v:1,cfg:{plan:clone(PLAN0),order:ORDER0.slice(),carryOn:true,tc:{}},ts:{},lastDay:null,carry:{},savedAt:0}}
 /* 사람마다 기록을 따로 */
-const PROFILES=[{id:"sihun",name:"시훈",icon:"🥷"},{id:"mom",name:"엄마",icon:"🐱"}];
+const PROFILES=[{id:"sihun",name:"시훈",icon:"🥷"},{id:"mom",name:"엄마",icon:"🐱"},{id:"dad",name:"아빠",icon:"🐻"}];
 let PID=null;try{PID=localStorage.getItem("sihun-app-pid")}catch(e){}
 if(!PROFILES.some(p=>p.id===PID))PID="sihun";
 const kCore=()=>PID==="sihun"?KCORE:KCORE+"-"+PID,kDays=()=>PID==="sihun"?KDAYS:KDAYS+"-"+PID;
@@ -3113,7 +3113,7 @@ async function connectDB(light){
   }catch(e){sync=FBU?"err":"local"}
 }
 /* ───────── 대결: 엄마 vs 시훈. 같은 문제를 따로 풀고 맞힌 수 → 시간으로 견줌. 기록·단계에는 안 들어감 ───────── */
-const KDUEL="sihun-app-duel-v1",JO={sihun:{eun:"은",iga:"이",gwa:"과",ro:"으로"},mom:{eun:"는",iga:"가",gwa:"와",ro:"로"}};let DU={rounds:[],savedAt:0};
+const KDUEL="sihun-app-duel-v1",JO={sihun:{eun:"은",iga:"이",gwa:"과",ro:"으로"},mom:{eun:"는",iga:"가",gwa:"와",ro:"로"},dad:{eun:"는",iga:"가",gwa:"와",ro:"로"}};let DU={rounds:[],savedAt:0};
 const duLoad=()=>{try{const d=JSON.parse(localStorage.getItem(KDUEL)||"null");if(d&&d.rounds)DU=d}catch(e){}};
 const duMerge=(A,B)=>{const m=new Map();[...(A.rounds||[]),...(B.rounds||[])].forEach(r=>{const o=m.get(r.k);if(!o){m.set(r.k,clone(r));return}Object.keys(r.res||{}).forEach(w=>{if(!o.res[w]||(r.res[w].at||0)<(o.res[w].at||0))o.res[w]=r.res[w]})});
   return{rounds:[...m.values()].sort((a,b)=>a.at-b.at).slice(-60),savedAt:Math.max(A.savedAt||0,B.savedAt||0)}};
@@ -3121,7 +3121,10 @@ async function duSync(push){try{localStorage.setItem(KDUEL,JSON.stringify(DU))}c
   if(!DB)return;try{const r=await DB.doc("duel/log").get(),c=r.exists?r.data():null,n0=JSON.stringify(DU.rounds);if(c&&c.rounds)DU=duMerge(DU,c);
     if(push||!c||JSON.stringify(DU.rounds)!==JSON.stringify(c.rounds)){DU.savedAt=Date.now();await DB.doc("duel/log").set(clone(DU))}
     try{localStorage.setItem(KDUEL,JSON.stringify(DU))}catch(e){}if(JSON.stringify(DU.rounds)!==n0&&view==="duel")render()}catch(e){}}
-const duOther=()=>PROFILES.find(p=>p.id!==PID),duMe=()=>PROFILES.find(p=>p.id===PID);
+const duMe=()=>PROFILES.find(p=>p.id===PID),duP=id=>PROFILES.find(p=>p.id===id)||{id,name:id,icon:""};
+const duVs=r=>r.vs||["sihun","mom"],duDone=r=>duVs(r).every(w=>r.res[w]);
+const duMine=()=>DU.rounds.filter(r=>duVs(r).includes(PID)&&TYPES[r.type]),duWith=o=>duMine().filter(r=>duVs(r).includes(o)).pop()||null;
+const duTodo=()=>duMine().filter(r=>!r.res[PID]).length;
 const duKid=()=>{if(PID==="sihun")return S;try{const c=JSON.parse(localStorage.getItem(KCORE)||"null");return c&&c.ts?c:null}catch(e){return null}};
 const duOK=id=>{const T=TYPES[id];return T&&!T.seq&&!T.scaffold&&!HIDE_BANK.includes(id)&&!HSIDS.includes(id)};
 function duPick(K){const ts=(K&&K.ts)||{},used=DU.rounds.slice(-3).map(r=>r.type);
@@ -3130,11 +3133,10 @@ function duPick(K){const ts=(K&&K.ts)||{},used=DU.rounds.slice(-3).map(r=>r.type
 function duRand(seed,fn){const R=Math.random;let a=seed>>>0;Math.random=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};try{return fn()}finally{Math.random=R}}
 function duProbs(r){const T=TYPES[r.type];return duRand(r.seed,()=>{const out=[],keys=new Set();for(let g=0;g<600&&out.length<10;g++){const p=T.rand(r.step),k=T.key(p);if(keys.has(k))continue;keys.add(k);out.push(p)}
   while(out.length<10)out.push(T.rand(r.step));return out.map(p=>{const q=T.make(p,1);if(q.sg===undefined)q.sg=!!T.sg;if(T.ml&&!q.ml)q.ml=T.ml;return{p,q}})})}
-const duCur=()=>DU.rounds[DU.rounds.length-1]||null;
-const duWin=r=>{const a=r.res.sihun,b=r.res.mom;if(!a||!b)return null;return a.c!==b.c?(a.c>b.c?"sihun":"mom"):Math.abs(a.t-b.t)<.5?"tie":a.t<b.t?"sihun":"mom"};
-async function duNew(){await duSync();const c=duCur();if(c&&TYPES[c.type]&&!(c.res.sihun&&c.res.mom))return;let K=duKid();if(PID!=="sihun"&&DB){try{const r=await DB.doc("app/core").get(),v=r.exists?r.data():null;if(v&&v.ts)K=v}catch(e){}}
-  const pk=duPick(K),t=today(),n=DU.rounds.filter(r=>r.d===t).length+1;DU.rounds.push({k:t+"#"+n+"-"+Math.floor(Math.random()*1e6),d:t,type:pk.type,step:pk.step,seed:Math.floor(Math.random()*2**31),at:Date.now(),res:{}});duSync(true)}
-function duStart(){const r=duCur();if(!r||r.res[PID]||!TYPES[r.type])return;PREVIEW=false;RUN={type:r.type,duel:r.k};RUN.probs=duProbs(r);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
+const duWin=r=>{const [x,y]=duVs(r),a=r.res[x],b=r.res[y];if(!a||!b)return null;return a.c!==b.c?(a.c>b.c?x:y):Math.abs(a.t-b.t)<.5?"tie":a.t<b.t?x:y};
+async function duNew(o){await duSync();const c=duWith(o);if(c&&!duDone(c))return c;let K=duKid();if(PID!=="sihun"&&DB){try{const r=await DB.doc("app/core").get(),v=r.exists?r.data():null;if(v&&v.ts)K=v}catch(e){}}
+  const pk=duPick(K),t=today(),n=DU.rounds.filter(r=>r.d===t).length+1,R={k:t+"#"+n+"-"+Math.floor(Math.random()*1e6),d:t,vs:[PID,o],type:pk.type,step:pk.step,seed:Math.floor(Math.random()*2**31),at:Date.now(),res:{}};DU.rounds.push(R);duSync(true);return R}
+function duStart(k){const r=DU.rounds.find(x=>x.k===k);if(!r||r.res[PID]||!TYPES[r.type]||!duVs(r).includes(PID))return;PREVIEW=false;RUN={type:r.type,duel:r.k};RUN.probs=duProbs(r);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
   RUN.items=RUN.probs.map(()=>({ms:0,tries:[],skip:false,mis:0,ok:false,ok1:false}));RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred=null;RUN.started=Date.now();RUN.user=null;RUN.rev=null;view="play";beginQ();render()}
 function duFinish(){const r=DU.rounds.find(x=>x.k===RUN.duel),n=RUN.probs.length,t=Math.round(RUN.items.reduce((a,b)=>a+b.ms,0)/100)/10,c=RUN.items.filter(x=>x.ok1).length;
   if(r&&!r.res[PID])r.res[PID]={c,n,t,at:Date.now()};RUN=null;view="duel";render();duSync(true)}
@@ -3143,43 +3145,49 @@ function duSelf(r){const me=r.res[PID];if(!me)return "";const pv=DU.rounds.filte
   if(pv){const o=pv.res[PID],dq=o.t/o.n-me.t/me.n;if(me.c>o.c)return `지난 대결의 나보다 ${me.c-o.c}개 더 맞혔다냥.`;if(me.c===o.c&&dq>=.1)return `지난 대결의 나보다 문제당 ${dq.toFixed(1)}초 빨라졌다냥.`}
   const lr=(tst(r.type).runs||[]).slice(-1)[0];if(lr&&lr.n){const dq=lr.t/lr.n-me.t/me.n;if(dq>=.1&&me.c===me.n)return `평소의 나보다 문제당 ${dq.toFixed(1)}초 빨랐다냥.`}
   return me.c===me.n?"하나도 안 틀렸다냥.":"끝까지 풀었다냥."}
-const duLine=(w,x)=>`<div class="du-row"><span>${PROFILES.find(p=>p.id===w).icon} ${PROFILES.find(p=>p.id===w).name}</span><b>${x?`${x.c}개 맞힘`:"아직"}</b><span class="tab">${x?fmt(x.t)+" ("+x.t.toFixed(1)+"초)":""}</span></div>`;
-function vDuel(){const r=duCur(),me=duMe(),ot=duOther(),T=r&&TYPES[r.type];let body="";
-  if(!r||!T||(r.res.sihun&&r.res.mom)){
-    if(r&&T){const w=duWin(r),nm=w==="tie"?"":PROFILES.find(p=>p.id===w).name;
-      body+=`<div class="card"><p class="small muted">${T.name} · 10문제</p>${duLine("sihun",r.res.sihun)}${duLine("mom",r.res.mom)}
-        <h3 style="margin-top:10px">${w==="tie"?"비겼다냥! 둘 다 대단하다옹.":w===PID?`${nm} 승리다냥!`:`이번 판은 ${nm}${JO[w].iga} 이겼다옹.`}</h3>
-        <p>${r.res.sihun.c!==r.res.mom.c?"맞힌 수로 갈렸다냥.":w==="tie"?"":"맞힌 수가 같아서 시간으로 갈렸다냥."}</p><p class="du-self">${duSelf(r)}</p></div>`}
-    body+=`<button class="bigbtn" data-act="dunew">${r?"새 판 만들기":"첫 판 만들기"}</button><p class="small muted" style="text-align:center">같은 문제를 둘이 따로 푼다냥. 맞힌 수가 먼저, 같으면 시간이다냥.</p>`}
-  else if(!r.res[PID]){body+=`<div class="card"><h3>${T.name} · 10문제</h3><p>${r.res[ot.id]?`${ot.name}${JO[ot.id].eun} 벌써 풀었다냥. 결과는 풀고 나면 보인다냥.`:`${ot.name}${JO[ot.id].gwa} 같은 문제를 푼다냥.`}</p><p class="small muted">처음에 바로 맞힌 것만 센다냥. 기록과 단계에는 안 들어간다냥.</p></div><button class="bigbtn" data-act="dustart">대결 시작</button>`}
-  else{body+=`<div class="card"><p class="small muted">${T.name} · 10문제</p>${duLine(PID,r.res[PID])}<h3 style="margin-top:10px">${ot.name} 차례를 기다린다냥.</h3><p class="du-self">${duSelf(r)}</p><p class="small muted">${ot.name}${JO[ot.id].iga} 이 앱에서 "${ot.name}"${JO[ot.id].ro} 들어가 대결을 누르면 같은 문제가 나온다냥.</p></div><button class="nb" style="align-self:center" data-act="durefresh">새로 보기</button>`}
-  const done=DU.rounds.filter(x=>x.res.sihun&&x.res.mom&&TYPES[x.type]),wk=done.filter(x=>Date.parse(today())-Date.parse(x.d)<7*864e5),cnt=w=>wk.filter(x=>duWin(x)===w).length;
-  const hist=done.slice(-6).reverse().filter(x=>x!==r||true).map(x=>{const w=duWin(x);return `<p class="small tab">${x.d.slice(5)} · ${TYPES[x.type].name} · 🥷 ${x.res.sihun.c}개 ${x.res.sihun.t.toFixed(0)}초 · 🐱 ${x.res.mom.c}개 ${x.res.mom.t.toFixed(0)}초 → ${w==="tie"?"비김":PROFILES.find(p=>p.id===w).name}</p>`}).join("");
-  return `${bar("대결 🥷 vs 🐱")}<div class="page">${body}${done.length?`<div class="card"><h3>지난 판</h3><p class="small">이번 주 · 시훈 ${cnt("sihun")} : 엄마 ${cnt("mom")}${cnt("tie")?` · 비김 ${cnt("tie")}`:""}</p>${hist}</div>`:""}</div>`}
+const duLine=(w,x)=>`<div class="du-row"><span>${duP(w).icon} ${duP(w).name}</span><b>${x?`${x.c}개 맞힘`:"아직"}</b><span class="tab">${x?fmt(x.t)+" ("+x.t.toFixed(1)+"초)":""}</span></div>`;
+function vDuel(){const cards=PROFILES.filter(p=>p.id!==PID).map(ot=>{const r=duWith(ot.id),T=r&&TYPES[r.type],hd=`<h3>${ot.icon} ${ot.name}${JO[ot.id].gwa} 대결</h3>`;
+    if(!r)return `<div class="card">${hd}<p class="small muted">아직 한 판도 안 했다냥.</p><button class="bigbtn" data-act="dunew" data-arg="${ot.id}">첫 판 만들기</button></div>`;
+    if(!r.res[PID])return `<div class="card">${hd}<p>${T.name} · 10문제</p><p class="small muted">${r.res[ot.id]?`${ot.name}${JO[ot.id].eun} 벌써 풀었다냥. 결과는 풀고 나면 보인다냥.`:`${ot.name}${JO[ot.id].gwa} 같은 문제를 푼다냥.`}</p><button class="bigbtn" data-act="dustart" data-arg="${r.k}">대결 시작</button></div>`;
+    if(!duDone(r))return `<div class="card">${hd}<p class="small muted">${T.name} · 10문제</p>${duLine(PID,r.res[PID])}<p style="margin-top:8px"><b>${ot.name} 차례를 기다린다냥.</b></p><p class="du-self">${duSelf(r)}</p></div>`;
+    const w=duWin(r),nm=w==="tie"?"":duP(w).name,vs=duVs(r);
+    return `<div class="card">${hd}<p class="small muted">${T.name} · 10문제</p>${duLine(vs[0],r.res[vs[0]])}${duLine(vs[1],r.res[vs[1]])}
+      <p style="margin-top:8px"><b>${w==="tie"?"비겼다냥! 둘 다 대단하다옹.":w===PID?`${nm} 승리다냥!`:`이번 판은 ${nm}${JO[w].iga} 이겼다옹.`}</b> ${r.res[vs[0]].c!==r.res[vs[1]].c?"맞힌 수로 갈렸다냥.":w==="tie"?"":"맞힌 수가 같아서 시간으로 갈렸다냥."}</p><p class="du-self">${duSelf(r)}</p>
+      <button class="bigbtn" data-act="dunew" data-arg="${ot.id}">새 판 만들기</button></div>`}).join("");
+  const done=duMine().filter(duDone),wk=done.filter(x=>Date.parse(today())-Date.parse(x.d)<7*864e5);
+  const tally=PROFILES.filter(p=>p.id!==PID).map(ot=>{const L=wk.filter(x=>duVs(x).includes(ot.id));return L.length?`${duMe().name} ${L.filter(x=>duWin(x)===PID).length} : ${ot.name} ${L.filter(x=>duWin(x)===ot.id).length}`:""}).filter(Boolean).join(" · ");
+  const hist=done.slice(-6).reverse().map(x=>{const w=duWin(x),v=duVs(x);return `<p class="small tab">${x.d.slice(5)} · ${TYPES[x.type].name} · ${v.map(q=>`${duP(q).icon} ${x.res[q].c}개 ${x.res[q].t.toFixed(0)}초`).join(" · ")} → ${w==="tie"?"비김":duP(w).name}</p>`}).join("");
+  return `${bar("대결")}<div class="page">${cards}<p class="small muted" style="text-align:center">같은 문제를 둘이 따로 푼다냥. 맞힌 수가 먼저, 같으면 시간이다냥. 기록과 단계에는 안 들어간다냥.</p><button class="nb" style="align-self:center" data-act="durefresh">새로 보기</button>${done.length?`<div class="card"><h3>지난 판</h3>${tally?`<p class="small">이번 주 · ${tally}</p>`:""}${hist}</div>`:""}</div>`}
 /* 구글 로그인 + 가족 저장소(Firestore). 로그인 안 해도 앱은 그대로 됨 */
-let FB=null,FBU=null,FBMSG="",FBBUSY=false;
+let FB=null,FBU=null,FBMSG="",FBBUSY=false,FBASK=false,FBDENY=false,FBOFF=false,FBWAIT=false;
 const fbCan=()=>/^https?:/.test(location.protocol)&&!(window.claude&&window.claude.use);
+const KAUTH="sihun-app-auth",authGet=()=>{try{const a=JSON.parse(localStorage.getItem(KAUTH)||"null");return a&&PROFILES.some(p=>p.id===a.pid)?a:null}catch(e){return null}},authSet=v=>{try{if(v)localStorage.setItem(KAUTH,JSON.stringify(v));else localStorage.removeItem(KAUTH)}catch(e){}};
 const FBV="https://www.gstatic.com/firebasejs/10.14.1/firebase-";
 function fbDB(F,fs){const R=["mathApp","family"],CH=700000,pk=o=>{const j=JSON.stringify(o),n=Math.ceil(j.length/CH)||1;return Array.from({length:n},(_,i)=>i?{j:j.slice(i*CH,(i+1)*CH)}:{j:j.slice(0,CH),parts:n,savedAt:o.savedAt||0})};
   const rd=async p=>{const s=await F.getDoc(F.doc(fs,...R,...p.split("/")));if(!s.exists())return null;const d=s.data();let j=d.j||"";for(let i=1;i<(d.parts||1);i++){const x=await F.getDoc(F.doc(fs,...R,...(p+"~"+i).split("/")));j+=x.exists()?x.data().j:""}try{return JSON.parse(j)}catch(e){return null}};
   const un=d=>{try{return d&&d.j&&(d.parts||1)===1?JSON.parse(d.j):null}catch(e){return null}};
   return{doc:p=>({get:async()=>{const v=await rd(p);return{exists:!!v,data:()=>v}},set:async o=>{const P=pk(o),b=F.writeBatch(fs);P.forEach((x,i)=>b.set(F.doc(fs,...R,...(i?p+"~"+i:p).split("/")),x));await b.commit()}}),
     collection:p=>({limit:n=>({get:async()=>{const s=await F.getDocs(F.query(F.collection(fs,...R,...p.split("/")),F.limit(n)));return{docs:s.docs.filter(d=>!d.id.includes("~")).map(d=>({id:d.id,data:()=>un(d.data())}))}}})})}}
-async function fbStart(){if(!fbCan()||FB)return;
-  try{const [A,U,F,C]=await Promise.all([import(FBV+"app.js"),import(FBV+"auth.js"),import(FBV+"firestore.js"),import("../config.js")]);
-    const ap=A.initializeApp(C.firebaseConfig),auth=U.getAuth(ap),fs=F.getFirestore(ap);FB={U,F,auth,fs};
-    U.onAuthStateChanged(auth,async u=>{FBU=u||null;FBBUSY=false;
-      if(!u){DBH=null;DB=null;sync="local";fbPaint();return}
-      try{await F.getDoc(F.doc(fs,"mathApp","family"));FBMSG="";DBH=fbDB(F,fs);fbPaint();await connectDB();fbPaint()}
-      catch(e){DBH=null;DB=null;sync="local";FBMSG=e&&e.code==="permission-denied"?"이 구글 계정은 아직 가족 목록에 없어요.":"지금은 계정 저장소에 못 들어갔어요. 이 기기에는 저장돼요.";fbPaint()}})
-  }catch(e){FBMSG=""}}
+async function fbStart(){if(!fbCan()||FB)return;FBWAIT=true;let A,U,F,C;
+  try{[A,U,F,C]=await Promise.all([import(FBV+"app.js"),import(FBV+"auth.js"),import(FBV+"firestore.js"),import("../config.js")])}catch(e){FBOFF=true;FBWAIT=false;fbPaint();return}
+  FBOFF=false;const ap=A.initializeApp(C.firebaseConfig),auth=U.getAuth(ap),fs=F.getFirestore(ap);FB={U,F,auth,fs};
+  U.onAuthStateChanged(auth,async u=>{FBU=u||null;FBBUSY=false;FBWAIT=false;FBASK=false;FBDENY=false;
+    if(!u){authSet(null);DBH=null;DB=null;sync="local";RUN=null;CON=null;modal=null;stopTick();view="who";render();return}
+    try{await F.getDoc(F.doc(fs,"mathApp","family"))}catch(e){DBH=null;DB=null;sync="local";
+      if(e&&e.code==="permission-denied"){FBDENY=true;FBMSG="이 구글 계정은 아직 가족 목록에 없어요.";view="who";render();return}
+      const a=authGet();if(a&&a.uid===u.uid){fbPaint();return}FBMSG="지금은 계정 저장소에 못 들어갔어요. 잠시 뒤 다시 열어 주세요.";view="who";render();return}
+    FBMSG="";DBH=fbDB(F,fs);const a=authGet();let pid=a&&a.uid===u.uid?a.pid:null;
+    if(!pid){try{const r=await DBH.doc("who/"+u.uid).get(),v=r.exists?r.data():null;if(v&&PROFILES.some(p=>p.id===v.pid))pid=v.pid}catch(e){}}
+    if(!pid){FBASK=true;view="who";render();return}
+    authSet({uid:u.uid,pid});if(PID!==pid||view==="who")await switchTo(pid);else{await connectDB();fbPaint()}})}
+async function fbWho(pid){if(!FBU||!DBH||!PROFILES.some(p=>p.id===pid))return;FBASK=false;authSet({uid:FBU.uid,pid});try{DBH.doc("who/"+FBU.uid).set({pid,savedAt:Date.now()}).catch(()=>{})}catch(e){}await switchTo(pid)}
 const fbPaint=()=>{try{if(view==="who"||view==="parent")render()}catch(e){}};
 async function fbLogin(){if(!FB){FBMSG="인터넷에 이어지면 다시 눌러 주세요.";await fbStart();if(!FB){fbPaint();return}}
   FBBUSY=true;FBMSG="";fbPaint();try{const p=new FB.U.GoogleAuthProvider();p.setCustomParameters({prompt:"select_account"});await FB.U.signInWithPopup(FB.auth,p)}catch(e){FBBUSY=false;FBMSG="로그인이 안 됐어요. 다시 눌러 주세요. ("+((e&&e.code)||"")+")";fbPaint()}}
 async function fbLogout(){if(!FB)return;try{if(DB){clearTimeout(flushT);await flush()}await FB.U.signOut(FB.auth)}catch(e){}}
-function fbHTML(kid){if(!fbCan())return "";
-  if(FBU)return `<p class="small muted" style="text-align:center">☁ ${DB?"기록이 구글 계정에 저장되고 있어요":FBMSG?esc(FBMSG):"계정 저장소에 잇는 중…"}<br>${esc(FBU.email||"")} ${kid?"":`<button class="nb" data-act="fbout">로그아웃</button>`}${FBMSG?` <button class="nb" data-act="fbout">다른 계정으로</button>`:""}</p>`;
-  return `<button class="nb pri" style="align-self:center" data-act="fbin" ${FBBUSY?"disabled":""}>${FBBUSY?"로그인 창을 여는 중…":"구글로 로그인 (기록을 계정에 보관)"}</button>${FBMSG?`<p class="small muted" style="text-align:center">${esc(FBMSG)}</p>`:`<p class="small muted" style="text-align:center">로그인하면 폰을 바꿔도 기록이 남아요.</p>`}`}
+function fbHTML(){if(!fbCan())return "";
+  if(FBU)return `<p class="small muted">☁ ${DB?"기록이 구글 계정에 저장되고 있어요":FBMSG?esc(FBMSG):"계정 저장소에 잇는 중…"} · ${esc(FBU.email||"")} <button class="nb" data-act="fbout">로그아웃</button></p>`;
+  return `<p class="small muted">${FBOFF?"인터넷이 안 돼서 지금은 이 기기에만 저장돼요.":"로그인이 안 되어 있어요."}</p>`}
 
 async function switchTo(pid){
   if(DB){clearTimeout(flushT);await flush()}
@@ -3202,9 +3210,16 @@ function render(){
 const bar=(title,right="")=>`${PREVIEW?'<div class="pv">미리 보기 · 기록이 남지 않아요 · <button data-act="pvexit">끝내기</button></div>':""}<div class="bar"><button class="nb" data-act="home">처음으로</button><span class="where">${title}</span><span class="sp"></span>${right}</div>`;
 
 /* 누가 하나 */
-function vWho(){return `<div class="page" style="justify-content:center;gap:14px"><h1 style="text-align:center">누가 할 거냥?</h1>
-  ${PROFILES.map(p=>`<button class="next" style="align-items:center" data-act="who" data-arg="${p.id}"><span class="v">${p.icon} ${p.name}</span></button>`).join("")}
-  <p class="small muted" style="text-align:center">기록은 사람마다 따로 남아요.</p>${fbHTML(true)}</div>`}
+function vWho(){const pick=act=>PROFILES.map(p=>`<button class="next" style="align-items:center" data-act="${act}" data-arg="${p.id}"><span class="v">${p.icon} ${p.name}</span></button>`).join(""),
+    wrap=h=>`<div class="page" style="justify-content:center;gap:14px">${h}</div>`,c=t=>`<p class="small muted" style="text-align:center">${t}</p>`,H=t=>`<h1 style="text-align:center">${t}</h1>`;
+  if(!fbCan()||FBOFF)return wrap(H("누가 할 거냥?")+pick("who")+c("기록은 사람마다 따로 남아요."+(FBOFF?" 인터넷이 안 돼서 지금은 이 기기에만 저장돼요.":"")));
+  if(FBWAIT)return wrap(H("잠깐만 기다린다냥…"));
+  if(!FBU)return wrap(H("로그인하고 시작한다냥")+`<button class="bigbtn" data-act="fbin" ${FBBUSY?"disabled":""}>${FBBUSY?"로그인 창을 여는 중…":"구글로 로그인"}</button>`+c(FBMSG?esc(FBMSG):"시훈, 엄마, 아빠가 각자 자기 구글 계정으로 들어온다냥. 기록은 사람마다 따로 남는다옹."));
+  if(FBDENY)return wrap(H("이 계정은 아직 못 들어온다냥")+c(esc(FBMSG)+"<br>"+esc(FBU.email||""))+`<button class="bigbtn" data-act="fbout">다른 계정으로</button>`);
+  const a=authGet();
+  if(FBASK||!a)return wrap(H("이 계정은 누가 쓸 거냥?")+c(esc(FBU.email||""))+pick("fbwho")+c("한 번만 고르면 다음부터는 바로 들어간다냥."));
+  const me=PROFILES.find(p=>p.id===a.pid);
+  return wrap(H(`${me.icon} ${me.name}`)+c(esc(FBU.email||"")+(FBMSG?"<br>"+esc(FBMSG):""))+`<button class="bigbtn" data-act="home">계속하기</button><div class="row" style="justify-content:center"><button class="nb" data-act="fbre">사람 다시 고르기</button><button class="nb" data-act="fbout">로그아웃</button></div>`)}
 /* 홈 */
 const curTxt=id=>{const c=CUR[id];return c?`${c[0]} ${c[1].split(" (")[0]}`:""};
 const afterOf=id=>{const k=Object.keys(PRE).find(k=>PRE[k].includes(id)&&TYPES[k]&&CUR[k]&&!passedT(k));return k?TYPES[k].name:""};
@@ -3236,7 +3251,7 @@ function vHome(){
    <div class="side">
      <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
      <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
-     <button data-act="duel" style="grid-column:span 2"><b>${duOther().name}${JO[duOther().id].gwa} 대결</b><span>같은 문제를 따로 풀고 견준다냥</span></button>
+     <button data-act="duel" style="grid-column:span 2"><b>대결</b><span>${duTodo()?"풀 차례인 대결이 있다냥!":"엄마, 아빠, 시훈이 같은 문제로 견준다냥"}</span></button>
      <button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>
    </div></div>`;
 }
@@ -3684,7 +3699,7 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      <button class="nb" data-act="clearcarry" ${carryN?"":"disabled"}>밀림 지우기</button></div>
    ${tiredHTML()}
-   <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML(false)}
+   <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML()}
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
@@ -3805,7 +3820,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){S=clone(B[d].core);loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),duel:()=>{duLoad();go("duel");duSync()},dunew:async()=>{await duNew();if(duCur()&&!duCur().res[PID])duStart();else render()},dustart:()=>duStart(),durefresh:()=>{duSync().then(()=>render())},
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
@@ -3890,6 +3905,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
 document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok");else if(e.key==="&")typeKey("amp");else if(e.key==="\\"||e.key==="/")typeKey("bs");else if(e.key==="n")typeKey("n")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&view==="play"&&RUN&&!modal){ACT.pause()}});
 
+if(fbCan()){FBWAIT=true;const a=authGet();if(a){if(PID!==a.pid){PID=a.pid;loadLocal()}view="home"}}
 ensureToday();render();connectDB();fbStart();
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&DB&&["who","home","parent","report","mine"].includes(view))connectDB(true)});
 </script>
