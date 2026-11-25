@@ -954,6 +954,15 @@ table.lmap th small{font-weight:500;color:var(--muted)}
  .bicmp{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:18px;font-weight:700;line-height:1.6;word-break:keep-all}
  .bicmp .c1{background:#e8f0fb;border-radius:10px;padding:6px 10px} .bicmp .c2{background:#fff3e0;border-radius:10px;padding:6px 10px}
  mark.kwg{background:#ffe27a;border-radius:4px;padding:0 2px;box-shadow:0 0 0 2px #ffd54a;animation:kwg 1.2s ease-in-out 3} @keyframes kwg{50%{background:#fff6c7}}
+ .anrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px} .anch{position:relative;border:2px solid #c9d3e3;background:#fff;border-radius:10px;padding:6px 10px;font:700 18px 'Noto Sans KR',sans-serif;color:var(--navy);cursor:pointer;line-height:1.4}
+ .anch:disabled{cursor:default;opacity:1} .anv{border-color:#e08a00;background:#fff1d6} .ans{border-color:#2f7de1;background:#e3efff} .ank{border-color:#3a9d5d;background:#e3f5ea}
+ .antag{display:block;font-size:11px;font-weight:800;text-align:center;color:#6a7891} .anv .antag{color:#c06f00} .ans .antag{color:#2f7de1} .ank .antag{color:#2e8b57}
+ .anhint{box-shadow:0 0 0 3px #ffd54a;background:#fff8d6} .anno{animation:shake .4s;background:#f3f5f9!important}
+ .anteach{margin-top:10px;background:#f4f7fc;border-radius:12px;padding:12px 14px;font-size:16px;line-height:1.7} .anth{font-weight:900;color:var(--navy);margin-bottom:4px}
+ .rdcard .rdbar{height:8px;background:#e3e8f0;border-radius:4px;margin:8px 0 14px} .rdbar i{display:block;height:8px;background:var(--navy);border-radius:4px;transition:width .3s}
+ .rdpara{font-size:21px;line-height:2.1;word-break:keep-all} .rds .sn{display:inline-block;width:22px;height:22px;border-radius:11px;background:#c9d3e3;color:var(--navy);font-size:12px;text-align:center;line-height:22px;margin-right:4px;vertical-align:3px;font-weight:800}
+ .rdnext{color:#b4bdcc} .rdpast{color:#7d889c} .rdnow{background:#fff6c7;border-radius:6px;box-shadow:0 0 0 3px #ffe27a;color:#1d2a44} .rdnow .sn{background:var(--navy);color:#fff} .rds.hint{background:#fff1b8;color:#1d2a44}
+ .rdchk{margin-top:14px;background:#f4f7fc;border-radius:12px;padding:12px 14px}
  .bibtn{display:flex;gap:6px} .bibtn .blk{padding:6px 16px;font-size:17px;min-width:0} .bisame{color:var(--ok)} .bidiff{color:var(--bad)}
  .hwev{margin-top:10px;background:#eefaf2;border-left:4px solid var(--ok);border-radius:8px;padding:8px 12px;font-size:17px;line-height:1.7}
 .hwcopy{margin-top:14px;background:#fff8d6;border:3px solid #f2c94c;border-radius:16px;padding:16px;text-align:center}
@@ -6630,6 +6639,57 @@ function viewFill(){if(!FL)FL={w:MAXW,area:'비문학'};const cs=CARDS.filter(c=
 /* READS 항목: {id,w,title,sub,chunks:[{title,pg,labels?,paras:[[문장…]],qs:[{no,pg,q,box?,opts,a,exp,h?}]}],essay:{…}}
    흐름: 조각마다 읽기 → 그 조각 문제(맞히면 📝 옮겨 적기) → 서술형(질문 바꿔 말하기 → 근거 문장 누르기 → 말로 해 보기 → 내 말로 칸 채우기 → 블록 순서 → 원고지)
    서술형 내용은 100% 시훈이 말. 앱은 질문만 하고 문장을 대신 만들지 않아요. */
+/* 📖 독서 지문 한 문장씩 읽기 (엄마 11/25 "독서 지문 UI 별로"): 워크지 id → 읽기 부분(chunks 순서) → 문단마다 {q:문단 끝 확인, o:[맞는 답, 틀린 답], key:도움 문장 번호, sum:이야기 지도 한 줄, w:[[낱말, 쉬운 뜻]]}.
+   문제에서 뜻을 묻는 낱말(나막신·과부·엄숙·자투리·투박·잠긴)은 뜻을 미리 알려 주지 않아요. 데이터 없는 워크지는 예전처럼 한 번에 보여 줘요. */
+const RDX={'w5-pink':[
+ [{q:'카렌은 어떤 형편이었고, 과부는 카렌에게 무엇을 해 주었지?',o:['가난한 카렌이 안쓰러워서 과부가 빨간 신을 지어 주었다','부자인 카렌이 과부에게 새 신을 사 주었다'],key:7,sum:'가난한 카렌 → 과부가 빨간 신을 지어 줌',
+   w:[['가냘픈','가늘고 약한'],['켤레','신 두 짝을 한 벌로 세는 말'],['정성','온 마음을 다함']]},
+  {q:'카렌은 어머니의 장례식에 무엇을 신고 갔지?',o:['다른 신이 없어서 빨간 신을 신고 갔다','검은 새 신을 사서 신고 갔다'],key:2,sum:'장례식에 어울리지 않는 빨간 신을 신고 감',
+   w:[['장례식','돌아가신 사람을 보내는 의식'],['누더기','여기저기 해지고 기운 헌 옷'],['관','돌아가신 사람을 넣는 상자']]}],
+ [{q:'노부인은 빨간 신을 어떻게 했지?',o:['싫어해서 난로에 던져 버렸다','카렌에게 빨간 신을 더 사 주었다'],key:3,sum:'노부인이 카렌을 데려감 → 빨간 신은 난로로',
+   w:[['고풍스러운','옛날 멋이 나는'],['노부인','나이 든 부인'],['가엾게','불쌍하게']]},
+  {q:'교회에 다녀온 뒤 카렌에게 무슨 일이 생겼지?',o:['춤을 추기 시작하자 발이 멈추지 않았다','군인이 카렌의 신을 빼앗아 갔다'],key:4,sum:'군인이 신을 툭툭 → 춤이 멈추지 않음',
+   w:[['예배','교회에서 하나님께 드리는 모임'],['목발','다리가 불편할 때 짚는 막대'],['발짝','발을 한 번 옮기는 걸음']]},
+  {q:'노부인이 아플 때 카렌은 무엇을 했지?',o:['노부인 곁을 떠나 빨간 신을 신고 무도회에 갔다','노부인 곁을 끝까지 지켰다'],key:2,sum:'아픈 노부인을 두고 무도회로 → 신이 숲으로 끌고 감',
+   w:[['무도회','여럿이 모여 춤추는 큰 잔치'],['제멋대로','자기 마음대로']]},
+  {q:'카렌은 마지막에 무엇을 깨달았지?',o:['모든 사람에게 버림받았다는 것','빨간 신이 가장 소중하다는 것'],key:5,sum:'천사의 벌, 노부인의 죽음 → 버림받았음을 깨달음',
+   w:[['해골','살이 다 없어지고 남은 뼈'],['용서','잘못을 덮어 줌'],['깨달았다','몰랐던 것을 알게 되었다']]}]
+]};
+function rdOn(R,ci){return RDX[R.id]&&RDX[R.id][ci]}
+function rdState(ci){WR.rd=WR.rd||{};const x=WR.rd[ci]=WR.rd[ci]||{p:0,s:0,chk:[],sec:0,words:0};return x}
+function rdSentHTML(R,ci,pi,si,cur,X){let t=R.chunks[ci].paras[pi][si];
+  if(cur){(X.w||[]).forEach(([w],k)=>{const j=t.indexOf(w);if(j>=0&&t.slice(0,j).lastIndexOf('<')<=t.slice(0,j).lastIndexOf('>'))t=t.slice(0,j)+`<span class="bw" data-rw="${k}">${w}</span>`+t.slice(j+w.length)})}
+  return t}
+function rdView(R,st){const ci=st.c,c=R.chunks[ci],D=RDX[R.id][ci],x=rdState(ci);x.t0=x.t0||Date.now();const np=c.paras.length;
+  const total=c.paras.reduce((a,p)=>a+p.length,0);const done=c.paras.slice(0,x.p).reduce((a,p)=>a+p.length,0)+(x.p<np?x.s+1:0);
+  if(x.p>=np){return `<div class="card"><div class="row" style="justify-content:space-between"><b>🗺️ 이야기 지도 · ${c.title}</b><span class="muted">다 읽었어요!</span></div>
+    ${D.map((d,i)=>`<div class="bimr"><b class="pno">${i+1}</b><div>${esc1(d.sum)}</div></div>`).join('')}
+    <div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="rdgo">문제 풀러 가기 →</button></div></div>`}
+  const para=c.paras[x.p],d=D[x.p];const atEnd=x.s>=para.length;
+  let h=`<div class="card rdcard"><div class="row" style="justify-content:space-between;align-items:center"><b>📖 ${c.title}</b><span class="muted">${x.p+1}번째 문단 / ${np}</span></div>
+   <div class="rdbar"><i style="width:${Math.round(Math.min(done,total)/total*100)}%"></i></div>
+   <div class="rdpara">${para.map((t,si)=>{const cur=si===x.s&&!atEnd;const cls=cur?'rdnow':si<x.s||atEnd?'rdpast':'rdnext';return `<span class="rds ${cls} ${atEnd&&si===d.key&&x.hl?'hint':''}" data-rd="${si}"><span class="sn">${si+1}</span>${rdSentHTML(R,ci,x.p,si,cur,d)}</span>`}).join(' ')}</div>
+   <div id="rdw" class="muted" style="font-size:15px;min-height:22px">${!atEnd&&d.w&&d.w.some(([w])=>para[x.s].includes(w))?'점선 낱말을 누르면 쉬운 뜻이 나와요.':''}</div>`;
+  if(!atEnd)h+=`<div class="row" style="justify-content:space-between;margin-top:10px"><button class="btn ghost" id="rdprev" ${x.p===0&&x.s===0?'disabled':''}>◀ 앞 문장</button><button class="btn" id="rdnx">${x.s<para.length-1?'다음 문장 ▶':'문단 끝 ✓'}</button></div>`;
+  else{x.o=x.o||{};const ord=x.o[x.p]=x.o[x.p]||shuffle([0,1]);
+    h+=`<div class="rdchk"><div class="muted" style="font-weight:700">문단 끝 확인</div><div class="qt" style="margin:6px 0">${esc1(d.q)}</div>
+     ${x.okNow?`<div class="exp" style="margin-left:0">✅ ${esc1(d.o[0])}</div><div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="rdnp">${x.p<np-1?'다음 문단 →':'🗺️ 이야기 지도 →'}</button></div>`
+     :`<div class="blocks" style="flex-direction:column;align-items:stretch">${ord.map(j=>`<button class="blk" style="text-align:left" data-rc="${j}">${esc1(d.o[j])}</button>`).join('')}</div><div id="rdfb"></div><div class="row" style="margin-top:8px"><button class="btn ghost sm" id="rdback">◀ 문단 다시 읽기</button></div>`}</div>`}
+  h+=`<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn ghost sm" id="rdskip">문제 먼저 볼래요</button></div></div>`;
+  return h}
+function rdBind(R,st,next,redraw){const ci=st.c,x=rdState(ci),D=RDX[R.id][ci],c=R.chunks[ci];const re=()=>{wrKeep(R);redraw()};
+  const fin=skip=>{x.sec+=Math.round((Date.now()-(x.t0||Date.now()))/1000);x.t0=null;if(skip)x.skip=true;next()};
+  const g=$('#rdgo');if(g)g.onclick=()=>{x.done=true;fin(false)};
+  const sk=$('#rdskip');if(sk)sk.onclick=()=>fin(true);
+  const pv=$('#rdprev');if(pv)pv.onclick=()=>{if(x.s>0)x.s--;else if(x.p>0){x.p--;x.s=c.paras[x.p].length-1}re()};
+  const nx=$('#rdnx');if(nx)nx.onclick=()=>{x.s++;x.n=(x.n||0)+1;re()};
+  const bk=$('#rdback');if(bk)bk.onclick=()=>{x.s=0;x.hl=false;re()};
+  const np=$('#rdnp');if(np)np.onclick=()=>{x.okNow=false;x.hl=false;x.p++;x.s=0;re();window.scrollTo(0,0)};
+  document.querySelectorAll('[data-rw]').forEach(b=>b.onclick=()=>{const w=D[x.p].w[+b.dataset.rw];$('#rdw').innerHTML=`<div class="cgloss">📖 <b>${w[0]}</b> = ${esc1(w[1])}</div>`;x.words++});
+  document.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{const j=+b.dataset.rc;x.chk[x.p]=x.chk[x.p]||0;
+    if(j===0){x.okNow=true;re();return}
+    x.chk[x.p]++;b.classList.add('anno');b.disabled=true;x.hl=true;document.querySelectorAll('.rds').forEach(s=>{if(+s.dataset.rd===D[x.p].key)s.classList.add('hint')});
+    $('#rdfb').innerHTML='<div class="cgloss" style="margin-top:8px">노랗게 빛나는 문장을 다시 읽어 봐요. 그 문장에 답이 있어요.</div>'})}
 const READS=[
 {id:'w5-pink',w:5,title:'안데르센 ① 분홍신',sub:'교재 18~23쪽 · 33~43번',chunks:[
  {title:'빨간 신 (앞부분)',pg:18,paras:[
@@ -6693,7 +6753,8 @@ function viewWrite(w){const L=READS.filter(r=>r.w===(w||MAXW));
   const head=`<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">📚 ${R.title}</h2><span class="muted">${R.sub}</span></div>
    <div class="seg" style="margin-top:10px">${S.map((s,k)=>`<button disabled style="opacity:1" class="${k===WR.st?'on':''}">${k<WR.st?'✅ ':''}${s.lab}</button>`).join('')}</div>
    ${st.k!=='g'?`<div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" id="wsrs">🔄 처음부터 다시</button><button class="btn ghost sm" id="wsvp">💾 여기까지 저장</button><span class="muted" id="wsvm"></span></div>`:''}</div>`;
-  if(st.k==='r'){const c=R.chunks[st.c];h=`<div class="card">${st.c===0?'<div class="alert" style="margin-top:0">천천히 읽어요. 다 읽으면 그 부분 문제를 바로 풀어요.</div>':'<div class="alert" style="margin-top:0">이어지는 이야기예요. ①~④ 문단 번호를 보며 읽어요.</div>'}${wrPsg(c,false)}<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="wnext">다 읽었어요 →</button></div></div>`}
+  if(st.k==='r'&&rdOn(R,st.c)){h=rdView(R,st)}
+  else if(st.k==='r'){const c=R.chunks[st.c];h=`<div class="card">${st.c===0?'<div class="alert" style="margin-top:0">천천히 읽어요. 다 읽으면 그 부분 문제를 바로 풀어요.</div>':'<div class="alert" style="margin-top:0">이어지는 이야기예요. ①~④ 문단 번호를 보며 읽어요.</div>'}${wrPsg(c,false)}<div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="wnext">다 읽었어요 →</button></div></div>`}
   else if(st.k==='q'){const c=R.chunks[st.c];const q=c.qs[WR.qi];
     const ox=q.ox!==undefined;const opts=ox?['⭕ 같은 뜻 (O)','❌ 다른 뜻 (X)']:q.opts;const copy=ox?`[ ${q.a===0?'O':'X'} ]`:N[q.a];
     h=`<div class="hwsplit"><div class="card hwl">${wrPsg(c,false,[],WR.hint&&q.ev?q.ev:[])}</div><div class="card hwr">
@@ -6735,6 +6796,7 @@ function viewWrite(w){const L=READS.filter(r=>r.w===(w||MAXW));
   const wrs=$('#wsrs');if(wrs)wrs.onclick=()=>wrRestart(R);
   const svp=$('#wsvp');if(svp)svp.onclick=async()=>{svp.disabled=true;svp.textContent='저장 중…';await wrSave(R,false);svp.textContent='✓ 저장됨';$('#wsvm').textContent=' 다음에 여기서 이어 해요'};
   const nx=$('#wnext');if(nx)nx.onclick=()=>{WR.st++;WR.qi=0;WR.fb=null;WR.hint=false;top()};
+  if(st.k==='r'&&rdOn(R,st.c))rdBind(R,st,()=>{WR.st++;WR.qi=0;WR.fb=null;WR.hint=false;wrKeep(R);top()},redraw);
   if(st.k==='q'){const c=R.chunks[st.c];const q=c.qs[WR.qi];
     document.querySelectorAll('[data-wo]').forEach(o=>o.onclick=()=>{const k=+o.dataset.wo;
       if(k===q.a){if(!WR.fb)WR.qok++;WR.fb='ok';redraw()}else{WR.miss++;WR.fb='bad';WR.qm++;o.classList.add('wrongpick');fb('다시! 💡 '+(q.h||'이야기에서 근거 문장을 찾아봐요.'))}});
@@ -6759,13 +6821,14 @@ function viewWrite(w){const L=READS.filter(r=>r.w===(w||MAXW));
     $('#wsave').onclick=async()=>{if(!pad.strokes.length){$('#wmsg').textContent='한 글자만 써 볼까?';return}const b=$('#wsave');b.disabled=true;b.textContent='저장 중…';
       await wrSave(R,true,pad.snap(700),$('#wcopied').checked);
       b.textContent='✓ 저장됨';$('#wmsg').textContent='저장했어요 ✓';const s=KO_PLAN.steps[PS];if(PLAN&&s&&s.k==='read')planAfter(PS)}}}
-function wrKeep(R){const keep={};['id','st','qi','qok','miss','qm','es','ev1','ev2','txt','asked','ord','bmiss','emiss'].forEach(k=>keep[k]=WR[k]);keep.sec0=WR.sec0+Math.round((Date.now()-WR.t0)/1000);store(RDK(R.id),keep)}
+function wrKeep(R){const keep={};['id','st','qi','qok','miss','qm','es','ev1','ev2','txt','asked','ord','bmiss','emiss','rd'].forEach(k=>keep[k]=WR[k]);keep.sec0=WR.sec0+Math.round((Date.now()-WR.t0)/1000);store(RDK(R.id),keep)}
 async function wrRestart(R){if(WR.st>0||WR.qi>0){WR.restart=1;await wrSave(R,false)}store(RDK(R.id),null);WR=null;viewWrite(R.w);window.scrollTo(0,0)}
 async function wrSave(R,fin,img,copied){const E=R.essay;const sec=WR.sec0+Math.round((Date.now()-WR.t0)/1000);const qn=R.chunks.reduce((a,c)=>a+c.qs.length,0);
   const rec={type:'write',id:R.id,w:R.w,title:R.title,done:fin,restart:!fin&&!!WR.restart,qn,qok:WR.qok,miss:WR.miss,emiss:WR.emiss,bmiss:WR.bmiss,stage:wrStages(R)[WR.st].lab,
     ev:[WR.ev1&&wrSent(R,E.ev1.chunk,WR.ev1),WR.ev2&&wrSent(R,E.ev2.chunk,WR.ev2)].filter(Boolean),text:WR.txt[3]?wrText(E):'',parts:Object.assign({},WR.txt),asked:Object.keys(WR.asked).length,copied:!!copied,sec};
+  if(WR.rd)rec.reads=Object.entries(WR.rd).map(([ci,x])=>{const c=R.chunks[+ci];return {title:c&&c.title,np:c?c.paras.length:0,p:Math.min(x.p||0,c?c.paras.length:0),chk:x.chk||[],words:x.words||0,skip:!!x.skip,done:!!x.done,sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}});
   if(img)rec.img=img;
-  const keep={};['id','st','qi','qok','miss','qm','es','ev1','ev2','txt','asked','ord','bmiss','emiss'].forEach(k=>keep[k]=WR[k]);keep.sec0=sec;
+  const keep={};['id','st','qi','qok','miss','qm','es','ev1','ev2','txt','asked','ord','bmiss','emiss','rd'].forEach(k=>keep[k]=WR[k]);keep.sec0=sec;
   store(RDK(R.id),fin?null:keep);WR.sec0=sec;WR.t0=Date.now();
   push(rec);await flushPend()}
 /* ================= 📒 워크지 숙제 (판서자료에 필기 없는 칸 = 숙제) =================
@@ -6946,6 +7009,75 @@ function biKwHTML(st){const kw=HWS.kw;HWS.kwO=HWS.kwO||shuffle(kw.o.map((_,k)=>k
 function biKwBind(){document.querySelectorAll('[data-kw]').forEach(b=>b.onclick=()=>{const kw=HWS.kw;
   if(+b.dataset.kw===kw.a){HWS.sp='ev';HWS.kwO=null;hwDraw();const m=document.querySelector('.hwl mark.kwg,.hwl .phint');if(m)m.scrollIntoView({block:'center',behavior:'smooth'});return}
   HWS.kwT++;HWS.kwMiss++;b.classList.add('bad');b.disabled=true;$('#hwfb').innerHTML=`<div class="alert alertbad" style="margin-top:10px">그 낱말로는 근거를 좁히기 어려워요. 글 여기저기 다 나오거나, 글에 없는 말이에요. 이 선지에만 있는 특별한 낱말을 골라 봐요.</div>`})}
+/* 🔍 근거 문장 쪼개기 (엄마 11/25 "문장 하나하나 분석부터, 문제 풀이 방식으로"): 근거 문장을 찾으면 → 어찌하다 → 무엇이 → 핵심 → 쉬운 말 고르기 → 같아/달라.
+   지문 → '문단.문장' → {c:덩어리(이어 붙이면 원래 문장), v:어찌하다 칸(여러 개면 아무거나), s:무엇이 칸(null이면 숨은 주어 hide), k:핵심 칸, p:[맞는 쉬운 말, 틀린 말]}.
+   데이터 없는 문장은 이 단계 없이 바로 같아/달라. */
+const HWSA={
+music:{
+ '4.0':{c:['이처럼','각 시대의 작곡가들은','모방, 변주, 형식적 반복 등','다양한 방법을 써서,','시간이 흐르는 동안','듣는 사람이','곧 전체의 모습을','알아볼 수 있게 했다.'],v:[7],s:[1],k:[2,3],p:['작곡가들은 여러 방법으로, 듣는 사람이 곡 전체를 알아보게 했다','작곡가들은 한 가지 방법만 계속 썼다']},
+ '4.1':{c:['시대마다','모습은','달랐지만,','음악은','언제나','반복을','기본 원리로 삼아','만들어졌다.'],v:[7],s:[3],k:[5,6],p:['음악은 언제나 반복을 바탕으로 만들어졌다','음악은 시대마다 반복을 버렸다']},
+ '0.6':{c:['같은 가락이','여러 번 되풀이되면서','노래가','하나로','묶인다.'],v:[4],s:[2],k:[0,1,3],p:['같은 가락이 반복되면 노래가 하나로 묶인다','같은 가락이 반복되면 노래가 여러 조각으로 나뉜다']},
+ '0.4':{c:['같은 부분이','다시 나오면','듣는 사람은','앞에서 들은 것을','떠올리고,','곧 전체의 모습을','쉽게 알 수 있다.'],v:[6],s:[2],k:[1,5],p:['같은 부분이 다시 나오면 듣는 사람이 곡 전체를 쉽게 안다','같은 부분이 다시 나오면 듣는 사람이 헷갈린다']},
+ '1.0':{c:['르네상스 시대에는','악기 없이','여러 목소리가','함께 부르는','노래가','많았다.'],v:[5],s:[4],k:[1],p:['르네상스 시대에는 악기 없이 목소리로만 부르는 노래가 많았다','르네상스 시대에는 악기 연주가 많았다']},
+ '1.1':{c:['이 시대','작곡가들은','소리를','입체적으로','들리게 하려고',"'모방'을",'썼다.'],v:[6],s:[1],k:[5],p:['르네상스 작곡가들은 모방을 썼다','르네상스 작곡가들은 변주를 썼다']},
+ '1.2':{c:['모방은','돌림 노래와','비슷하다.'],v:[2],s:[0],k:[1],p:['모방은 돌림 노래 같은 것이다','모방은 돌림 노래와 정반대다']},
+ '3.1':{c:['이 시대에','많이 쓰인','소나타는','분위기가 서로 다른','여러 악장으로','이루어지는데,','마지막 악장은','첫 악장보다','가볍고 쉬운','편이다.'],v:[5,9],s:[2,6],k:[4],p:['소나타는 여러 악장으로 되어 있다','소나타는 한 악장으로만 되어 있다']}},
+ppl:{
+ '1.4':{c:['시청자들은','배경에 있는 상품보다','출연자가 직접 쓰는 상품에','더','눈길을','준다.'],v:[5],s:[0],k:[1,2],p:['시청자는 배경에 있는 상품보다 출연자가 쓰는 상품을 더 본다','시청자는 배경에 있는 상품을 더 본다']},
+ '0.4':{c:['직접 광고는','리모컨으로 채널을 돌려','피할 수 있지만,','간접 광고는','프로그램 속에 섞여 있어','피하기 어렵다.'],v:[2,5],s:[0,3],k:[2,5],p:['직접 광고는 피할 수 있지만 간접 광고는 피하기 어렵다','간접 광고가 직접 광고보다 피하기 쉽다']},
+ '4.2':{c:['미디어 전문가들은','사람들이','각자 정보를 해석하는','자기만의 눈을','가지고 있어서,','방송 내용을','그대로 받아들이기만','하지는 않는다고','말한다.'],v:[8],s:[0],k:[3,6,7],p:['사람들은 자기만의 눈이 있어서 방송을 그대로 믿지만은 않는다','사람들은 방송을 언제나 그대로 믿는다']},
+ '0.2':{c:['프로그램 앞뒤에 따로 나오는','광고는',"'직접 광고'이고,",'프로그램 안에 상품을 슬쩍 넣어 보여 주는','광고는',"'간접 광고'이다."],v:[2,5],s:[1,4],k:[0,3],p:['앞뒤에 따로 나오면 직접 광고, 프로그램 안에 넣으면 간접 광고다','효과가 큰 광고가 간접 광고다']},
+ '4.0':{c:['이처럼','간접 광고는','시청자도 모르게','마음속으로','파고든다.'],v:[4],s:[1],k:[2],p:['간접 광고는 시청자가 몰라도 마음에 들어온다','간접 광고는 시청자가 다 알아챈다']},
+ '0.0':{c:['요즘','시청자들은','자기도 모르는 사이에','간접 광고를','자주','보며 살아간다.'],v:[5],s:[1],k:[2],p:['시청자들은 모르는 사이에 간접 광고를 자주 본다','시청자들은 간접 광고를 거의 안 본다']},
+ '1.2':{c:['하나는',"'주류적 배치'로,",'출연자가','상품을','직접 쓰거나 입거나 대사로 말하는','방식이다.'],v:[5],s:[0],k:[1,4],p:['주류적 배치는 출연자가 상품을 직접 쓰는 방식이다','주류적 배치는 상품을 배경에 두는 방식이다']},
+ '3.3':{c:['이제','프로그램 안에서','상품 이름이나 회사 이름을','보여 주는 것은','괜찮아졌다.'],v:[4],s:[3],k:[2,3],p:['이제 프로그램 안에서 상품 이름을 보여 줘도 된다','지금도 상품 이름을 보여 주면 안 된다']},
+ '2.2':{c:['그리고','프로그램이 끝날 때','도와준 업체의 이름을','알려 줄 수 있다.'],v:[3],s:null,hide:'방송을 만드는 사람 (앞 문장에 나와요)',k:[1,2],p:['협찬은 프로그램이 끝날 때 도와준 업체 이름을 알려 준다','협찬은 방송 중에 업체 이름을 계속 보여 준다']},
+ '2.4':{c:['드라마에서','협찬받은 옷의','상표를','가려 놓는 것도','이 때문이다.'],v:[4],s:[3],k:[1,2,3],p:['협찬받은 옷은 방송 중에 이름을 보여 주면 안 돼서 상표를 가린다','협찬받은 옷은 상표를 크게 보여 준다']},
+ '3.1':{c:['협찬 제도는','그대로 두고','간접 광고를','법으로','허용한 것이다.'],v:[4],s:null,hide:'나라 (법을 만든 쪽)',k:[0,1,2],p:['협찬 제도는 남겨 두고 간접 광고도 허락했다','협찬 제도를 없애고 간접 광고로 바꿨다']},
+ '3.4':{c:['하지만','시청자를 보호하기 위해','출연자가 상품 이름을 말하거나','"이거 사세요"처럼 구매를 권하는 것은','여전히','금지되었다.'],v:[5],s:[3],k:[2,3,4],p:['출연자가 상품 이름을 말하거나 사라고 하는 건 아직도 안 된다','이제는 출연자가 상품 이름을 말해도 된다']},
+ '1.5':{c:['또','상품이','프로그램 내용에','자연스럽게 어울리면','광고 효과가','더 커지는데,','이것을',"'맥락 효과'라고",'한다.'],v:[5,8],s:[4],k:[3,7],p:['상품이 내용에 자연스럽게 어울리면 광고 효과가 커진다 (맥락 효과)','상품이 어색할수록 광고 효과가 커진다']}}
+};
+const ANK='sihun_ko_an';
+function anGet(){return store(ANK)||{st:0,skip:false,taught:false}}
+function anData(p,k){return HWSA[p]&&HWSA[p][k]||null}
+function anStart(it,k){const d=anData(it.p,k);HWS.anSeen=HWS.anSeen||{};const id=it.p+'|'+k;if(!d||HWS.anSeen[id])return false;
+  const A=anGet();HWS.an={id,p:it.p,k,d,step:A.taught?(A.skip?'k':'v'):'teach',skip:!!A.skip,miss:{v:0,s:0,k:0,p:0},sec:{},t0:Date.now(),pick:{},po:shuffle([0,1])};return true}
+function anTxt(d,ix){return ix.map(i=>d.c[i]).join(' / ')}
+function anHTML(st){const a=HWS.an,d=a.d;const roleOf=i=>a.pick.v===i?['v','어찌하다']:a.pick.s===i?['s','무엇이']:a.pick.k===i?['k','핵심']:null;
+  const chunks=`<div class="anrow">${d.c.map((t,i)=>{const r=roleOf(i);const hint=(a.hl||[]).includes(i);return `<button class="anch ${r?'an'+r[0]:''} ${hint?'anhint':''}" data-an="${i}" ${['v','s','k'].includes(a.step)?'':'disabled'}>${esc1(t)}${r?`<span class="antag">${r[1]}</span>`:''}</button>`}).join('')}</div>`;
+  let h=`<div class="hwev" style="margin-top:10px">📌 찾은 근거 문장이에요. 이 문장을 쪼개 읽어 봐요.</div>`;
+  if(a.step==='teach')return h+`<div class="anteach"><div class="anth">🔍 문장 쪼개 읽기 배우기</div>
+    <div>문장의 뼈대는 <b>무엇이</b> + <b>어찌하다</b>예요. (선생님이 말한 <b>S + V</b>)</div>
+    <div class="anrow" style="margin:10px 0"><span class="anch">같은 가락이</span><span class="anch">여러 번 되풀이되면서</span><span class="anch ans">노래가<span class="antag">무엇이</span></span><span class="anch">하나로</span><span class="anch anv">묶인다.<span class="antag">어찌하다</span></span></div>
+    <ol style="margin:6px 0 0 18px;padding:0;line-height:1.9"><li>문장 <b>맨 끝</b>, '~다'로 끝나는 덩어리 = <b>어찌하다</b> → 묶인다</li><li>"<b>누가/무엇이</b> 묶여?" 하고 물어요 → 노래가</li><li>선지와 이어지는 말 = <b>핵심</b> → 같은 가락이, 되풀이되면서</li><li>이어서 쉬운 말로: "가락이 반복되면 노래가 하나로 묶인다"</li></ol>
+    <div class="row" style="justify-content:flex-end;margin-top:10px"><button class="btn" id="anok">알겠어, 해 볼게 →</button></div></div>`;
+  h+=chunks;
+  const vt=a.pick.v!=null?d.c[a.pick.v]:'';
+  if(a.step==='v')h+=`<div class="qt" style="margin-top:10px">① 문장 끝, <b>어찌하다/어떠하다</b>는 어느 덩어리?</div>`;
+  else if(a.step==='s')h+=d.s?`<div class="qt" style="margin-top:10px">② <b>누가/무엇이</b> 「${esc1(vt)}」? 덩어리를 눌러요.</div>`:`<div class="cgloss" style="margin-top:10px">② 이 문장은 <b>누가/무엇이</b>가 숨어 있어요 → <b>${esc1(d.hide||'')}</b><br>한국어는 앞에서 말한 '누가'를 자주 빼요.</div><div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn" id="anhid">알겠어 →</button></div>`;
+  else if(a.step==='k')h+=`<div class="qt" style="margin-top:10px">${a.skip?'':'③ '}선지와 이어지는 <b>핵심</b> 덩어리는?</div><div class="muted" style="font-size:14px">선지: ${esc1([].concat(st).join(' / '))}</div>`;
+  else if(a.step==='p')h+=`<div class="qt" style="margin-top:10px">${a.skip?'':'④ '}이 문장을 <b>쉬운 말</b>로 바꾸면?</div><div class="blocks" style="flex-direction:column;align-items:stretch">${a.po.map(j=>`<button class="blk" style="text-align:left" data-ap="${j}">${esc1(d.p[j])}</button>`).join('')}</div>`;
+  if(a.skip&&a.step==='k')h=`<div class="muted" style="font-size:13px;margin-top:6px">무엇이·어찌하다는 3번 연속 바로 찾아서 이제 생략해요.</div>`+h;
+  return h+`<div id="anfb"></div>`}
+function anMsg(t){const f=$('#anfb');if(f)f.innerHTML=`<div class="cgloss" style="margin-top:8px">${t}</div>`}
+function anNext(){const a=HWS.an;a.sec[a.step]=Math.round((Date.now()-a.t0)/1000);a.t0=Date.now();a.hl=null;
+  a.step={v:'s',s:'k',k:'p',p:'done'}[a.step];if(a.step==='done')anEnd();hwDraw()}
+function anEnd(){const a=HWS.an;const A=anGet();HWS.anSeen[a.id]=1;
+  if(!a.skip){if(!a.miss.v&&!a.miss.s){A.st=(A.st||0)+1;if(A.st>=3){A.skip=true;A.st=0}}else A.st=0}
+  else if(a.miss.p>=1){A.skip=false;A.st=0}
+  store(ANK,A);HWS.anLog=HWS.anLog||[];HWS.anLog.push({k:a.id,t:a.d.c.join(' ').slice(0,40),skip:a.skip,miss:a.miss,sec:a.sec});HWS.an=null;HWS.sp='cmp'}
+function anBind(){const a=HWS.an;if(!a)return;const d=a.d;
+  const ok=$('#anok');if(ok)ok.onclick=()=>{const A=anGet();A.taught=true;store(ANK,A);a.step='v';a.t0=Date.now();hwDraw()};
+  const hd=$('#anhid');if(hd)hd.onclick=()=>{a.pick.s=null;anNext()};
+  document.querySelectorAll('[data-an]').forEach(b=>b.onclick=()=>{const i=+b.dataset.an;const st=a.step;const okSet=st==='v'?d.v:st==='s'?d.s:d.k;
+    if(okSet.includes(i)){a.pick[st]=i;anNext();return}
+    a.miss[st]++;b.classList.add('anno');setTimeout(()=>b.classList.remove('anno'),500);
+    const m=a.miss[st];
+    if(m>=2){a.hl=okSet;hwDraw();anMsg(st==='v'?'반짝이는 덩어리가 <b>어찌하다</b>예요. 눌러 봐요.':st==='s'?'반짝이는 덩어리가 <b>무엇이</b>예요. 눌러 봐요.':'반짝이는 덩어리 중 하나를 눌러 봐요. 선지의 말과 이어져요.');return}
+    anMsg(st==='v'?'문장 <b>맨 끝</b>을 봐요. \'~다\'로 끝나는 덩어리예요.':st==='s'?`"누가/무엇이 <b>${esc1(d.c[a.pick.v])}</b>?" 하고 물어봐요. '~은/는, ~이/가'가 붙은 덩어리가 많아요.`:'선지 조각에 나온 말이나, 같은 뜻의 말이 들어 있는 덩어리를 찾아봐요.')});
+  document.querySelectorAll('[data-ap]').forEach(b=>b.onclick=()=>{const j=+b.dataset.ap;if(j===0){anNext();return}
+    a.miss.p++;b.classList.add('anno');b.disabled=true;
+    const sv=a.pick.s!=null&&d.s?d.c[a.pick.s]:(d.hide||'');anMsg(`<b>무엇이</b>와 <b>어찌하다</b>를 이어 읽어 봐요: 「${esc1(sv)} … ${esc1(d.c[a.pick.v!=null?a.pick.v:d.v[0]])}」. 그 뜻과 같은 걸 골라요.`)})}
 /* 비문학 쪼개 읽기 + 근거 찾기 화면 (엄마 11/24) */
 const esc1=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/&lt;(\/?b)>/g,'<$1>');
 function biOn(H,it){return H&&H.area==='비문학'&&it&&it.p&&HWP[it.p]&&!HWP[it.p].poem}
@@ -6995,6 +7127,7 @@ function biStepHTML(it,st,ev,bad,box){const sp=HWS.sp;
     else if(kw&&lv===2)help=`<div class="cgloss" style="margin-top:8px">🔑 <b>${esc1(kw.o[kw.a])}</b> → <b>${biKwPara(it.p,kw,ev)+1}번째 문단</b>에서 이 말(또는 같은 뜻의 말)을 찾아봐요.</div>`;
     else help=`<div class="muted" style="margin-top:6px;font-size:14px">🔑 3단계 · 혼자 찾기</div>`;
     return h+help+`<div class="alert" style="margin-top:10px">👆 이 선지가 맞는지 확인하려면 글의 어디를 봐야 할까? 왼쪽 글에서 <b>근거 문장</b>을 눌러요.</div><div class="row"><button class="btn ghost sm" id="hwhint">💡 근거가 어디 있는지 모르겠어</button></div><div id="hwfb"></div>`}
+  if(sp==='an'&&HWS.an)return h+(HWS.lvMsg?`<div class="alert" style="margin-top:10px">${HWS.lvMsg}</div>`:'')+anHTML(st);
   const got=HWS.got[0];const keys=[got].concat(ev.filter(k=>k!==got));
   if(HWS.lvMsg)h+=`<div class="alert" style="margin-top:10px">${HWS.lvMsg}</div>`;
   h+=`<div class="hwev">📌 근거: ${biEvSents(it.p,keys).map(t=>'“'+esc1(t)+'”').join(' ')}</div>${box?`<div class="muted" style="font-size:14px;margin-top:4px">&lt;보기&gt;도 같이 봐요.</div>`:''}`;
@@ -7015,7 +7148,7 @@ function biEvBind(it,ev){const hh=$('#hwhint');const pOf=()=>+ev[0].split('.')[0
   const lv2=()=>{HWS.phint=2;document.querySelectorAll('.hs').forEach(s=>{if(ev.includes(s.dataset.hs))s.classList.add('hint')})};
   if(hh)hh.onclick=()=>{HWS.hint=true;if(HWS.phint<1){lv1();$('#hwfb').innerHTML=`<div class="cgloss">💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.</div>`}else{lv2();$('#hwfb').innerHTML='<div class="cgloss">노랗게 빛나는 문장 중에서 골라 눌러요.</div>'}};
   document.querySelectorAll('.hs.tap').forEach(s=>s.onclick=()=>{const k=s.dataset.hs;
-    if(ev.includes(k)){HWS.evN++;if(HWS.et===0)HWS.evFirst++;biLvAfter();HWS.got=[k];HWS.sp='cmp';HWS.ci=0;HWS.cj=[];HWS.ct=0;hwDraw();return}
+    if(ev.includes(k)){HWS.evN++;if(HWS.et===0)HWS.evFirst++;biLvAfter();HWS.got=[k];HWS.sp=anStart(it,k)?'an':'cmp';HWS.ci=0;HWS.cj=[];HWS.ct=0;hwDraw();return}
     HWS.et++;HWS.evMiss++;
     if(HWS.et===1)hwBad(s,'다른 문장이에요. 선지 <b>앞 조각</b>에 나온 낱말이 들어 있는 문장을 찾아봐요.',3);
     else if(HWS.et===2){hwBad(s,`💡 <b>${pOf()+1}번째 문단</b>에 있어요. 그 문단만 다시 읽어 봐요.`,3);lv1()}
@@ -7033,7 +7166,7 @@ function viewHW(id){
   const H=hwSet(id);if(!H){$('#main').innerHTML='<div class="card">숙제가 없어요.</div>';return}
   if(!HWS||HWS.id!==id){const sv=store(HWK(id));HWS=sv&&sv.res?{id,i:Math.min(sv.i||0,H.items.length-1),res:sv.res,rd:sv.rd||{},t0:Date.now(),sec0:sv.sec||0}:{id,i:0,res:[],rd:{},t0:Date.now(),sec0:0};HWS.fresh=!sv;hwReset()}
   hwDraw()}
-function hwReset(){Object.assign(HWS,{ph:null,miss:0,hint:false,got:[],oi:0,bi:0,fill:[],wi:0,si:0,step1:false,q0:Date.now(),done:false,sp:'ev',spi:false,kwO:null,lvMsg:'',kwMiss:0,evLog:[],et:0,ci:0,cj:[],ct:0,phint:0,phN:0,evN:0,evFirst:0,evMiss:0,cmpN:0,cmpFirst:0,cmpMiss:0});if(!HWS.rd)HWS.rd={}}
+function hwReset(){Object.assign(HWS,{ph:null,miss:0,hint:false,got:[],oi:0,bi:0,fill:[],wi:0,si:0,step1:false,q0:Date.now(),done:false,sp:'ev',spi:false,kwO:null,lvMsg:'',kwMiss:0,evLog:[],an:null,anLog:[],et:0,ci:0,cj:[],ct:0,phint:0,phN:0,evN:0,evFirst:0,evMiss:0,cmpN:0,cmpFirst:0,cmpMiss:0});if(!HWS.rd)HWS.rd={}}
 function hwDone(){return HWS.res.filter(r=>r&&!r.skipped).length}
 function hwHead(H){const n=H.items.length;const dots=H.items.map((_,i)=>{const r=HWS.res[i];return `<button class="hwdot ${i===HWS.i?'cur':''} ${r?(r.skipped?'sk':r.miss?'mi':'ok'):''}" data-hj="${i}">${i+1}</button>`}).join('');
   return `<div class="card"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">📒 ${H.w}주차 ${H.title}</h2><span class="muted">${hwDone()} / ${n} · 약 ${H.min}분</span></div>
@@ -7042,7 +7175,7 @@ function hwHead(H){const n=H.items.length;const dots=H.items.map((_,i)=>{const r
    <div class="row" style="justify-content:flex-end;margin-top:8px"><button class="btn ghost sm" id="hwrs">🔄 처음부터 다시</button><button class="btn ghost sm" id="hwsv">💾 여기까지 저장</button><span class="muted" id="hwsvm"></span></div></div>`}
 function hwMark(ok){const it=hwSet(HWS.id).items[HWS.i];if(HWS.res[HWS.i]&&!HWS.res[HWS.i].skipped)return;
   HWS.res[HWS.i]={no:it.no||null,k:it.k,ok:HWS.miss===0&&!HWS.hint,miss:HWS.miss,hint:HWS.hint,sec:Math.round((Date.now()-HWS.q0)/1000)};
-  if(HWS.evN)Object.assign(HWS.res[HWS.i],{ev:{n:HWS.evN,first:HWS.evFirst,miss:HWS.evMiss,ph:HWS.phN,kwMiss:HWS.kwMiss,log:HWS.evLog,lvNow:biLvGet().lv},cmp:{n:HWS.cmpN,first:HWS.cmpFirst,miss:HWS.cmpMiss}})}
+  if(HWS.evN)Object.assign(HWS.res[HWS.i],{ev:{n:HWS.evN,first:HWS.evFirst,miss:HWS.evMiss,ph:HWS.phN,kwMiss:HWS.kwMiss,log:HWS.evLog,lvNow:biLvGet().lv,an:HWS.anLog||[]},cmp:{n:HWS.cmpN,first:HWS.cmpFirst,miss:HWS.cmpMiss}})}
 function hwCopyCard(it){const val=it.copy||(it.k==='ox'?`[ ${it.a} ]`:it.k==='mc'||it.k==='pick'?(it.copy||N[it.a]):it.k==='pron'?it.o[it.a]:'');
   return `<div class="hwcopy"><div class="hwcl">📝 종이에 옮겨 적기</div><div class="hwcw">교재 <b>${it.pg}쪽</b> · <b>${it.no}번</b></div><div class="hwcv">${val}</div>
   <div class="row" style="justify-content:center;margin-top:12px"><button class="btn" id="hwcp">✏️ 종이에 적었어요 ✓</button></div></div>`}
@@ -7132,6 +7265,7 @@ function hwBind(H,it){
   const hh=$('#hwhint');
   if(it.k==='ox'&&biOn(H,it)&&HWS.ph==='ev'){
     if(HWS.sp==='kw')biKwBind();
+    if(HWS.sp==='an')anBind();
     if(HWS.sp==='ev')biEvBind(it,it.ev);
     else if(HWS.sp==='cmp')biCmpBind(it,it.st,biBad(it),it.why||'');
     document.querySelectorAll('[data-bv]').forEach(b=>b.onclick=()=>{if(b.dataset.bv===it.a)hwAfterOk(it);else hwBad(b,'방금 비교한 걸 봐요. 두 조각이 <b>다 같으면 ⭕</b>, 하나라도 <b>다르면 ❌</b>.')})}
@@ -7141,6 +7275,7 @@ function hwBind(H,it){
     document.querySelectorAll('[data-ox]').forEach(b=>b.onclick=()=>{if(b.dataset.ox===it.a){hwAfterOk(it)}else hwBad(b,'근거를 다시 읽어 봐요. 선지의 <b>뒤 조각</b>까지 근거와 똑같아?')})}
   else if(it.k==='mc'&&biOn(H,it)&&HWS.ph==='judge'&&(it.opts[HWS.oi]||{}).ev){const op=it.opts[HWS.oi];
     if(HWS.sp==='kw')biKwBind();
+    if(HWS.sp==='an')anBind();
     if(HWS.sp==='ev')biEvBind(it,op.ev);
     else if(HWS.sp==='cmp')biCmpBind(it,op.t,biOpBad(op),op.why||'');
     document.querySelectorAll('[data-bj]').forEach(b=>b.onclick=()=>{const say=b.dataset.bj==='1';
