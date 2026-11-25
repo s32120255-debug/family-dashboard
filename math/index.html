@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795646034";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795646788";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -104,6 +104,8 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .side button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:64px;display:flex;flex-direction:column;gap:2px}
 .side b{font-family:var(--f-disp);font-weight:400;font-size:19px}
 .side span{font-size:13px;color:var(--ink-2)}
+.fam-top{display:flex;gap:8px}.fam-p{flex:1;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink-2)}.fam-p b{font-family:var(--f-disp);font-weight:400;font-size:19px;color:var(--ink)}.fam-p.me{border:2px solid var(--blue)}
+.fam-t{width:100%;border-collapse:collapse;font-size:16px}.fam-t th{text-align:left;font-weight:400;padding:7px 6px;border-bottom:1px solid var(--line)}.fam-t tr:first-child th{text-align:center;font-size:20px}.fam-t td{text-align:center;padding:7px 4px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}.fam-t td i{font-style:normal;color:var(--ink-2);font-size:12px}.fam-t td.ok{color:var(--green);font-weight:700}.fam-t td.me{background:var(--blue-soft,rgba(47,111,189,.08))}
 .du-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:18px}.du-row b{font-family:var(--f-disp);font-weight:400;font-size:20px}.du-self{color:var(--pri,#2c5fa5);font-weight:700}
 .gate{position:relative;overflow:hidden}
 .gate .fill{position:absolute;left:0;bottom:0;height:4px;background:var(--blue);width:0}
@@ -3158,6 +3160,30 @@ function vDuel(){const cards=PROFILES.filter(p=>p.id!==PID).map(ot=>{const r=duW
   const tally=PROFILES.filter(p=>p.id!==PID).map(ot=>{const L=wk.filter(x=>duVs(x).includes(ot.id));return L.length?`${duMe().name} ${L.filter(x=>duWin(x)===PID).length} : ${ot.name} ${L.filter(x=>duWin(x)===ot.id).length}`:""}).filter(Boolean).join(" · ");
   const hist=done.slice(-6).reverse().map(x=>{const w=duWin(x),v=duVs(x);return `<p class="small tab">${x.d.slice(5)} · ${TYPES[x.type].name} · ${v.map(q=>`${duP(q).icon} ${x.res[q].c}개 ${x.res[q].t.toFixed(0)}초`).join(" · ")} → ${w==="tie"?"비김":duP(w).name}</p>`}).join("");
   return `${bar("대결")}<div class="page">${cards}<p class="small muted" style="text-align:center">같은 문제를 둘이 따로 푼다냥. 맞힌 수가 먼저, 같으면 시간이다냥. 기록과 단계에는 안 들어간다냥.</p><button class="nb" style="align-self:center" data-act="durefresh">새로 보기</button>${done.length?`<div class="card"><h3>지난 판</h3>${tally?`<p class="small">이번 주 · ${tally}</p>`:""}${hist}</div>`:""}</div>`}
+/* ───────── 가족 진도: 같은 항목을 각자 해 나감. 시간은 견주지 않고 어디까지 왔는지만 봄 ───────── */
+let FAM={};
+const famK=id=>id==="sihun"?[KCORE,KDAYS,"app/core","days"]:[KCORE+"-"+id,KDAYS+"-"+id,"core/"+id,"days-"+id];
+async function famLoad(){const t=today();
+  for(const p of PROFILES){if(p.id===PID){FAM[p.id]={core:S,day:DAYS[t]};continue}const K=famK(p.id);let core=null,day=null;
+    try{core=JSON.parse(localStorage.getItem(K[0])||"null")}catch(e){}try{day=(JSON.parse(localStorage.getItem(K[1])||"{}")||{})[t]||null}catch(e){}
+    FAM[p.id]={core,day}}
+  if(view==="fam")render();if(!DB)return;
+  for(const p of PROFILES){if(p.id===PID)continue;const K=famK(p.id),f=FAM[p.id];
+    try{const r=await DB.doc(K[2]).get(),c=r.exists?r.data():null;if(c&&c.ts&&(!f.core||(c.savedAt||0)>=(f.core.savedAt||0)))f.core=c}catch(e){}
+    try{const r=await DB.doc(K[3]+"/"+t).get(),d=r.exists?r.data():null;if(d&&(!f.day||(d.sets||[]).length>=((f.day.sets||[]).length)))f.day=d}catch(e){}}
+  if(view==="fam")render()}
+const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||[]).length&&!st.grad))return null;const mx=stepMax(T)+1;return st.grad||(STEPT(T)&&(st.step||0)>=mx)?{ok:1,n:mx,mx}:{n:STEPT(T)?(st.step||0)+1:0,mx:STEPT(T)?mx:0}};
+function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
+  const tot=p=>{const d=FAM[p.id].day,pl=d?Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
+  const pass=p=>Object.keys(FAM[p.id].core.ts||{}).filter(id=>TYPES[id]&&(famSt(FAM[p.id].core,id)||{}).ok).length;
+  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
+  const ids=S.cfg.order.filter(id=>TYPES[id]&&P.some(p=>famSt(FAM[p.id].core,id)));
+  const rows=ids.map(id=>`<tr><th>${TYPES[id].name}</th>${P.map(p=>{const x=famSt(FAM[p.id].core,id);return `<td class="${x&&x.ok?"ok":""}${p.id===PID?" me":""}">${!x?"·":x.ok?"통과":x.mx?`${x.n}<i>/${x.mx}</i>`:"하는 중"}</td>`}).join("")}</tr>`).join("");
+  const miss=PROFILES.filter(p=>!P.includes(p)).map(p=>p.name);
+  return `${bar("우리 가족 진도")}<div class="page"><div class="fam-top">${top}</div>
+   ${ids.length?`<div class="card" style="padding:8px"><table class="fam-t"><tr><th></th>${P.map(p=>`<th>${p.icon}</th>`).join("")}</tr>${rows}</table></div><p class="small muted" style="text-align:center">숫자는 지금 단계 / 전체 단계다냥. 같은 길을 각자 걸어간다옹.</p>`:`<div class="notice">아직 푼 것이 없다냥. 한 세트 풀고 오면 여기에 보인다옹.</div>`}
+   ${miss.length?`<p class="small muted" style="text-align:center">${miss.join(", ")}${miss.length>1?"는":JO[PROFILES.find(p=>p.name===miss[0]).id].eun} 아직 시작 전이거나, 로그인하면 보인다냥.</p>`:""}
+   <button class="nb" style="align-self:center" data-act="fam">새로 보기</button></div>`}
 /* 구글 로그인 + 가족 저장소(Firestore). 로그인 안 해도 앱은 그대로 됨 */
 let FB=null,FBU=null,FBMSG="",FBBUSY=false,FBASK=false,FBDENY=false,FBOFF=false,FBWAIT=false;
 const fbCan=()=>/^https?:/.test(location.protocol)&&!(window.claude&&window.claude.use);
@@ -3202,7 +3228,7 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel}[view]||vHome;
+  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam}[view]||vHome;
   app.innerHTML=f()+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
@@ -3251,7 +3277,7 @@ function vHome(){
    <div class="side">
      <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
      <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
-     <button data-act="duel" style="grid-column:span 2"><b>대결</b><span>${duTodo()?"풀 차례인 대결이 있다냥!":"엄마, 아빠, 시훈이 같은 문제로 견준다냥"}</span></button>
+     <button data-act="fam" style="grid-column:span 2"><b>우리 가족 진도</b><span>시훈, 엄마, 아빠가 어디까지 왔나 본다냥</span></button>
      <button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>
    </div></div>`;
 }
@@ -3820,7 +3846,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){S=clone(B[d].core);loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
