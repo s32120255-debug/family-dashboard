@@ -1378,10 +1378,10 @@ function vOpen(i){const s=VS();if(i<0)return;if(i>=s.queue.length)return vFinish
   vc={i,w,phase:r?'result':'spell',pred:vIsRe(w.w)?'re':'new',t0:Date.now(),heard:false,tries:[],hintN:0,copyN:0,recallN:0,msg:''};V={view:'vocab'};vsave();render()}
 const VLV={self:'뜻만 보고 씀',sound:'소리 듣고 씀',hint:'힌트 보고 씀',copy:'따라 쓰고 기억해서 씀',gave:'두 번 틀려 정답 봄'};
 function vToPos(known){vc.known=known;if(posOf(vc.w)){vc.phase='pos';vc.msg='';render()}else vDone(known,vc.gave)}
-function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,lvl:vc.lvl||(known?'self':'gave'),heard:!!vc.heard,tries:vc.tries.join(' / '),hintN:vc.hintN||0,copyN:vc.copyN,recallN:vc.recallN,posPick:vc.posPick||null,posOk:vc.posOk==null?null:vc.posOk,mask:vMask(w),fixN:vc.fixN||0,badSyl:vc.bad?vc.bad.map(i=>sylOf(w.w)[i].t):null,cut:vc.cutRes?{ok:vc.cutRes.ok}:null,sec:Math.round((Date.now()-vc.t0)/100)/10};
+function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pred:vc.pred,lvl:vc.lvl||(known?'self':'gave'),heard:!!vc.heard,tries:vc.tries.join(' / '),hintN:vc.hintN||0,copyN:vc.copyN,recallN:vc.recallN,posPick:vc.posPick||null,posOk:vc.posOk==null?null:vc.posOk,posAns:posOf(w),mask:vMask(w),fixN:vc.fixN||0,badSyl:vc.bad?vc.bad.map(i=>sylOf(w.w)[i].t):null,cut:vc.cutRes?{ok:vc.cutRes.ok}:null,sec:Math.round((Date.now()-vc.t0)/100)/10};
   VC.words=VC.words||{};const prev=VC.words[w.w];VC.words[w.w]={sr:{st:0,due:addDays(today(),1)},mc:(prev&&prev.mc)||[],known,ko:w.ko,ts:new Date().toISOString(),pred:vc.pred,gave:!!gave,how:'spell',lvl:s.res[w.w].lvl,posOk:s.res[w.w].posOk,hist:((prev&&prev.hist)||[]).concat([{d:today(),pred:vc.pred,known,lvl:s.res[w.w].lvl,pos:s.res[w.w].posOk}]).slice(-10)};
   const D=vday();const r=Object.values(s.res);D.n=r.length;D.known=r.filter(x=>x.known).length;D.re=r.filter(x=>x.pred==='re').length;D.reOk=r.filter(x=>x.pred==='re'&&x.known).length;D.gave=r.filter(x=>x.gave).length;
-  D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;
+  D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;D.posBad=Object.entries(s.res).filter(([,x])=>x.posOk===false).map(([ww,x])=>({w:ww,pick:x.posPick,ans:x.posAns||posOf(VW.words.find(z=>z.w===ww)||{w:ww})}));
   vc.phase='result';vsave();render();say(w.w)}
 function vFinish(force){const s=VS(),D=vday();const left=s.queue.filter(w=>!s.res[w]).length;if(left&&!force){V={view:'vend'};render();return}D.skipped=left;if(force)D.forced=true;else delete D.forced;if(!D.end||force){D.end=new Date().toISOString();D.min=mins(Date.now()-s.start)}vsave();V={view:'home'};render()}
 function vend(){const s=VS();const left=s.queue.filter(w=>!s.res[w]);
@@ -1391,9 +1391,19 @@ function vBoxes(word,shown){return `<div style="display:flex;justify-content:cen
 function vFullBoxes(word){return `<div class="vfull" style="display:flex;justify-content:center;gap:5px;flex-wrap:wrap;margin:10px 0">${[...word].map(c=>c===' '?'<span style="width:14px"></span>':`<span data-f="1" style="width:30px;height:38px;border-bottom:3px solid #c3cbe0;display:inline-flex;align-items:flex-end;justify-content:center;font:800 24px 'Noto Sans KR';color:#3b6cf6"></span>`).join('')}</div>`}
 function vInput(act,label){return `<div class="row" style="justify-content:center"><input id="vin" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="${act}" data-full="1" style="font:800 24px 'Noto Sans KR';padding:10px 14px;border:2px solid #c3cbe0;border-radius:14px;width:min(100%,340px);text-align:center"><button class="btn" data-act="${act}">${label}</button></div>`}
 function vDup(w){return VW.words.filter(x=>x.ko===w.ko&&x.w!==w.w)}
-function vPosQ(){const k=posOf(vc.w);const o=['n','v','a','d'];if(!o.includes(k))o.push(k);
+// 엄마 11/25: 품사 틀리면 그냥 넘어가서 틀린 줄 모름 → ❌ + 정답 + 한 줄 이유 보여 주고 「알겠어」 눌러야 넘어감
+function posWhy(word,k){const w=(word||'').toLowerCase();
+  if(k==='a'){if(/ed$/.test(w))return '동사에 -ed가 붙어서 "그런 상태인"을 말해요 → 형용사';if(/ing$/.test(w))return '동사에 -ing가 붙어서 "그렇게 만드는"을 말해요 → 형용사';
+    const m=w.match(/(ful|ous|ive|able|ible|less|ic|al)$/);if(m)return `-${m[1]}로 끝나는 말은 대부분 형용사예요`}
+  if(k==='n'){const m=w.match(/(tion|sion|ment|ness|ity|ship)$/);if(m)return `-${m[1]}로 끝나는 말은 대부분 명사예요`;const e=w.match(/(er|or|ist)$/);if(e)return `-${e[1]}로 끝나서 "~하는 사람·것"이 돼요 → 명사`}
+  if(k==='d'&&/ly$/.test(w))return '-ly로 끝나서 "어떻게"를 꾸며 줘요 → 부사';
+  return POSHINT[k]+' → '+POS[k]}
+function vPosQ(){const k=posOf(vc.w);const o=['n','v','a','d'];if(!o.includes(k))o.push(k);const bad=vc.posPick&&vc.posOk===false;
+  const chip=p=>{const st=!bad?'background:#eef1f7;color:#1f2330':p===k?'background:#e3f6ea;color:#1f2330;border:3px solid #2e9e5b':p===vc.posPick?'background:#fde8e4;color:#1f2330;border:3px solid #e4572e':'background:#eef1f7;color:#8a90a0;opacity:.6';
+    return `<button class="chip" ${bad?'disabled':`data-act="vpos" data-v="${p}"`} style="flex:1;min-width:130px;max-width:200px;${st};padding:10px 8px;white-space:normal;line-height:1.4"><b style="font-size:18px">${bad&&p===k?'✅ ':bad&&p===vc.posPick?'❌ ':''}${POS[p]}</b><div style="font-size:12px;font-weight:400">${POSHINT[p]}</div></button>`};
   return `<div class="res ok" style="text-align:center"><div class="ans">${esc(vc.w.w)} = ${esc(vc.w.ko)} <button class="btn light sm" data-act="vsay">🔊</button></div></div>
-  <div class="tip" style="text-align:center;margin-top:12px">🏷️ 이 단어는 무슨 품사야?</div><div class="row" style="justify-content:center;align-items:stretch">${o.map(p=>`<button class="chip" data-act="vpos" data-v="${p}" style="flex:1;min-width:130px;max-width:200px;background:#eef1f7;color:#1f2330;padding:10px 8px;white-space:normal;line-height:1.4"><b style="font-size:18px">${POS[p]}</b><div style="font-size:12px;font-weight:400">${POSHINT[p]}</div></button>`).join('')}</div>`}
+  <div class="tip" style="text-align:center;margin-top:12px">🏷️ 이 단어는 무슨 품사야?</div><div class="row" style="justify-content:center;align-items:stretch">${o.map(chip).join('')}</div>`+
+  (bad?`<div class="res slow" style="text-align:center;margin-top:10px"><div style="font-size:18px;font-weight:800">❌ 품사가 틀렸어요</div><div style="margin-top:6px"><b>${esc(vc.w.w)}</b>은(는) <b style="color:#2e9e5b">${POS[k]}</b>예요 (고른 것: ${POS[vc.posPick]||vc.posPick})</div><div class="tip" style="margin-top:4px">💡 ${posWhy(vc.w.w,k)}</div></div><div class="row" style="justify-content:center"><button class="btn" data-act="vposok">알겠어 ▶</button></div>`:'')}
 function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
   let h=topbar('🔤 단어 10개',true)+`<div class="bar"><i style="width:${Math.round(Object.keys(s.res).length/n*100)}%"></i></div><div class="nav"><button data-act="vgo" data-i="0" ${vc.i?'':'disabled'}>⏮ 처음으로</button><button data-act="vgo" data-i="${vc.i-1}" ${vc.i?'':'disabled'}>◀ 이전</button><span>${vc.i+1} / ${n}${vIsRe(w.w)?' · 전에 틀린 단어':''}</span><button data-act="vgo" data-i="${vc.i+1}">${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`;
   h+=`<div class="card"><div class="tip" style="text-align:center">영어로 뭐지?</div><div class="prompt">${esc(w.ko)}</div>`;
@@ -1420,7 +1430,7 @@ function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
   else if(vc.phase==='pos'){h+=vPosQ()}
   else{const ok=r&&r.known,k=posOf(w);const L=r.lvl;
     const msg=L==='self'?(r.pred==='re'?'⭕ 전에 틀린 단어, 이제 뜻만 보고 썼어요!':'⭕ 뜻만 보고 썼어요!'):L==='sound'?'⭕ 소리 듣고 썼어요!':L==='hint'?'💡 힌트 보고 썼어요. 다음에 한 번 더 나와요.':L==='copy'?'따라 쓰고 기억해서 썼어요. 다음에 한 번 더 나와요.':L==='gave'?'아직 헷갈려요. 다음에 한 번 더 나와요.':(ok?'⭕ 맞았어요!':'다음에 한 번 더 나와요.');
-    const pm=r.posOk==null?'':r.posOk?`<div class="tip" style="margin-top:4px">🏷️ 품사도 맞았어요: <b>${POS[k]}</b></div>`:`<div class="tip" style="margin-top:4px">🏷️ 품사는 <b>${POS[k]}</b>예요 · ${POSHINT[k]}</div>`;
+    const pm=r.posOk==null?'':r.posOk?`<div class="tip" style="margin-top:4px">🏷️ 품사도 맞았어요: <b>${POS[k]}</b></div>`:`<div class="tip" style="margin-top:4px;color:#c0392b">🏷️ 품사는 틀렸어요 → 정답 <b>${POS[k]}</b> · ${posWhy(w.w,k)}</div>`;
     h+=`<div class="res ${ok?'ok':'slow'}">${msg}<div class="ans" style="text-align:center">${esc(w.w)} = ${esc(w.ko)}${k?` <span class="tip">(${POS[k]})</span>`:''} <button class="btn light sm" data-act="vsay">🔊</button></div>${sylN(w.w)>1?sylHTML(w.w,{noTip:true}):''}${pm}</div>
      <div class="tip" style="text-align:center;margin-top:10px">🗣️ 들은 대로 소리 내어 따라 말해 봐요</div><div class="row" style="justify-content:center"><button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button><button class="btn" data-act="vgo" data-i="${vc.i+1}">🗣️ 따라 말했어 · ${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>';const inp=$('#vin');if(inp)setTimeout(()=>{try{inp.focus()}catch(e){}},30)}
@@ -1745,7 +1755,8 @@ const ACT={
     if(vnorm(v)===vnorm(S[bi].t)){vc.msg='';if(vc.fixI<vc.bad.length-1){vc.fixI++;render()}else{vc.phase='recall2';render()}return}
     vc.msg=`❌ 이 마디는 <b>${esc(S[bi].t)}</b>예요. 보고 한 번 더 써요.`;render()},
   vrecall2:()=>{const v=vVal();if(!vnorm(v))return;vc.tries.push('🙈'+v.trim());if(vnorm(v)===vnorm(vc.w.w)){vc.lvl='copy';vToPos(false);return}vc.lvl='gave';vc.gave=true;vToPos(false)},
-  vpos:t=>{if(vc.phase!=='pos')return;vc.posPick=t.dataset.v;vc.posOk=vc.posPick===posOf(vc.w);vDone(vc.known,vc.gave)},
+  vpos:t=>{if(vc.phase!=='pos'||vc.posOk===false)return;vc.posPick=t.dataset.v;vc.posOk=vc.posPick===posOf(vc.w);if(vc.posOk)vDone(vc.known,vc.gave);else render()},
+  vposok:()=>{if(vc.phase!=='pos'||vc.posOk!==false)return;vDone(vc.known,vc.gave)},
   vsay:()=>say(vc.w.w),
   vrsay:()=>say(vr.w.w),
   vrpick:t=>{const s=VS();if(!vr||(s.revRes||{})[vr.w.w])return;const v=t.dataset.v,ok=v===vr.w.ko;s.revRes=s.revRes||{};s.revRes[vr.w.w]={ok,pick:v};
