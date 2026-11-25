@@ -1265,13 +1265,13 @@ let MZ=null;
 function mapS(){return RLOG.map||(RLOG.map={cells:{},days:{},done:{}})}
 // 👀 직접 해 보기(엄마 미리보기): 날짜와 상관없이 아직 안 한 다음 지도를 보여 줌. 저장은 막혀 있어 시훈이 기록엔 안 남음
 // 👀 미리보기: 오늘 지도를 이미 끝냈으면 내일 지도를 따로(try:날짜) 보여 줌. 저장은 막혀 있어 기록 안 남음
-function mapDKey(){if(window.HUBTRY){const d=mapS().days[today()];if(d&&d.end)return 'try:'+today()}return today()}
+function mapDKey(){if(window.HUBTRY){if(window.TRYDAY==='today')return 'tryT:'+today();if(window.TRYDAY==='tomorrow')return 'try:'+today();const d=mapS().days[today()];if(d&&d.end)return 'try:'+today()}return today()}
 function mapWeak(k){const M=mapS(),S=MAPSET[k];return S?S.cells.filter(c=>mapColor(M.cells[c.k])!=='green').length:0}
 function mapSetToday(){if(today()<MAP_FROM&&!window.HUBTRY)return null;const M=mapS();let d=M.days[mapDKey()];
   // MARK로 바꾸기 전에 열어 둔 be·There 날: 칸을 하나도 안 했으면 MARK로 바꿈
   if(d&&d.set==='A'&&!d.end&&!MAPSET.A.cells.some(c=>M.cells[c.k]&&M.cells[c.k].d===today())){delete M.days[mapDKey()];d=null}
-  if(d)return d.set;const tom=mapDKey()!==today();M.again=M.again||{};
-  for(const k of MAPORDER){const dd=M.done[k],ag=M.again[k];if(!dd)return k;if(dd===today()&&!tom)return k;
+  if(d)return d.set;const tom=mapDKey().startsWith('try:');M.again=M.again||{};const dT=M.days[today()],curT=tom&&dT&&!dT.end?dT.set:null;
+  for(const k of MAPORDER){const dd=M.done[k],ag=M.again[k];if(k===curT&&!ag)continue;if(!dd)return k;if(dd===today()&&!tom)return k;
     if(ag){if(ag===today()&&!tom)return k;continue}
     if(mapWeak(k)>=MAP_WEAK)return k}
   return 'R'}
@@ -1281,7 +1281,7 @@ function mapPickR(){const M=mapS(),A=MAPALL(),o={gray:0,yellow:1,green:2,'':3};r
 function mapSetOf(d){if(!d)return null;if(d.set!=='R')return MAPSET[d.set];const A=MAPALL(),cells=(d.rk||[]).map(k=>A[k]).filter(Boolean),sets=[...new Set(cells.map(c=>c.set))];
   return {t:'다시 채우기 · 느린 칸과 다음에 배울 칸',rule:['오늘은 지금까지 지도에서 <b>느렸던 칸 · 다음에 배울 칸</b>을 다시 채워요. 원리가 기억 안 나면 아래를 한 번 보고 가요.'].concat(sets.map(k=>`<b>${esc(MAPSET[k].t)}</b><br>`+MAPSET[k].rule[sets.length>2?0:1]||MAPSET[k].rule[0])),
     cells,quiz:sets.flatMap(k=>MAPSET[k].quiz||[]).filter((q,i)=>i%Math.max(1,Math.ceil(sets.length*5/5))===0).slice(0,5),words:[]}}
-function mapDay(){const M=mapS(),k=mapSetToday();if(!k)return null;const key=mapDKey();if(!M.days[key]){M.days[key]={set:k,start:new Date().toISOString()};if(k==='R')M.days[key].rk=mapPickR();else M.days[key].revK=mapRevPick(k,key.startsWith('try:')?addDays(today(),1):today())}return M.days[key]}
+function mapDay(){const M=mapS(),k=mapSetToday();if(!k)return null;const key=mapDKey();if(!M.days[key]){M.days[key]={set:k,start:new Date().toISOString()};if(key.startsWith('tryT:')){const S0=MAPSET[k];((S0&&S0.cells)||[]).forEach(c=>{if(M.cells[c.k]&&M.cells[c.k].d===today())delete M.cells[c.k]})}if(k==='R')M.days[key].rk=mapPickR();else M.days[key].revK=mapRevPick(k,key.startsWith('try:')?addDays(today(),1):today())}return M.days[key]}
 function mapCells(){const d=mapDay();const S=mapSetOf(d);return S?S.cells:[]}
 function mapCN(c){return c.n||stageName(c.k)}
 // 🧠 외우기(엄마 11/25 「외우기부터 시작하자」): 단어 다음, 원리 전에 오늘 예문 10개를 듣고 따라 말하며 외움 → 그다음 안 보고 씀
@@ -1409,7 +1409,7 @@ function mapRevRec(d,c,r){const M=mapS();d.rev=d.rev||{};d.rev[c.k]=Object.assig
 function mapFinish(){const d=mapDay();if(!d)return;if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));const M=mapS();if(M.done[d.set]&&M.done[d.set]!==today()&&d.set!=='R'){M.again=M.again||{};M.again[d.set]=today()}M.done[d.set]=M.done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
 function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length)return '';const C={green:'🟢',yellow:'🟡',gray:'⬜','':'·'};
   let h='<div class="card"><h2>🗺️ 내 지도 (문법 칸 확인)</h2><p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 틀림(다음에 배울 칸). 난이도 조정할 때 보는 기록이에요.</p>';
-  Object.keys(M.days).sort().reverse().forEach(dt=>{const d=M.days[dt],S=mapSetOf(d);if(!S||dt.startsWith('try:'))return;const g=S.cells.filter(c=>mapColor(M.cells[c.k])==='green').length;
+  Object.keys(M.days).sort().reverse().forEach(dt=>{const d=M.days[dt],S=mapSetOf(d);if(!S||dt.startsWith('try'))return;const g=S.cells.filter(c=>mapColor(M.cells[c.k])==='green').length;
     h+=`<h3 style="margin:12px 0 4px">${dt.slice(5).replace('-','/')} · ${esc(S.t)}${d.end?` · ${d.min}분`:' · 아직 안 끝남'}</h3><p>예측 <b>${d.pred!=null?d.pred+'칸':'-'}</b> → 실제 🟢 <b>${g}칸</b>${d.quiz?` · 📝 내신 ${d.quiz.filter(x=>x.ok).length}/${S.quiz.length}`:''}</p>
     <div class="scroll"><table class="grid"><tr><th>칸</th><th>색</th><th>초</th><th>시훈이가 쓴 것</th><th>정답</th><th>막힌 이유</th><th>말하기</th></tr>${S.cells.map(c=>{const r=M.cells[c.k]||{};const sp=(d.speak||{})[c.k];return `<tr><td>${esc(mapCN(c))}</td><td>${C[mapColor(M.cells[c.k])]}</td><td>${r.sec||'-'}</td><td>${esc(r.typed||'')}</td><td>${esc(c.en[0])}</td><td>${esc((d.why||{})[c.k]||'')}</td><td>${sp?sp.sec+'초':''}</td></tr>`}).join('')}</table></div>`;
     if(d.quiz)h+=`<p class="tip">📝 내신: ${S.quiz.map((q,i)=>{const r=d.quiz[i];return `${i+1}번 ${!r?'-':r.ok?'⭕':'🔎 '+'①②③'[r.pick]}`}).join(' · ')}</p>`;
@@ -1665,9 +1665,15 @@ function vStart(){let s=VS();
   if(s&&s.v!==2){const done=s.queue.filter(w=>(s.res||{})[w]);if(done.length<VDAILY){const p=vPickQueue();s.queue=done.concat(p.queue.filter(w=>!done.includes(w))).slice(0,VDAILY);s.re=[...new Set((s.re||[]).concat(p.re))].filter(w=>s.queue.includes(w))}else s.queue=done;s.v=2;vsave()}
   // 엄마 11/25 「시훈이 오늘 께 아니라고」: 새 단어 첫날 익히기 배포 전에 만들어진 오늘 묶음 → 오늘 처음 만난 단어는 익히기(품사·외우는 방법→따라 쓰기→녹음→예문)로 다시. 내일 시험.
   if(s&&!s.sim&&s.learn===undefined&&!window.HUBTRY){const K=VC.words||{};const isNew=w=>{const k=K[w];return !k||(!k.learnAt&&!(k.hist||[]).some(h=>h.d<today()))};s.learn=s.queue.filter(isNew);s.learn.forEach(w=>{delete s.res[w]});s.re=(s.re||[]).filter(w=>!s.learn.includes(w));s.i=0;vsave()}
+  if(!s&&window.HUBTRY&&window.TRYDAY){s={date:today(),v:2,queue:[],re:[],learn:[],i:0,res:{},rev:[],revRes:{},ph:true}}
   if(!s){const p=vPickQueue();s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,learn:p.learn||[],i:0,res:{},start:Date.now()};vday().start=new Date().toISOString();vsave()}
   if(s.rev===undefined){s.rev=[];s.revRes={};vsave()}
   // 👀 직접 해 보기: 오늘 단어를 이미 다 했으면 내일 나올 단어로 보여 줌(기록 안 남음, 끝내기 누르면 원래대로)
+  // 👀 미리보기 오늘/내일 고르기(엄마 11/25): 기록 안 남음
+  if(window.HUBTRY&&window.TRYDAY&&!s.sim){const K=VC.words||{},base=s.date===today()&&!s.sim&&!s.ph?s:null;let q,re,ln;
+    if(window.TRYDAY==='today'){if(base){q=base.queue.slice();re=(base.re||[]).slice();ln=base.learn?base.learn.slice():base.queue.filter(w=>{const k=K[w];return !k||(!k.learnAt&&!(k.hist||[]).some(h=>h.d<today()))})}else{const p=vPickQueue();q=p.queue;re=p.re;ln=p.learn||[]}}
+    else{const p=vPickQueue(addDays(today(),1));const tl=base?(base.learn||[]).filter(w=>!K[w]):[];q=[...new Set(tl.concat(p.queue))];re=[...new Set(tl.concat(p.re))];ln=(p.learn||[]).filter(w=>!tl.includes(w))}
+    s=VC.session={date:today(),v:2,queue:q,re,learn:ln,i:0,res:{},start:Date.now(),rev:[],revRes:{},sim:true}}
   if(window.HUBTRY&&!s.sim&&!s.queue.some(w=>!s.res[w])&&!(s.rev||[]).some(w=>!(s.revRes||{})[w])){const p=vPickQueue(addDays(today(),1));s=VC.session={date:today(),v:2,queue:p.queue,re:p.re,learn:p.learn||[],i:0,res:{},start:Date.now(),rev:[],revRes:{},sim:true}}
   const ri=(s.rev||[]).findIndex(w=>!(s.revRes||{})[w]);if(ri>=0)return vRevOpen(ri);
   const f=s.queue.findIndex(w=>!s.res[w]);vOpen(f>=0?f:Math.min(s.i,s.queue.length-1))}
@@ -8144,7 +8150,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
       ${H('👀 직접 해 보기 · 시훈이 화면 그대로')}
       <p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 풀지 않아도 다음 ▶으로 넘기고, 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
-      ${B('🇺🇸','영어','단어 · 문장 · 녹음','data-h="try" data-app="en"')}
+      ${B('🇺🇸','영어 · 오늘','시훈이가 오늘 하는 것 처음부터','data-h="try" data-app="en" data-day="today"')}
+      ${B('🇺🇸','영어 · 내일','시훈이가 내일 할 것 미리','data-h="try" data-app="en" data-day="tomorrow"')}
       ${B('📖','국어','복습 · 비문학 · 숙제 · 누적 테스트','data-h="try" data-app="ko"')}
       ${B('🔢','수학 3-2','단계 · 그림 틀 · 🖼 그림 복습 · 🧑‍🏫 가르치기 · 📘 최상위 문제집','data-h="try" data-app="m32"')}
       ${B('✍️','글쓰기','AI 쌤과 글쓰기','data-h="try" data-app="write"')}
@@ -8249,7 +8256,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
     else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
-    else if(a==='try'){window.HUBTRY=true;RET='admin';tryBar();openApp(t.dataset.app)}
+    else if(a==='try'){window.HUBTRY=true;window.TRYDAY=t.dataset.day||'';RET='admin';tryBar();openApp(t.dataset.app)}
     else if(a==='report'){location.href='./report.html'}
     else if(a==='pencal'){penCal()}
     else if(a==='lock'){try{sessionStorage.removeItem('hub:mom')}catch(e){}location.reload()}
