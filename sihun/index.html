@@ -950,7 +950,7 @@ table.lmap th small{font-weight:500;color:var(--muted)}
 .pno{display:inline-block;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:11px;background:var(--navy);color:#fff;font-size:13px;margin-right:4px;vertical-align:2px}
  .hwp p.phint{background:#fff8d6;border-radius:10px;box-shadow:0 0 0 3px #ffd54a;padding:4px 6px}
  .bw{border-bottom:2px dotted #e08a00;cursor:pointer} .bw.on{background:#fff1b8}
- .bicur{font-size:20px!important;line-height:2.1!important} .biprev{margin-bottom:10px}
+ .bicur{font-size:20px!important;line-height:2.1!important} .hs.ceres{border-bottom:3px solid #2f7de1;background:#e3efff} mark.cesig{background:#ffd54a;border-radius:4px;padding:0 2px} .ceq{border-left:4px solid #2f7de1;background:#eef5ff;padding:8px 10px;border-radius:8px;font-size:17px;margin:6px 0} .cecard{border:2px solid #c9d3e3;border-radius:12px;padding:10px 12px;margin:8px 0;font-size:16px;line-height:1.6;background:#fff} .cearr{color:#c06f00;font-weight:800;margin:2px 0 2px 8px} .cetag{display:inline-block;font-size:12px;font-weight:800;border-radius:6px;padding:1px 6px;margin-right:4px} .cewhy{background:#fff1d6;color:#c06f00} .cetag.ceres{background:#e3efff;color:#2f7de1} .biprev{margin-bottom:10px}
  .bimap{margin:6px 0 12px;background:#f4f7fc;border-radius:10px;padding:6px 10px} .bimap summary{cursor:pointer;font-weight:800;color:var(--navy)}
  .bimr{display:flex;gap:8px;align-items:flex-start;margin:8px 0;font-size:16px;line-height:1.6;word-break:keep-all} .bimr.done{opacity:.75;font-size:14px} .bimrole{font-weight:800;color:var(--navy);font-size:14px} .bimnote{margin-top:8px;font-weight:700}
  .bicmp{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:18px;font-weight:700;line-height:1.6;word-break:keep-all}
@@ -7313,11 +7313,42 @@ function biNeedRead(H,it){if(!biOn(H,it)||!HWREAD[it.p])return false;if(H.items.
 function biBad(it){return it.k==='ox'?(it.bad!=null?it.bad:it.a==='X'?1:-1):null}
 function biOpBad(op){return op.bad!=null?op.bad:op.ok?-1:1}
 function biMap(p,open){const R=HWREAD[p],P=HWP[p];if(!R)return '';
-  return `<details class="bimap" ${open?'open':''}><summary>🗺️ 글 지도 · ${P.title}</summary>${R.paras.map((x,i)=>`<div class="bimr"><b class="pno">${i+1}</b><div><div class="bimrole">${x.role}</div><div>${esc1(x.o[0])}</div></div></div>`).join('')}<div class="bimnote">${R.map}</div></details>`}
+  return `<details class="bimap" ${open?'open':''}><summary>🗺️ 글 지도 · ${P.title}</summary>${R.paras.map((x,i)=>`<div class="bimr"><b class="pno">${i+1}</b><div><div class="bimrole">${x.role}</div><div>${esc1(x.o[0])}</div></div></div>`).join('')}<div class="bimnote">${R.map}</div>${(()=>{const st=HWS.rd&&HWS.rd[p];const L=(HWCE[p]||[]).map((d,i)=>d&&st&&st.ce&&st.ce[i]&&st.ce[i].st==='ok'?`<div class="bimr"><b class="pno">${i+1}</b><div>🔗 ${esc1(d.why)} <b>➜ 그래서</b> ${esc1(d.res)}</div></div>`:'').join('');return L?`<div class="bimrole" style="margin-top:8px">🔗 왜 → 그래서</div>${L}`:''})()}</details>`}
 function biWords(p,pi){const R=HWREAD[p];const P=HWP[p];const W=(R&&R.paras[pi].w||[]).map((x,k)=>({w:x[0],m:x[1],k})).sort((a,b)=>b.w.length-a.w.length);const used=new Set();
   return P.s[pi].map((t,si)=>{let s=t;W.forEach(x=>{if(used.has(x.k))return;const j=s.indexOf(x.w);if(j<0)return;used.add(x.k);s=s.slice(0,j)+'\u0001'+x.k+'\u0002'+s.slice(j+x.w.length)});
     s=esc1(s).replace(/\u0001(\d+)\u0002/g,(_,k)=>`<span class="bw" data-bw="${k}">${esc1(R.paras[pi].w[+k][0])}</span>`);
     return `<span class="hs" data-hs="${pi}.${si}">${s}</span>`}).join(' ')}
+/* 쪼개 읽기: 문단마다 인과관계 1번 (결과 문장 → "왜?" 이유 문장 누르기). r=결과 문장, c=이유 문장(여러 개면 아무거나), sig=신호 낱말 */
+const HWCE={
+music:[
+ {r:2,c:[1,0],sig:'그래서',why:'음악은 소리가 나오자마자 사라진다',res:'지나간 소리를 기억하게 해 주는 방법(반복)이 필요하다'},
+ {r:5,c:[3,4],sig:'그 결과',why:'목소리들이 같은 가락으로 따라 시작하고, 그다음엔 서로 다른 가락으로 이어 간다',res:'목소리마다 따로 움직이면서도 전체가 하나로 어울린다'},
+ {r:0,c:[1],sig:null,why:'음악가들이 화음 반주에 맞춰 한 가락을 노래하는 방식을 좋아하게 되었다',res:'모방은 더 이상 쓸모 있는 방법이 아니었다',tip:'이 문단엔 신호 낱말이 없어요. 결과 바로 뒤 문장이 이유를 말해 줘요.'},
+ {r:2,c:[1],sig:'이런',why:'마지막 악장은 가볍고 쉬운 편이다',res:'마지막 악장에는 론도 형식이 잘 어울린다'},
+ null],
+ppl:[
+ {r:5,c:[4],sig:'그래서',why:'간접 광고는 프로그램 속에 섞여 있어 피하기 어렵다',res:'간접 광고는 시청자 눈에 띌 가능성이 더 높다'},
+ {r:1,c:[0],sig:'이를 위해',why:'회사는 사람들이 자기 상품을 더 알고 좋아하게 만들고 싶다',res:'간접 광고에서 상품을 두 가지 방식으로 보여 준다'},
+ {r:4,c:[3],sig:'이 때문',why:'프로그램 중에 상품 이름·회사 이름을 보여 주는 걸 법으로 막았다',res:'드라마에서 협찬받은 옷의 상표를 가려 놓는다'},
+ {r:1,c:[2],sig:null,why:'광고 규제를 풀어 방송 광고 산업을 키우려고',res:'간접 광고를 법으로 허용했다',tip:'이번엔 이유가 결과 <b>뒤</b>에 있어요. 「목적이었다」 = "~하려고"예요.'},
+ {r:3,c:[2],sig:'이 때문에',why:'사람마다 정보를 해석하는 자기만의 눈이 있다',res:'간접 광고를 따져 보는 미디어 교육이 필요하다'}]};
+function ceData(p,i){const a=HWCE[p];return a&&a[i]}
+function ceCard(d){return `<div class="cecard"><div><span class="cetag cewhy">이유</span> ${esc1(d.why)}</div><div class="cearr">⬇ 그래서</div><div><span class="cetag ceres">결과</span> ${esc1(d.res)}</div></div>`}
+function ceHTML(p,i,st){const d=ceData(p,i);const x=st.ce[i];const P=HWP[p];
+  if(x.st==='ok')return `<div class="exp" style="margin-left:0">🔗 <b>왜 → 그래서</b> 찾았어요!</div>${ceCard(d)}`;
+  return `<div class="qt">🔗 왜 그렇게 됐을까?</div><div style="font-size:16px;margin:4px 0">파란 줄 문장은 <b>결과</b>예요. 왼쪽 글에서 <b>이유</b> 문장을 찾아 눌러요.</div>
+   <div class="ceq">${esc1(P.s[i][d.r])}</div><div id="cefb"></div>`}
+function ceDeco(p,i,st){const d=ceData(p,i);const x=st.ce[i];if(!d||!x||x.st==='ok')return;
+  document.querySelectorAll(`.hs[data-hs^="${i}."]`).forEach(e=>{const k=+e.dataset.hs.split('.')[1];if(k===d.r)e.classList.add('ceres');else e.classList.add('tap');
+    if(x.m>=2&&d.c.includes(k))e.classList.add('hint')});
+  if(x.m>=1&&d.sig){const e=document.querySelector(`.hs[data-hs="${i}.${d.r}"]`);if(e&&!e.querySelector('.cesig'))e.innerHTML=e.innerHTML.replace(d.sig,`<mark class="cesig">${d.sig}</mark>`)}}
+function ceBind(p,i,st,redraw){const d=ceData(p,i);const x=st.ce[i];if(!d||!x||x.st==='ok')return;x.t0=x.t0||Date.now();ceDeco(p,i,st);
+  const say=h=>{const f=$('#cefb');if(f)f.innerHTML=`<div class="cgloss" style="margin-top:8px">🙂 ${h}</div>`};
+  document.querySelectorAll(`.hs[data-hs^="${i}."]`).forEach(e=>e.onclick=()=>{const k=+e.dataset.hs.split('.')[1];
+    if(d.c.includes(k)){x.st='ok';x.sec=Math.round((Date.now()-x.t0)/1000);redraw();return}
+    if(k===d.r){say('그건 파란 줄, <b>결과</b> 문장이에요. 이게 <b>왜</b> 일어났는지 말해 주는 다른 문장을 찾아요.');return}
+    x.m++;redraw();
+    say(x.m>=2?'노랗게 빛나는 문장을 읽어 봐요. 그게 이유예요.':(d.tip||`결과 문장의 <b>「${esc1(d.sig)}」</b>를 봐요. 「${esc1(d.sig)}」는 "앞에 이유가 있어요"라는 신호예요. 바로 앞 문장을 읽어 봐요.`))})}
 /* 쪼개 읽기: 문단마다 한 문장 주어·서술어 찾기 (서술어 = 맨 끝 → 주어 = 누가/무엇이). c.join(' ')===원문 */
 const HWSV={
 music:[
@@ -7349,7 +7380,7 @@ function svBind(p,i,st,redraw){const d=svData(p,i);const x=st.sv[i];if(!d||!x||x
     else if(x.st==='s'){if(j===d.s){x.st='ok';x.sec=Math.round((Date.now()-x.t0)/1000);redraw();return}
       x.ms++;const why=(d.sx&&d.sx[j])||`「${esc1(d.c[d.v].replace(/[.,]$/,''))}」 하는 게 누구(무엇)인지 찾아요. 「은·는·이·가」가 붙은 말을 봐요.`;
       f.innerHTML=`<div class="cgloss" style="margin-top:8px">🙂 ${why}${x.ms>=2?' 빛나는 걸 눌러 봐요.':''}</div>`;if(x.ms>=2){const keep=f.innerHTML;redraw();const g=$('#svfb');if(g)g.innerHTML=keep}}})}
-function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=HWS.rd[p]||{i:0,miss:[],sec:0};st.sv=st.sv||[];st.t0=st.t0||Date.now();const n=R.paras.length;
+function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=HWS.rd[p]||{i:0,miss:[],sec:0};st.sv=st.sv||[];st.ce=st.ce||[];st.t0=st.t0||Date.now();const n=R.paras.length;
   const tag=`<div class="row" style="gap:6px;margin-bottom:6px"><span class="chip">${H.area}</span><span class="chip ok">📖 쪼개 읽기</span><span class="muted">${P.title} · 교재 ${P.pg}쪽</span></div>`;
   if(st.i>=n){
     $('#main').innerHTML=hwHead(H)+`<div class="card">${tag}<h2 style="margin:6px 0">🗺️ 글 지도 완성!</h2><div class="muted">문단마다 고른 말이 모여서 글 전체가 한눈에 보여요. 문제 풀 때 지문 위 「🗺️ 글 지도」를 누르면 다시 볼 수 있어요.</div>${biMap(p,true)}
@@ -7366,6 +7397,13 @@ function biReadDraw(H,it){const p=it.p,R=HWREAD[p],P=HWP[p];const st=HWS.rd[p]=H
     document.querySelectorAll('[data-bw]').forEach(b=>b.onclick=()=>{const w=x.w[+b.dataset.bw];document.querySelectorAll('.bw.on').forEach(y=>y.classList.remove('on'));b.classList.add('on');$('#bwm').innerHTML=`<div class="cgloss">📖 <b>${esc1(w[0])}</b> = ${esc1(w[1])}</div>`;st.words=(st.words||0)+1});
     const sk=$('#biskip');if(sk)sk.onclick=()=>{st.skip=true;st.sec=(st.sec||0)+Math.round((Date.now()-st.t0)/1000);st.t0=null;HWS.q0=Date.now();hwDraw()};
     svBind(p,st.i,st,()=>biReadDraw(H,it));return}
+  const ced=ceData(p,st.i);const cex=ced&&(st.ce[st.i]=st.ce[st.i]||{st:'go',m:0});
+  if(ced&&cex.st!=='ok'){Q+=ceHTML(p,st.i,st)+`<div class="row" style="justify-content:flex-end;margin-top:14px"><button class="btn ghost sm" id="biskip">문제 먼저 볼래요</button></div>`;
+    $('#main').innerHTML=hwHead(H)+`<div class="hwsplit"><div class="card hwl">${L}</div><div class="card hwr">${Q}</div></div>`;hwBind(H,it);
+    document.querySelectorAll('[data-bw]').forEach(b=>b.onclick=()=>{const w=x.w[+b.dataset.bw];document.querySelectorAll('.bw.on').forEach(y=>y.classList.remove('on'));b.classList.add('on');$('#bwm').innerHTML=`<div class="cgloss">📖 <b>${esc1(w[0])}</b> = ${esc1(w[1])}</div>`;st.words=(st.words||0)+1});
+    const sk=$('#biskip');if(sk)sk.onclick=()=>{st.skip=true;st.sec=(st.sec||0)+Math.round((Date.now()-st.t0)/1000);st.t0=null;HWS.q0=Date.now();hwDraw()};
+    ceBind(p,st.i,st,()=>biReadDraw(H,it));return}
+  if(ced)Q+=ceHTML(p,st.i,st);
   Q+=`<div class="qt">${st.i+1}번째 문단은 무슨 말을 하고 있을까?</div><div class="muted" style="margin-bottom:6px">왼쪽 문단만 천천히 읽고 골라요.</div>`;
   if(!ok)Q+=`<div class="blocks" style="flex-direction:column;align-items:stretch">${ord.map(k=>`<button class="blk" style="text-align:left" data-bs="${k}">${esc1(x.o[k])}</button>`).join('')}</div><div id="hwfb"></div>`;
   else Q+=`<div class="exp" style="margin-left:0">✅ <b>${x.role}</b><br>${esc1(x.o[0])}</div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn" id="binx">${st.i<n-1?'다음 문단 →':'🗺️ 글 지도 보기 →'}</button></div>`;
@@ -7575,7 +7613,7 @@ function hwBind(H,it){
 async function hwSave(fin){const H=hwSet(HWS.id);const n=H.items.length;const r=HWS.res;const sec=HWS.sec0+Math.round((Date.now()-HWS.t0)/1000);
   const rec={type:'hw',set:H.id,w:H.w,area:H.area,title:H.title,n,done:fin,restart:!fin&&!!HWS.restart,answered:r.filter(x=>x&&!x.skipped).length,first:r.filter(x=>x&&x.ok).length,copied:r.filter(x=>x&&x.copied).length,items:r.map((x,i)=>x?Object.assign({i},x):{i,skipped:true}),sec};
   store(HWK(H.id),fin?null:{i:HWS.i,res:r,rd:HWS.rd,sec});
-  const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,sv:(x.sv||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',mv:v.mv||0,ms:v.ms||0,sec:v.sec||0}:null).filter(Boolean),sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
+  const rds=Object.entries(HWS.rd||{});if(rds.length)rec.reads=Object.fromEntries(rds.map(([p,x])=>{const R=HWREAD[p];const n=R?R.paras.length:0;const m=x.miss||[];return [p,{title:HWP[p]&&HWP[p].title,n,read:Math.min(x.i||0,n),first:m.filter((v,k)=>k<n&&v===0).length,missParas:m.map((v,k)=>v?k+1:0).filter(Boolean),words:x.words||0,done:!!x.done,skip:!!x.skip,ce:(x.ce||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',m:v.m||0,sec:v.sec||0}:null).filter(Boolean),sv:(x.sv||[]).map((v,k)=>v?{p:k+1,ok:v.st==='ok',mv:v.mv||0,ms:v.ms||0,sec:v.sec||0}:null).filter(Boolean),sec:(x.sec||0)+(x.t0?Math.round((Date.now()-x.t0)/1000):0)}]}));HWS.sec0=sec;HWS.t0=Date.now();
   push(rec);await flushPend()}
 function hwFinish(){const H=hwSet(HWS.id);const r=HWS.res;const sk=H.items.map((_,i)=>i).filter(i=>!r[i]||r[i].skipped);
   const first=r.filter(x=>x&&x.ok).length,ans=r.filter(x=>x&&!x.skipped).length;
