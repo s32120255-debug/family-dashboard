@@ -147,6 +147,11 @@ details .list{margin-top:6px}
 .lstack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px}
 .lbar span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lock{z-index:45}
+.fold>summary{list-style:none;cursor:pointer;color:var(--fg)}.fold>summary::-webkit-details-marker{display:none}
+.fold>summary h3::before,.fold.sub>summary::before{content:"▾";display:inline-block;color:var(--muted);font-size:.8em;transition:transform .15s;margin-right:2px}
+.fold:not([open])>summary h3::before,.fold.sub:not([open])>summary::before{transform:rotate(-90deg)}
+.fold.sub{margin:8px 0 0 4px}.fold.sub>summary{color:var(--fg);font-family:var(--display);font-size:1.1rem;display:flex;gap:6px;align-items:baseline}.fold.sub>summary small{color:var(--muted);font-family:var(--body);font-size:.8rem}
+.fold.sub .list{margin-top:6px}
 #ttl,#today{user-select:none;-webkit-user-select:none}
 .sec{z-index:46;place-items:start center;overflow:auto}
 .secbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;width:min(640px,100%);display:grid;gap:12px;margin-block:24px}
@@ -200,7 +205,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 15</p>
+ <p style="font-size:.75rem">버전 16</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -396,6 +401,10 @@ function editMeal(k,f){const lab=MEALS.find(x=>x[0]===f)[1];const d=new Date(k+"
  $("mc").onclick=closeForm;$("mf").onsubmit=e=>{e.preventDefault();const v=e.target.v.value.trim();closeForm();run(db.setMeal(k,{[f]:v||null}),"저장했어요")}}
 
 /* 미해결판: 모든 탭에서 아직 안 끝난 것을 한눈에 */
+// 접기: 묶음마다 접힘 상태를 이 기기에 기억
+const foldState=(()=>{try{return JSON.parse(store.get("sy-fold")||"{}")}catch(e){return{}}})();
+const isOpen=(k,def)=>k in foldState?foldState[k]:def;
+document.addEventListener("toggle",e=>{const d=e.target;if(!d.dataset||!d.dataset.fold)return;foldState[d.dataset.fold]=d.open;store.set("sy-fold",JSON.stringify(foldState))},true);
 function renderOpen(){const t=today();
  const by=k=>items.filter(x=>x.tab===k&&!x.done).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const money=items.filter(x=>x.tab==="money"&&!x.done&&(x.flow==="think"||x.flow==="plan")).sort((a,b)=>(a.flow==="plan"?0:1)-(b.flow==="plan"?0:1)||(a.createdAt||0)-(b.createdAt||0));
@@ -408,9 +417,11 @@ function renderOpen(){const t=today();
  const total=G.reduce((s,g)=>s+g[2].length,0);
  const solved=items.filter(x=>x.done&&x.decided!=="no"&&["sihoon","work","home"].includes(x.tab)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)).slice(0,60);
  const md=x=>{const v=x.doneDate||(x.doneAt?ymd(new Date(x.doneAt)):"");return v?v.slice(5).replace("-","/"):""};
- const solvedHtml=solved.length?`<details class="solved"><summary>해결한 일 ${solved.length}개</summary><ul class="list">${solved.map(x=>`<li class="item done"><button class="check on" data-done="${x.id}" aria-label="안 한 걸로">✓</button><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(x.tab==="home"?(x.sub||"집안일"):TABNAME[x.tab])}</span>${md(x)?`<span class="pill">${md(x)}</span>`:""}<button class="edit" data-open="${x.id}">수정</button>${x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`).join("")}</ul></details>`:"";
+ const sItem=x=>`<li class="item done"><button class="check on" data-done="${x.id}" aria-label="안 한 걸로">✓</button><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(x.tab==="home"?(x.sub||"집안일"):TABNAME[x.tab])}</span>${md(x)?`<span class="pill">${md(x)}</span>`:""}<button class="edit" data-open="${x.id}">수정</button>${x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`;
+ const SG=[["sihoon","시훈"],["work","서윤 회사"],["home","집안일"]].map(([k,n])=>[k,n,solved.filter(x=>x.tab===k)]).filter(g=>g[2].length);
+ const solvedHtml=solved.length?`<details class="solved" data-fold="solved"${isOpen("solved",false)?" open":""}><summary>해결한 일 ${solved.length}개</summary>${SG.map(([k,n,l])=>`<details class="fold sub" data-fold="s-${k}"${isOpen("s-"+k,true)?" open":""}><summary><span>${n}</span> <small>${l.length}</small></summary><ul class="list">${l.map(sItem).join("")}</ul></details>`).join("")}</details>`:"";
  $("openBoard").innerHTML=`<h2>미해결 ${total?`<span class="big">${total}</span>`:""}</h2>
- ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<div class="ogrp"><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3><ul class="list">${l.map(f).join("")}</ul></div>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}${solvedHtml}`}
+ ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<details class="ogrp fold" data-fold="o-${n}"${isOpen("o-"+n,true)?" open":""}><summary><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3></summary><ul class="list">${l.map(f).join("")}</ul></details>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}${solvedHtml}`}
 
 function render(){
  // 적는 도중 다시 그려져도 커서가 그 자리에 남게
@@ -514,7 +525,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
   if(d.to==="home")return askGroup(x);
   if(d.to==="money")return askAmount(`${x.text} · 얼마예요?`,"out",(a,f)=>upd(x.id,{tab:"money",amount:a,flow:a?f:null,date:today()},"돈으로 옮겼어요"));
   return upd(x.id,{tab:d.to},`${TABNAME[d.to]}(으)로 옮겼어요`)}
- if(d.go){tab=d.go;store.set("sy-tab",tab);render();$("tabs").scrollIntoView({behavior:"smooth"});return}
+ if(d.go){e.preventDefault();tab=d.go;store.set("sy-tab",tab);render();$("tabs").scrollIntoView({behavior:"smooth"});return}
  if(b.classList.contains("tab")){tab=d.k;store.set("sy-tab",tab);render();return}
  if(d.filter!==undefined){homeFilter[d.filter]=d.sub;render();return}
  if(d.week!==undefined){const n=Number(d.week);weekOff=n===0?0:weekOff+n;render();return}
@@ -663,7 +674,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=15;
+const VERSION=16;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
