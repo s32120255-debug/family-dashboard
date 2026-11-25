@@ -147,6 +147,8 @@ details .list{margin-top:6px}
 .lstack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px}
 .lbar span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lock{z-index:45}
+.edit{border:none;background:none;color:var(--accent);font-size:.82rem;cursor:pointer;padding:2px 4px;white-space:nowrap}
+.edit:hover{text-decoration:underline}
 .note{flex:1 1 100%;font-size:.85rem;color:var(--muted);padding-left:34px;overflow-wrap:anywhere}
 .solved summary{cursor:pointer;color:var(--muted);padding:4px 0}
 .solved .list{margin-top:6px}
@@ -182,7 +184,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 12</p>
+ <p style="font-size:.75rem">버전 13</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -274,7 +276,7 @@ const amountPill=x=>x.amount?`<span class="pill ${flowOf(x)}">${{in:"+",plan:"�
 const homePill=x=>(x.sentHome&&x.sentHome.length)?`<span class="pill home">우리집 ${esc(x.sentHome.join("·"))}</span>`:"";
 function row(x,{sub=false}={}){
  return`<li class="item ${x.done?"done":""}"><button class="check ${x.done?"on":""}" data-done="${x.id}" aria-label="${x.done?"안 한 걸로":"끝"}">${x.done?"✓":""}</button>
- <button class="t" data-open="${x.id}">${esc(x.text)}</button>${sub&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}${homePill(x)}${x.done&&x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`}
+ <button class="t" data-open="${x.id}">${esc(x.text)}</button>${sub&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}${homePill(x)}<button class="edit" data-open="${x.id}">수정</button>${x.done&&x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`}
 function listWithDone(arr,opts){
  const open=arr.filter(x=>!x.done).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const done=arr.filter(x=>x.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0));
@@ -285,7 +287,7 @@ function renderInbox(){
  const l=items.filter(x=>x.tab==="inbox").sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  $("inboxCount").textContent=l.length?`정리할 것 ${l.length}개`:"";
  $("inboxList").innerHTML=l.map(x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button>
-  <span class="sort"><button class="btn small b-sihoon" data-move="${x.id}" data-to="sihoon">시훈</button><button class="btn small b-work" data-move="${x.id}" data-to="work">회사</button><button class="btn small b-home" data-move="${x.id}" data-to="home">집안일</button><button class="btn small b-money" data-move="${x.id}" data-to="money">돈</button></span></li>`).join("");
+  <span class="sort"><button class="btn small b-sihoon" data-move="${x.id}" data-to="sihoon">시훈</button><button class="btn small b-work" data-move="${x.id}" data-to="work">회사</button><button class="btn small b-home" data-move="${x.id}" data-to="home">집안일</button><button class="btn small b-money" data-move="${x.id}" data-to="money">돈</button><button class="edit" data-open="${x.id}">수정</button></span></li>`).join("");
 }
 function renderTabs(){
  $("tabs").innerHTML=TABS.map(([k,n])=>{const c=k==="money"||k==="meals"||k==="ledger"?"":items.filter(x=>x.tab===k&&!x.done).length;
@@ -382,14 +384,14 @@ function renderOpen(){const t=today();
  const money=items.filter(x=>x.tab==="money"&&!x.done&&(x.flow==="think"||x.flow==="plan")).sort((a,b)=>(a.flow==="plan"?0:1)-(b.flow==="plan"?0:1)||(a.createdAt||0)-(b.createdAt||0));
  const dd=x=>Math.round((new Date(x.expiry+"T00:00")-new Date(t+"T00:00"))/864e5);
  const food=pantry.filter(x=>!x.empty&&x.expiry&&dd(x)<=2).sort((a,b)=>a.expiry.localeCompare(b.expiry));
- const r=x=>`<li class="item"><button class="check" data-done="${x.id}" aria-label="끝"></button><button class="t" data-open="${x.id}">${esc(x.text)}</button>${x.tab==="home"&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}</li>`;
- const mr=x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button>${amountPill(x)}</li>`;
+ const r=x=>`<li class="item"><button class="check" data-done="${x.id}" aria-label="끝"></button><button class="t" data-open="${x.id}">${esc(x.text)}</button>${x.tab==="home"&&x.sub?`<span class="pill">${esc(x.sub)}</span>`:""}${amountPill(x)}<button class="edit" data-open="${x.id}">수정</button></li>`;
+ const mr=x=>`<li class="item"><button class="t" data-open="${x.id}">${esc(x.text)}</button>${amountPill(x)}<button class="edit" data-open="${x.id}">수정</button></li>`;
  const fr=x=>{const n=dd(x);return`<li class="item"><button class="check" data-peat="${x.id}" aria-label="먹었어요"></button><button class="t" data-popen="${x.id}">${esc(x.name)}</button><span class="pill out">${n<0?-n+"일 지남":n?"D-"+n:"오늘까지"}</span></li>`};
  const G=[["sihoon","시훈",by("sihoon"),r],["work","서윤 회사",by("work"),r],["home","집안일",by("home"),r],["money","돈",money,mr],["home","기한 다 된 먹을거리",food,fr]];
  const total=G.reduce((s,g)=>s+g[2].length,0);
  const solved=items.filter(x=>x.done&&x.decided!=="no"&&["sihoon","work","home"].includes(x.tab)).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)).slice(0,60);
  const md=x=>{const v=x.doneDate||(x.doneAt?ymd(new Date(x.doneAt)):"");return v?v.slice(5).replace("-","/"):""};
- const solvedHtml=solved.length?`<details class="solved"><summary>해결한 일 ${solved.length}개</summary><ul class="list">${solved.map(x=>`<li class="item done"><button class="check on" data-done="${x.id}" aria-label="안 한 걸로">✓</button><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(x.tab==="home"?(x.sub||"집안일"):TABNAME[x.tab])}</span>${md(x)?`<span class="pill">${md(x)}</span>`:""}${x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`).join("")}</ul></details>`:"";
+ const solvedHtml=solved.length?`<details class="solved"><summary>해결한 일 ${solved.length}개</summary><ul class="list">${solved.map(x=>`<li class="item done"><button class="check on" data-done="${x.id}" aria-label="안 한 걸로">✓</button><button class="t" data-open="${x.id}">${esc(x.text)}</button><span class="pill">${esc(x.tab==="home"?(x.sub||"집안일"):TABNAME[x.tab])}</span>${md(x)?`<span class="pill">${md(x)}</span>`:""}<button class="edit" data-open="${x.id}">수정</button>${x.note?`<span class="note">${esc(x.note)}</span>`:""}</li>`).join("")}</ul></details>`:"";
  $("openBoard").innerHTML=`<h2>미해결 ${total?`<span class="big">${total}</span>`:""}</h2>
  ${total?`<div class="ogrid">${G.filter(g=>g[2].length).map(([k,n,l,f])=>`<div class="ogrp"><h3>${n} <small>${l.length}</small><button class="btn small go" data-go="${k}" style="font-family:var(--body)">탭으로</button></h3><ul class="list">${l.map(f).join("")}</ul></div>`).join("")}</div>`:`<p class="empty" style="margin:0">미해결이 없어요.</p>`}${solvedHtml}`}
 
@@ -425,8 +427,9 @@ function askGroup(x){
   if(PANTRY[s])return run(db.family("pantry",{name:x.text,place:PANTRY[s],qty:null,expiry:null,createdAt:Date.now()}).then(()=>db.remove(x.id)),`${s}에 넣었어요 (가족 화면에도 보여요)`);
   upd(x.id,{tab:"home",group:g,sub:s||null},`집안일 · ${s||GNAME[g]}(으)로 옮겼어요`)})}
 function openItem(x){
- modal(`<form class="modal" id="ef"><h3>고치기</h3>
+ modal(`<form class="modal" id="ef"><h3>수정하기</h3>
  <label>내용<input name="text" value="${esc(x.text)}"></label>
+ ${x.done?`<label>어떻게 됐어요 (경과)<input name="note" value="${esc(x.note||"")}" placeholder="예: 다음 주 화요일로 잡음"></label>`:""}
  <label>어디<select name="dest">${DESTS.map(([v,l])=>`<option value="${esc(v)}"${destOf(x)===v||(x.tab==="home"&&!x.sub&&v===`home/${x.group}/`)?" selected":""}>${l}</option>`).join("")}</select></label>
  <details class="moneyopt"${x.amount?" open":""}><summary>돈이 드는 일이면</summary>
  <label>금액 (원)<input name="a" inputmode="numeric" value="${x.amount?Number(x.amount).toLocaleString("ko-KR"):""}" placeholder="예: 12,000"></label>
@@ -436,7 +439,7 @@ function openItem(x){
  $("ec").onclick=closeForm;$("eh").onclick=()=>sendHome(x);
  $("ed").onclick=()=>{modal(`<div class="modal"><h3>지울까요?</h3><p class="hint">「${esc(x.text)}」 되돌릴 수 없어요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div>`);$("dn").onclick=closeForm;$("dy").onclick=()=>{closeForm();del(x.id)}};
  $("ef").onsubmit=e=>{e.preventDefault();const f=e.target;const text=f.text.value.trim();if(!text)return toast("내용을 적어 주세요");
-  const a=toNum(f.a.value);closeForm();upd(x.id,{text,...parseDest(f.dest.value),amount:a,flow:a?f.f.value:null,date:f.d.value||today()},"저장했어요")}}
+  const a=toNum(f.a.value);closeForm();upd(x.id,{text,...parseDest(f.dest.value),amount:a,flow:a?f.f.value:null,date:f.d.value||today(),...(f.note?{note:f.note.value.trim()||null}:{})},"저장했어요")}}
 
 /* 우리집 대시보드로 보내기: 글자만 보내요(금액은 절대 안 보냄) */
 function sendHome(x){
@@ -635,7 +638,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=12;
+const VERSION=13;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
