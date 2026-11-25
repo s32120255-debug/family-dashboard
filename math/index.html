@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795650867";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795650881";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3343,7 +3343,7 @@ function vHome(){
     const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
     return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${STEPT(T)?stepLabel(T,st.step||0):T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span>${pathTxt(id)}</button>`}).join("");
   return `${bar(dayLabel(today()),`<button class="nb" data-act="pin">관리자</button><button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`,1)}<div class="page">
-   ${(()=>{const n=Object.values(DAYS).reduce((a,d)=>a+(d.sets||[]).reduce((x,y)=>x+(y.n||0),0),0);if(!n)return "";const b=n/BOOKN;return `<p class="small muted" style="text-align:center;margin:-6px 0">지금까지 <b>${n.toLocaleString()}문제</b> · 연산 문제집 <b>${b<10?b.toFixed(1):Math.round(b)}권</b>쯤 풀었다냥</p>`})()}
+   ${(()=>{const n=Object.values(DAYS).reduce((a,d)=>a+(d.sets||[]).reduce((x,y)=>x+(y.n||0),0),0);if(!n)return "";const b=n/BOOKN;return `<p class="small muted" style="text-align:center;margin:-6px 0">지금까지 <b>${n.toLocaleString()}문제</b> · 시중 연산 문제집 <b>${b<10?b.toFixed(1):Math.round(b)}권</b>쯤 풀었다냥</p>`})()}
    ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${STEPT(TYPES[nx])?stepLabel(TYPES[nx],tst(nx).step||0):TYPES[nx].ex}</span>${pathTxt(nx)}</button>`
      :`<div class="notice good"><b>오늘 ${totalOwed}판 끝! 수고했다냥.</b></div>`}
    ${carryN?`<p class="small muted">점선 = 지난번에 남은 판 (${carryN})</p>`:""}
@@ -3356,8 +3356,8 @@ function vHome(){
 
 TYPES.MM.conAt=Array.from({length:17},(_,i)=>i);/* 단계마다 방법이 달라서 단계마다 예시 먼저 */
 TYPES.PF.link="머리셈 곱셈에서 48 × 25를 12 × 4 × 25로 쪼갰던 거다냥. 수를 끝까지 쪼개면 소인수분해다옹.";TYPES.PL.link="머리셈 곱셈의 쪼개서 짝 맞추기를 두 수에 같이 하는 거다냥.";TYPES.PE.link="머리셈 곱셈에서 19 × 21 = 20 × 20 − 1로 풀었던 거다냥. 그게 (a − 1)(a + 1) = a² − 1이다옹.";TYPES.FZ.link="머리셈 곱셈을 거꾸로 하는 거다냥. 399를 19 × 21로 되돌리던 것처럼 식을 곱으로 되돌린다옹.";
-/* 연산 문제집 한 권을 1,000문제로 어림 (하루 2쪽 약 25문제 × 주 5일 × 8주) */
-const BOOKN=1000;
+/* 시중 연산 문제집 한 권을 1,500문제로 어림 (150쪽 안팎, 직접 센 수는 아님) */
+const BOOKN=1500;
 /* 달력: 날마다 그날 푼 시간(분). 남과 견주지 않고 내 기록만 */
 let CALM=null,CALD=null;
 const calSec=k=>((DAYS[k]||{}).sets||[]).reduce((a,x)=>a+(x.t||0),0),calMin=sec=>sec>0?Math.max(1,Math.round(sec/60)):0;
