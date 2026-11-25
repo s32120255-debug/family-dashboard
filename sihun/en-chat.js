@@ -15,7 +15,7 @@
   let VOICE=null;
   function pickVoice(){try{const V=speechSynthesis.getVoices();VOICE=V.find(v=>/en-US/i.test(v.lang)&&/female|samantha|google us/i.test(v.name))||V.find(v=>/en-US/i.test(v.lang))||V.find(v=>/^en/i.test(v.lang))||null}catch(e){}}
   try{pickVoice();speechSynthesis.onvoiceschanged=pickVoice}catch(e){}
-  function say(t,rate){try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';if(VOICE)u.voice=VOICE;u.rate=rate||0.8;u.pitch=1.25;speechSynthesis.speak(u)}catch(e){}}
+  function say(t,rate){try{if(window.__micOn)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-US';if(VOICE)u.voice=VOICE;u.rate=rate||0.8;u.pitch=1.8;speechSynthesis.speak(u)}catch(e){}} /* 엄마 11/25 카츄 목소리: 높게(1.8), 속도는 그대로(느린 소리 기능 유지) */
   const CSS=`.kc{font-family:'Noto Sans KR',system-ui,sans-serif;color:#1c2533}
 .kc .card{background:#fff;border-radius:18px;padding:16px;margin:10px 0}
 .kc .goal{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 2px}.kc .goal span{font-size:13px;padding:4px 8px;border-radius:10px;background:#eef1f7;color:#4a5570}.kc .goal span.on{background:#2a9d5c;color:#fff}

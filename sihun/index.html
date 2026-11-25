@@ -49,6 +49,7 @@ window.liveMic=function(ta,onState,lang){
   md.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(s){stream=s;if(!on){s.getTracks().forEach(function(t){t.stop()});return}
     t0s=Date.now();seg();tick=setInterval(function(){show();if(Date.now()-t0s>MAX)end()},500);show()},function(){if(on){on=false;if(onState)onState(false)}doneRes();badge.remove();
     try{alert('마이크를 쓸 수 없어요. 글로 쓰거나 패드에 써 줘요.')}catch(x){}});
+  try{window.speechSynthesis&&speechSynthesis.cancel()}catch(x){}window.__micOn=true;doneP.then(function(){window.__micOn=false});
   show();if(onState)onState(true);
   return {stop:function(){end()},isOn:function(){return on}}};
 window.liveMicSR=function(ta,onState,lang){var SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR||!ta)return null;
@@ -4679,7 +4680,9 @@ function parent(tab='rec'){ CUR='parent'; toHub.later=true; const A=allAtt();
 // 엄마: "무조건 매일" → 그날 맞힌 문제가 없어도 예전에 맞힌 문제나 통과한 단계의 새 문제로 꼭 1문제.
 // 카츄(형아라고 부르는 동생)는 헷갈려하는 역할: 건너뛴 단계("여기서 18은 어떻게 나왔어?")·순서를 묻고, 한 번은 일부러 틀린 풀이를 보여 줘요. 답·방법은 먼저 말 안 해요.
 // 문제 모음·한 날 m32/teach {pool,days}, 요청 m32teachai/<id>(서버 m32Teach), 대화 기록 m32teach/<날짜>-<SID>-<시각>.
-var TEACH_MAX=5, TEACHD=null, TEACH_DIRTY=false, TC=null;
+// 엄마 11/25 "카츄가 지멋대로 끝낸다, 시훈이가 마무리하게 해 줘, 잘난 척도 더 하고 싶어 함": 카츄는 스스로 안 끝내고
+// "더 알려 줄 거 있어?"로 넘겨요. 끝은 시훈이가 「✅ 다 가르쳤어」로 정해요(최대 12번).
+var TEACH_MAX=12, TEACHD=null, TEACH_DIRTY=false, TC=null;
 function teachP(){ if(!TEACHD) TEACHD={pool:[],days:{}}; return TEACHD; }
 function teachDone(d){ const x=teachP().days[d||today()]; return !!(x&&x.done); }
 function teachReset(d){ const T=teachP(); if(T.days[d]){ T.days[d]={done:false,reset:Date.now(),was:T.days[d].end||null,wasKey:T.days[d].key||null}; TEACH_DIRTY=true; DIRTY=true; refreshTop(); } }
@@ -4708,7 +4711,11 @@ async function teachCands(){ const T=teachP(), t=today(), out=[], seen=new Set()
   for(let g=0;out.length<3&&g<12;g++){ const p=teachGen(out.length+g); if(!p) break; const q=stripTags(p.text); if(seen.has(q)) continue; seen.add(q);
     out.push({key:q,kind:'new',d:t,q,html:p.text,svg:p.svg||'',ans:stripTags(answerText(p)),sol:p.sol.map(stripTags),lv:p.lv,sk:SKILLS[p.sk].id,src:'new',res:null,cond:0,strat:''}); }
   return out; }
-function teachSay(txt){ try{ const u=new SpeechSynthesisUtterance(txt); u.lang='ko-KR'; u.rate=1; u.pitch=1.25; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
+// 엄마 11/25 "목소리 피카츄스럽게": 진짜 피카츄 소리는 못 내고, 읽어 주는 목소리를 높고(피치 1.8) 조금 빠르게 해서 귀여운 동생처럼.
+// 🔊/🔇 버튼으로 끄고 켜요(이 기기에 기억). 시훈이가 녹음 중이면 말하지 않아요(녹음에 안 섞이게).
+const teachMuted=()=>{ try{ return localStorage.getItem('katchu:mute')==='1'; }catch(e){ return false; } };
+function teachVoice(){ try{ const V=speechSynthesis.getVoices().filter(v=>/^ko/i.test(v.lang)); return V.find(v=>/female|여성|yuna|sunhi|google/i.test(v.name))||V[0]||null; }catch(e){ return null; } }
+function teachSay(txt,force){ try{ if(window.__micOn||(!force&&teachMuted())) return; const u=new SpeechSynthesisUtterance(txt); u.lang='ko-KR'; const v=teachVoice(); if(v) u.voice=v; u.rate=1.1; u.pitch=1.8; speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){} }
 // 엄마 11/25 "그거 해 줘": 가르치기 화면을 열면 서버를 미리 깨워 둬요(빈 요청 하나, AI는 안 불러서 값 거의 0).
 // at 칸이 없어서 하루 횟수·리포트에는 안 잡혀요. 5분에 한 번만.
 let TEACH_WARM=0;
@@ -4733,7 +4740,7 @@ function teachDraw(ctl){ const tb=$('#tbx'); if(!tb||!TC) return;
   const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>':'🙋 '}${picEsc(t.text)}${t.work?`<div class="twork"><b>카츄 풀이</b><br>${picEsc(t.work).replace(/\n/g,'<br>')}</div>`:''}${t.pad?'<div class="tpadm">✍️ 패드에 쓴 것도 같이 보냈어요</div>':''}</div>`;
   tb.innerHTML=`<div class="tlog">${TC.turns.map(bub).join('')}</div><div class="tctl">${ctl||''}</div>`; const l=tb.querySelector('.tlog'); l.scrollTop=l.scrollHeight; tb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function teachReply(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let MIC=null;
-  teachDraw(`<textarea class="tans" id="th" rows="3" placeholder="${SR?'🎤 누르고 설명해요. 다 말하면 「보내기」!':'여기에 설명을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;line-height:1.5;min-height:84px;resize:vertical"></textarea><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 설명</button>':''}<button class="hint" id="ts" style="flex:0 0 auto">보내기 ▶</button></div><div class="tsub">✍️ 오른쪽 패드에 식을 쓰면 같이 보내져요 · <button class="tlink" id="tl">🔊 다시 듣기</button> · <button class="tstop" id="tq">그만할래요</button></div>`);
+  teachDraw(`<textarea class="tans" id="th" rows="3" placeholder="${SR?'🎤 누르고 설명해요. 다 말하면 「보내기」!':'여기에 설명을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;line-height:1.5;min-height:84px;resize:vertical"></textarea><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 설명</button>':''}<button class="hint" id="ts" style="flex:0 0 auto">보내기 ▶</button>${TC.n>=2?'<button class="next" id="tend" style="flex:0 0 auto">✅ 다 가르쳤어</button>':''}</div><div class="tsub">✍️ 오른쪽 패드에 식을 쓰면 같이 보내져요 · <button class="tlink" id="tl">🔊 다시 듣기</button> · <button class="tlink" id="tv">${teachMuted()?'🔇 카츄 소리 꺼짐':'🔈 카츄 소리 켜짐'}</button> · <button class="tstop" id="tq">그만할래요</button></div>`);
   const tb=$('#tbx'), th=tb.querySelector('#th'), tm=tb.querySelector('#tm');
   const stopMic=()=>{ if(MIC){ MIC.stop(); MIC=null; } };
   if(tm) tm.onclick=()=>{ if(MIC&&MIC.isOn()){ stopMic(); return; }
@@ -4743,7 +4750,9 @@ function teachReply(){ const SR=window.SpeechRecognition||window.webkitSpeechRec
     const padNew=pn>0&&(pn!==TC.lastN||(s.img||'')!==TC.lastImg);
     if(!txt&&!padNew){ toast('말로 하거나 패드에 써서 알려 줘요.'); return; }
     TC.lastN=pn; TC.lastImg=s.img||''; TC.n++; TC.turns.push({who:'me',text:txt||'(패드에 써서 설명했어요)',pad:padNew?1:0}); teachStep(s); };
-  tb.querySelector('#tl').onclick=()=>{ const a=TC.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) teachSay(a.text); };
+  tb.querySelector('#tl').onclick=()=>{ const a=TC.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) teachSay(a.text,true); };
+  tb.querySelector('#tv').onclick=e=>{ const m=!teachMuted(); try{ localStorage.setItem('katchu:mute',m?'1':'0'); }catch(x){} if(m) try{ speechSynthesis.cancel(); }catch(x){} e.currentTarget.textContent=m?'🔇 카츄 소리 꺼짐':'🔈 카츄 소리 켜짐'; };
+  const te=tb.querySelector('#tend'); if(te) te.onclick=()=>{ stopMic(); const txt=th.value.trim(); if(txt){ TC.n++; TC.turns.push({who:'me',text:txt}); } TC.userEnd=true; TC.n++; TC.turns.push({who:'me',text:'(다 가르쳤어!)'}); teachStep(PAD&&PAD.snap?PAD.snap(TC.t0):{n:0}); };
   tb.querySelector('#tq').onclick=()=>{ stopMic(); if(TC.n>0||confirm('카츄에게 아직 하나도 안 알려 줬어요. 그만할까요?')) teachFinish('stopped'); }; }
 // 엄마 11/25 "시훈이가 막히는 지점을 공략해서 질문": 최근 30일 수학 기록(틀림·헤맴·실수 표시·과외쌤 메모)과
 // 지난 가르치기에서 건너뛴 단계를 모아 카츄에게 같이 보내요. 카츄는 이걸 보고 그 지점부터 콕 집어 물어요.
@@ -4767,7 +4776,7 @@ async function teachAsk(s,final,onPart){ if(TC&&TC.hist==null){ try{ await Promi
     if(onPart){ try{ const sp=await DBH.doc('m32teachp/'+id).get(); const x=sp.exists?sp.data():null; if(x&&x.say&&x.say!==part){ part=x.say; onPart(part); } }catch(e){} } }
   return {state:'error',err:'timeout'}; }
 async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait"><img class="tav" src="icons/cat-study.svg?v=1" alt="카츄">⚡ 카츄가 생각하고 있어요…</div>`);
-  const final=TC.n>=TEACH_MAX; let r;
+  const final=!!TC.userEnd||TC.n>=TEACH_MAX; let r;
   const onPart=say=>{ if(TC!==T0) return; const w=$('#tbx .twait'); if(w) w.outerHTML=`<div class="tb ai tpart"><img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>${picEsc(say)}…</div>`; else { const pb=$('#tbx .tpart'); if(pb) pb.lastChild.textContent=say+'…'; } const l=$('#tbx .tlog'); if(l) l.scrollTop=l.scrollHeight; };
   if(!tutorOK()) r={state:'error',err:'db'}; else { try{ r=await teachAsk(s,final,onPart); }catch(e){ r={state:'error',err:String(e&&e.message||e)}; } }
   if(TC!==T0||CUR!=='teachrun') return;
@@ -4776,9 +4785,12 @@ async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait"><img cla
     const re=$('#tre'); if(re) re.onclick=()=>{ TC.n++; TC.turns.push(last); teachStep(s); }; $('#tq2').onclick=()=>teachFinish(TC.n>0?'stopped':'error'); return; }
   if(r.have) TC.have=r.have; (r.skipped||[]).forEach(x=>{ if(x&&!TC.skipped.includes(x)) TC.skipped.push(x); }); if(r.mom) TC.moms.push(r.mom);
   let st=r.state, say=r.say; if(st==='wrong'&&(TC.wrongDone||!r.wrongWork)) st='ask'; if(st==='wrong') TC.wrongDone=true;
+  if(st==='done'&&!final){ // 카츄 혼자 끝내지 않기: 이해한 말은 하고, 시훈이에게 더 할 말을 넘겨요
+    if(Array.isArray(r.order)&&r.order.length) TC.order=r.order.filter(o=>o&&o.text).slice(0,6); if(typeof r.correct==='boolean') TC.correct=r.correct;
+    st='ask'; say=String(say||'').replace(/\s*고마워[^.!?]*[.!?]?\s*$/,'').trim(); say=(say?say+' ':'')+'형아, 더 알려 줄 거 있어? 다 알려 줬으면 「다 가르쳤어」 눌러 줘!'; }
   if(final&&st!=='done'){ st='done'; say='고마워 형아! 형아 덕분에 이제 거의 다 알 것 같아.'; }
   const turn={who:'ai',text:say,state:st,focus:r.focus||''}; if(st==='wrong') turn.work=r.wrongWork; TC.turns.push(turn); teachSay(say);
-  if(st==='done'){ TC.order=Array.isArray(r.order)?r.order.filter(o=>o&&o.text).slice(0,6):[]; TC.correct=typeof r.correct==='boolean'?r.correct:null; return teachFinish(final&&r.state!=='done'?'max':'done'); }
+  if(st==='done'){ if(Array.isArray(r.order)&&r.order.length) TC.order=r.order.filter(o=>o&&o.text).slice(0,6); TC.correct=typeof r.correct==='boolean'?r.correct:null; return teachFinish(TC.userEnd||!(final&&r.state!=='done')?'done':'max'); }
   teachSave(); teachReply(); }
 function teachRec(){ const c=TC.c; return {at:today(),date:today(),ts:new Date(TC.t0).toISOString(),id:TC.id,prob:{q:c.q,ans:c.ans,kind:c.kind,src:c.src,lv:c.lv,sk:c.sk,strat:c.strat||'',d:c.d,res:c.res||null},
   turns:TC.turns,n:TC.n,have:TC.have,skipped:TC.skipped,mom:TC.moms,order:TC.order,correct:TC.correct,end:TC.end,calls:TC.calls,err:TC.err||null,sec:Math.round((Date.now()-TC.t0)/1000),img:TC.end?TC.lastImg:''}; }
@@ -4794,9 +4806,9 @@ function teachFinish(end,silent){ if(!TC||TC.end) return; TC.end=end;
   const m=TC.mom; $('#tfin').onclick=()=>{ if(m) teachHome(true); else home(); }; }
 // 엄마 보기 「🧑‍🏫 가르치기」 탭: 직접 해 보기 + 시훈이가 한 대화 전체
 function teachMomHTML(){ return `<button class="big" id="tmom"><div><div class="t">🧑‍🏫 직접 해 보기</div><div class="s">시훈이 화면 그대로 · 시훈이 기록에는 안 남아요 (카츄 AI는 실제로 불러요)</div></div><span class="go">▶</span></button>
-  <p class="note">카츄는 시훈이가 <b>건너뛴 단계</b>("여기서 18은 어떻게 나왔어?")와 <b>순서</b>를 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요. 3~5번 주고받으면 끝나요. 오늘 했는지: <b>${teachDone()?'했어요 ✅':'아직이에요'}</b>${teachDone()?' <button class="pbtn" id="treset">🔄 오늘 것 다시 하게 하기</button>':''}</p>
+  <p class="note">카츄는 시훈이가 <b>건너뛴 단계</b>("여기서 18은 어떻게 나왔어?")와 <b>순서</b>를 묻고, 한 번은 일부러 틀린 풀이를 보여 주고 고쳐 달라고 해요. 카츄는 혼자 끝내지 않고 "더 알려 줄 거 있어?"로 넘기고, 시훈이가 「✅ 다 가르쳤어」를 누르면 끝나요(최대 12번). 오늘 했는지: <b>${teachDone()?'했어요 ✅':'아직이에요'}</b>${teachDone()?' <button class="pbtn" id="treset">🔄 오늘 것 다시 하게 하기</button>':''}</p>
   <div class="sec">시훈이가 한 가르치기</div><div id="tlogs" class="note">불러오는 중…</div>`; }
-const TEND={done:'✅ 카츄가 이해',max:'✅ 5번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
+const TEND={done:'✅ 카츄가 이해',max:'✅ 12번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
 const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
 function teachLogHTML(x){ const E=picEsc, h=x.have||{};
   return `<details class="tlogd"><summary><b>${E(x.date)} ${E((x.ts||'').slice(11,16))}</b> · ${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 · ${E(String((x.prob||{}).q||'').slice(0,50))}…</summary>
@@ -8272,6 +8284,6 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
 </script>
 
 <script src="ko-ai.js"></script>
-<script src="en-chat.js?v=2"></script>
+<script src="en-chat.js?v=3"></script>
 <script src="write.js"></script>
 </body></html>
