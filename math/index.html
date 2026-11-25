@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795649424";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795650041";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -428,6 +428,26 @@ const BXF=(op,k,v)=>op==="+"?v+k:op==="−"?v-k:op==="×"?v*k:v/k;
 const BXC=[{a:"고양이 수",b:"다리 수",k:4,e:"🐱"},{a:"고양이 수",b:"귀 수",k:2,e:"🐱"},{a:"문어 수",b:"다리 수",k:8,e:"🐙"},{a:"세발자전거 수",b:"바퀴 수",k:3,e:"🚲"},{a:"손 수",b:"손가락 수",k:5,e:"✋"},{a:"무당벌레 수",b:"다리 수",k:6,e:"🐞"},{a:"주 수",b:"날 수",k:7,e:"📅"},{a:"닌자 수",b:"표창 수",k:9,e:"🥷"},{a:"동생 나이",b:"형 나이",op:"+",e:"🐾"}];
 const BXT=(xs,ys,bl,hi,ha="넣는 공 △",hb="나오는 공 ○")=>`<table class="ftab"><tr><th>${ha}</th>${xs.map((v,i)=>`<td${hi===i?' class="hi"':""}>${bl&&bl[0]===i?"[[0]]":v}</td>`).join("")}</tr><tr><th>${hb}</th>${ys.map((v,i)=>`<td${hi===i?' class="hi"':""}>${bl&&bl[1]===i?"[[0]]":v}</td>`).join("")}</tr></table>`;
 const BXP=p=>{const mx=p.op==="×"?12:10,xm=p.op==="×"?Math.floor(mx/p.k):mx-p.k,P=[];if(p.L===18){for(let x=0;x<=xm;x++)P.push([x,BXF(p.op,p.k,x)]);return P}for(let x=p.x;x<=p.x+(p.L===21?3:2);x++)P.push([x,BXF(p.op,p.k,x)]);return P};
+/* 길이·들이·무게: 계산 앞에 넣은 단위 바꾸기 단계 */
+const uE=u=>/g$/.test(u)?"은":"는",uG=u=>/g$/.test(u)?"이":"가",uL=u=>/g$/.test(u)?"을":"를";
+const UWC=[["cm","mm",10],["m","cm",100],["km","m",1000],["L","mL",1000],["kg","g",1000]];
+const UWCL=["cm → mm (4cm = □mm)","m → cm, km → m","L → mL, kg → g","거꾸로 (30mm = □cm)","cm mm → mm (3cm 5mm = □mm)","mm → cm mm (35mm = □cm □mm)","m cm → cm (3m 25cm = □cm)","cm → m cm","km m → m (2km 350m = □m)","m → km m","L mL → mL","mL → L mL","kg g → g","g → kg g","가운데가 0 (2km 50m = □m)","단위 바꾸기 섞어서"],UWK=UWCL.length;
+function uwcR(L){const mix=(u,rev,z)=>{const r=UWC[u][2];return{L,f:"mix",u,rev,a:ri(1,9),b:z?(r===10?ri(1,9):r===100?ri(1,9):ri(1,99)):r===10?ri(1,9):r===100?ri(10,99):ri(100,999)}};
+  if(L===0)return{L,f:"big",u:0,rev:0,a:ri(1,20)};
+  if(L===1){const u=pick([1,2]);return{L,f:"big",u,rev:0,a:ri(1,u===1?12:9)}}
+  if(L===2)return{L,f:"big",u:pick([3,4]),rev:0,a:ri(1,9)};
+  if(L===3)return{L,f:"big",u:ri(0,4),rev:1,a:ri(1,9)};
+  if(L<=13){const k=L-4;return mix([0,1,2,3,4][k>>1],k&1,0)}
+  if(L===14)return mix(pick([1,2,3,4]),ri(0,1),1);
+  return ri(0,3)?mix(ri(0,4),ri(0,1),ri(0,3)===0&&1):{L,f:"big",u:ri(0,4),rev:ri(0,1),a:ri(1,9)}}
+function uwcM(p){const[B,S,r]=UWC[p.u],{a,b}=p;
+  if(p.f==="big")return p.rev?{html:`${a*r}${S} = [[0]]${B}`,a:[String(a)],kind:"num",cls:"mid",text:`${a*r}${S} → ${B}`}:{html:`${a}${B} = [[0]]${S}`,a:[String(a*r)],kind:"num",cls:"mid",text:`${a}${B} → ${S}`};
+  return p.rev?{html:`${a*r+b}${S} = [[0]]${B} [[1]]${S}`,a:[String(a),String(b)],kind:"num",cls:"mid",text:`${a*r+b}${S} → ${B} ${S}`}:{html:`${a}${B} ${b}${S} = [[0]]${S}`,a:[String(a*r+b)],kind:"num",cls:"mid",text:`${a}${B} ${b}${S} → ${S}`}}
+function uwcS(p){const[B,S,r]=UWC[p.u],{a,b}=p,q=uwcM(p),one={h:`1${B} = [[0]]${S}`,a:[String(r)],hints:[`1${B}${uE(B)} ${r}${S}다냥. 이건 약속이라 외운다옹.`]};
+  if(p.f==="big")return{head:q.text,list:p.rev?[one,{h:`${a*r}${S}${uE(S)} ${r}${S}${uG(S)} [[0]]묶음`,a:[String(a)],hints:[`${a*r} ÷ ${r}를 한다냥.`]},{h:`그래서 ${a*r}${S} = [[0]]${B}`,a:[String(a)],hints:[`${r}${S} 한 묶음이 1${B}다옹.`]}]
+    :[one,{h:`${a}${B}${uE(B)} ${r}${S}${uG(S)} ${a}번. ${r} × ${a} = [[0]]`,a:[String(a*r)],hints:[`${r}을 ${a}번 더한 것과 같다냥.`]},{h:`그래서 ${a}${B} = [[0]]${S}`,a:[String(a*r)],hints:["방금 구한 수다옹."]}]};
+  return{head:q.text,list:p.rev?[one,{h:`${a*r+b}${S}에서 ${r}${S} 묶음은 [[0]]개, 남는 것은 [[1]]${S}`,a:[String(a),String(b)],hints:[`${r}씩 묶는다냥. 묶음 수가 ${B}, 남는 것이 ${S}다옹.`]},{h:`그래서 [[0]]${B} [[1]]${S}`,a:[String(a),String(b)],hints:[`묶음이 큰 단위, 남는 것이 작은 단위다냥.`]}]
+    :[one,{h:`${a}${B} = [[0]]${S}`,a:[String(a*r)],hints:[`${r} × ${a}다냥.`]},{h:`${a*r}${S} + ${b}${S} = [[0]]${S}`,a:[String(a*r+b)],hints:["바꾼 것에 남은 작은 단위를 더한다옹."]}]}}
 const UWU=L=>L<=1?["cm","mm",10]:L<=3?["km","m",1000]:L<=7?["L","mL",1000]:L<=11?["kg","g",1000]:["t","kg",1000];
 
 /* ───────── 유형 ───────── */
@@ -1589,29 +1609,33 @@ const TYPES={
   pat:(p,g)=>p.L>=22?"표 대응":p.L>=16?"좌표·그래프":p.L>=12?"식으로 쓰기":p.L>=4?"거꾸로·규칙 찾기":"상자 계산"},
 
  /* ───── 3-1 길이 · 3-2 들이와 무게 계산 ───── */
- UW:{name:"길이·들이·무게 계산",code:"3-1·3-2",ex:"3L 400mL + 2L 800mL,  5kg 200g − 2kg 600g",sec:9,why:"단위가 두 개인 수를 더하고 뺀다냥. 문장제에 그대로 나온다옹.",
-  idea:"작은 단위끼리, 큰 단위끼리 계산한다냥. 1L = 1000mL, 1kg = 1000g, 1cm = 10mm, 1km = 1000m.",
-  lv:["cm mm 더하기","cm mm 빼기","km m 더하기","km m 빼기","L mL 더하기","L mL 더하기 (받아올림)","L mL 빼기","L mL 빼기 (받아내림)","kg g 더하기","kg g 더하기 (받아올림)","kg g 빼기","kg g 빼기 (받아내림)","t ↔ kg 바꾸기","몇 배인지 (컵으로 재기)","덜어 내고 남은 양"],
-  rand:L=>{const U=UWU(L),r=U[2];
+ UW:{name:"길이·들이·무게 계산",code:"3-1·3-2",ex:"3cm 5mm = □mm,  3L 400mL + 2L 800mL",sec:9,why:"단위를 바꾸는 것부터 하고, 그다음 더하고 뺀다냥. 문장제에 그대로 나온다옹.",conAt:[0,4,UWK],
+  idea:"1cm = 10mm, 1m = 100cm, 1km = 1000m, 1L = 1000mL, 1kg = 1000g다냥. 큰 단위를 작은 단위로 바꾸고 더한다옹.",idea0:"작은 단위끼리, 큰 단위끼리 계산한다냥. 1L = 1000mL, 1kg = 1000g, 1cm = 10mm, 1km = 1000m.",
+  lv:[...UWCL,"cm mm 더하기","cm mm 빼기","km m 더하기","km m 빼기","L mL 더하기","L mL 더하기 (받아올림)","L mL 빼기","L mL 빼기 (받아내림)","kg g 더하기","kg g 더하기 (받아올림)","kg g 빼기","kg g 빼기 (받아내림)","t ↔ kg 바꾸기","몇 배인지 (컵으로 재기)","덜어 내고 남은 양"],
+  rand0:L=>{const U=UWU(L),r=U[2];
     if(L<=11){const sub=[1,3,6,7,10,11].includes(L),cy=L<=3?null:[5,7,9,11].includes(L),sm=()=>r===10?ri(1,9):ri(10,99)*10;let a,b,c,d,g=0,ok;
       do{c=ri(1,8);a=sub?ri(c+1,9):ri(1,9);b=sm();d=sm();ok=sub?(b!==d&&(cy==null||cy===(b<d))):(b+d!==r&&(cy==null||cy===(b+d>r)))}while(!ok&&g++<500);return{L,a,b,c,d}}
     if(L===12)return{L,a:ri(1,9),b:ri(1,99)*10,rev:ri(0,1)};if(L===13)return{L,a:ri(2,6),m:ri(2,9)};
     let cup,n,a,b;do{cup=pick([150,200,250,300,350,400]);n=ri(2,4);a=ri(1,3);b=ri(1,9)*100}while(a*1000+b-cup*n<50);return{L,a,b,cup,n}},
   key:p=>JSON.stringify(p),
-  make:p=>{const{L,a,b,c,d}=p,[B,S,r]=UWU(L);
+  make0:p=>{const{L,a,b,c,d}=p,[B,S,r]=UWU(L);
     if(L<=11){const sub=[1,3,6,7,10,11].includes(L),T=sub?(a*r+b)-(c*r+d):(a*r+b)+(c*r+d);return{html:`<span class="sub">${a}${B} ${b}${S} ${sub?"−":"+"} ${c}${B} ${d}${S}</span><span class="sub">= [[0]]${B} [[1]]${S}</span>`,a:[String(Math.floor(T/r)),String(T%r)],kind:"num",cls:"mid stack",text:`${a}${B}${b}${S}${sub?"−":"+"}${c}${B}${d}${S}`}}
     if(L===12)return p.rev?{html:`${a*1000+b}kg = [[0]]t [[1]]kg`,a:[String(a),String(b)],kind:"num",cls:"mid",text:`${a*1000+b}kg → t`}:{html:`${a}t ${b}kg = [[0]]kg`,a:[String(a*1000+b)],kind:"num",cls:"mid",text:`${a}t ${b}kg → kg`};
     if(L===13)return{html:`<span class="sub">물병: 컵으로 ${p.a}번</span><span class="sub">주전자: 컵으로 ${p.a*p.m}번</span><span class="sub">주전자는 물병의 [[0]]배</span>`,a:[String(p.m)],kind:"num",cls:"mid stack sm",text:`컵 ${p.a}번 vs ${p.a*p.m}번`};
     const tot=a*1000+b,R=tot-p.cup*p.n;return{html:`<span class="sub">물 ${a}L ${b}mL에서</span><span class="sub">${p.cup}mL씩 ${p.n}번 덜어 내면</span><span class="sub">남은 물 [[0]]mL</span>`,a:[String(R)],kind:"num",cls:"mid stack sm",text:`${a}L${b}mL − ${p.cup}×${p.n}`}},
-  steps:p=>{const{L,a,b,c,d}=p,[B,S,r]=UWU(L),q=TYPES.UW.make(p);
+  steps0:p=>{const{L,a,b,c,d}=p,[B,S,r]=UWU(L),q=TYPES.UW.make0(p);
     if(L<=11){const sub=[1,3,6,7,10,11].includes(L);if(!sub){const s=b+d;return{head:q.text,list:[{h:`${S}끼리 ${b} + ${d} = [[0]]${S}`,a:[String(s)],hints:["작은 단위부터 더한다냥."]},
-        ...(s>=r?[{h:`${s}${S}는 ${r}${S}를 넘는다. ${s}${S} = 1${B} [[0]]${S}`,a:[String(s-r)],hints:[`1${B} = ${r}${S}다옹.`]}]:[]),{h:`${B}끼리 ${a} + ${c}${s>=r?" + 1":""} = [[0]]${B}`,a:q.a.slice(0,1),hints:[s>=r?"올라온 1을 잊지 마.":"큰 단위끼리."]},{h:`답 [[0]]${B} [[1]]${S}`,a:q.a,hints:["두 칸에 넣어."]}]}}
-      const br=b<d;return{head:q.text,list:[...(br?[{h:`${b}${S}에서 ${d}${S}를 못 뺀다. 1${B}를 빌려 오면 ${b} + ${r} = [[0]]${S}`,a:[String(b+r)],hints:[`1${B} = ${r}${S}.`]}]:[]),
+        ...(s>=r?[{h:`${s}${S}${uE(S)} ${r}${S}${uL(S)} 넘는다. ${s}${S} = 1${B} [[0]]${S}`,a:[String(s-r)],hints:[`1${B} = ${r}${S}다옹.`]}]:[]),{h:`${B}끼리 ${a} + ${c}${s>=r?" + 1":""} = [[0]]${B}`,a:q.a.slice(0,1),hints:[s>=r?"올라온 1을 잊지 마.":"큰 단위끼리."]},{h:`답 [[0]]${B} [[1]]${S}`,a:q.a,hints:["두 칸에 넣어."]}]}}
+      const br=b<d;return{head:q.text,list:[...(br?[{h:`${b}${S}에서 ${d}${S}${uL(S)} 못 뺀다. 1${B}${uL(B)} 빌려 오면 ${b} + ${r} = [[0]]${S}`,a:[String(b+r)],hints:[`1${B} = ${r}${S}.`]}]:[]),
         {h:`${S}끼리 ${br?b+r:b} − ${d} = [[0]]${S}`,a:[String((br?b+r:b)-d)],hints:["작은 단위부터 뺀다냥."]},{h:`${B}끼리 ${a}${br?" − 1":""} − ${c} = [[0]]${B}`,a:q.a.slice(0,1),hints:[br?"빌려 준 1을 빼.":"큰 단위끼리."]},{h:`답 [[0]]${B} [[1]]${S}`,a:q.a,hints:["두 칸에 넣어."]}]}}
     if(L===12)return{head:q.text,list:[{h:`1t = [[0]]kg`,a:["1000"],hints:["1t은 1000kg이다냥."]},p.rev?{h:`${a*1000+b}kg에서 1000kg 묶음 [[0]]개, 남는 것 [[1]]kg`,a:q.a,hints:["앞 자리 수를 봐."]}:{h:`${a}t = [[0]]kg, 더하면 [[1]]kg`,a:[String(a*1000),q.a[0]],hints:["1000 × "+a]}]};
     if(L===13)return{head:"몇 배",list:[{h:`${p.a*p.m} ÷ ${p.a} = [[0]]`,a:q.a,hints:["같은 컵으로 쟀으니 횟수만 비교한다냥."]}]};
     return{head:"남은 양",list:[{h:`${a}L ${b}mL = [[0]]mL`,a:[String(a*1000+b)],hints:["1L = 1000mL."]},{h:`덜어 낸 물 ${p.cup} × ${p.n} = [[0]]mL`,a:[String(p.cup*p.n)],hints:["곱해."]},{h:`${a*1000+b} − ${p.cup*p.n} = [[0]]mL`,a:q.a,hints:["빼."]}]}},
-  pat:p=>p.L>=12?"단위 바꾸기":[1,3,6,7,10,11].includes(p.L)?"받아내림":"받아올림"},
+  pat0:p=>p.L>=12?"단위 바꾸기":[1,3,6,7,10,11].includes(p.L)?"받아내림":"받아올림",
+  rand:L=>{if(L<UWK)return uwcR(L);const p=TYPES.UW.rand0(L-UWK);p.L=L;return p},
+  make:p=>p.L<UWK?uwcM(p):TYPES.UW.make0({...p,L:p.L-UWK}),
+  steps:p=>p.L<UWK?uwcS(p):TYPES.UW.steps0({...p,L:p.L-UWK}),
+  pat:p=>p.L<UWK?"단위 바꾸기":TYPES.UW.pat0({...p,L:p.L-UWK})},
 
  /* ───── 3-2 그림그래프 · 4-1 막대그래프 ───── */
  PG:{name:"그림그래프·막대그래프",code:"3-2·4-1",ex:"큰 그림 10마리, 작은 그림 1마리",sec:8,why:"그림 하나가 얼마인지 보고 센다냥. 4학년 막대그래프까지 미리 간다옹.",
@@ -3023,6 +3047,7 @@ function loadFix(){
   if(!S.cfg.all3){S.cfg.all3=true;["E1","C2","D1"].forEach(id=>{if(!S.cfg.plan[id])S.cfg.plan[id]=1});if(DAYS[today()])DAYS[today()].plan=planNow()}
   if(!S.cfg.lvx1&&LVX){S.cfg.lvx1=true;S.cfg.lvxv=LVX._v;Object.keys(S.ts).forEach(id=>{const T=TYPES[id],st=S.ts[id];if(T&&T.lvBase&&st.step){const i=T.lvBase.indexOf(st.step);if(i>=0)st.step=i}})}
   if(LVX&&S.cfg.lvxv!==LVX._v){Object.keys(S.ts).forEach(id=>{const T=TYPES[id],st=S.ts[id];if(!T||!T.lv||!st.step)return;const lab=st.stepLab||(!S.cfg.lvxv&&OLD17[id]?OLD17[id][st.step]:null);if(!lab)return;let i=T.lv.indexOf(lab);if(i<0){const pre=lab.split(" · ")[0];i=T.lv.findIndex(l=>l.split(" · ")[0]===pre)}if(i>=0)st.step=i});S.cfg.lvxv=LVX._v}
+  if(!S.cfg.uwBase){S.cfg.uwBase=true;const st=S.ts.UW;if(st&&!st.grad){st.step=0;st.stepLab=TYPES.UW.lv[0];st.rev=[]}}
   if(!S.cfg.coRef){S.cfg.coRef=true;const st=S.ts.CO;if(st&&st.step)st.step=[0,2,4,6,8,9,10][Math.min(st.step,6)]}
   if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.includes("T19")&&o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
 loadLocal();
@@ -3070,12 +3095,14 @@ let CFGJ=null;
 function save(dayKey){S.savedAt=Date.now();try{const j=JSON.stringify(S.cfg);if(CFGJ!==null&&j!==CFGJ)S.cfgAt=S.savedAt;CFGJ=j}catch(e){}try{Object.keys(S.ts).forEach(id=>{const T=TYPES[id],st=S.ts[id];if(T&&T.lv&&st.step!=null)st.stepLab=T.lv[Math.min(st.step,T.lv.length-1)]})}catch(e){}dirty.add("core");if(dayKey&&DAYS[dayKey]){DAYS[dayKey].savedAt=Date.now();dirty.add("d:"+dayKey)}persistLocal();if(DB){clearTimeout(flushT);flushT=setTimeout(flush,1200)}}
 /* 두 기기 기록 합치기: 유형마다 더 최근에 푼 쪽, 설정은 더 최근에 바꾼 쪽 */
 const coreW=c=>Object.values((c&&c.ts)||{}).reduce((a,t)=>a+((t.runs||[]).length+(t.runs0||[]).length+(t.grad?1:0)),0);
-function mergeCore(L,R){if(!R||!R.cfg)return L;if(!coreW(L))return clone(R);if(!coreW(R))return L;
+function mergeCore(L,R){if(!R||!R.cfg)return L;{const ra=(L&&L.rs)||0,rb=R.rs||0;if(ra!==rb)return ra>rb?L:clone(R)}if(!coreW(L))return clone(R);if(!coreW(R))return L;
   const tAt=t=>t?(t.at||0):-1,tN=t=>t?(t.runs||[]).length+(t.runs0||[]).length:-1,O=clone((L.savedAt||0)>=(R.savedAt||0)?L:R);
   O.cfg=clone((L.cfgAt||0)>=(R.cfgAt||0)?L.cfg:R.cfg);O.cfgAt=Math.max(L.cfgAt||0,R.cfgAt||0);O.ts={};
   new Set([...Object.keys(L.ts),...Object.keys(R.ts)]).forEach(id=>{const a=L.ts[id],b=R.ts[id];O.ts[id]=clone(!b?a:!a?b:tAt(a)!==tAt(b)?(tAt(a)>tAt(b)?a:b):tN(a)>=tN(b)?a:b)});
   if(L.gw||R.gw)O.gw=clone(((L.gw||{}).i||0)>=((R.gw||{}).i||0)?L.gw:R.gw);
   O.lastDay=[L.lastDay,R.lastDay].filter(Boolean).sort().pop()||null;O.savedAt=Math.max(L.savedAt||0,R.savedAt||0);return O}
+/* "처음부터"를 누른 뒤에는 그 전에 푼 세트를 어느 기기에서 와도 버림 */
+function rsFix(){const rs=S.rs||0;if(!rs)return false;let ch=false;const t=today();Object.keys(DAYS).forEach(k=>{const d=DAYS[k],o=d.sets||[],n=o.filter(x=>x.at>=rs);if(n.length===o.length)return;ch=true;d.sets=n;d.done={};n.forEach(x=>{d.done[x.type]=(d.done[x.type]||0)+1});d.carry={};d.savedAt=Date.now();if(!n.length&&k!==t)delete DAYS[k];else dirty.add("d:"+k)});return ch}
 const dayNewer=(v,l)=>!l||(v.sets||[]).length>(l.sets||[]).length||((v.sets||[]).length===(l.sets||[]).length&&(v.savedAt||0)>(l.savedAt||0));
 const mergeDay=(l,v)=>{if(!l)return clone(v);const ls=l.sets||[],vs=v.sets||[];if(![...ls,...vs].every(x=>x.at))return dayNewer(v,l)?clone(v):l;
   const m=new Map();[...ls,...vs].forEach(x=>{const k=x.at+"|"+x.type;if(!m.has(k))m.set(k,x)});const o=clone((v.savedAt||0)>(l.savedAt||0)?v:l);o.sets=[...m.values()].sort((a,b)=>a.at-b.at);
@@ -3084,9 +3111,9 @@ let REMAT=0;
 async function flush(){if(!DB)return;if(flushing){flushT=setTimeout(flush,1200);return}flushing=true;
   try{for(const k of [...dirty]){dirty.delete(k);try{
     if(k==="core"){const r=await DB.doc(dCore()).get(),c=r.exists?r.data():null;
-      if(c&&c.cfg&&(c.savedAt||0)>REMAT&&(c.savedAt||0)!==(S.savedAt||0)){const at=Date.now();S=mergeCore(S,c);loadFix();S.savedAt=at;CFGJ=JSON.stringify(S.cfg);persistLocal()}
+      if(c&&c.cfg&&(c.savedAt||0)>REMAT&&(c.savedAt||0)!==(S.savedAt||0)){const at=Date.now();S=mergeCore(S,c);loadFix();rsFix();S.savedAt=at;CFGJ=JSON.stringify(S.cfg);persistLocal()}
       await DB.doc(dCore()).set(clone(S));REMAT=S.savedAt||0}
-    else{const d=k.slice(2);await DB.doc(dDays()+"/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
+    else{const d=k.slice(2);if(DAYS[d])await DB.doc(dDays()+"/"+d).set(clone(DAYS[d]))}sync="db"}catch(e){dirty.add(k);sync="err";break}}}finally{flushing=false}}
 /* 부모님이 Claude에게 보낼 짧은 기록 (최근 7일) */
 function sumText(){const days=Object.keys(DAYS).filter(k=>(DAYS[k].sets||[]).length).sort().slice(-7),L=[`[${pname()} 연산 기록] ${today()} 복사 · 최근 ${days.length}일`];
   days.forEach(k=>{const d=DAYS[k],own=Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0);L.push("",`■ ${k} · ${d.sets.length}세트${own?" / 계획 "+own:""} · ${d.sets.reduce((a,x)=>a+x.n,0)}문제${tiredTxt(k)?" · 평소 대비 "+tiredTxt(k):""}`);
@@ -3106,7 +3133,8 @@ async function connectDB(light){
     if(light){const t=today(),r=await db.doc(dDays()+"/"+t).get();if(r.exists)docs=[{id:t,data:()=>r.data()}]}
     else docs=(await db.collection(dDays()).limit(1000).get()).docs;
     if(pid!==PID)return;
-    docs.forEach(d=>{const v=d.data();if(!v)return;const l=DAYS[d.id],m=mergeDay(l,v);if(m!==l){DAYS[d.id]=m;changed=true}if((m.sets||[]).length>(v.sets||[]).length)dirty.add("d:"+d.id)});
+    docs.forEach(d=>{const v=d.data();if(!v)return;const l=DAYS[d.id];if(!l&&!(v.sets||[]).length&&d.id!==today())return;const m=mergeDay(l,v);if(m!==l){DAYS[d.id]=m;changed=true}if((m.sets||[]).length>(v.sets||[]).length)dirty.add("d:"+d.id)});
+    if(rsFix())changed=true;
     DB=db;sync="db";
     if(!core.exists){dirty.add("core");Object.keys(DAYS).forEach(k=>dirty.add("d:"+k))}
     else if(!light){const rem={};docs.forEach(d=>{rem[d.id]=d.data()});Object.keys(DAYS).forEach(k=>{if((DAYS[k].sets||[]).length&&(!rem[k]||dayNewer(DAYS[k],rem[k])))dirty.add("d:"+k)})}
@@ -3311,7 +3339,7 @@ function vIntro(){
     <button class="bigbtn" data-act="concept">처음 한 번 보여주기 + 방법 찾기 보기</button>
     ${T.scaffold?`<button class="bigbtn ghost" data-act="pvset" data-arg="0">세트 보기 (칸 채우기 단계)</button><button class="bigbtn ghost" data-act="pvset" data-arg="1">세트 보기 (답 칸만 단계)</button>`:`<button class="bigbtn ghost" data-act="pvset" data-arg="1">세트 보기 (${tc(id).n}문제)</button>`}</div>`}
   const id=RUN.type,T=TYPES[id],c=tc(id),st=tst(id),n=c.n,lr=lastRun(id),bp=bestPQ(id);
-  const needConcept=!st.conceptDone&&!c.skipConcept;
+  const needConcept=(!st.conceptDone||(T.conAt||[]).some(k=>(st.step||0)>=k&&(st.conK??-1)<k))&&!c.skipConcept;
   const tgt=st.target?`목표 <b>${fmt(st.target*n)}</b>`
     :st.runs.length===0?`목표 <b>${fmt(finalPQ(id)*n)}</b>`
     :``;
@@ -3390,9 +3418,9 @@ function startSet(){
   view="play";beginQ();render();
 }
 const curIdx=()=>RUN.order[RUN.pos];
-function beginQ(){RUN.vals=[];RUN.act=0;RUN.user=null;RUN.say="";RUN.cur=performance.now();RUN.boxState=[]}
+function beginQ(){RUN.vals=[];RUN.act=0;RUN.user=null;RUN.say="";const it=RUN.items&&RUN.items[RUN.order[RUN.pos]];RUN.cur=it&&it.fz?null:performance.now();RUN.boxState=[];if(it&&it.again){it.rt=0;it.found=[];RUN.say="아까 그 문제다냥. 한 번 더 해 보자옹."}}
 function stopClock(){if(RUN&&RUN.cur!=null&&RUN.items[curIdx()]){RUN.items[curIdx()].ms+=performance.now()-RUN.cur;RUN.cur=null}}
-function resumeClock(){if(RUN&&RUN.cur==null)RUN.cur=performance.now()}
+function resumeClock(){if(RUN&&RUN.cur==null&&!(RUN.items&&RUN.items[curIdx()]||{}).fz)RUN.cur=performance.now()}
 function elapsed(){if(!RUN)return 0;let s=RUN.items.reduce((a,b)=>a+b.ms,0);if(RUN.cur!=null)s+=performance.now()-RUN.cur;return s/1000}
 function startTick(){stopTick();tick=setInterval(()=>{const c=$("#clock");if(c)c.textContent=fmt(elapsed())},250)}
 function stopTick(){if(tick){clearInterval(tick);tick=null}}
@@ -3458,13 +3486,22 @@ function judgeMulti(g){
   RUN.vals=[];RUN.boxState=[];
   if(it.found.includes(g)){RUN.say="이미 찾았다냥";render();return}
   if(q.need.includes(g)){it.found.push(g);RUN.say="";
-    if(it.found.length===q.need.length){it.ok=true;it.ok1=it.wn===0;it.tries.push(it.found.join(","));stopClock();render();RUN.lock=true;setTimeout(nextQ,250);return}
+    if(it.found.length===q.need.length){it.ok=true;it.ok1=it.wn===0&&!it.again;it.tries.push(it.found.join(","));stopClock();render();RUN.lock=true;setTimeout(nextQ,250);return}
     render();return}
   if(!it.misUsed&&q.need.some(x=>!it.found.includes(x)&&oneOff(g,x))){slip(it);return}
   it.wn++;it.tries.push(g);if(!it.pat)it.pat=TYPES[RUN.type].pat(pr.p,[g])||"";
   const left=q.need.filter(x=>!it.found.includes(x));
-  RUN.say=it.wn>=3?`남은 답: ${left.join(", ")} 다냥. 써 보자`:"틀렸다냥. 다시!";RUN.boxState=["again"];render();
+  if(wrongOnce(it,pr))return;
+  RUN.say=it.again&&it.rt>=2?`남은 답: ${left.join(", ")} 다냥. 써 보자`:"다시 한 번 본다냥. 시간은 안 센다옹.";RUN.boxState=["again"];render();
 }
+/* 틀렸을 때는 어느 유형이든 같게: 그 자리에서 한 번 더(답은 안 보여 줌) → 또 틀리면 힌트 질문 하나 보고 넘어감 → 세트 끝에 한 번 더 나옴.
+   시간은 첫 시도까지만 잰다(다시 푸는 시간은 기록에 안 들어감). 맞음·틀림 기록도 첫 시도 기준. */
+function hintQ(pr){const T=TYPES[RUN.type];try{const s=T.steps&&T.steps(pr.p),x=s&&s.list&&s.list[0];if(x&&x.h)return `<p class="small muted">먼저 이것부터 생각해 본다냥.</p><div class="qline sm stack" style="margin:6px 0">${String(x.h).replace(/^찾았다냥: /,"").replace(/\[\[\d+\]\]/g,"□")}</div>${x.hints&&x.hints[0]?`<p class="small">${x.hints[0]}</p>`:""}`}catch(e){}return `<p>${T.idea||"천천히 다시 본다냥."}</p>`}
+/* 틀린 답 하나 처리. true면 이미 다음으로 넘어갈 준비(힌트 창)를 했다는 뜻 */
+function wrongOnce(it,pr,one){it.rt=(it.rt||0)+1;if(!it.fz){stopClock();it.fz=true}RUN.cur=null;
+  if(it.again)return false;
+  if(it.rt>=(one?1:2)){it.again=true;RUN.order.push(curIdx());RUN.lock=true;modal=()=>`<div class="veil"><div class="sheet"><h3>힌트다냥</h3>${hintQ(pr)}<p class="small muted">이 문제는 조금 뒤에 한 번 더 나온다냥.</p><button class="bigbtn" data-act="hintok">알겠다냥</button></div></div>`;render();return true}
+  return false}
 /* 클릭 미스: 한 글자만 다르면 문제마다 한 번은 오답으로 안 침 */
 const oneOff=(x,y)=>{x=String(x);y=String(y);if(x.length!==y.length)return false;let d=0;for(let k=0;k<x.length;k++)if(x[k]!==y[k])d++;return d===1};
 function slip(it){it.misUsed=true;it.mis=(it.mis||0)+1;RUN.say="손이 미끄러졌냥? 다시 쳐 보자";RUN.vals=[];RUN.act=0;RUN.boxState=[];render()}
@@ -3473,10 +3510,11 @@ function judge(given){
   const ok=[q.a,...(q.alts||[])].some(a=>a.every((v,k)=>v===given[k]));
   if(!ok&&!it.misUsed&&q.kind==="num"&&oneOff(given.join("|"),q.a.join("|"))){slip(it);return}
   it.tries.push(given.join("|"));
-  if(ok){it.ok=true;if(it.tries.length===1)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();RUN.lock=true;setTimeout(nextQ,220);return}
+  if(ok){it.ok=true;if(it.tries.length===1&&!it.again)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();RUN.lock=true;setTimeout(nextQ,220);return}
   if(it.tries.length===1){it.pat=TYPES[RUN.type].pat(pr.p,given)||"";}
-  if(q.kind!=="ox"){RUN.say=it.tries.length>=3?`정답은 ${q.a.map(fview).join(" , ")} 다냥. 그대로 써 보자`:"틀렸다냥. 다시!";RUN.vals=[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
-  stopClock();nextQ();
+  if(wrongOnce(it,pr,q.kind==="ox"))return;
+  if(q.kind==="ox"){RUN.say=`정답은 ${q.a[0]} 다냥. 눌러 보자옹.`;RUN.vals=[];render();return}
+  RUN.say=it.again&&it.rt>=2?`정답은 ${q.a.map(fview).join(" , ")} 다냥. 그대로 써 보자`:"다시 한 번 본다냥. 시간은 안 센다옹.";RUN.vals=[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();
 }
 function nextQ(){
   RUN.lock=false;RUN.pos++;
@@ -3490,7 +3528,7 @@ function finishSet(){
   const id=RUN.type,c=tc(id),st=tst(id),T=TYPES[id];
   const n=RUN.probs.length,t=RUN.items.reduce((a,b)=>a+b.ms,0)/1000,w=RUN.items.filter(x=>!x.ok1).length;
   const pq=t/n,fin=finalPQ(id),valid=w<=c.allow,prevRuns=st.runs.slice(),prevBest=bestPQ(id),prevLast=lastRun(id);
-  const byO=RUN.order.map(k=>RUN.items[k].ms),hh=Math.floor(n/2),h1=byO.slice(0,hh).reduce((a,b)=>a+b,0)/1000,h2=byO.slice(hh).reduce((a,b)=>a+b,0)/1000;
+  const byO=[...new Set(RUN.order)].map(k=>RUN.items[k].ms),hh=Math.floor(n/2),h1=byO.slice(0,hh).reduce((a,b)=>a+b,0)/1000,h2=byO.slice(hh).reduce((a,b)=>a+b,0)/1000;
   const rec={type:id,n,t:Math.round(t*10)/10,w,h1:Math.round(h1*10)/10,h2:Math.round(h2*10)/10,pred:RUN.pred,at:Date.now(),
     items:RUN.items.map((x,k)=>({q:RUN.probs[k].q.text,a:(RUN.probs[k].q.a||RUN.probs[k].q.need).join("|"),g:x.tries,ok1:x.ok1,ok:x.ok,ms:Math.round(x.ms),skip:x.skip,mis:x.mis,pat:x.pat||"",o:RUN.order.indexOf(k)}))};
   const out={quick:false,pass:false,grad:false,tgtBefore:st.target,newStart:false};
@@ -3594,7 +3632,7 @@ function advanceStep(){
   CON.si++;CON.vals=[];CON.act=0;CON.miss=0;CON.user=null;CON.boxState=[];
   if(CON.si>=CON.probs[CON.pi].s.list.length){CON.pi++;CON.si=0;
     if(CON.pi>=CON.probs.length){const id=CON.type;
-      if(CON.mode==="concept"&&!PREVIEW){tst(id).conceptDone=true;save()}
+      if(CON.mode==="concept"&&!PREVIEW){tst(id).conceptDone=true;tst(id).conK=tst(id).step||0;save()}
       const T=TYPES[id];
       modal=()=>`<div class="veil"><div class="sheet"><h3>${CON.mode==="review"?"다 봤다냥!":"같은 순서로 다 풀었다냥!"}</h3><p>${T.idea}</p><button class="bigbtn" data-act="${CON.mode==="review"?"home":"tointro"}">${CON.mode==="review"?"처음으로":"세트 하러 가자!"}</button></div></div>`;
       render();return}}
@@ -3730,7 +3768,7 @@ function vParent(){
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
-     <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button></div>
+     <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button>${PID!=="sihun"&&!PREVIEW?`<button class="nb" data-act="resetme">${pname()} 기록 처음부터</button>`:""}</div>
      <div class="row" style="align-items:center"><span>하루 세트 수</span><button class="nb" data-act="tot" data-arg="-1">−</button><b>${S.cfg.total||20}</b><button class="nb" data-act="tot" data-arg="1">+</button><span class="small muted">정한 유형을 빼고 남는 칸은 교과 순서대로 저절로 채워져요. 통과한 유형은 빠져요.</span></div></div>
    <div class="card"><h3>기준</h3><p class="small">10문제 · 오답 1개까지 · 처음 3판 평균에서 10%씩 줄임 · 기준 안 2일이면 졸업 · <a href="${TREE}" target="_blank" rel="noopener">계통표</a></p></div>
   </div>`;
@@ -3866,7 +3904,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
-  bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){S=clone(B[d].core);loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
+  bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){{const rs=S.rs;S=clone(B[d].core);if(rs)S.rs=Date.now()}loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
   gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
@@ -3901,6 +3939,7 @@ const ACT={
   plotclear:()=>{const ctx=view==="play"?RUN:CON;ctx.user=null;render()},
   pause:()=>{stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>잠깐 쉬는 중이다냥</h3><button class="bigbtn" data-act="mclose">이어서 하기</button></div></div>`;render()},
   later:()=>{const i=curIdx();RUN.items[i].skip=true;stopClock();RUN.order.splice(RUN.pos,1);RUN.order.push(i);beginQ();render()},
+  hintok:()=>{modal=null;nextQ()},
   misfix:()=>{modal=null;resumeClock();render()},
   miskeepm:()=>{modal=null;resumeClock();judgeMulti(RUN.vals[0]||"")},
   miskeep:()=>{modal=null;resumeClock();const i=curIdx(),q=RUN.probs[i].q;render();judge(q.a.map((_,k)=>RUN.vals[k]||""))},
@@ -3914,6 +3953,13 @@ const ACT={
   preset2:id=>{delete S.ts[id];modal=null;save();render()},
   clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
   tot:a=>{S.cfg.total=Math.max(5,Math.min(40,(S.cfg.total||20)+ +a));D().plan=planNow();save(today());render()},
+  resetme:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>${pname()} 기록을 처음 상태로 돌릴까요?</h3><p class="small muted">${pname()} 계정의 단계·푼 기록·그래프 진도가 모두 처음으로 돌아가요. 시훈이 기록은 건드리지 않아요. 지우기 전 기록은 따로 남겨 둬요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="resetme2">처음부터</button></div></div></div>`;render()},
+  resetme2:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>정말 처음부터 할까요?</h3><p class="small muted">한 번 더 물어봐요. 누르면 ${pname()} 기록이 처음 상태가 돼요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">아니요</button><button class="bigbtn" style="flex:1" data-act="resetdo">네, 처음부터</button></div></div></div>`;render()},
+  resetdo:async()=>{modal=null;if(PID==="sihun"||PREVIEW){render();return}const pid=PID,old={at:Date.now(),savedAt:Date.now(),core:clone(S),days:clone(DAYS)};try{localStorage.setItem(kCore()+"-before-reset",JSON.stringify(old))}catch(e){}
+    const keys=Object.keys(DAYS),rs=Date.now();clearTimeout(flushT);dirty.clear();S=freshCore();S.rs=rs;S.savedAt=rs;DAYS={};loadFix();CFGJ=null;ensureToday();persistLocal();MSG=pname()+" 기록을 처음 상태로 돌렸어요. 지우기 전 기록은 따로 남겨 뒀어요.";view="home";render();
+    if(DB){const db=DB;try{await db.doc("bak/"+pid).set(old)}catch(e){}
+      try{await db.doc(dCore()).set(clone(S));REMAT=S.savedAt||0;let rk=keys;try{rk=[...new Set([...keys,...(await db.collection(dDays()).limit(1000).get()).docs.map(d=>d.id)])]}catch(e){}
+        for(const k of rk){if(pid!==PID)return;await db.doc(dDays()+"/"+k).set(DAYS[k]?clone(DAYS[k]):{sets:[],done:{},plan:{},carry:{},savedAt:rs})}}catch(e){dirty.add("core");sync="err"}}},
   resetplan:()=>{S.cfg.plan=clone(PLAN0);D().plan=planNow();save(today());MSG="하루 계획을 처음 값으로 돌렸어요.";render()},
   export:async()=>{const data=JSON.stringify({app:"sihun-yeonsan",v:1,core:S,days:DAYS});
     if(!window.claude){try{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type:"application/json"}));a.download=`시훈-연산-기록-${today()}.json`;document.body.appendChild(a);a.click();a.remove();MSG="파일로 저장했어요.";render();return}catch(e){}}
