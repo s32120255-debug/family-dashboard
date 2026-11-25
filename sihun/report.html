@@ -150,10 +150,14 @@ const strip=x=>String(x==null?'':x).replace(/<[^>]+>/g,'').replace(/\s+/g,' ').t
 const mmss=s=>s==null?'':s>=60?`${Math.floor(s/60)}분 ${s%60}초`:`${s}초`;
 // 비문학 쪼개 읽기·근거 찾기 (엄마 11/24)
 function biSum(r){const it=(r.items||[]).filter(x=>x&&x.ev);const S=k=>it.reduce((a,x)=>a+((x.ev||{})[k]||0),0),C=k=>it.reduce((a,x)=>a+((x.cmp||{})[k]||0),0);
-  return {reads:Object.values(r.reads||{}).map(x=>({title:x.title,n:x.n,read:x.read,first:x.first,missParas:x.missParas,words:x.words,skip:x.skip,sec:x.sec})),ev:{n:S('n'),first:S('first'),miss:S('miss'),paraHint:S('ph')},cmp:{n:C('n'),first:C('first'),miss:C('miss')},kwMiss:S('kwMiss'),lvNow:(it.slice().reverse().find(x=>x.ev&&x.ev.lvNow)||{ev:{}}).ev.lvNow,byLv:[1,2,3].map(l=>{const L=it.flatMap(x=>(x.ev&&x.ev.log)||[]).filter(y=>y.lv===l);return {lv:l,n:L.length,first:L.filter(y=>y.first).length}}).filter(y=>y.n)}}
+  return {reads:Object.values(r.reads||{}).map(x=>({title:x.title,n:x.n,read:x.read,first:x.first,missParas:x.missParas,words:x.words,skip:x.skip,sec:x.sec})),ev:{n:S('n'),first:S('first'),miss:S('miss'),paraHint:S('ph')},cmp:{n:C('n'),first:C('first'),miss:C('miss')},kwMiss:S('kwMiss'),an:it.flatMap(x=>(x.ev&&x.ev.an)||[]),lvNow:(it.slice().reverse().find(x=>x.ev&&x.ev.lvNow)||{ev:{}}).ev.lvNow,byLv:[1,2,3].map(l=>{const L=it.flatMap(x=>(x.ev&&x.ev.log)||[]).filter(y=>y.lv===l);return {lv:l,n:L.length,first:L.filter(y=>y.first).length}}).filter(y=>y.n)}}
 function biLine(r){const b=biSum(r);let h='';
   b.reads.forEach(x=>{h+=`<br>📖 쪼개 읽기 · ${esc(x.title||'')}: ${x.skip&&!x.read?'<span class="muted">건너뜀(문제 먼저)</span>':`문단 요약 한 번에 ${x.first}/${x.n}${x.read<x.n?` (${x.read}문단까지)`:''}${x.missParas&&x.missParas.length?` · <span class="bad">헤맨 문단 ${x.missParas.join(', ')}</span>`:''}${x.words?` · 낱말 뜻 본 횟수 ${x.words}`:''}${x.sec?` · ${mmss(x.sec)}`:''}`}`});
   if(b.ev.n)h+=`<br>📌 근거 문장 찾기: 한 번에 ${b.ev.first}/${b.ev.n}${b.ev.miss?` · 잘못 누름 ${b.ev.miss}`:''}${b.ev.paraHint?` · 문단 힌트 ${b.ev.paraHint}번`:''} · 같아/달라 한 번에 ${b.cmp.first}/${b.cmp.n}${b.kwMiss?` · 열쇠 낱말 헤맴 ${b.kwMiss}`:''}`+(b.byLv.length?`<br>🔑 도움 단계(1 반짝 · 2 문단 번호 · 3 혼자): ${b.byLv.map(y=>`${y.lv}단계 한 번에 ${y.first}/${y.n}`).join(' · ')}${b.lvNow?` → 지금 <b>${b.lvNow}단계</b>`:''}`:'');
+  if(b.an.length){const A=b.an,st=['v','s','k','p'],nm={v:'어찌하다',s:'무엇이',k:'핵심',p:'쉬운 말'};
+    const cnt=k=>{const L=A.filter(a=>a.sec&&a.sec[k]!=null);return {n:L.length,first:L.filter(a=>!(a.miss||{})[k]).length,avg:L.length?Math.round(L.reduce((x,a)=>x+a.sec[k],0)/L.length):0}};
+    h+=`<br>🔍 근거 문장 쪼개기 ${A.length}문장: `+st.map(k=>{const c=cnt(k);return c.n?`${nm[k]} 한 번에 ${c.first}/${c.n} (평균 ${mmss(c.avg)})`:''}).filter(Boolean).join(' · ');
+    const hard=A.filter(a=>Object.values(a.miss||{}).some(v=>v));if(hard.length)h+=`<br><span class="muted">막힌 문장:</span> `+hard.map(a=>`“${esc(a.t||'')}…” <span class="bad">${st.filter(k=>(a.miss||{})[k]).map(k=>nm[k]+' '+a.miss[k]+'번').join(', ')}</span>`).join(' / ');}
   return h}
 const KOAREA={'비문학':'비문학','문학':'문학','문법':'문법','스키마':'스키마'};
 async function koFill(KR){
@@ -179,7 +183,7 @@ async function koFill(KR){
       h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.restart?' <span class="muted">(🔄 처음부터 다시 하기 전 첫 시도)</span>':''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
         ${r.ev&&r.ev.length?`<br><span class="muted">고른 근거:</span> ${r.ev.map(e=>'“'+esc(e)+'”').join(' ')}`:''}
         ${r.parts&&Object.keys(r.parts).length?`<br><span class="muted">시훈이가 쓴 말:</span> ${Object.values(r.parts).map(v=>'「'+esc(v)+'」').join(' ')}`:''}
-        ${r.text?`<br><span class="muted">완성 문장:</span> <b>${esc(r.text)}</b>`:''}${r.img?`<div class="pen"><img src="${r.img}" alt="원고지"></div>`:''}</li>`; }
+        ${(r.reads||[]).map(x=>`<br>📖 한 문장씩 읽기 · ${esc(x.title||'')}: ${x.skip&&!x.done?'<span class="muted">건너뜀(문제 먼저)</span>':`${x.p}/${x.np}문단${x.chk&&x.chk.some(v=>v)?` · <span class="bad">문단 확인 틀림: ${x.chk.map((v,i)=>v?(i+1)+'문단 '+v+'번':'').filter(Boolean).join(', ')}</span>`:' · 문단 확인 모두 한 번에'}${x.words?` · 낱말 뜻 ${x.words}번`:''} · ${mmss(x.sec||0)}`}`).join('')}${r.text?`<br><span class="muted">완성 문장:</span> <b>${esc(r.text)}</b>`:''}${r.img?`<div class="pen"><img src="${r.img}" alt="원고지"></div>`:''}</li>`; }
     else if(r.type==='wrong'||r.type==='retry'){ h+=`<li><b>${r.type==='wrong'?'오답 다시 풀기':'틀린 문제 다시'}</b> — ${r.ok?'<span class="ok">맞음</span>':'<span class="bad">또 틀림</span>'} <span class="muted">${esc(strip(r.q||'').slice(0,50))}</span></li>`;
       if(!r.ok){const b=src.bank[r.id];wrongAll.push({src:r.type==='wrong'?'오답 다시':'다시 풀기',id:r.id,w:b&&b.w,area:b&&b.area,pick:[].concat(r.pickText||[]).join(', '),ans:[].concat(r.ansText||(b?[b.opts[b.a]]:[])).join(', '),q:b?b.q:r.q});} }
     else if(r.type==='note'){ h+=`<li><b>${r.mode==='fill'?'핵심 빈칸':'개념 정리'}</b>${r.area?' · '+esc(r.area):''}${r.week?` · ${r.week}주차`:''} — 획 ${r.strokes||0}${r.checked?' · 확인함':''}${time}</li>`; }
@@ -216,7 +220,7 @@ function koItems(R,src,tut,wr){ const out=[];
       wrong:it.filter(x=>!x.ok).map(x=>{const k=x.id&&src.bank[x.id];return {area:x.area,q:strip(x.q||(k&&k.q)||'').slice(0,300),box:strip(x.box||(k&&k.box)||'').slice(0,300),pick:strip(x.omrText),ans:strip(x.ansText),exp:strip(k&&k.exp||'').slice(0,300)}})}); }
     else if(r.type==='daily'){ const c=r.cards||[]; out.push({...b,n:c.length,first:c.filter(x=>x.ok&&!x.miss).length,miss:c.filter(x=>x.miss).length}); }
     else if(r.type==='hw'){ const H=src.hw[r.set]; out.push({...b,title:r.title,n:r.n,first:r.first,bi:(r.reads||(r.items||[]).some(x=>x&&x.ev))?biSum(r):undefined,wrong:(r.items||[]).filter(x=>x&&!x.skipped&&(x.miss||x.ok===false)).map(x=>{const q=H&&H.items[x.i];return {q:strip(q&&(q.q||(q.st?q.st.join(' / '):''))||'').slice(0,200),pick:strip(x.pickText||x.pick||''),miss:x.miss||0,evMiss:x.ev?x.ev.miss||0:undefined,hint:!!x.hint,solved:true}})}); }
-    else if(r.type==='write') out.push({...b,title:r.title,qok:r.qok,qn:r.qn,miss:r.miss,emiss:r.emiss,asked:r.asked,ev:r.ev,parts:r.parts,text:r.text});
+    else if(r.type==='write') out.push({...b,reads:r.reads,title:r.title,qok:r.qok,qn:r.qn,miss:r.miss,emiss:r.emiss,asked:r.asked,ev:r.ev,parts:r.parts,text:r.text});
     else out.push({...b,ok:r.ok,miss:r.miss,q:strip(r.q||'').slice(0,150)});
   }
   (tut||[]).forEach(t=>out.push({type:'tutor',date:t.at,area:t.problem&&t.problem.area||'',q:strip(t.problem&&t.problem.q||'').slice(0,300),picks:t.picks,ans:t.problem&&t.problem.ans,turns:(t.turns||[]).map(x=>x.who+': '+x.text).concat(t.res&&t.res.say?['ai: '+t.res.say]:[]),end:t.kind}));
