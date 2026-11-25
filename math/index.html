@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795587061";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795589725";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -188,6 +188,7 @@ details.card summary{cursor:pointer;padding:4px 0}
 .tbl th{font-weight:400;color:var(--ink-2);font-size:12px}
 .scrollx{overflow-x:auto}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.homeplan{margin:6px 0}.homeplan>summary{cursor:pointer;padding:12px 4px;color:var(--muted,#777);font-size:15px;list-style:none}.homeplan>summary::-webkit-details-marker{display:none}.homeplan>summary::before{content:"▸ "}.homeplan[open]>summary::before{content:"▾ "}
 </style>
 
 <div id="app"></div>
@@ -1005,14 +1006,12 @@ function vHome(){
   const items=S.cfg.order.filter(id=>owed(id)>0).map(id=>{const T=TYPES[id],o=owed(id),dn=d.done[id]||0,plan=d.plan[id]||0,st=tst(id);
     const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
     return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${STEPT(T)?stepLabel(T,st.step||0):T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span></button>`}).join("");
-  const opt=S.cfg.order.filter(id=>TYPES[id].optional&&!owed(id)).map(id=>`<button data-act="open" data-arg="${id}"><b>${TYPES[id].name}</b><span>골라서 한 판</span></button>`).join("");
   return `${bar(dayLabel(today()),`<button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`)}<div class="page">
    ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${STEPT(TYPES[nx])?stepLabel(TYPES[nx],tst(nx).step||0):TYPES[nx].ex}</span></button>`
      :`<div class="notice good"><b>오늘 ${totalOwed}판 끝! 수고했다냥.</b></div>`}
    ${carryN?`<p class="small muted">점선 = 지난번에 남은 판 (${carryN})</p>`:""}
-   <div class="plan">${items||'<p class="muted">오늘 계획이 비어 있어요. 부모님 화면에서 정해 주세요.</p>'}</div>
-   <div class="side">${opt}
-     <button data-act="go" data-arg="word"><b>문장제 코너</b><span>준비 중</span></button>
+   ${items?`<details class="homeplan"><summary>오늘 할 것 다 보기 (${totalOwed}판)</summary><div class="plan">${items}</div></details>`:'<p class="muted">오늘 계획이 비어 있어요. 부모님 화면에서 정해 주세요.</p>'}
+   <div class="side">
      <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
      <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
    </div></div>`;
