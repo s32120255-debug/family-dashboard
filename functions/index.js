@@ -640,7 +640,7 @@ const TEACH_SCHEMA = {
   },
 };
 exports.m32Teach = onDocumentCreated(
-  { document: "sihun/data/m32teachai/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3, minInstances: 1 },
+  { document: "sihun/data/m32teachai/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3, minInstances: 0 },
   async (event) => {
     const snap = event.data;
     const req = unpackDoc(snap && snap.data());
@@ -672,7 +672,7 @@ exports.m32Teach = onDocumentCreated(
     try {
       // 엄마 11/25 "카츄 반응 너무 느리다": 답 전체(정리·메모 칸까지)를 기다리지 않고, 카츄가 하는 말(say)이 나오는 대로
       // 작은 문서 m32teachp/{id} 에 0.35초마다 써서 앱이 바로 보여 줘요.
-      // 엄마 11/25 "비용 올라가도 돼, 최고의 과외 선생님 수준": 빠른 모드(speed fast, 값 2배) + 생각 깊게(effort high) + 늘 켜 둔 서버 1대.
+      // 엄마 11/25 "비용 올라가도 돼, 최고의 과외 선생님 수준": 빠른 모드(speed fast, 값 2배) + 생각 깊게(effort high). 늘 켜 둔 서버(minInstances)는 엄마 "안 써도 20달러면 부담"으로 뺌.
       const pref = getFirestore().doc("sihun/data/m32teachp/" + event.params.id);
       let buf = "", lastSay = "", lastAt = 0, chain = Promise.resolve();
       const push = (force) => {
@@ -823,7 +823,7 @@ const STT_HINTS = {
   "en-US": ["Katchu", "basketball", "defense"],
 };
 exports.stt = onDocumentCreated(
-  { document: "sihun/data/stt/{id}", region: "asia-northeast3", timeoutSeconds: 60, memory: "512MiB", maxInstances: 5, minInstances: 1 },
+  { document: "sihun/data/stt/{id}", region: "asia-northeast3", timeoutSeconds: 60, memory: "512MiB", maxInstances: 5, minInstances: 0 },
   async (event) => {
     const snap = event.data;
     const req = unpackDoc(snap && snap.data());
