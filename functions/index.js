@@ -697,7 +697,7 @@ exports.m32Teach = onDocumentCreated(
 // AI 요청 문서에 답(res)이 처음 채워질 때 토큰 수를 sihun/data/aiuse/{YYYY-MM} 에 더해요. 앱 코드는 안 건드려요.
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { FieldValue } = require("firebase-admin/firestore");
-for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai", "enchat"]) {
+for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai", "enchat", "enwrite", "enhand"]) {
   exports["aiUse_" + col] = onDocumentUpdated(
     { document: "sihun/data/" + col + "/{id}", region: "asia-northeast3", maxInstances: 2 },
     async (event) => {
@@ -846,6 +846,85 @@ exports.stt = onDocumentCreated(
     } catch (e) {
       console.error("stt", e && e.code, e && e.message);
       return done({ text: "", err: String((e && e.code) || (e && e.message) || "error") });
+    }
+  }
+);
+
+// ===================================================================================
+// 시훈 공부방 영어 「✍️ 내 이야기」(엄마 11/25): 시훈이가 한국어로 한 말 한 문장 → 쉬운 영어로 번역 + 성분 블록으로 쪼개기.
+// 앱이 sihun/data/enwrite/{id} 에 {ko, at} 를 쓰면 같은 문서에 res {en, blocks:[{t,r}]} 를 채워요. 시훈이는 블록을 순서대로 골라 문장을 만들어요.
+// 블록 기준 = MARK 개념편: 앞에서 꾸미는 말은 명사 덩어리 안, 뒤에서 꾸미는 전치사구·to부정사·부사는 M, 빼면 뜻이 무너지는 장소 말은 Ms(M*).
+// ===================================================================================
+const ENWRITE_LIMIT = 60;
+const ENWRITE_SYSTEM = `너는 초등학교 3학년(시훈)의 영어 쓰기를 돕는 선생님이야. 시훈이가 한국어로 한 문장을 주면:
+1) en: 그 뜻을 살린 쉽고 자연스러운 영어 한 문장(12단어 이하). 초등 수준 낱말. 줄임말 금지(I'm → I am, don't → do not). 문장 끝에 마침표·물음표·느낌표. 뜻이 여러 문장이면 가장 중요한 한 문장만.
+2) blocks: en을 문장 성분 덩어리로 순서대로 나눠. 각 덩어리 t는 en의 낱말 그대로(구두점은 붙은 낱말에 그대로), 모두 공백으로 이으면 en과 글자 하나까지 똑같아야 해.
+   r(역할): S 주어 · V 동사(조동사·do/does/did·not·구동사 포함 한 덩어리, 예 "did not play", "can swim", "turned on") · O 목적어 · IO 간접목적어(~에게) · DO 직접목적어(~을) · C 보어(주격·목적격) · M 수식어(부사, 뒤에서 꾸미는 전치사구·to부정사, 시간·장소) · Ms 빼면 뜻이 무너지는 장소 말(be·live·stay + 장소) · J 접속사 · X 감탄사.
+   앞에서 꾸미는 말(관사·소유격·형용사)은 명사 덩어리 안에 둬(예 "my new bike"). 덩어리는 2~7개.
+3) ko: en을 다시 자연스러운 한국어로.
+한국어가 비어 있거나 장난·욕설·아이에게 맞지 않는 말이면 ok=false, 나머지는 빈 값.`;
+const ENWRITE_SCHEMA = {
+  type: "object", additionalProperties: false, required: ["ok", "en", "ko", "blocks"],
+  properties: {
+    ok: { type: "boolean" }, en: { type: "string" }, ko: { type: "string" },
+    blocks: { type: "array", items: { type: "object", additionalProperties: false, required: ["t", "r"], properties: { t: { type: "string" }, r: { type: "string", enum: ["S", "V", "O", "IO", "DO", "C", "M", "Ms", "J", "X"] } } } },
+  },
+};
+exports.enWrite = onDocumentCreated(
+  { document: "sihun/data/enwrite/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.ko || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("enwrite", req.at)) > ENWRITE_LIMIT) return done({ state: "limit", ok: false });
+    try {
+      let r = null, tries = 0, usage = { in: 0, out: 0 }, model = "", extra = "";
+      while (tries < 2) {
+        tries++;
+        r = await callJson(ENWRITE_SYSTEM, [{ type: "text", text: `시훈이 한국어: ${String(req.ko).slice(0, 200)}${extra}` }], ENWRITE_SCHEMA, { tag: "enWrite", max: 2000, effort: "low" });
+        model = r.model || model;
+        if (r.usage) { usage.in += r.usage.in || 0; usage.out += r.usage.out || 0; }
+        if (r.refusal) return done({ state: "error", ok: false, err: "refusal", model, usage });
+        const o = r.out;
+        if (!o.ok) return done({ ...o, state: "skip", model, usage });
+        if (o.blocks.map((b) => b.t).join(" ") === o.en && o.blocks.length >= 2) return done({ ...o, state: "ok", model, usage });
+        extra = "\n\n방금 blocks를 이으면 en과 달랐어. 덩어리를 이으면 en과 똑같게 다시 나눠.";
+      }
+      return done({ state: "error", ok: false, err: "blocks", model, usage });
+    } catch (e) {
+      console.error("enWrite", e && e.status, e && e.message);
+      return done({ state: "error", ok: false, err: String((e && e.status) || (e && e.message) || "error") });
+    }
+  }
+);
+
+// ----- 영어 손글씨 읽기: S펜으로 영어 노트(4선)에 쓴 글씨를 고치지 않고 그대로 옮겨 적기 -----
+const ENHAND_LIMIT = 120;
+const ENHAND_SYSTEM = `너는 초등학생 손글씨를 옮겨 적는 사람이야. 그림은 영어 노트(4줄 칸, 빨간 줄이 기준선)에 아이가 S펜으로 쓴 영어 한두 문장이야.
+- 쓴 글자를 **보이는 그대로** 옮겨. 철자·대소문자·띄어쓰기·마침표를 절대 고치거나 채우지 마. 틀린 철자도 그대로 적어(예: 아이가 "Went"라고 썼으면 "Went").
+- 무슨 문장이 맞는지 추측해서 바꾸지 마. 노트 줄은 글자가 아니야.
+- 두 줄에 걸쳐 쓴 것은 한 줄로 이어서, 단어 사이 한 칸 띄어 적어.
+- 글자 대부분을 읽을 수 없으면 clear=false, text는 빈 문자열.`;
+const ENHAND_SCHEMA = { type: "object", additionalProperties: false, required: ["text", "clear"], properties: { text: { type: "string" }, clear: { type: "boolean" } } };
+exports.enHand = onDocumentCreated(
+  { document: "sihun/data/enhand/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 60, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.img || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ at: req.at, res: { ...res, atRes: Date.now() } })); // 그림은 지우고 결과만 남김
+    if ((await usedToday("enhand", req.at)) > ENHAND_LIMIT) return done({ state: "limit" });
+    try {
+      const r = await callJson(ENHAND_SYSTEM, [
+        { type: "image", source: { type: "base64", media_type: "image/png", data: String(req.img) } },
+        { type: "text", text: "이 노트에 쓴 영어를 보이는 그대로 옮겨 적어." },
+      ], ENHAND_SCHEMA, { tag: "enHand", max: 1000, effort: "low" });
+      if (r.refusal) return done({ state: "error", err: "refusal", model: r.model, usage: r.usage });
+      return done({ state: "ok", text: String(r.out.text || "").slice(0, 300), clear: !!r.out.clear, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("enHand", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error") });
     }
   }
 );
