@@ -4446,9 +4446,12 @@ const PER=12;
 // ===== 쪼갠 칸 (엄마 11/25: "진분수 2단계부터 어려워하네, 문제를 더 쪼개봐야것다") =====
 // 유형(kind:단계:유형)마다 stage 0 = 칸 전부 → 3번 연속 칸마다 한 번에 맞히면 stage 1 = 칸 줄임 → 또 3번이면 stage 2 = 혼자 풀기. 혼자 풀다 틀리면 stage 1로.
 // 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 쪼갠 칸으로 맞힌 건 ★ 안 줌.
-function kstGet(key){ PROG.kstep=PROG.kstep||{}; return PROG.kstep[key]||(PROG.kstep[key]={stage:0,ok:0}); }
+// 엄마 11/25 저녁: 너무 빡빡함 → 유형별이 아니라 단계 전체(kind:단계)로 세고, 답을 안 보고 다 채우면(다시 해서 맞힌 칸 포함) 인정, KST_N번이면 다음.
+const KST_N=2, KST_STAR=false;
+function kstGet(key){ PROG.kstep=PROG.kstep||{}; const k=String(key).split(':').slice(0,2).join(':'); if(PROG.kstep[k]) return PROG.kstep[k];
+  const old=Object.keys(PROG.kstep).filter(x=>x.startsWith(k+':')).map(x=>PROG.kstep[x].stage||0); return (PROG.kstep[k]={stage:old.length?Math.max(...old):0,ok:0}); }
 function kstAfter(key,stepRun,rec){ const s=kstGet(key); DIRTY=true; let up=0;
-  if(stepRun){ if(stepRun.clean){ s.ok++; if(s.ok>=3){ s.stage=Math.min(2,s.stage+1); s.ok=0; up=s.stage; } } else s.ok=0; }
+  if(stepRun){ if(stepRun.pass){ s.ok++; if(s.ok>=KST_N){ s.stage=Math.min(2,s.stage+1); s.ok=0; up=s.stage; } } else s.ok=0; }
   else if(rec&&rec.res==='x'){ s.stage=1; s.ok=0; }
   return up; }
 function mountSteps(box,p,stage,opts){
@@ -4476,7 +4479,7 @@ function mountSteps(box,p,stage,opts){
     const rec={d:today(),ts:new Date().toISOString(),mode:'solve',sk:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:0,wrong:[],tags:[],sec,fm:p.fm,qc:st.qc||null,cond:st.cond||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),
       pen:penSnap(st),penAsk:null,solSeen:true,fixed:false,learn:null,tutor:null,stepMode:1,
       steps:{stage,n:idx.length,all:p.steps.length,clean:st.clean,miss:st.miss.map(i=>({i:i+1,q:stripTags(p.steps[idx[i]].q).slice(0,80)})),wrong:st.wrong}};
-    const up=p.skey?kstAfter(p.skey,{clean:st.clean},rec):0; rec.steps.up=up||0;
+    const up=p.skey?kstAfter(p.skey,{pass:!st.miss.length},rec):0; rec.steps.up=up||0;
     show(res==='h'?'o':'x', res==='h'?`⭕ 작은 칸을 모두 풀었어요!${st.clean?'':' (다시 해서 맞힌 칸도 있어요)'}${up===1?'<div class="tagline">🎉 잘했어요! 다음부터 칸을 줄여 볼게요.</div>':up===2?'<div class="tagline">🎉 잘했어요! 다음엔 혼자 풀어 봐요.</div>':''}`
       :`정답은 <b>${answerText(p)}</b> 이에요. 막힌 칸은 풀이를 봐 두고, 다음 문제로 가요.`);
     box.querySelector('#sol').innerHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
@@ -4509,8 +4512,8 @@ function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   if(!it.fr) pfNew(it); pfApply(it);
   it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; if(it.p.skey&&it.p.steps) kstAfter(it.p.skey,null,rec); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
-function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
-  if(rec.res==='o') r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
+function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode&&!(KST_STAR&&rec.res==='h')) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
+  if(rec.res==='o'||rec.stepMode) r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
   if(r.st[l]>=5&&r.lv<=l&&l<4){ r.lv=l+1; levelUp(l); } else if(r.st[l]>=5&&l===4&&r.lv<5){ r.lv=5; levelUp(l); } }
 function modal(html){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="mbox">${html}</div>`; document.body.appendChild(m); return m; }
 function levelUp(l){ const s=SKILLS[C.si]; const m=modal(`<div class="lvup"><div class="em">${l>=4?'🏆':'🎉'}</div><h2>${s.title} · ${LV[l]} 통과!</h2><p>${l<4?`다음 단계 「${LV[l+1]}」가 열렸어요.`:'마지막 단계까지 모두 통과!'}</p><div class="acts">${l<4?`<button class="ok" id="mup">${LV[l+1]}로 올라가기</button>`:''}<button class="hint" id="mst" style="flex:1">이 단계 계속</button></div></div>`);
