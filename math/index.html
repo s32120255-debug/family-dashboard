@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795646788";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795648990";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -175,7 +175,7 @@ details.card summary{cursor:pointer;padding:4px 0}
 .pad{flex:none;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-block:8px 12px}
 .key{height:clamp(42px,7.6vh,62px);border-radius:14px;background:var(--card);border:1px solid var(--line);font-family:var(--f-disp);font-size:32px;box-shadow:0 2px 0 var(--line)}
 .key.nk{background:var(--blue-soft,#dbe6f5);color:var(--blue)}
-.key.fn{font-size:20px;background:var(--paper-2)}
+.key.fn{font-size:20px;background:var(--paper-2)}.key.clr{font-size:14px;line-height:1.15}
 .key.go{background:var(--blue);border-color:var(--blue);color:var(--on-blue);font-size:24px}
 .ox{flex:none;display:grid;grid-template-columns:1fr 1fr;gap:10px;padding-block:8px 14px}
 .ox button{height:110px;border-radius:18px;background:var(--card);border:2px solid var(--line);font-family:var(--f-disp);font-size:64px}
@@ -3343,9 +3343,9 @@ function padHTML(kind,canSubmit){
   if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
   const K=n=>`<button class="key" data-key="${n}">${n}</button>`;
   const okk=S&&S.cfg&&S.cfg.okKey;
-  const MK='<button class="key nk" data-key="mn" aria-label="음수 부호">−</button>';
-  if(kind==="frac"||kind==="sfrac")return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key nk" data-key="amp" aria-label="자연수 다음">&amp;</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="bs" aria-label="분수 막대">\\</button>${K(7)}${K(8)}${K(9)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${kind==="sfrac"?MK+K(0):'<button class="key" data-key="0" style="grid-column:span 2">0</button>'}${okk?'<button class="key go" data-key="ok">확인</button>':""}<button class="key nk" data-key="n" aria-label="다음" style="font-size:22px${okk?"":";grid-column:span 2"}">다음</button></div>`;
-  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음" style="font-size:22px${okk?"":";grid-row:span 3;height:auto"}">다음</button>${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':""}${kind==="signed"?MK+'<button class="key" data-key="0" style="grid-column:span 2">0</button>':'<button class="key" data-key="0" style="grid-column:span 3">0</button>'}</div>`;
+  const MK='<button class="key nk" data-key="mn" aria-label="음수 부호">−</button>',CL='<button class="key fn clr" data-key="clr" aria-label="전체 지우기">전체<br>지우기</button>';
+  if(kind==="frac"||kind==="sfrac")return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key nk" data-key="amp" aria-label="자연수 다음">&amp;</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="bs" aria-label="분수 막대">\\</button>${K(7)}${K(8)}${K(9)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${kind==="sfrac"?MK+K(0)+CL:(okk?K(0)+CL:'<button class="key" data-key="0" style="grid-column:span 2">0</button>'+CL)}${okk&&kind==="sfrac"?"":okk?'<button class="key go" data-key="ok">확인</button>':""}<button class="key nk" data-key="n" aria-label="다음" style="font-size:22px">다음</button>${okk&&kind==="sfrac"?'<button class="key go" data-key="ok" style="grid-column:span 4">확인</button>':""}</div>`;
+  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}${okk?'<button class="key nk" data-key="n" aria-label="다음" style="font-size:22px">다음</button>':CL}${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':'<button class="key nk" data-key="n" aria-label="다음" style="font-size:22px;grid-row:span 2;height:auto">다음</button>'}${kind==="signed"?MK+(okk?K(0)+CL:'<button class="key" data-key="0" style="grid-column:span 2">0</button>'):(okk?'<button class="key" data-key="0" style="grid-column:span 2">0</button>'+CL:'<button class="key" data-key="0" style="grid-column:span 3">0</button>')}</div>`;
 }
 function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
 
@@ -3415,6 +3415,7 @@ function typeKey(k){
   const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx||(view==="play"&&RUN.lock))return;
   const q=view==="play"?RUN.probs[curIdx()].q:curStep();if(!q||q.kind==="ox"||q.kind==="plot")return;if(q.kind==="multi")ctx.act=0;
   if(k==="ok"){submit();return}
+  if(k==="clr"){if(view==="concept")ctx.vals[ctx.act]="";else{ctx.vals=[];ctx.act=0}ctx.boxState=[];softRender();return}
   if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}ctx.act++;softRender();return}
   const v=ctx.vals[ctx.act]||"";
   if(k==="mn"){if(!q.sg||v)return;k="-"}
@@ -3788,6 +3789,7 @@ const gwAns=st=>st.k==="tab"?gwPts(GS.s,st.ln).map(p=>p[1]):st.a||[];
 function gwNext(){GS.si++;GS.vals=[];GS.ok=[];GS.act=0;const st=GS.steps[GS.si];GS.say=st.k==="tab"?"두 번째 식도 표를 채운다냥.":st.k==="plot"?(st.shift?`점을 모두 ${GS.s.p?`옆으로 ${MN(GS.s.p)}칸`:""}${GS.s.p&&GS.s.u?", ":""}${GS.s.u?`위로 ${MN(GS.s.u)}칸`:""} 옮겨 찍는다냥. (−는 왼쪽·아래다옹)`:"표의 짝을 점으로 찍는다냥. 옆으로 x, 위로 y다옹."):st.k==="line"?(gwLines(GS.s)[st.ln].c?"점을 부드러운 곡선으로 잇는다냥. 자는 안 쓴다옹.":"점이 한 줄로 섰다냥. 자를 대고 이어 보자옹."):st.k==="ask"?"그래프를 보고 답한다냥.":"";render()}
 function gwKey(k){const st=GS&&GS.steps[GS.si];if(!st||(st.k!=="tab"&&st.k!=="ask"))return;const A=gwAns(st);let v=GS.vals[GS.act]||"";
   if(k==="del"){GS.vals[GS.act]=v.slice(0,-1);render();return}
+  if(k==="clr"){GS.vals[GS.act]="";render();return}
   if(k==="mn"){if(!v){GS.vals[GS.act]="-";render()}return}
   if(k==="n"||k==="ok"){gwCheck();return}
   if(!/^\d$/.test(k)||v.length>=3)return;v=GS.vals[GS.act]=v+k;if(v.length>=String(A[GS.act]).length)gwCheck();else render()}
