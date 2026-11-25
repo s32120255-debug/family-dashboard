@@ -50,7 +50,7 @@
     function hist(){const T=S.turns.slice(0,-1);if(!T.length)return '';return `<details class="hist"><summary class="m">지금까지 나눈 말 (${T.length})</summary>${T.map(t=>t.who==='ai'?`<div class="kat"><div class="av">⚡</div><div class="bub">${esc(t.text)}</div></div>`:`<div class="me"><span>${esc(t.text)}</span></div>`).join('')}</details>`}
     function draw(){
       let h=`<div class="card"><div style="font:800 20px 'Noto Sans KR'">⚡ 카츄랑 말하기</div><div class="m" style="text-align:left">오늘 배운 문장을 카츄한테 써 봐요 · ${S.used.length} / ${ctx.sents.length}</div>${goal()}</div><div class="card">`;
-      if(S.busy)h+=`<div class="kat"><div class="av">⚡</div><div class="bub">…</div></div><div class="m">카츄가 생각하는 중…</div>`;
+      if(S.busy)h+=`<div class="kat"><div class="av">⚡</div><div class="bub">…</div></div><div class="m">카츄가 생각하는 중…</div>${S.slow?`<div class="m">카츄 생각이 길어요. 기다려도 되고, 오늘은 넘어가도 돼요.</div><div class="row"><button class="g" data-k="skip">오늘은 그만 · 다음 ▶</button></div>`:''}`;
       else if(S.err)h+=`<div class="bad">${esc(S.err)}</div><div class="row"><button class="g" data-k="retry">다시 해 보기</button><button class="g" data-k="skip">오늘은 그만 · 끝 ▶</button></div>`;
       else if(S.phase==='start')h+=`<div class="scene"><div class="t">⚡ 카츄가 왔어요</div>카츄는 형아를 좋아하는 동생이에요. 카츄가 영어로 물어보면, 오늘 배운 문장으로 대답해 줘요. 천천히 말해 줄 거예요.</div><div class="row"><button class="big" data-k="begin">카츄 부르기 ▶</button></div>`;
       else if(S.phase==='fix'){const r=S.react;
@@ -80,8 +80,9 @@
       const id=`${today()}-${S.sid}-${pad(++S.calls)}`;
       const req={at:today(),date:today(),ts:new Date().toISOString(),sid:S.sid,kind,sents:ctx.sents.map(s=>({en:s.en,ko:s.ko})),vocab:ctx.vocab||[],used:S.used.slice(),turns:S.turns.map(t=>({who:t.who,text:t.text,help:t.help||0})),heard:heard||'',typed:!!typed,turnsLeft:MAXR-S.replies};
       try{await DB.doc('enchat/'+id).set(req)}catch(e){S.busy=false;S.err='요청을 못 보냈어요.';draw();return}
-      let res=null;for(let i=0;i<90&&!res;i++){await new Promise(r=>setTimeout(r,i<5?1500:1000));try{const sn=await DB.doc('enchat/'+id).get();const d=sn.exists?sn.data():null;if(d&&d.res)res=d.res}catch(e){}}
-      S.busy=false;S.lastReq=kind;
+      // 엄마 11/25: "계속 생각 중"에서 멈춤 → 8초 지나면 넘어가기 버튼, 60초면 그만 기다림
+      const t0=Date.now();S.slow=false;let res=null;for(let i=0;i<60&&!res&&!S.done;i++){await new Promise(r=>setTimeout(r,1000));if(!S.slow&&Date.now()-t0>8000){S.slow=true;draw()}try{const sn=await DB.doc('enchat/'+id).get();const d=sn.exists?sn.data():null;if(d&&d.res)res=d.res}catch(e){}}
+      S.busy=false;S.slow=false;S.lastReq=kind;if(S.done)return;
       if(!res){S.err='카츄 대답이 늦어요. 잠시 뒤 다시 해 봐요.';draw();return}
       if(res.state==='limit'){S.err='오늘은 카츄가 너무 많이 말했어요. 내일 또 해요.';draw();return}
       if(res.state!=='ok'){S.err='카츄가 대답을 못 했어요. 다시 해 볼까요?';draw();return}
@@ -99,7 +100,7 @@
       if(k!=='mic'&&MIC){MIC.stop();MIC=null}
       if(k==='begin'){ask('start')}
       else if(k==='retry'){if(!S.turns.length)ask('start');else{const last=[...S.turns].reverse().find(t=>t.who==='me');ask('reply',last?last.text:'',false)}}
-      else if(k==='skip'){S.done=true;S.err=S.err||'skip';keep();ctx.onDone&&ctx.onDone(sum())}
+      else if(k==='skip'){S.done=true;S.busy=false;S.err=S.err||'skip';keep();ctx.onDone&&ctx.onDone(sum())}
       else if(k==='ready'){S.phase='talk';S.turns.push({who:'ai',text:S.cur.say});keep();draw();say(S.cur.say,0.8)}
       else if(k==='again')say(S.cur.say,0.8);
       else if(k==='slow')say(S.cur.say,0.55);
@@ -121,5 +122,46 @@
     draw();
     return {sum};
   }
-  window.EN_CHAT={open};
+  // 📜 준비된 카츄 대사(엄마 11/25: 카츄가 "생각 중"에서 안 떠서). AI 없이 바로 대답 — 내 지도 날에 씀
+  // ctx.script: [{scene, say, ko, en:[정답...]}]. 맞으면 카츄가 그대로 되받아 말하고, 다르면 바른 문장을 따라 말하기. 빨간 X 없음
+  function norm(t){return String(t||'').toLowerCase().replace(/[’‘]/g,"'").replace(/n't\b/g,' not').replace(/'m\b/g,' am').replace(/'re\b/g,' are').replace(/'s\b/g,' is').replace(/\b(the|an)\b/g,'a').replace(/\b2\b/g,'two').replace(/[^a-z\s]/g,' ').split(/\s+/).filter(Boolean)}
+  function close(a,b){const A=norm(a),B=norm(b);if(!B.length)return 'quiet';if(A.join(' ')===B.join(' '))return 'ok';if(A.length===B.length&&A.slice(1).join(' ')===B.slice(1).join(' '))return 'ok';return 'diff'}
+  function openScript(host,ctx){
+    const root=host.getRootNode&&host.getRootNode();if(root&&!root.__kcCss){const st=document.createElement('style');st.textContent=CSS;(root.head||root).appendChild(st);root.__kcCss=1}
+    host.innerHTML='';const box=document.createElement('div');box.className='kc';host.appendChild(box);
+    const L=ctx.script;let S=lsGet();const sk='script|'+L.map(x=>x.en[0]).join('|');
+    if(!S||S.sk!==sk)S={sk,sid:Date.now().toString(36),i:0,phase:'start',used:[],turns:[],fixes:[],done:false,t0:Date.now(),help:{},helpMax:0,replies:0};
+    let MIC=null,showKo=false,last='';
+    const sum=()=>({sid:S.sid,used:S.used.length,of:L.length,usedIdx:S.used.slice(),replies:S.replies,fixes:S.fixes.length,helpMax:S.helpMax,help:S.help,done:!!S.done,err:null,script:true,turns:S.turns.slice(-20),min:Math.max(1,Math.round((Date.now()-S.t0)/60000))});
+    const keep=()=>{lsSet(S);try{ctx.onSave&&ctx.onSave(sum())}catch(e){}};
+    function draw(){const x=L[S.i];
+      let h=`<div class="card"><div style="font:800 20px 'Noto Sans KR'">⚡ 카츄랑 말하기</div><div class="m" style="text-align:left">${S.used.length} / ${L.length}</div></div><div class="card">`;
+      if(S.phase==='start')h+=`<div class="scene"><div class="t">⚡ 카츄가 왔어요</div>카츄는 형아를 좋아하는 동생이에요. 카츄가 영어로 말하면, 오늘 지도에 나온 문장으로 대답해 줘요.</div><div class="row"><button class="big" data-k="go">카츄 부르기 ▶</button></div>`;
+      else if(S.phase==='scene')h+=`<div class="scene"><div class="t">🎬 이런 상황이에요</div>${esc(x.scene)}</div><div class="row"><button class="big" data-k="ready">알겠어 👍</button></div>`;
+      else if(S.phase==='talk'){h+=`<div class="kat"><div class="av">⚡</div><div class="bub">${esc(x.say)}${showKo?`<div class="ko">${esc(x.ko)}</div>`:''}</div></div>
+        <div class="row"><button class="g" data-k="again">🔊 다시 듣기</button><button class="g" data-k="slow">🐢 더 느리게</button>${showKo?'':'<button class="g" data-k="ko">🇰🇷 뜻</button>'}</div>
+        ${last==='quiet'?'<div class="hint">🔈 잘 안 들렸어요. 한 번 더 말하거나 써 봐요.</div>':''}
+        <textarea rows="2" placeholder="영어로 대답해요 (🎤 말로 해도 돼요)"></textarea><div class="row"><button data-k="send">보내기 →</button><button class="g" data-k="mic">🎤 말로 하기</button><button class="g" data-k="pass">넘어가기</button></div>`}
+      else if(S.phase==='ok')h+=`<div class="kat"><div class="av">⚡</div><div class="bub">${esc(x.en[0])} <button class="g" data-k="sayans" style="padding:4px 8px">🔊</button><div class="ko">카츄가 형아 말을 따라 했어요</div></div></div><div class="row"><button class="big" data-k="next">${S.i+1<L.length?'다음 ▶':'끝 ▶'}</button></div>`;
+      else if(S.phase==='fix')h+=`<div class="fix">🗣️ 카츄가 이렇게 말해요. <b>따라 말해</b> 봐요<div style="font:800 24px 'Noto Sans KR';margin:8px 0">${esc(x.en[0])} <button class="g" data-k="sayans">🔊</button></div></div><textarea rows="2" placeholder="말하거나 써요"></textarea><div class="row"><button class="g" data-k="mic">🎤 말로 하기</button><button data-k="next">따라 했어 ▶</button></div>`;
+      else h+=`<div class="ok" style="text-align:center;font-size:20px;margin:10px 0">오늘 문장 ${S.used.length} / ${L.length}개를 카츄한테 썼어요!</div><div class="row"><button class="big" data-k="finish">끝 ▶</button></div>`;
+      box.innerHTML=h+'</div>';box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>act(b.dataset.k))}
+    function judgeSend(v){const x=L[S.i];const r=x.en.map(e=>close(e,v));const res=r.includes('ok')?'ok':r.includes('diff')?'diff':'quiet';
+      if(res==='quiet'){last='quiet';draw();return}S.replies++;S.turns.push({who:'me',text:v});last='';
+      if(res==='ok'){if(!S.used.includes(S.i+1))S.used.push(S.i+1);S.phase='ok'}else{S.fixes.push({heard:v,fix:x.en[0]});S.phase='fix'}
+      S.turns.push({who:'ai',text:x.en[0]});keep();draw();say(x.en[0],0.85)}
+    function act(k){const ta=box.querySelector('textarea'),x=L[S.i];if(k!=='mic'&&MIC){MIC.stop();MIC=null}
+      if(k==='go'){S.phase='scene';keep();draw()}
+      else if(k==='ready'){S.phase='talk';showKo=false;last='';S.turns.push({who:'ai',text:x.say});keep();draw();say(x.say,0.85)}
+      else if(k==='again')say(x.say,0.85);else if(k==='slow')say(x.say,0.6);else if(k==='sayans')say(x.en[0],0.8);
+      else if(k==='ko'){showKo=true;S.help[1]=(S.help[1]||0)+1;S.helpMax=Math.max(S.helpMax,1);draw()}
+      else if(k==='send'){const v=(ta&&ta.value||'').trim();judgeSend(v)}
+      else if(k==='pass'){S.fixes.push({heard:'(넘어감)',fix:x.en[0]});S.phase='fix';keep();draw();say(x.en[0],0.85)}
+      else if(k==='mic'){if(MIC&&MIC.isOn()){MIC.stop();return}
+        MIC=window.liveMic&&window.liveMic(ta,on=>{const b=box.querySelector('[data-k="mic"]');if(b)b.textContent=on?'⏹ 그만 듣기':'🎤 말로 하기';if(!on){MIC=null;if(S.phase==='talk'&&ta&&ta.value.trim())judgeSend(ta.value.trim())}},'en-US');
+        if(!MIC){const b=box.querySelector('[data-k="mic"]');if(b){b.textContent='🎤 이 기기에선 안 돼요 · 자판으로 써요';b.disabled=true}}}
+      else if(k==='next'){if(S.i+1<L.length){S.i++;S.phase='scene'}else{S.phase='end';S.done=true}keep();draw()}
+      else if(k==='finish'){S.done=true;keep();ctx.onDone&&ctx.onDone(sum())}}
+    draw();return {sum}}
+  window.EN_CHAT={open:(host,ctx)=>ctx&&ctx.script&&ctx.script.length?openScript(host,ctx):open(host,ctx)};
 })();
