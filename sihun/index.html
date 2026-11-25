@@ -1204,7 +1204,8 @@ const MAPORDER=['A'];
 const MAPWHY=[['📘','이해'],['🌊','컨디션'],['🎯','주의'],['🗣️','꺼내기'],['🔋','후반 집중']];
 let MZ=null;
 function mapS(){return RLOG.map||(RLOG.map={cells:{},days:{},done:{}})}
-function mapSetToday(){if(today()<MAP_FROM)return null;const M=mapS(),d=M.days[today()];if(d)return d.set;
+// 👀 직접 해 보기(엄마 미리보기): 날짜와 상관없이 아직 안 한 다음 지도를 보여 줌. 저장은 막혀 있어 시훈이 기록엔 안 남음
+function mapSetToday(){if(today()<MAP_FROM&&!window.HUBTRY)return null;const M=mapS(),d=M.days[today()];if(d)return d.set;
   for(const k of MAPORDER){const dd=M.done[k];if(!dd)return k;if(dd===today())return k}return null}
 function mapDay(){const M=mapS(),k=mapSetToday();if(!k)return null;return M.days[today()]||(M.days[today()]={set:k,start:new Date().toISOString()})}
 function mapCells(){const d=mapDay();return d?MAPSET[d.set].cells:[]}
