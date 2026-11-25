@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795648990";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795649076";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3278,7 +3278,7 @@ function vHome(){
      <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
      <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
      <button data-act="fam" style="grid-column:span 2"><b>우리 가족 진도</b><span>시훈, 엄마, 아빠가 어디까지 왔나 본다냥</span></button>
-     <button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>
+     ${gwOn()?`<button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>`:""}
    </div></div>`;
 }
 
@@ -3753,6 +3753,7 @@ const GWL=(()=>{const L=[],add=(g,o)=>L.push({g,...o});let sd=7;const rnd=()=>(s
   const G8=[];for(const c of[1,-1,2,-2])for(let p=-3;p<=3;p++)for(let u=-4;u<=4;u++)if(p&&qn({c,p,u})>=3)G8.push({c,p,u});const k8=G8.filter(o=>!o.u),r8=G8.filter(o=>o.u);shuf(k8).concat(shuf(r8)).forEach(o=>add(8,o));
   const G9=[];for(const c of[1,-1])for(let p=-2;p<=2;p++)for(let u=-4;u<=4;u++)for(let i=-2;i<=2;i++)for(let j=i+1;j<=2;j++){const x1=p+i,x2=p+j,y1=c*i*i+u,y2=c*j*j+u,a=(y2-y1)/(x2-x1),b=y1-a*x1;if(a&&Math.abs(a)<=3&&Math.abs(b)<=5&&Math.abs(y1)<=6&&Math.abs(y2)<=6&&qn({c,p,u})>=4)G9.push({c,p,u,a,b,x1,x2})}shuf(G9).slice(0,160).forEach(o=>add(9,o));
   return L})();
+const gwOn=()=>S.cfg.gwOn??(PID!=="sihun");
 const gwS=()=>{if(!S.gw)S.gw={i:0,per:3,log:{}};if(!S.gw.log)S.gw.log={};S.gw.i=Math.max(0,Math.min(S.gw.i||0,GWL.length-1));return S.gw};
 const gwY=(l,x)=>l.c?l.c*(x-l.p)*(x-l.p)+l.u:l.a*x/(l.d||1)+l.b;
 const gwF=l=>{if(l.c){const C=Math.abs(l.c);return `y = ${l.c<0?"−":""}${C===1?"":C}${l.p?`(x ${l.p<0?"+":"−"} ${Math.abs(l.p)})²`:"x²"}${l.u?` ${l.u<0?"−":"+"} ${Math.abs(l.u)}`:""}`}const d=l.d||1,A=Math.abs(l.a);if(l.q&&l.a<0)return `y = ${l.b} − ${A===1?"":A}x`;return `y = ${l.a<0?"−":""}${d>1?fr(A,d):A===1?"":A}x${l.b?` ${l.b<0?"−":"+"} ${Math.abs(l.b)}`:""}`};
@@ -3837,7 +3838,7 @@ function vGprint(){const P=GP||{from:0,n:6},list=P.blank?Array.from({length:P.n}
   return `<div class="page gprint"><div class="noprint">${bar("그래프 양식 인쇄")}<div class="notice">A4 세로, 한 쪽에 2장씩 나와요. 아래 버튼을 누른 뒤 "인쇄" 또는 "PDF로 저장"을 고르면 돼요.</div><div class="row" style="margin-top:8px"><button class="bigbtn" style="flex:1" data-act="gw" data-arg="doprint">인쇄 / PDF로 저장</button><button class="bigbtn ghost" style="flex:1" data-act="go" data-arg="parent">돌아가기</button></div></div>
    ${list.map((s,k)=>gwSheetHTML(s,s?"#"+(P.from+k+1):"")).join("")}</div>`}
 function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,tot=Object.values(g.log).reduce((a,b)=>a+b,0);
-  return `<div class="card"><h3>오늘의 그래프 (손으로 그리기)</h3><p class="small muted">화면에서 표 → 점 → 선을 먼저 끝내고, 종이에는 옮겨 그리기만 해요. 일차함수 890장 뒤에 이차함수가 이어져요. 모두 ${GWL.length}장.</p>
+  return `<div class="card"><h3>오늘의 그래프 (손으로 그리기)</h3><label class="row"><input type="checkbox" ${gwOn()?"checked":""} data-ch="gwon"> ${pname()} 처음 화면에 오늘의 그래프 보이기</label><p class="small muted">화면에서 표 → 점 → 선을 먼저 끝내고, 종이에는 옮겨 그리기만 해요. 일차함수 890장 뒤에 이차함수가 이어져요. 모두 ${GWL.length}장.</p>
    <p>지금 <b>${g.i+1} / ${GWL.length}장</b> · ${GWG[s.g]} · 지금까지 ${tot}장 (${days}일)</p>
    <div class="prow"><div class="top"><span class="nm">하루 장수</span><div class="stepper"><button data-act="gw" data-arg="per-" aria-label="줄이기">−</button><b>${g.per||3}</b><button data-act="gw" data-arg="per+" aria-label="늘리기">+</button></div></div>
    <div class="row small"><button class="nb" data-act="gw" data-arg="prev">앞 단계로</button><button class="nb" data-act="gw" data-arg="nextg">다음 단계로</button></div></div>
@@ -3917,6 +3918,7 @@ app.addEventListener("pointerdown",e=>{
 });
 app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)return;const k=el.dataset.ch,id=el.dataset.arg;
   if(k==="carry"){S.cfg.carryOn=el.checked;save();return}
+  if(k==="gwon"){S.cfg.gwOn=el.checked;save();return}
   if(k==="corefirst"){S.cfg.coreFirst=el.checked;save();return}
   if(k==="okkey"){S.cfg.okKey=el.checked;save();return}
   if(k==="io"){IMPORT_TXT=el.value;return}
