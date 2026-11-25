@@ -536,7 +536,11 @@ ul.cond{margin:8px 0;padding-left:22px;font-size:20px}ul.cond li{margin:3px 0}
 .navrow{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.navrow button{flex:1;min-width:120px;height:44px;border-radius:12px;border:1.5px solid var(--line);background:#fff;font-size:15px;color:var(--soft)}
 .navrow button:disabled{opacity:.35}.back.home{font-size:22px}.ok.skipmode{background:#8b93a7;box-shadow:0 4px 0 #6b7280}
 .homebtn{flex:0 0 auto;height:44px;padding:0 14px;border-radius:12px;background:var(--ink);color:#fff;font-size:16px;font-weight:600;white-space:nowrap}
-.savefab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;border:none;border-radius:999px;padding:10px 16px;font-weight:800;font-size:15px;background:#e8e4da;color:#6b6659;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer}.savefab.dirty{background:#ffd166;color:#1d2b4f;font-size:17px;padding:12px 20px}</style><div class="body"><div id="app"></div><div class="toast" id="toast"></div><button class="savefab" id="savefab">✓ 저장됨</button></div></template>
+.savefab{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;border:none;border-radius:999px;padding:10px 16px;font-weight:800;font-size:15px;background:#e8e4da;color:#6b6659;box-shadow:0 2px 8px rgba(0,0,0,.15);cursor:pointer}.savefab.dirty{background:#ffd166;color:#1d2b4f;font-size:17px;padding:12px 20px}
+/* 계단 문제 */
+.kstb{font-family:'Jua';font-size:18px;color:var(--soft);margin:12px 2px 4px}.kstr{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:10px 14px;margin:8px 0;font-size:19px;line-height:1.8}
+.kstr.now{border:2.5px solid var(--ink)}.kstr.kdone{background:#f3faf6;border-color:#b9e2c9}.kstr.kgive{background:#fbf6ec;border-color:#f2dfae}.kstn{font-family:'Jua';margin-right:6px}.kstw{font-size:16px;color:var(--soft)}.kstr .disp{margin-top:6px}
+</style><div class="body"><div id="app"></div><div class="toast" id="toast"></div><button class="savefab" id="savefab">✓ 저장됨</button></div></template>
 <template id="t-m32"><style>
 /* 큰 수 앱과 같은 종이·잉크 화면 (밝은 화면 하나로 고정) */
 :host{--paper:#faf7f0;--card:#fffdf8;--ink:#1f2a44;--soft:#6b7280;--line:#e6e0d2;--accent:#e4572e;--ok:#2a9d5c;--no:#c8553d;--hl:#fff8e6;--chip:#f1ede3}
@@ -2400,6 +2404,18 @@ const TAGS = {
 };
 const GENERIC = ['숫자를 모두 더해 본다','맨 앞 숫자만 보고 바로 정한다','일단 감으로 어림해 본다'];
 
+// ===== 계단 문제 도구 =====
+const KS=(q,type,answer,why,x)=>Object.assign({q,type,answer,why},x||{});
+const nearPN=(p,L)=>shuffle(uniq([p,p+1,p-1,p+2,p-2].filter(x=>x>=0&&x<L)).slice(0,4).map(x=>PN[x]));
+const UNB=i=>i?`「${UN[i]}」 묶음`:'맨 끝 묶음';
+function readSteps(n){ const g=groups(n), top=g.length-1; const st=[KS('오른쪽 끝에서 네 자리씩 끊으면 묶음이 몇 개?','num',B(g.length),chunkHTML(n),{unit:'개'})];
+  for(let i=top;i>=0;i--){ if(!g[i]) continue; st.push(KS(`${i===top?String(g[i]):pad4(g[i])} ${i?`(${UN[i]} 묶음)`:'(맨 끝 묶음)'}을 읽으면? (단위까지)`,'kor',readKor(B(g[i])*p10(4*i)),`${i===1&&g[i]===1?'(일)':read4(g[i])}${UN[i]}`)); }
+  st.push(KS('모두 이어서 읽으면?','kor',readKor(n),readKor(n))); return st; }
+function writeSteps(n){ const g=groups(n), top=g.length-1; const st=[];
+  for(let i=top;i>=0;i--){ if(i===top) st.push(KS(`맨 앞 ${UN[i]?'「'+UN[i]+'」 앞의':''} 수는?`,'num',B(g[i]),String(g[i])));
+    else st.push(KS(`${UNB(i)}을 네 칸으로 쓰면? ${g[i]?'(빈 자리는 0)':'(읽는 말에 없으면 0000)'}`,'num',B(g[i]),pad4(g[i]),{show:pad4(g[i])})); }
+  st.push(KS('이어서 숫자로 쓰면?','num',n,groups(n).map((x,i)=>i===top?String(x):pad4(x)).reverse().join(' | '))); return st; }
+
 // ===== 기능(스킬) =====
 const LV = ['1단계','2단계','3단계','4단계','5단계']; // 엄마 11/23: 시훈 화면엔 '심화·최상위' 이름 안 보이게
 const SKILLS = [];
@@ -2421,7 +2437,7 @@ S({ id:'place', day:'DAY 01', title:'자리와 나타내는 값', moves:{
      const k=rnd(1,4), p2=rnd(0,7-k), p1=p2+k, d=rnd(1,9); const arr=[];
      for(let p=0;p<8;p++){ if(p===p1||p===p2) arr[p]=d; else { let x; do{x=rnd(0,9);}while(x===d || (p===7&&x===0)); arr[p]=x; } }
      if(arr[7]===0) return null; const s=arr.slice().reverse().join(''), n=B(s), ans=p10(k);
-     return { text:`<big>${s}</big><br>왼쪽 ${d}${jo(B(d),'이/가')} 나타내는 값은 오른쪽 ${d}${jo(B(d),'이/가')} 나타내는 값의 몇 배인가요?`, type:'num', unit:'배', answer:ans, fm:'gap', tool:n,
+     return { steps:[KS(`왼쪽 ${d}${jo(B(d),'은/는')} 어느 자리일까요?`,'choice',PN[p1],placeRow(n),{options:nearPN(p1,8)}),KS(`오른쪽 ${d}${jo(B(d),'은/는')} 어느 자리일까요?`,'choice',PN[p2],placeRow(n),{options:nearPN(p2,8)}),KS('두 자리는 몇 칸 떨어져 있어요?','num',B(k),`${PN[p1]} ↔ ${PN[p2]}: ${k}칸`,{unit:'칸'}),KS(`한 칸마다 10배예요. ${k}칸이면 몇 배?`,'num',ans,`10을 ${k}번 곱하면 ${ans}`,{unit:'배'})], text:`<big>${s}</big><br>왼쪽 ${d}${jo(B(d),'이/가')} 나타내는 값은 오른쪽 ${d}${jo(B(d),'이/가')} 나타내는 값의 몇 배인가요?`, type:'num', unit:'배', answer:ans, fm:'gap', tool:n,
        hints:['두 '+d+'에 손가락을 대고, 사이가 몇 칸인지 세어 봐요.', `${k}칸 떨어져 있어요. 한 칸마다 10배예요.`],
        sol:[placeRow(n), `왼쪽 ${d}${jo(B(d),'은/는')} ${PN[p1]}의 자리, 오른쪽 ${d}${jo(B(d),'은/는')} ${PN[p2]}의 자리 → ${k}칸`, `10을 ${k}번 곱하면 <b>${ans}배</b>`],
        bugs:[{v:B(k),tag:'gap',msg:`칸 수는 ${k}칸 맞아! 그런데 몇 배는 10을 ${k}번 곱한 수예요.`},{v:p10(k+1),tag:'zeros',msg:'0을 하나 더 붙였어요. 칸 수를 다시 세어 봐요.'},{v:p10(k-1),tag:'zeros',msg:'0이 하나 모자라요. 칸 수를 다시 세어 봐요.'}] }; },
@@ -2430,7 +2446,7 @@ S({ id:'place', day:'DAY 01', title:'자리와 나타내는 값', moves:{
      const [k,d,e,r]=pick(c); const p2=rnd(0,7-k), p1=p2+k; const arr=[];
      for(let p=0;p<8;p++){ if(p===p1) arr[p]=d; else if(p===p2) arr[p]=e; else { let x; do{x=rnd(0,9);}while(x===d||x===e||(p===7&&x===0)); arr[p]=x; } }
      const s=arr.slice().reverse().join(''), n=B(s);
-     return { text:`<big>${s}</big><br>숫자 ${d}${jo(B(d),'이/가')} 나타내는 값은 숫자 ${e}${jo(B(e),'이/가')} 나타내는 값의 몇 배인가요?`, type:'omr', unit:'배', answer:B(r), fm:'value', tool:n,
+     return { steps:[KS(`숫자 ${d}${jo(B(d),'이/가')} 나타내는 값은?`,'num',B(d)*p10(p1),`${PN[p1]}의 자리 → ${B(d)*p10(p1)}`),KS(`숫자 ${e}${jo(B(e),'이/가')} 나타내는 값은?`,'num',B(e)*p10(p2),`${PN[p2]}의 자리 → ${B(e)*p10(p2)}`),KS(`${B(e)*p10(p2)} × □ = ${B(d)*p10(p1)}. □는?`,'num',B(r),`${B(e)*p10(p2)} × ${r} = ${B(d)*p10(p1)}`,{unit:'배'})], text:`<big>${s}</big><br>숫자 ${d}${jo(B(d),'이/가')} 나타내는 값은 숫자 ${e}${jo(B(e),'이/가')} 나타내는 값의 몇 배인가요?`, type:'omr', unit:'배', answer:B(r), fm:'value', tool:n,
        hints:['숫자가 서로 달라요. 칸 수만 세면 안 되고, 값을 직접 써 봐요.', `${d}${jo(B(d),'은/는')} ${PN[p1]}의 자리 → ${B(d)*p10(p1)}, ${e}${jo(B(e),'은/는')} ${PN[p2]}의 자리 → ${B(e)*p10(p2)}`],
        sol:[placeRow(n), `${d}${jo(B(d),'이/가')} 나타내는 값 ${B(d)*p10(p1)}, ${e}${jo(B(e),'이/가')} 나타내는 값 ${B(e)*p10(p2)}`, `${B(e)*p10(p2)} × ${r} = ${B(d)*p10(p1)} → <b>${r}배</b>`],
        bugs:[{v:p10(k),tag:'ignore-digit',msg:`${k}칸이라 ${p10(k)}배라고 했지? 그건 숫자가 같을 때만이에요. 숫자가 다르면 값을 직접 비교해요.`}] }; }
@@ -2440,17 +2456,17 @@ function placeQ(s,n,lv){
   if(lv===1 && r<0.34){ const ps=uniqPositions(s).filter(p=>digitAt(n,p)>0); if(!ps.length) return null;
     const p=pick(ps), d=digitAt(n,p), V=B(d)*p10(p);
     const opts=uniq([p,p+1,p-1,p+2,p-2].filter(x=>x>=0&&x<L)).slice(0,4).map(x=>PN[x]);
-    return { text:`<big>${s}</big><br>나타내는 값이 <b>${V}</b>인 숫자는 어느 자리에 있나요?`, type:'choice', options:shuffle(opts), answer:PN[p], fm:'place', tool:n,
+    return { steps:[KS(`${V}의 맨 앞 숫자는?`,'num',B(d),`${V} → ${d}`),KS(`${V}에서 ${d} 뒤에 붙은 0은 몇 개?`,'num',B(p),`0이 ${p}개`,{unit:'개'}),KS(`뒤에 0이 ${p}개인 자리는 어느 자리일까요?`,'choice',PN[p],`일(0개), 십(1개), 백(2개), 천(3개), 만(4개)… → ${PN[p]}`,{options:opts.slice()})], text:`<big>${s}</big><br>나타내는 값이 <b>${V}</b>인 숫자는 어느 자리에 있나요?`, type:'choice', options:shuffle(opts), answer:PN[p], fm:'place', tool:n,
       hints:[`${V}의 맨 앞 숫자는 ${d}예요. ${s}에서 ${d}${jo(B(d),'을/를')} 찾아요.`, `${d}에 손가락을 대고 오른쪽 끝(일의 자리)부터 자리 이름을 불러 봐요.`],
       sol:[placeRow(n), `${d}${jo(B(d),'은/는')} ${PN[p]}의 자리 → 나타내는 값 ${V}`, `답: <b>${PN[p]}의 자리</b>`], bugs:[] }; }
   if(r<0.5){ const p=rnd(0,L-1), d=digitAt(n,p);
-    return { text:`<big>${s}</big><br><b>${PN[p]}의 자리 숫자</b>를 쓰세요.`, type:'num', answer:B(d), fm:'place', tool:n,
+    return { steps:[KS(`${PN[p]}의 자리는 오른쪽 끝(일의 자리)에서 몇 번째 칸?`,'num',B(p+1),`일, 십, 백, 천, 만… → ${p+1}번째`,{unit:'번째'}),KS(`오른쪽 끝에서 ${p+1}번째 숫자는?`,'num',B(d),placeRow(n))], text:`<big>${s}</big><br><b>${PN[p]}의 자리 숫자</b>를 쓰세요.`, type:'num', answer:B(d), fm:'place', tool:n,
       hints:['오른쪽 끝이 일의 자리예요. 일, 십, 백, 천, 만… 하나씩 짚어요.', `${PN[p]}의 자리는 오른쪽 끝에서 ${p+1}번째 칸이에요.`],
       sol:[placeRow(n), `${PN[p]}의 자리 숫자는 <b>${d}</b>`, '자리 숫자는 숫자 하나만 써요.'],
       bugs: d>0&&p>0 ? [{v:B(d)*p10(p),tag:'digit-value',msg:`그건 ${d}${jo(B(d),'이/가')} <b>나타내는 값</b>이에요. 묻는 건 <b>자리 숫자</b> — 숫자 하나!`}] : [] }; }
   const ps=uniqPositions(s).filter(p=>digitAt(n,p)>0 && p>0); if(!ps.length) return null;
   const p=pick(ps), d=digitAt(n,p), V=B(d)*p10(p);
-  return { text:`<big>${s}</big><br>숫자 <b>${d}</b>${jo(B(d),'이/가')} 나타내는 값은 얼마인가요?`, type:'num', answer:V, fm:'place', tool:n,
+  return { steps:[KS(`숫자 ${d}${jo(B(d),'은/는')} 어느 자리일까요?`,'choice',PN[p],placeRow(n),{options:nearPN(p,L)}),KS(`${PN[p]}의 자리 값은 뒤에 0이 몇 개 붙어요?`,'num',B(p),`${PN[p]} → 0이 ${p}개`,{unit:'개'}),KS(`숫자 ${d}${jo(B(d),'이/가')} 나타내는 값은?`,'num',V,`${d} 뒤에 0 ${p}개 → ${V}`)], text:`<big>${s}</big><br>숫자 <b>${d}</b>${jo(B(d),'이/가')} 나타내는 값은 얼마인가요?`, type:'num', answer:V, fm:'place', tool:n,
     hints:[`먼저 ${d}${jo(B(d),'이/가')} 어느 자리에 있는지 찾아요.`, `${d}${jo(B(d),'은/는')} ${PN[p]}의 자리예요. 뒤에 0이 몇 개 붙을까?`],
     sol:[placeRow(n), `${d}${jo(B(d),'은/는')} ${PN[p]}의 자리`, `나타내는 값은 <b>${V}</b> (0이 ${p}개)`],
     bugs:[{v:B(d),tag:'digit-value',msg:`${d}${jo(B(d),'은/는')} <b>자리 숫자</b>예요. 묻는 건 그 숫자가 <b>나타내는 값</b> — 뒤에 0이 붙어요.`},
@@ -2463,13 +2479,13 @@ function frontBack(){ const fl=rnd(1,4); const f=B(makeDigits(fl,0.3)); let b;
   return f*10000n+B(b); }
 function readWrite(n, fm, extraNote){
   if(Math.random()<0.5){
-    return { text:`다음 수를 읽어 한글로 쓰세요.<br><big>${n}</big>`, type:'kor', answer:readKor(n), fm, tool:n,
+    return { steps:readSteps(n), text:`다음 수를 읽어 한글로 쓰세요.<br><big>${n}</big>`, type:'kor', answer:readKor(n), fm, tool:n,
       hints:['오른쪽 끝에서 네 자리씩 끊어요.', `끊으면 ${chunkHTML(n)} — 묶음마다 읽고 단위(만·억·조)를 붙여요. 0인 자리는 안 읽어요.`],
       sol:[chunkHTML(n), ...groups(n).map((g,i)=>[g,i]).reverse().filter(([g])=>g).map(([g,i])=>`${pad4(g)} → ${i===1&&g===1?'(일)':read4(g)}${UN[i]}`), `<b>${readKor(n)}</b>`], bugs:[] }; }
   const sl=sloppyConcat(n); const bugs=[];
   if(sl!==n) bugs.push({v:sl,tag:'zero-fill',msg:'0이 빠졌어요! 읽는 말에 없는 자리, 없는 묶음은 0으로 채워서 네 칸씩 맞춰요.'});
   const dz=B(String(n).replace(/0/g,'')||'0'); if(dz!==n && dz!==sl) bugs.push({v:dz,tag:'zero-fill',msg:'읽는 말에 없는 자리는 0으로 채워야 해요.'});
-  return { text:`다음을 수로 쓰세요.<br><big>「${readKor(n)}」</big>`, type:'num', answer:n, fm: fm==='chunk'?'split':fm, tool:null,
+  return { steps:writeSteps(n), text:`다음을 수로 쓰세요.<br><big>「${readKor(n)}」</big>`, type:'num', answer:n, fm: fm==='chunk'?'split':fm, tool:null,
     hints:[ dlen(n)>4? '「만」 앞의 말과 뒤의 말을 나눠요. 뒤쪽은 꼭 네 칸!' : '자리표를 그리고 읽는 말에 나오는 자리에 숫자를 넣어요.', `자리마다 쓰면 ${chunkHTML(n)}`],
     sol:[...groups(n).map((g,i)=>[g,i]).reverse().filter(([g,i])=>g||i===0).map(([g,i])=>`${i?UN[i]+' 묶음':'일 묶음'} → ${i===groups(n).length-1?g:pad4(g)}`), `<b>${n}</b>`], bugs }; }
 S({ id:'man', day:'DAY 01', title:'만 단위 읽기·쓰기·묶음', moves:{
@@ -2481,23 +2497,23 @@ S({ id:'man', day:'DAY 01', title:'만 단위 읽기·쓰기·묶음', moves:{
    lv=>{ let s; do{ s=makeDigits(5,0.35);}while(!/0/.test(s.slice(1))); return readWrite(B(s),'table'); },
    lv=>{ const n=frontBack(); if(n<100000n) return null; return readWrite(n,'chunk'); },
    lv=>{ if(Math.random()<0.5){ const a=rnd(1,9), b=rnd(10,29), d=rnd(1,9); const ans=B(a*10000+b*1000+d*10);
-       return { text:`10000이 ${a}개, 1000이 ${b}개, 10이 ${d}개인 수를 쓰세요.`, type:'num', answer:ans, fm:'carry', tool:null,
+       return { steps:[KS(`1000이 ${b}개는 10개가 넘어요. 1000이 10개면 10000. 1000이 ${b}개는 10000이 몇 개 나와요?`,'num',B(Math.floor(b/10)),`1000 × ${b} = ${b*1000}`,{unit:'개'}),KS('그러고 1000은 몇 개 남아요?','num',B(b%10),`${b} − ${Math.floor(b/10)*10} = ${b%10}`,{unit:'개'}),KS('10000은 모두 몇 개?','num',B(a+Math.floor(b/10)),`${a} + ${Math.floor(b/10)} = ${a+Math.floor(b/10)}`,{unit:'개'}),KS('수로 쓰면? (100이 0개, 1이 0개)','num',ans,`${ans}`)], text:`10000이 ${a}개, 1000이 ${b}개, 10이 ${d}개인 수를 쓰세요.`, type:'num', answer:ans, fm:'carry', tool:null,
          hints:[`1000이 ${b}개는 10개가 넘어요. 먼저 올려요.`, `1000이 ${b}개 = 10000이 ${Math.floor(b/10)}개 + 1000이 ${b%10}개`],
          sol:[`1000이 ${b}개 = 10000이 ${Math.floor(b/10)}개 + 1000이 ${b%10}개`, `10000이 ${a+Math.floor(b/10)}개, 1000이 ${b%10}개, 100이 0개, 10이 ${d}개, 1이 0개`, `<b>${ans}</b>`],
          bugs:[{v:B(`${a}${b}0${d}0`),tag:'carry-bundle',msg:`천의 자리에 ${b}${jo(B(b),'을/를')} 썼어요. 한 자리에는 숫자 하나! 10개가 넘으면 위로 올려요.`}] }; }
      const a=rnd(1,5), b=rnd(1,9), c=rnd(10,25); const ans=B(a*10000+b*1000+c*100);
-     return { text:`만 원짜리 지폐 ${a}장, 천 원짜리 지폐 ${b}장, 백 원짜리 동전 ${c}개가 있어요. 모두 얼마인가요?`, type:'num', unit:'원', answer:ans, fm:'money', tool:null,
+     return { steps:[KS(`만 원짜리 ${a}장은 몇 원?`,'num',B(a*10000),`10000 × ${a} = ${a*10000}`,{unit:'원'}),KS(`천 원짜리 ${b}장은 몇 원?`,'num',B(b*1000),`1000 × ${b} = ${b*1000}`,{unit:'원'}),KS(`백 원짜리 ${c}개는 몇 원?`,'num',B(c*100),`100 × ${c} = ${c*100}`,{unit:'원'}),KS('모두 더하면?','num',ans,`${a*10000} + ${b*1000} + ${c*100} = ${ans}`,{unit:'원'})], text:`만 원짜리 지폐 ${a}장, 천 원짜리 지폐 ${b}장, 백 원짜리 동전 ${c}개가 있어요. 모두 얼마인가요?`, type:'num', unit:'원', answer:ans, fm:'money', tool:null,
        hints:['종류마다 (개수) × (한 개 금액)을 구해요.', `${a}×10000 = ${a*10000}, ${b}×1000 = ${b*1000}, ${c}×100 = ${c*100}`],
        sol:[`${a*10000} + ${b*1000} + ${c*100}`, `= <b>${ans}원</b>`],
        bugs:[{v:B(a*10000+b*1000+c),tag:'unit',msg:`백 원짜리 ${c}개를 ${c}원으로 셌어요. 백 원짜리 한 개는 100원!`},{v:B(a*10000+b*1000+c*10),tag:'unit',msg:'백 원짜리 한 개는 100원이에요. 0의 개수를 확인해요.'}] }; },
    lv=>{ if(Math.random()<0.5){ const a=rnd(1,4), x=rnd(3,40), c=rnd(10,35); const T=a*10000+x*1000+c*100;
        const bugs=[]; const bv=Math.floor((T-a*10000)/1000); if(bv!==x) bugs.push({v:B(bv),tag:'money',msg:`백 원짜리 ${c}개(${c*100}원)를 빼는 걸 잊었어요.`});
-       return { text:`만 원짜리 지폐 ${a}장, 천 원짜리 지폐 □장, 백 원짜리 동전 ${c}개를 모았더니 모두 ${T}원이에요. □에 알맞은 수는?`, type:'omr', answer:B(x), fm:'money', tool:null,
+       return { steps:[KS(`만 원짜리 ${a}장은 몇 원?`,'num',B(a*10000),`10000 × ${a} = ${a*10000}`,{unit:'원'}),KS(`백 원짜리 ${c}개는 몇 원?`,'num',B(c*100),`100 × ${c} = ${c*100}`,{unit:'원'}),KS(`${T}원에서 둘을 빼면 몇 원 남아요?`,'num',B(x*1000),`${T} − ${a*10000} − ${c*100} = ${x*1000}`,{unit:'원'}),KS(`${x*1000}원은 천 원짜리 몇 장?`,'num',B(x),`1000 × ${x} = ${x*1000}`,{unit:'장'})], text:`만 원짜리 지폐 ${a}장, 천 원짜리 지폐 □장, 백 원짜리 동전 ${c}개를 모았더니 모두 ${T}원이에요. □에 알맞은 수는?`, type:'omr', answer:B(x), fm:'money', tool:null,
          hints:['아는 돈부터 모두 빼면, 남은 게 천 원짜리 돈이에요.', `${T} − ${a*10000} − ${c*100} = ${x*1000}`],
          sol:[`만 원짜리 ${a}장 = ${a*10000}원, 백 원짜리 ${c}개 = ${c*100}원`, `${T} − ${a*10000} − ${c*100} = ${x*1000}원`, `${x*1000}원은 천 원짜리 <b>${x}장</b>`], bugs }; }
      let n; do{ n=frontBack(); }while(n<1000000n || zeroCount(n)<3);
      const z=zeroCount(n), sl=zeroCount(sloppyConcat(n)); const bugs= sl!==z? [{v:B(sl),tag:'zero-fill',msg:'「만」 뒤 묶음을 네 칸으로 안 채우면 0이 빠져요.'}]:[];
-     return { text:`「${readKor(n)}」${jo(n,'을/를')} 수로 쓰면 숫자 0은 모두 몇 개인가요?`, type:'omr', unit:'개', answer:B(z), fm:'split', tool:null,
+     return { steps:[...writeSteps(n),KS('쓴 수에서 0은 모두 몇 개?','num',B(z),chunkHTML(n),{unit:'개'})], text:`「${readKor(n)}」${jo(n,'을/를')} 수로 쓰면 숫자 0은 모두 몇 개인가요?`, type:'omr', unit:'개', answer:B(z), fm:'split', tool:null,
        hints:['먼저 수로 써요. 「만」 뒤는 네 칸!', `수로 쓰면 ${chunkHTML(n)}`], sol:[chunkHTML(n), `0을 세면 <b>${z}개</b>`], bugs }; }
   ]});
 
@@ -2508,27 +2524,27 @@ S({ id:'unitchg', day:'DAY 01', title:'큰 단위로 묶어 세기 (수표·상�
   <ul><li>끝에 0이 모자라면 <b>남는 것</b>이 있어요: 2830000원 → 10만 원 수표 28장, 30000원 남음</li><li>돈이 여러 종류면 먼저 <b>전체 금액</b>으로 모아요</li></ul>`,
   gen:[
    lv=>{ const u=pick([1000,10000]), x=rnd(12,9999), N=B(x)*B(u), z=String(u).length-1, obj=pick(['구슬','색종이','클립','스티커']);
-     return { text:`${obj} ${N}개를 한 상자에 ${u}개씩 담으면 몇 상자가 되나요?`, type:'num', unit:'상자', answer:B(x), fm:'zeros', tool:null,
+     return { steps:[KS(`${u}은 0이 몇 개?`,'num',B(z),`${u} → 0이 ${z}개`,{unit:'개'}),KS(`${N}의 끝에서 0을 ${z}개 지우면?`,'num',B(x),`${String(N).slice(0,-z)}<s>${'0'.repeat(z)}</s>`,{unit:'상자'})], text:`${obj} ${N}개를 한 상자에 ${u}개씩 담으면 몇 상자가 되나요?`, type:'num', unit:'상자', answer:B(x), fm:'zeros', tool:null,
        hints:[`${u}은 0이 ${z}개예요.`, `${N}의 끝에서 0을 ${z}개 지워요.`], sol:[`${u} → 0이 ${z}개`, `${String(N).slice(0,-z)}<s>${'0'.repeat(z)}</s>`, `<b>${x}상자</b>`],
        bugs:[{v:N/(B(u)*10n),tag:'zeros',msg:`0을 하나 더 지웠어요. ${u}은 0이 ${z}개!`},{v:N/(B(u)/10n),tag:'zeros',msg:`0을 하나 덜 지웠어요. ${u}은 0이 ${z}개!`}] }; },
    lv=>{ const x=rnd(3,99), r=rnd(1,9), M=B(x)*100000n+B(r)*10000n;
-     if(Math.random()<0.5) return { text:`${M}원을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸려고 해요. 수표는 몇 장이 되나요?`, type:'num', unit:'장', answer:B(x), fm:'zeros', tool:M,
+     if(Math.random()<0.5) return { steps:[KS('10만은 0이 몇 개?','num',5n,'100000 → 0이 5개',{unit:'개'}),KS(`${M}의 끝 다섯 자리를 가리면 앞에 남는 수는?`,'num',B(x),`${String(M).slice(0,-5)} | ${String(M).slice(-5)}`,{unit:'장'})], text:`${M}원을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸려고 해요. 수표는 몇 장이 되나요?`, type:'num', unit:'장', answer:B(x), fm:'zeros', tool:M,
        hints:['10만은 0이 다섯 개예요.', `끝의 다섯 자리를 가리면 ${x}${jo(B(x),'이/가')} 보여요.`], sol:[`${M} → ${String(M).slice(0,-5)} | ${String(M).slice(-5)}`, `앞쪽 ${x} → <b>${x}장</b>, 뒤쪽 ${r*10000}원은 남아요`],
        bugs:[{v:M/10000n,tag:'zeros',msg:'0을 네 개만 지웠어요. 10만은 0이 다섯 개!'}] };
-     return { text:`${M}원을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸면, 바꾸지 못하고 남는 돈은 얼마인가요?`, type:'num', unit:'원', answer:B(r)*10000n, fm:'remain', tool:M,
+     return { steps:[KS('10만은 0이 몇 개?','num',5n,'100000 → 0이 5개',{unit:'개'}),KS(`${M}의 끝 다섯 자리 수는?`,'num',B(r)*10000n,`${String(M).slice(0,-5)} | ${String(M).slice(-5)}`,{unit:'원'})], text:`${M}원을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸면, 바꾸지 못하고 남는 돈은 얼마인가요?`, type:'num', unit:'원', answer:B(r)*10000n, fm:'remain', tool:M,
        hints:['10만 원짜리로 바꿀 수 있는 부분과 남는 부분을 나눠요.', `${String(M).slice(0,-5)} | ${String(M).slice(-5)} — 오른쪽 다섯 자리가 남는 돈`], sol:[`${M} = ${B(x)*100000n} + ${B(r)*10000n}`, `남는 돈 <b>${r*10000}원</b>`],
        bugs:[{v:B(r),tag:'unit',msg:`남는 돈은 「원」으로! ${r}이 아니라 ${r}만 원이에요.`},{v:B(x),tag:'remain',msg:'그건 수표 장 수예요. 묻는 건 남는 돈!'}] }; },
    lv=>{ let a,b,ans,bug; do{ a=rnd(120,1999); b=rnd(5,60); ans=Math.floor((a+10*b)/100); bug=Math.floor(a/100)+Math.floor(b/10);}while(bug===ans);
-     return { text:`만 원짜리 지폐 ${a}장과 10만 원짜리 수표 ${b}장을 100만 원짜리 수표로 될 수 있는 대로 많이 바꾸려고 해요. 100만 원짜리 수표는 몇 장이 되나요?`, type:'num', unit:'장', answer:B(ans), fm:'whole', tool:null,
+     return { steps:[KS(`만 원짜리 ${a}장은 몇 원?`,'num',B(a*10000),`10000 × ${a} = ${a*10000}`,{unit:'원'}),KS(`10만 원짜리 ${b}장은 몇 원?`,'num',B(b*100000),`100000 × ${b} = ${b*100000}`,{unit:'원'}),KS('전체 금액은?','num',B(a*10000+b*100000),`${a*10000} + ${b*100000} = ${a*10000+b*100000}`,{unit:'원'}),KS('100만은 0이 6개. 끝 여섯 자리를 가리면 앞에 남는 수는?','num',B(ans),`${String(a*10000+b*100000).slice(0,-6)||'0'} | ${String(a*10000+b*100000).slice(-6)}`,{unit:'장'})], text:`만 원짜리 지폐 ${a}장과 10만 원짜리 수표 ${b}장을 100만 원짜리 수표로 될 수 있는 대로 많이 바꾸려고 해요. 100만 원짜리 수표는 몇 장이 되나요?`, type:'num', unit:'장', answer:B(ans), fm:'whole', tool:null,
        hints:['따로따로 바꾸지 말고 먼저 전체 금액을 구해요.', `${a*10000} + ${b*100000} = ${a*10000+b*100000}원`],
        sol:[`전체: ${a*10000} + ${b*100000} = ${a*10000+b*100000}원`, `100만은 0이 여섯 개 → 끝의 여섯 자리를 가려요`, `<b>${ans}장</b>`],
        bugs:[{v:B(bug),tag:'combine',msg:'따로 바꾸면 남는 돈끼리 모아서 또 바꿀 수 있는 걸 놓쳐요. 전체 금액부터!'}] }; },
    lv=>{ if(Math.random()<0.5){ let a,b,ans,bug; do{ a=rnd(120,1999); b=rnd(5,60); ans=(a+10*b)%100; bug=(a%100)+(b%10)*10;}while(bug===ans||ans===0);
-       return { text:`만 원짜리 지폐 ${a}장과 10만 원짜리 수표 ${b}장을 100만 원짜리 수표로 될 수 있는 대로 많이 바꿨어요. 바꾸지 못하고 남은 돈은 몇만 원인가요?`, type:'omr', unit:'만 원', answer:B(ans), fm:'whole', tool:null,
+       return { steps:[KS(`만 원짜리 ${a}장은 몇 원?`,'num',B(a*10000),`10000 × ${a} = ${a*10000}`,{unit:'원'}),KS(`10만 원짜리 ${b}장은 몇 원?`,'num',B(b*100000),`100000 × ${b} = ${b*100000}`,{unit:'원'}),KS('전체 금액은?','num',B(a*10000+b*100000),`${a*10000} + ${b*100000} = ${a*10000+b*100000}`,{unit:'원'}),KS('100만 원으로 바꾸고 남는 끝 여섯 자리는 몇 원?','num',B(ans*10000),`${String(a*10000+b*100000).slice(0,-6)||'0'} | ${String(a*10000+b*100000).slice(-6)}`,{unit:'원'}),KS(`${ans*10000}원은 몇만 원?`,'num',B(ans),`10000 × ${ans} = ${ans*10000}`,{unit:'만 원'})], text:`만 원짜리 지폐 ${a}장과 10만 원짜리 수표 ${b}장을 100만 원짜리 수표로 될 수 있는 대로 많이 바꿨어요. 바꾸지 못하고 남은 돈은 몇만 원인가요?`, type:'omr', unit:'만 원', answer:B(ans), fm:'whole', tool:null,
          hints:['전체 금액을 먼저 구해요.', `전체 ${a*10000+b*100000}원 — 100만 원(0 여섯 개)으로 바꾸고 남는 건 끝 여섯 자리`], sol:[`전체 ${a*10000+b*100000}원`, `끝 여섯 자리 ${String(a*10000+b*100000).slice(-6)} → <b>${ans}만 원</b>`],
          bugs:[{v:B(bug),tag:'combine',msg:'따로 계산하면 남는 돈을 합쳐 또 바꿀 수 있는 걸 놓쳐요.'}] }; }
      const a=rnd(100,2000), b=rnd(3,90), c=rnd(2,60); const tot=a*1000+b*10000+c*100000, ans=Math.floor(tot/10000); if(ans>999) return null;
-     return { text:`천 원짜리 지폐 ${a}장, 만 원짜리 지폐 ${b}장, 10만 원짜리 수표 ${c}장이 있어요. 모두 만 원짜리 지폐로 될 수 있는 대로 많이 바꾸면 몇 장이 되나요?`, type:'omr', unit:'장', answer:B(ans), fm:'whole', tool:null,
+     return { steps:[KS(`천 원짜리 ${a}장은 몇 원?`,'num',B(a*1000),`1000 × ${a} = ${a*1000}`,{unit:'원'}),KS(`만 원짜리 ${b}장은 몇 원?`,'num',B(b*10000),`10000 × ${b} = ${b*10000}`,{unit:'원'}),KS(`10만 원짜리 ${c}장은 몇 원?`,'num',B(c*100000),`100000 × ${c} = ${c*100000}`,{unit:'원'}),KS('전체 금액은?','num',B(tot),`${a*1000} + ${b*10000} + ${c*100000} = ${tot}`,{unit:'원'}),KS('만 원은 0이 4개. 끝 네 자리를 가리면 앞에 남는 수는?','num',B(ans),`${String(tot).slice(0,-4)} | ${String(tot).slice(-4)}`,{unit:'장'})], text:`천 원짜리 지폐 ${a}장, 만 원짜리 지폐 ${b}장, 10만 원짜리 수표 ${c}장이 있어요. 모두 만 원짜리 지폐로 될 수 있는 대로 많이 바꾸면 몇 장이 되나요?`, type:'omr', unit:'장', answer:B(ans), fm:'whole', tool:null,
        hints:['전체 금액부터 구해요.', `${a*1000} + ${b*10000} + ${c*100000} = ${tot}원`], sol:[`전체 ${tot}원`, `만 원(0 네 개) → 끝 네 자리를 가려요`, `<b>${ans}장</b>`],
        bugs:[{v:B(b+10*c),tag:'combine',msg:'천 원짜리도 10장이면 만 원 한 장이 돼요!'},{v:B(a+b+c),tag:'unit',msg:'종류마다 금액이 달라요. 전체 금액부터!'}] }; }
   ]});
@@ -2547,21 +2563,21 @@ S({ id:'eok', day:'DAY 02', title:'억과 조 읽기·쓰기·자릿수', moves:
    lv=>{ const n=bigNum(3,4,0.4); if(n<100000000000n) return null; return readWrite(n,'chunk4'); },
    lv=>{ const n=bigNum(3,4,0.4); if(!groups(n).slice(0,-1).some(g=>g<1000)) return null;
      if(Math.random()<0.5){ const sl=sloppyConcat(n);
-       return { text:`「${mixedForm(n)}」${jo(n,'을/를')} 숫자로만 쓰세요.`, type:'num', answer:n, fm:'fill', tool:null,
+       return { steps:writeSteps(n), text:`「${mixedForm(n)}」${jo(n,'을/를')} 숫자로만 쓰세요.`, type:'num', answer:n, fm:'fill', tool:null,
          hints:['단위마다 묶음을 나눠요. 맨 앞 묶음 말고는 모두 네 칸!', `${groups(n).map((g,i)=>[g,i]).reverse().map(([g,i],k)=>k===0?String(g):pad4(g)).join(' | ')}`],
          sol:[`${groups(n).map((g,i)=>[g,i]).reverse().map(([g,i],k)=>(k===0?String(g):pad4(g))+(UN[i]?`(${UN[i]})`:'')).join(' | ')}`, `<b>${n}</b>`],
          bugs: sl!==n?[{v:sl,tag:'zero-fill',msg:'묶음을 네 칸으로 안 채워서 0이 빠졌어요. 「80만」은 0080!'}]:[] }; }
      const L=dlen(n), top=groups(n).length, sl=dlen(sloppyConcat(n));
-     return { text:`「${mixedForm(n)}」${jo(n,'은/는')} 몇 자리 수인가요?`, type:'num', unit:'자리', answer:B(L), fm:'digits', tool:null,
+     return { steps:[KS(`맨 앞 묶음 ${groups(n)[top-1]}은 몇 자리?`,'num',B(String(groups(n)[top-1]).length),String(groups(n)[top-1]),{unit:'자리'}),KS('그 아래 단위(만·억·조)는 몇 개?','num',B(top-1),`${UN.slice(1,top).reverse().join(', ')}`,{unit:'개'}),KS(`단위 하나마다 4자리. ${String(groups(n)[top-1]).length} + 4 × ${top-1}${jo(B(top-1),'은/는')}?`,'num',B(L),`${String(groups(n)[top-1]).length} + 4 × ${top-1} = ${L}`,{unit:'자리'})], text:`「${mixedForm(n)}」${jo(n,'은/는')} 몇 자리 수인가요?`, type:'num', unit:'자리', answer:B(L), fm:'digits', tool:null,
        hints:['맨 앞 단위가 무엇인지 보고, 그 아래 단위가 몇 개인지 세요.', `맨 앞 묶음 ${groups(n)[top-1]}은 ${String(groups(n)[top-1]).length}자리, 아래 단위 ${top-1}개`],
        sol:[`맨 앞 묶음 ${groups(n)[top-1]} → ${String(groups(n)[top-1]).length}자리`, `${String(groups(n)[top-1]).length} + 4 × ${top-1} = <b>${L}자리</b>`],
        bugs: sl!==L?[{v:B(sl),tag:'zero-fill',msg:'빈 자리 0까지 세야 해요. 단위 하나마다 4자리!'}]:[] }; },
    lv=>{ if(Math.random()<0.55){ let n; do{ n=bigNum(3,4,0.4);}while(zeroCount(n)<4); const z=zeroCount(n), sz=zeroCount(sloppyConcat(n)); const form=Math.random()<0.5?mixedForm(n):readKor(n);
-       return { text:`「${form}」${jo(n,'을/를')} 숫자로 쓰면 0은 모두 몇 개인가요?`, type:'omr', unit:'개', answer:B(z), fm:'fill', tool:null,
+       return { steps:[...writeSteps(n),KS('쓴 수에서 0은 모두 몇 개?','num',B(z),chunkHTML(n),{unit:'개'})], text:`「${form}」${jo(n,'을/를')} 숫자로 쓰면 0은 모두 몇 개인가요?`, type:'omr', unit:'개', answer:B(z), fm:'fill', tool:null,
          hints:['먼저 묶음마다 네 칸으로 써요.', `${chunkHTML(n)}`], sol:[chunkHTML(n), `0은 <b>${z}개</b>`],
          bugs: sz!==z?[{v:B(sz),tag:'zero-fill',msg:'빈 묶음·빈 자리의 0을 빠뜨렸어요.'}]:[] }; }
      const a=rnd(1,6), b=rnd(11,39), c=rnd(1,9)*10; const ans=100*a+10*b+c/10;
-     return { text:`1억이 ${a}개, 1000만이 ${b}개, 10만이 ${c}개인 수는 100만이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:B(ans), fm:'fill', tool:null,
+     return { steps:[KS(`1억 ${a}개는 100만이 몇 개?`,'num',B(100*a),`1억 = 100만 × 100 → 100 × ${a} = ${100*a}`,{unit:'개'}),KS(`1000만 ${b}개는 100만이 몇 개?`,'num',B(10*b),`1000만 = 100만 × 10 → 10 × ${b} = ${10*b}`,{unit:'개'}),KS(`10만 ${c}개는 100만이 몇 개?`,'num',B(c/10),`10만이 10개 = 100만 → ${c} ÷ 10 = ${c/10}`,{unit:'개'}),KS('모두 더하면?','num',B(ans),`${100*a} + ${10*b} + ${c/10} = ${ans}`,{unit:'개'})], text:`1억이 ${a}개, 1000만이 ${b}개, 10만이 ${c}개인 수는 100만이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:B(ans), fm:'fill', tool:null,
        hints:['먼저 수 전체를 구해요. 10개가 넘는 묶음은 올려요.', `${a}억 + ${b*1000}만 + ${c*10}만`],
        sol:[`1억 ${a}개 = 100만이 ${100*a}개`, `1000만 ${b}개 = 100만이 ${10*b}개`, `10만 ${c}개 = 100만이 ${c/10}개`, `${100*a} + ${10*b} + ${c/10} = <b>${ans}개</b>`],
        bugs:[{v:B(100*a+10*b+c),tag:'unit',msg:`10만이 ${c}개면 100만은 ${c/10}개예요.`},{v:B(a+b+c),tag:'unit',msg:'단위가 다른 개수를 그냥 더했어요. 모두 100만 기준으로 바꿔요.'}] }; }
@@ -2583,7 +2599,11 @@ function calcProb(p, op, fm, ctx){
      (carry? `${a2}에서 ${b2}${jo(B(b2),'을/를')} 못 빼요 → ${a1}${un[0]}을 ${a1-1}${un[0]} + 10000${un[1]}으로: ${a2+10000} − ${b2} = ${a2+10000-b2}` : `${un[1]}끼리 ${a2} − ${b2} = ${a2-b2}`);
   const s2 = op==='+'? `${un[0]}끼리 ${a1} + ${b1}${carry?' + 1':''} = ${a1+b1+(carry?1:0)}` : `${un[0]}끼리 ${carry?a1-1:a1} − ${b1} = ${(carry?a1-1:a1)-b1}`;
   const text = ctx? ctx(mixedForm(A),mixedForm(Bv)) : `계산하세요.<br><big>${mixedForm(A)} ${op==='+'?'+':'−'} ${mixedForm(Bv)}</big>`;
-  return { text, type:'mixed', answer:ans, fm: carry&&op==='-'?'borrow':'same', tool:null,
+  const W0=op==='+'?a1+b1+(carry?1:0):(carry?a1-1:a1)-b1;
+  const steps= op==='+' ? [KS(`${un[1]}끼리 더하면? (${a2} + ${b2})`,'num',B(a2+b2),`${a2} + ${b2} = ${a2+b2}`,{unit:un[1]}),...(carry?[KS(`10000${un[1]}은 1${un[0]}${un[0]==='조'?'로':'으로'} 올려요. 올리고 남는 ${un[1]}은?`,'num',B(a2+b2-10000),`${a2+b2} − 10000 = ${a2+b2-10000}`,{unit:un[1]})]:[]),KS(`${un[0]}끼리 더하면?${carry?' (올린 1까지)':''}`,'num',B(W0),`${a1} + ${b1}${carry?' + 1':''} = ${W0}`,{unit:un[0]}),KS('답은? (조·억·만으로)','mixed',ans,mixedForm(ans))]
+   : carry ? [KS(`${a2}에서 ${b2}${jo(B(b2),'을/를')} 못 빼요. 1${un[0]}${un[0]==='조'?'를':'을'} 10000${un[1]}으로 바꿔 오면 ${un[1]}은?`,'num',B(a2+10000),`${a2} + 10000 = ${a2+10000}`,{unit:un[1]}),KS(`${un[1]}끼리 빼면?`,'num',B(a2+10000-b2),`${a2+10000} − ${b2} = ${a2+10000-b2}`,{unit:un[1]}),KS(`${un[0]}끼리 빼면? (빌려 준 1을 빼고)`,'num',B(W0),`${a1} − 1 − ${b1} = ${W0}`,{unit:un[0]}),KS('답은? (조·억·만으로)','mixed',ans,mixedForm(ans))]
+   : [KS(`${un[1]}끼리 빼면? (${a2} − ${b2})`,'num',B(a2-b2),`${a2} − ${b2} = ${a2-b2}`,{unit:un[1]}),KS(`${un[0]}끼리 빼면?`,'num',B(W0),`${a1} − ${b1} = ${W0}`,{unit:un[0]}),KS('답은? (조·억·만으로)','mixed',ans,mixedForm(ans))];
+  return { steps, text, type:'mixed', answer:ans, fm: carry&&op==='-'?'borrow':'same', tool:null,
     hints:[`${un[0]}은 ${un[0]}끼리, ${un[1]}은 ${un[1]}끼리 계산해요.`, s1], sol:[s1, s2, `<b>${mixedForm(ans)}</b>`], bugs, _ans:ans }; }
 S({ id:'mixcalc', day:'DAY 02', title:'단위 섞인 수의 덧셈·뺄셈', moves:{
     same:'같은 단위끼리 계산하고, 10000이 넘으면 위 단위로 올린다', borrow:'모자라면 위 단위 1을 10000으로 바꿔 와서 뺀다' },
@@ -2596,11 +2616,11 @@ S({ id:'mixcalc', day:'DAY 02', title:'단위 섞인 수의 덧셈·뺄셈', mov
      if(k<0.4){ const p=mixPair(Math.random()<0.7,'+','eok'); return p&&calcProb(p,'+',null,(a,b)=>`동영상 두 편을 본 횟수가 각각 ${a} 번, ${b} 번이에요. 두 동영상을 본 횟수는 모두 몇 번인가요?`); }
      if(k<0.8){ const p=mixPair(Math.random()<0.7,'-','jo'); return p&&calcProb(p,'-',null,(a,b)=>`회사 통장에 ${a} 원이 있었는데 그중 ${b} 원을 썼어요. 남은 돈은 얼마인가요?`); }
      const kk=rnd(1,9), r=rnd(1,9)*100, m=rnd(1,3)*1000; const N=B(kk)*p10(8)-B(r), ans=N+B(m);
-     return { text:`어느 도시의 인구가 ${N}명이에요. ${m}명이 더 이사 오면 인구는 몇 명이 될까요?`, type:'mixed', answer:ans, fm:'same', tool:N,
+     return { steps:[KS(`${N}에 ${r}${jo(B(r),'을/를')} 더하면?`,'num',B(kk)*p10(8),`${N} + ${r} = ${B(kk)*p10(8)}`,{unit:'명'}),KS(`${m}은 ${r}보다 얼마 더 많아요?`,'num',B(m-r),`${m} − ${r} = ${m-r}`,{unit:'명'}),KS(`그럼 ${kk}억에 ${m-r}${jo(B(m-r),'을/를')} 더하면? (조·억·만으로)`,'mixed',ans,mixedForm(ans))], text:`어느 도시의 인구가 ${N}명이에요. ${m}명이 더 이사 오면 인구는 몇 명이 될까요?`, type:'mixed', answer:ans, fm:'same', tool:N,
        hints:['끝자리부터 더하면서 받아올림이 계속 이어지는지 봐요.', `${chunkHTML(N)} + ${m}`], sol:[`${N} + ${m} = ${ans}`, `<b>${mixedForm(ans)}</b> (${ans})`], bugs:[] }; },
    lv=>{ const op=pick(['+','-']); let p; do{ p=mixPair(true,op,'eok'); }while(!p || (op==='+'&&p.a1+p.b1+1>9));
      const pr=calcProb(p,op); const ans=pr._ans/1000000n;
-     return { ...pr, text:`<big>${mixedForm(p.A)} ${op==='+'?'+':'−'} ${mixedForm(p.Bv)}</big><br>계산한 값은 100만이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:ans,
+     return { ...pr, steps:[...pr.steps,KS(`${mixedForm(pr._ans)}은 100만이 몇 개?`,'num',ans,`${pr._ans} ÷ 1000000 = ${ans}`,{unit:'개'})], text:`<big>${mixedForm(p.A)} ${op==='+'?'+':'−'} ${mixedForm(p.Bv)}</big><br>계산한 값은 100만이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:ans,
        sol:[...pr.sol, `${mixedForm(pr._ans)} = 100만이 <b>${ans}개</b>`], bugs: pr.bugs.map(b=>({...b, v:b.v/1000000n})) }; }
   ]});
 
@@ -2616,7 +2636,8 @@ S({ id:'compare', day:'DAY 02', title:'큰 수의 크기 비교', moves:{
    lv=>{ let A,Bv; if(Math.random()<0.5){ const L=rnd(8,12); const sa=String(rnd(1,4))+makeDigits(L-1,0.3).slice(1); const sb=String(rnd(6,9))+makeDigits(L-rnd(1,2)-1,0.3).slice(1); A=B(sa); Bv=B(sb); }
      else { const L=rnd(8,12); const s=makeDigits(L,0.3); const p=rnd(1,L-2); const d=Number(s[p]); let e; do{e=rnd(0,9);}while(e===d); const t=s.slice(0,p)+e+makeDigits(L-p-1,0.3); A=B(s); Bv=B(t.length===L?t:s); if(A===Bv) return null; }
      if(Math.random()<0.5) [A,Bv]=[Bv,A]; const ans=A>Bv?'>':'<'; const diffLen=dlen(A)!==dlen(Bv);
-     return { text:`○ 안에 &gt;, &lt; 를 알맞게 고르세요.<br><big>${A} ○ ${Bv}</big>`, type:'cmp', answer:ans, fm: diffLen?'len':'front', tool:[A,Bv],
+     const sA=String(A), sB=String(Bv); let fi=0; while(!diffLen&&sA[fi]===sB[fi]) fi++;
+     return { steps:[KS('왼쪽 수는 몇 자리?','num',B(dlen(A)),chunkHTML(A),{unit:'자리'}),KS('오른쪽 수는 몇 자리?','num',B(dlen(Bv)),chunkHTML(Bv),{unit:'자리'}),...(diffLen?[]:[KS('자릿수가 같아요. 앞에서부터 처음 다른 곳에서 왼쪽 수의 숫자는?','num',B(sA[fi]),`앞에서 ${fi+1}번째: ${sA[fi]}`),KS('같은 곳에서 오른쪽 수의 숫자는?','num',B(sB[fi]),`앞에서 ${fi+1}번째: ${sB[fi]}`)]),KS(diffLen?'자릿수가 많은 쪽이 커요. ○에 알맞은 것은?':'○에 알맞은 것은?','cmp',ans,`${A} ${ans} ${Bv}`)], text:`○ 안에 &gt;, &lt; 를 알맞게 고르세요.<br><big>${A} ○ ${Bv}</big>`, type:'cmp', answer:ans, fm: diffLen?'len':'front', tool:[A,Bv],
        hints: diffLen? ['두 수가 각각 몇 자리인지 세요.', `${dlen(A)}자리 vs ${dlen(Bv)}자리`] : ['자릿수가 같아요. 네 자리씩 끊고 앞 묶음부터 비교해요.', `${chunkHTML(A)}<br>${chunkHTML(Bv)}`],
        sol:[`${chunkHTML(A)} (${dlen(A)}자리)`, `${chunkHTML(Bv)} (${dlen(Bv)}자리)`, diffLen?'자릿수가 많은 쪽이 커요':'처음으로 다른 곳에서 결정!', `<b>${A} ${ans} ${Bv}</b>`],
        bugs:[{v: ans==='>'?'<':'>', tag: diffLen?'len':'front', msg: diffLen?'맨 앞 숫자가 커도 자릿수가 적으면 작아요. 자릿수부터!':'앞에서 이미 정해졌어요. 뒤쪽 숫자는 보지 않아요.'}] }; },
@@ -2624,7 +2645,7 @@ S({ id:'compare', day:'DAY 02', title:'큰 수의 크기 비교', moves:{
      if(r<0.5){ const g=groups(base); const i=rnd(0,g.length-2); g[i]=Math.min(9999,Math.max(0,g[i]+pick([-1,1])*rnd(1,3)*100)); other=0n; for(let k=g.length-1;k>=0;k--) other=other*10000n+B(g[k]); }
      else other = base*10n + B(rnd(0,9))*0n; if(other===base) return null;
      let [A,Bv]= Math.random()<0.5?[base,other]:[other,base]; const fa=pick(['kor','mix']); const ans=A>Bv?'>':'<';
-     return { text:`○ 안에 &gt;, &lt; 를 알맞게 고르세요.<br><big>${formOf(A,fa)}</big> ○ <big>${Bv}</big>`, type:'cmp', answer:ans, fm:'convert', tool:[A,Bv],
+     return { steps:[KS('왼쪽 수를 숫자만으로 쓰면?','num',A,chunkHTML(A)),KS('왼쪽 수는 몇 자리?','num',B(dlen(A)),chunkHTML(A),{unit:'자리'}),KS('오른쪽 수는 몇 자리?','num',B(dlen(Bv)),chunkHTML(Bv),{unit:'자리'}),KS(dlen(A)!==dlen(Bv)?'자릿수가 많은 쪽이 커요. ○에 알맞은 것은?':'자릿수가 같아요. 앞 묶음부터 비교해서 ○에 알맞은 것은?','cmp',ans,`${A} ${ans} ${Bv}`)], text:`○ 안에 &gt;, &lt; 를 알맞게 고르세요.<br><big>${formOf(A,fa)}</big> ○ <big>${Bv}</big>`, type:'cmp', answer:ans, fm:'convert', tool:[A,Bv],
        hints:['왼쪽 수를 숫자만 쓴 수로 바꿔요.', `${chunkHTML(A)}`], sol:[`${formOf(A,fa)} = ${chunkHTML(A)}`, `${Bv} = ${chunkHTML(Bv)}`, `<b>${ans}</b>`],
        bugs:[{v: ans==='>'?'<':'>', tag:'order-form', msg:'모양이 다르면 같은 꼴(숫자만 쓴 수)로 바꾼 뒤 자릿수부터!'}] }; },
    lv=>{ const base=bigNum(3,3,0.2); const vals=new Set([base]);
@@ -2633,7 +2654,7 @@ S({ id:'compare', day:'DAY 02', title:'큰 수의 크기 비교', moves:{
        if(v>0n) vals.add(v); }
      const arr=shuffle([...vals]), labs=['㉠','㉡','㉢','㉣']; const forms=shuffle(['kor','mix','dig',pick(['kor','mix','dig'])]);
      const big=Math.random()<0.5; const sorted=arr.slice().sort((x,y)=> (x>y?-1:x<y?1:0)*(big?1:-1)); const ans=sorted.map(v=>labs[arr.indexOf(v)]);
-     return { text:`${big?'<b>큰 수부터</b>':'<b>작은 수부터</b>'} 차례로 기호를 누르세요.<br>${arr.map((v,i)=>`${labs[i]} ${formOf(v,forms[i])}`).join('<br>')}`, type:'order', options:labs, answer:ans, fm:'order', tool:arr,
+     return { steps:[...arr.map((v,i)=>KS(`${labs[i]}${jo(labs[i]==='㉠'?'기역':labs[i]==='㉡'?'니은':labs[i]==='㉢'?'디귿':'리을','은/는')} 숫자로 쓰면 몇 자리?`,'num',B(dlen(v)),chunkHTML(v),{unit:'자리'})),KS(`${big?'큰':'작은'} 수부터 차례로 기호를 누르세요.`,'order',ans,arr.map((v,i)=>`${labs[i]} ${chunkHTML(v)}`).join('<br>'),{options:labs})], text:`${big?'<b>큰 수부터</b>':'<b>작은 수부터</b>'} 차례로 기호를 누르세요.<br>${arr.map((v,i)=>`${labs[i]} ${formOf(v,forms[i])}`).join('<br>')}`, type:'order', options:labs, answer:ans, fm:'order', tool:arr,
        hints:['네 수를 모두 숫자만 쓴 수로 바꿔요.', arr.map((v,i)=>`${labs[i]} ${chunkHTML(v)}`).join('<br>')],
        sol:[arr.map((v,i)=>`${labs[i]} ${chunkHTML(v)} (${dlen(v)}자리)`).join('<br>'), `${big?'큰':'작은'} 수부터: <b>${ans.join(', ')}</b>`],
        bugs:[{v:ans.slice().reverse().join(','),tag:'direction',msg:`순서가 거꾸로예요. 문제는 「${big?'큰':'작은'} 수부터」!`}] }; },
@@ -2642,7 +2663,7 @@ S({ id:'compare', day:'DAY 02', title:'큰 수의 크기 비교', moves:{
        for(let d=0;d<=9;d++){ const v=B(T.slice(0,i)+d+tail); if(gt? v>B(T): v<B(T)) okd.push(d); }
        if(okd.length<1||okd.length>9) continue; const d0=Number(T[i]); const eqOk=okd.includes(d0); const cnt=okd.length;
        const Tn=B(T), tf=pick(['kor','mix','dig']); const tail0=B(tail), Ttail=B(T.slice(i+1));
-       return { text:`0부터 9까지의 숫자 중 □에 들어갈 수 있는 숫자는 모두 몇 개인가요?<br><big>${Apat} ${gt?'&gt;':'&lt;'} ${formOf(Tn,tf)}</big>`, type:'omr', unit:'개', answer:B(cnt), fm:'box', tool:Tn,
+       return { steps:[...(tf!=='dig'?[KS('오른쪽 수를 숫자만으로 쓰면?','num',Tn,chunkHTML(Tn))]:[]),KS(`□ 앞까지 같아요. □에 ${d0}보다 ${gt?'큰':'작은'} 숫자가 들어가면 언제나 돼요. 그런 숫자는 몇 개?`,'num',B(gt?9-d0:d0),gt?`${d0+1}~9 → ${9-d0}개`:(d0?`0~${d0-1} → ${d0}개`:'없어요 → 0개'),{unit:'개'}),KS(`□ = ${d0}이면 뒤를 비교해요. 그때도 되나요?`,'choice',eqOk?'돼요':'안 돼요',`${tail} ${tail0>Ttail?'&gt;':tail0<Ttail?'&lt;':'='} ${T.slice(i+1)}`,{options:['돼요','안 돼요']}),KS('모두 몇 개?','num',B(cnt),eqOk?`${gt?9-d0:d0} + 1 = ${cnt}`:`${cnt}개`,{unit:'개'})], text:`0부터 9까지의 숫자 중 □에 들어갈 수 있는 숫자는 모두 몇 개인가요?<br><big>${Apat} ${gt?'&gt;':'&lt;'} ${formOf(Tn,tf)}</big>`, type:'omr', unit:'개', answer:B(cnt), fm:'box', tool:Tn,
          hints:[tf!=='dig'?'오른쪽 수를 먼저 숫자만 쓴 수로 바꿔요. 자릿수가 같은지 봐요.':'자릿수가 같아요. □ 앞까지 같은지 봐요.', `□가 ${d0}일 때는 같아지니까 다음 자리를 비교해야 해요: ${tail.slice(0,1)} vs ${T[i+1]}…`],
          sol:[`${Apat}<br>${T}`, `□ 앞 ${T.slice(0,i)}까지 같아요.`, `□ = ${d0}이면 뒤를 비교: ${tail} ${tail0>Ttail?'&gt;':tail0<Ttail?'&lt;':'='} ${T.slice(i+1)} → ${eqOk?'○':'×'}`, `되는 숫자: ${okd.join(', ')} → <b>${cnt}개</b>`],
          bugs:[{v:B(eqOk?cnt-1:cnt+1),tag:'equal-case',msg:`□가 ${d0}일 때를 다시 봐요. 앞자리가 같으면 다음 자리까지 비교해야 해요.`},{v:B(10-cnt),tag:'direction',msg:'부등호 방향을 다시 읽어요. 반대쪽을 셌어요.'}] }; } return null; }
@@ -2663,41 +2684,41 @@ S({ id:'skip', day:'DAY 03', title:'뛰어 세기와 수직선', moves:{
    lv=>{ const [e,nm]=pick(STEPS.slice(0,5)); const d=rnd(1,3), k=rnd(2,4); let S0;
      for(let t=0;t<50;t++){ S0=niceStart(e); if(digitAt(S0,e)+d*k<=9) break; S0=null; } if(!S0) return null; const st=stepVal(e,d);
      if(Math.random()<0.4){ const opts=shuffle(uniq([e,e+1,e-1,e+4>15?e-2:e+4].filter(x=>x>=0)).slice(0,4).map(x=>PN[x]));
-       return { text:`${mixedForm(S0)}에서 ${stepName(st)}씩 커지게 뛰어 세면 어느 자리 숫자가 바뀌나요?`, type:'choice', options:opts, answer:PN[e], fm:'onedigit', tool:S0,
+       return { steps:[KS(`${stepName(st)}을 숫자로 쓰면?`,'num',st,String(st)),KS(`${st}에서 0이 아닌 숫자 ${d}${jo(B(d),'은/는')} 어느 자리일까요?`,'choice',PN[e],placeRow(st),{options:opts.slice()})], text:`${mixedForm(S0)}에서 ${stepName(st)}씩 커지게 뛰어 세면 어느 자리 숫자가 바뀌나요?`, type:'choice', options:opts, answer:PN[e], fm:'onedigit', tool:S0,
          hints:[`${stepName(st)}을 숫자로 쓰면 ${st} — 0이 아닌 숫자가 어느 자리에 있나요?`, `${st}에서 ${d}${jo(B(d),'은/는')} ${PN[e]}의 자리`], sol:[`${stepName(st)} = ${st}`, `${d}${jo(B(d),'이/가')} ${PN[e]}의 자리에 있으니 <b>${PN[e]}의 자리</b>가 바뀌어요`], bugs:[] }; }
      const ans=S0+st*B(k); const seq=[S0]; for(let i=1;i<=k;i++) seq.push(S0+st*B(i));
-     return { text:`${mixedForm(S0)}에서 ${stepName(st)}씩 커지게 <b>${k}번</b> 뛰어 센 수를 쓰세요.`, type:'mixed', answer:ans, fm:'onedigit', tool:S0,
+     return { steps:[KS(`${stepName(st)}씩 뛰면 숫자가 바뀌는 곳은 어느 자리일까요?`,'choice',PN[e],`${stepName(st)} = ${st}`,{options:nearPN(e,16)}),KS(`${PN[e]}의 자리 숫자는 지금 ${digitAt(S0,e)}. ${d}씩 ${k}번 커지면?`,'num',B(digitAt(S0,e)+d*k),`${digitAt(S0,e)} + ${d} × ${k} = ${digitAt(S0,e)+d*k}`),KS('답은? (조·억·만으로)','mixed',ans,seq.map(mixedForm).join(' → '))], text:`${mixedForm(S0)}에서 ${stepName(st)}씩 커지게 <b>${k}번</b> 뛰어 센 수를 쓰세요.`, type:'mixed', answer:ans, fm:'onedigit', tool:S0,
        hints:[`${PN[e]}의 자리 숫자만 ${d}씩 커져요.`, `${PN[e]}의 자리: ${digitAt(S0,e)} → ${digitAt(S0,e)+d} → …`], sol:[seq.map(mixedForm).join(' → '), `<b>${mixedForm(ans)}</b>`],
        bugs:[{v:S0+st,tag:'k-times',msg:`한 번만 뛰었어요. ${k}번 뛰어야 해요!`},{v:S0-st*B(k),tag:'direction',msg:'커지게 뛰는 거예요. 더해요!'}] }; },
    lv=>{ const [e,nm]=pick(STEPS.slice(0,6)); const d=rnd(2,6), k=rnd(2,4), up=Math.random()<0.55; let S0;
      for(let t=0;t<80;t++){ S0=niceStart(e); const v=digitAt(S0,e); if(up? v+d*k>=10 : v-d*k<0 && S0>stepVal(e,d)*B(k)*3n) break; S0=null; } if(!S0) return null; const st=stepVal(e,d);
      const ans= up? S0+st*B(k) : S0-st*B(k); const seq=[S0]; for(let i=1;i<=k;i++) seq.push(up?S0+st*B(i):S0-st*B(i));
-     return { text:`${mixedForm(S0)}에서 ${stepName(st)}씩 <b>${up?'커지게':'작아지게'} ${k}번</b> 뛰어 센 수를 쓰세요.`, type:'mixed', answer:ans, fm:'carry', tool:S0,
+     return { steps:[KS(`한 번 ${up?'커지게':'작아지게'} 뛰면? (조·억·만으로)`,'mixed',seq[1],`${mixedForm(S0)} ${up?'+':'−'} ${stepName(st)} = ${mixedForm(seq[1])}`),KS(`${stepName(st)} × ${k}${jo(B(k),'은/는')}? (조·억·만으로)`,'mixed',st*B(k),`${st} × ${k} = ${st*B(k)}`),KS(`${mixedForm(S0)} ${up?'+':'−'} ${stepName(st*B(k))}${jo(st*B(k),'은/는')}? (조·억·만으로)`,'mixed',ans,seq.map(mixedForm).join(' → '))], text:`${mixedForm(S0)}에서 ${stepName(st)}씩 <b>${up?'커지게':'작아지게'} ${k}번</b> 뛰어 센 수를 쓰세요.`, type:'mixed', answer:ans, fm:'carry', tool:S0,
        hints:[up?'같은 단위끼리 더하고, 10000이 넘으면 올려요.':'같은 단위끼리 빼고, 모자라면 위 단위에서 받아내림해요.', `한꺼번에: ${stepName(st)} × ${k} = ${stepName(st*B(k))}`],
        sol:[seq.map(mixedForm).join(' → '), `한꺼번에: ${mixedForm(S0)} ${up?'+':'−'} ${stepName(st*B(k))}`, `<b>${mixedForm(ans)}</b>`],
        bugs:[{v: up?S0-st*B(k):S0+st*B(k), tag:'direction', msg:`「${up?'커지게':'작아지게'}」예요. 방향을 다시 읽어요.`},{v:up?S0+st:S0-st,tag:'k-times',msg:`${k}번 뛰어야 해요.`}] }; },
    lv=>{ const t=Math.random(); const [e]=pick(STEPS.slice(1,6)); const st=stepVal(e,rnd(1,9)*(Math.random()<0.5?1:5)/(1));
      if(t<0.35){ const dn=Math.random()<0.5; const S0=niceStart(e)+st*6n; const dd= dn?-st:st; const a=[S0,S0+dd,S0+2n*dd,S0+3n*dd];
-       return { text:`규칙에 따라 뛰어 센 것이에요. ㉠에 알맞은 수는?<br><big>${mixedForm(a[0])} → ${mixedForm(a[1])} → ${mixedForm(a[2])} → ㉠</big>`, type:'mixed', answer:a[3], fm:'diff', tool:null,
+       return { steps:[KS('이웃한 두 수의 차는? (조·억·만으로)','mixed',st,`${mixedForm(a[0])}${jo(a[0],'과/와')} ${mixedForm(a[1])}의 차`),KS('수가 커져요, 작아져요?','choice',dn?'작아져요':'커져요',`${mixedForm(a[0])} → ${mixedForm(a[1])}`,{options:['커져요','작아져요']}),KS('㉠은? (조·억·만으로)','mixed',a[3],`${mixedForm(a[2])} ${dn?'−':'+'} ${mixedForm(st)} = ${mixedForm(a[3])}`)], text:`규칙에 따라 뛰어 센 것이에요. ㉠에 알맞은 수는?<br><big>${mixedForm(a[0])} → ${mixedForm(a[1])} → ${mixedForm(a[2])} → ㉠</big>`, type:'mixed', answer:a[3], fm:'diff', tool:null,
          hints:['이웃한 두 수의 차를 구해요. 커지는지 작아지는지도 봐요.', `차 = ${mixedForm(st)}, ${dn?'작아져요':'커져요'}`], sol:[`${mixedForm(a[1])} − ${mixedForm(a[0])} → ${dn?'−':'+'}${mixedForm(st)}씩`, `㉠ = ${mixedForm(a[2])} ${dn?'−':'+'} ${mixedForm(st)} = <b>${mixedForm(a[3])}</b>`],
          bugs:[{v:a[2]-dd,tag:'direction',msg:`수가 ${dn?'작아지고':'커지고'} 있어요. 방향을 맞춰요.`}] }; }
      if(t<0.65){ const k=rnd(2,5); const S0=niceStart(e)+st*6n; const R=S0+st*B(k);
-       return { text:`어떤 수에서 ${mixedForm(st)}씩 커지게 ${k}번 뛰어 세었더니 ${mixedForm(R)}${jo(R,'이/가')} 되었어요. 처음 수는?`, type:'mixed', answer:S0, fm:'reverse', tool:null,
+       return { steps:[KS(`${mixedForm(st)} × ${k}${jo(B(k),'은/는')}? (조·억·만으로)`,'mixed',st*B(k),`${st} × ${k} = ${st*B(k)}`),KS('처음 수를 구하려면 더해요, 빼요?','choice','빼요','거꾸로 가니까 빼요',{options:['더해요','빼요']}),KS('처음 수는? (조·억·만으로)','mixed',S0,`${mixedForm(R)} − ${mixedForm(st*B(k))} = ${mixedForm(S0)}`)], text:`어떤 수에서 ${mixedForm(st)}씩 커지게 ${k}번 뛰어 세었더니 ${mixedForm(R)}${jo(R,'이/가')} 되었어요. 처음 수는?`, type:'mixed', answer:S0, fm:'reverse', tool:null,
          hints:['처음 수를 구하려면 거꾸로 — 빼요.', `${mixedForm(st)} × ${k} = ${mixedForm(st*B(k))}`], sol:[`${mixedForm(st)} × ${k} = ${mixedForm(st*B(k))}`, `${mixedForm(R)} − ${mixedForm(st*B(k))} = <b>${mixedForm(S0)}</b>`],
          bugs:[{v:R+st*B(k),tag:'direction',msg:'처음 수는 더 작아야 해요. 거꾸로 빼요!'},{v:R-st,tag:'k-times',msg:`${k}번만큼 빼야 해요.`}] }; }
      // 수직선
      const N=rnd(8,10); const i=rnd(1,3), j=i+rnd(2,4); const m= Math.random()<0.5? rnd(j+1,N) : rnd(0,i-1); const base=bigNum(3,3,0.1)*1n; const Vi=base - base%st + st*5n; const Vj=Vi+st*B(j-i); const ans=Vi+st*B(m-i);
      const labels={}; labels[i]=mixedForm(Vi); labels[j]=mixedForm(Vj); const marks={}; marks[m]='㉠';
      const bugs=[]; const diff=Vj-Vi; if(diff%B(j-i+1)===0n){ const s2=diff/B(j-i+1); bugs.push({v:Vi+s2*B(m-i),tag:'gap-tick',msg:`눈금 개수(${j-i+1}개)로 나눴어요. 칸은 눈금 사이 — ${j-i}칸!`}); }
-     return { text:`눈금 사이의 간격은 모두 같아요. ㉠이 나타내는 수는?`, svg:numberLine(N,labels,marks), type:'mixed', answer:ans, fm:'tick', tool:null,
+     return { steps:[KS('두 수가 쓰인 눈금 사이는 몇 칸? (눈금 개수 아님)','num',B(j-i),`${j-i}칸`,{unit:'칸'}),KS('두 수의 차는? (조·억·만으로)','mixed',diff,`${mixedForm(Vj)} − ${mixedForm(Vi)} = ${mixedForm(diff)}`),KS('한 칸의 크기는? (조·억·만으로)','mixed',st,`${mixedForm(diff)} ÷ ${j-i} = ${mixedForm(st)}`),KS(`㉠은 ${m>j?mixedForm(Vj)+'에서 몇 칸 뒤':mixedForm(Vi)+'에서 몇 칸 앞'}?`,'num',B(m>j?m-j:i-m),`${m>j?m-j:i-m}칸`,{unit:'칸'}),KS('㉠은? (조·억·만으로)','mixed',ans,mixedForm(ans))], text:`눈금 사이의 간격은 모두 같아요. ㉠이 나타내는 수는?`, svg:numberLine(N,labels,marks), type:'mixed', answer:ans, fm:'tick', tool:null,
        hints:['두 수가 쓰인 눈금 사이가 몇 칸인지 세요 (눈금 개수 아님).', `${j-i}칸에 ${mixedForm(diff)} → 한 칸 ${mixedForm(st)}`],
        sol:[`칸 수 ${j-i}, 차 ${mixedForm(diff)} → 한 칸 ${mixedForm(st)}`, `㉠은 ${m>j?mixedForm(Vj)+'에서 '+(m-j)+'칸 더':mixedForm(Vi)+'에서 '+(i-m)+'칸 앞'}`, `<b>${mixedForm(ans)}</b>`], bugs }; },
    lv=>{ if(Math.random()<0.5){ const c=rnd(2,6); const unitE=pick([5,6,7]); const unit=p10(unitE); const q=rnd(2,99); const step=unit*B(q); const S0=niceStart(8); const S1=S0-S0%unit; const E=S1+step*B(c+1);
        const ans=B(q); const bugs=[]; if((E-S1)%(B(c)*unit)===0n){ const bv=(E-S1)/B(c)/unit; if(bv<=999n) bugs.push({v:bv,tag:'jumps',msg:`사이에 수가 ${c}개면 뛴 횟수는 ${c+1}번이에요.`}); }
-       return { text:`${mixedForm(S1)}${jo(S1,'과/와')} ${mixedForm(E)} 사이를 같은 크기씩 뛰어 세었더니 그 사이에 수가 ${c}개 있었어요. 한 번 뛴 크기는 ${mixedForm(unit)}이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:ans, fm:'count', tool:null,
+       return { steps:[KS(`사이에 수가 ${c}개면 몇 번 뛰었어요?`,'num',B(c+1),`${c} + 1 = ${c+1}`,{unit:'번'}),KS('두 수의 차는? (조·억·만으로)','mixed',E-S1,`${mixedForm(E)} − ${mixedForm(S1)} = ${mixedForm(E-S1)}`),KS('한 번 뛴 크기는? (조·억·만으로)','mixed',step,`${mixedForm(E-S1)} ÷ ${c+1} = ${mixedForm(step)}`),KS(`${mixedForm(step)}은 ${mixedForm(unit)}이 몇 개?`,'num',ans,`${step} ÷ ${unit} = ${q}`,{unit:'개'})], text:`${mixedForm(S1)}${jo(S1,'과/와')} ${mixedForm(E)} 사이를 같은 크기씩 뛰어 세었더니 그 사이에 수가 ${c}개 있었어요. 한 번 뛴 크기는 ${mixedForm(unit)}이 몇 개인 수인가요?`, type:'omr', unit:'개', answer:ans, fm:'count', tool:null,
          hints:[`사이에 수가 ${c}개 → 뛴 횟수는 ${c}+1번`, `차는 ${mixedForm(E-S1)}`], sol:[`차 ${mixedForm(E-S1)}, 뛴 횟수 ${c+1}번`, `한 번 = ${mixedForm(step)}`, `${mixedForm(unit)}이 <b>${q}개</b>`], bugs }; }
      const [e]=pick(STEPS.slice(0,5)); const st=stepVal(e,rnd(1,5)); const k=rnd(6,40); const S0=niceStart(e); const E=S0+st*B(k);
-     return { text:`${mixedForm(S0)}에서 ${mixedForm(st)}씩 커지게 뛰어 세어 ${mixedForm(E)}${jo(E,'이/가')} 되려면 몇 번 뛰어야 하나요?`, type:'omr', unit:'번', answer:B(k), fm:'count', tool:null,
+     return { steps:[KS('끝 수 − 처음 수는? (조·억·만으로)','mixed',st*B(k),`${mixedForm(E)} − ${mixedForm(S0)} = ${mixedForm(st*B(k))}`),KS(`${mixedForm(st*B(k))} 안에 ${mixedForm(st)}${jo(st,'이/가')} 몇 번 들어가요?`,'num',B(k),`${st*B(k)} ÷ ${st} = ${k}`,{unit:'번'})], text:`${mixedForm(S0)}에서 ${mixedForm(st)}씩 커지게 뛰어 세어 ${mixedForm(E)}${jo(E,'이/가')} 되려면 몇 번 뛰어야 하나요?`, type:'omr', unit:'번', answer:B(k), fm:'count', tool:null,
        hints:['끝 수 − 처음 수를 먼저 구해요.', `차는 ${mixedForm(st*B(k))}`], sol:[`${mixedForm(E)} − ${mixedForm(S0)} = ${mixedForm(st*B(k))}`, `${mixedForm(st*B(k))} ÷ ${mixedForm(st)} = <b>${k}번</b>`],
        bugs:[{v:B(k+1),tag:'jumps',msg:'수의 개수를 셌어요. 뛴 횟수는 그보다 하나 적어요.'}] }; }
   ]});
@@ -2715,38 +2736,47 @@ S({ id:'cards', day:'DAY 03', title:'수 카드와 조건에 맞는 수', moves:
   gen:[
    lv=>{ const c=drawCards(5,Math.random()<0.6); const all=allNums(c); const big=Math.random()<0.5; const ans= big? all[all.length-1]:all[0];
      const bugs=[]; if(!big){ const naive=B(c.slice().sort().join('')); if(naive!==ans) bugs.push({v:naive,tag:'lead-zero',msg:'맨 앞에 0이 오면 다섯 자리 수가 아니에요!'}); }
-     return { text:`수 카드를 한 번씩 모두 써서 <b>가장 ${big?'큰':'작은'}</b> 다섯 자리 수를 만드세요.<br>${cardsHTML(c)}`, type:'num', answer:ans, fm: big?'big':'small', tool:null,
+     const sa=String(ans); return { steps: big?[KS('맨 앞에 놓을 숫자는? (가장 큰 숫자)','num',B(sa[0]),`큰 순서: ${sa.split('').join(', ')}`),KS('두 번째 자리에 놓을 숫자는?','num',B(sa[1]),`남은 것 중 가장 큰 숫자 ${sa[1]}`),KS('가장 큰 수는?','num',ans,sa)]
+       :[KS('맨 앞에 놓을 숫자는? (0은 맨 앞에 못 와요)','num',B(sa[0]),`0 말고 가장 작은 숫자 ${sa[0]}`),KS('두 번째 자리에 놓을 숫자는?','num',B(sa[1]),`남은 것 중 가장 작은 숫자 ${sa[1]}`),KS('가장 작은 수는?','num',ans,sa)],
+     text:`수 카드를 한 번씩 모두 써서 <b>가장 ${big?'큰':'작은'}</b> 다섯 자리 수를 만드세요.<br>${cardsHTML(c)}`, type:'num', answer:ans, fm: big?'big':'small', tool:null,
        hints:[big?'가장 큰 숫자를 맨 앞에!':'0은 맨 앞에 못 와요. 0 말고 가장 작은 숫자를 맨 앞에!', big?`큰 순서: ${c.slice().sort((a,b)=>b-a).join(', ')}`:`0 말고 가장 작은 숫자는 ${Math.min(...c.filter(x=>x))}`],
        sol:[big?`큰 숫자부터: ${c.slice().sort((a,b)=>b-a).join(' ')}`:`맨 앞 ${String(ans)[0]}, 나머지는 작은 순서`, `<b>${ans}</b>`], bugs }; },
    lv=>{ const c=drawCards(5,Math.random()<0.6); const all=allNums(c); const t=Math.random(); let f, desc, big, fm='last';
      if(t<0.35){ f=x=>x%2n===0n; desc='짝수 중 가장 큰'; big=true; } else if(t<0.7){ f=x=>x%2n===1n; desc='홀수 중 가장 작은'; big=false; }
      else { const k=pick(c), pos=rnd(0,3); f=x=>digitAt(x,pos)===k; desc=`${PN[pos]}의 자리 숫자가 ${k}인 가장 큰`; big=true; }
      const fl=all.filter(f); if(!fl.length) return null; const ans= big? fl[fl.length-1]:fl[0]; const ext= big? all[all.length-1]:all[0];
-     return { text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 수 중 <b>${desc}</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm, tool:null,
+     const pv=t<0.7?null:Number(desc.match(/숫자가 (\d)/)[1]), ppos=t<0.7?null:PN.indexOf(desc.split('의 자리')[0]);
+     const rest=t<0.7?'':String(ans).split('').filter((_,q)=>q!==4-ppos).join('');
+     const steps = t<0.7 ? [KS(`일의 자리에 올 수 있는 ${t<0.35?'짝수':'홀수'} 카드는 몇 장?`,'num',B(c.filter(x=>x%2===(t<0.35?0:1)).length),c.filter(x=>x%2===(t<0.35?0:1)).join(', '),{unit:'장'}),KS(`일의 자리 숫자는? (앞자리를 가장 ${big?'크게':'작게'} 남기는 카드)`,'num',ans%10n,`일의 자리 ${ans%10n}`),KS(`남은 네 장으로 앞 네 자리를 가장 ${big?'크게':'작게'} 만들면?`,'num',ans/10n,String(ans/10n)),KS('답은?','num',ans,String(ans))]
+       : [KS(`${PN[ppos]}의 자리에 먼저 놓을 카드는?`,'num',B(pv),`${PN[ppos]}의 자리 ${pv}`),KS('나머지 네 장을 큰 순서로 쓰면? (네 자리 수로)','num',B(rest),rest),KS(`${PN[ppos]}의 자리에 ${pv}${jo(B(pv),'을/를')} 끼워 넣으면?`,'num',ans,String(ans))];
+     return { steps, text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 수 중 <b>${desc}</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm, tool:null,
        hints:['조건이 걸린 자리를 먼저 채워요.', desc.includes('짝수')?'일의 자리에 올 수 있는 짝수 카드를 하나씩 놓아 보고 비교해요.':desc.includes('홀수')?'일의 자리에 올 수 있는 홀수 카드를 하나씩 놓아 보고 비교해요.':'그 자리에 카드를 먼저 놓고, 나머지를 큰 순서로.'],
        sol:[`조건 자리부터 → 남은 카드로 ${big?'큰':'작은'} 수`, `<b>${ans}</b>`], bugs: ext!==ans?[{v:ext,tag:'lastdigit',msg:'그 수는 조건을 안 지켜요. 조건 자리부터 정해요!'}]:[] }; },
    lv=>{ if(Math.random()<0.45){ const c=drawCards(5,Math.random()<0.6); const all=allNums(c); const big=Math.random()<0.5; const ans= big? all[all.length-2]:all[1]; const ext= big? all[all.length-1]:all[0];
-       return { text:`수 카드를 한 번씩 모두 써서 만든 다섯 자리 수 중 <b>두 번째로 ${big?'큰':'작은'}</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm: big?'big':'small', tool:null,
+       const sw=String(ext).slice(0,3)+String(ext)[4]+String(ext)[3];
+       return { steps:[KS(`먼저 가장 ${big?'큰':'작은'} 수는?`,'num',ext,String(ext)),KS(sw===String(ans)?'끝의 두 자리를 바꾸면?':`그다음으로 ${big?'큰':'작은'} 수는?`,'num',ans,String(ans))], text:`수 카드를 한 번씩 모두 써서 만든 다섯 자리 수 중 <b>두 번째로 ${big?'큰':'작은'}</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm: big?'big':'small', tool:null,
          hints:[`먼저 가장 ${big?'큰':'작은'} 수를 만들어요.`, '끝의 두 자리만 바꾸면 두 번째가 돼요.'], sol:[`가장 ${big?'큰':'작은'} 수 ${ext}`, `끝 두 자리를 바꾸면 <b>${ans}</b>`],
          bugs:[{v:ext,tag:'lastdigit',msg:`그건 가장 ${big?'큰':'작은'} 수예요. 두 번째!`}] }; }
      for(let t=0;t<100;t++){ const c=drawCards(6,true); const all=allNums(c); const T=B(rnd(2,8))*100000n; const below=all.filter(x=>x<T), above=all.filter(x=>x>T); if(!below.length||!above.length) continue;
        const lo=below[below.length-1], hi=above[0]; if(T-lo===hi-T) continue; const ans= T-lo<hi-T? lo:hi, other= ans===lo?hi:lo;
-       return { text:`수 카드를 한 번씩 모두 써서 여섯 자리 수를 만들어요. <b>${T}에 가장 가까운 수</b>는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm:'near', tool:null,
+       return { steps:[KS(`${T}보다 작은 수 중 가장 큰 수는?`,'num',lo,String(lo)),KS(`${T}보다 큰 수 중 가장 작은 수는?`,'num',hi,String(hi)),KS(`${T}${jo(T,'과/와')}의 차가 더 작은 수는?`,'num',ans,`${T} − ${lo} = ${T-lo}, ${hi} − ${T} = ${hi-T}`)], text:`수 카드를 한 번씩 모두 써서 여섯 자리 수를 만들어요. <b>${T}에 가장 가까운 수</b>는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm:'near', tool:null,
          hints:[`${T}보다 작은 수 중 가장 큰 수, 큰 수 중 가장 작은 수를 둘 다 만들어요.`, `후보: ${lo}, ${hi}`], sol:[`작은 쪽 ${lo} (차 ${T-lo})`, `큰 쪽 ${hi} (차 ${hi-T})`, `<b>${ans}</b>`],
          bugs:[{v:other,tag:'near',msg:'반대쪽 후보도 만들어서 차를 비교해 봐요.'}] }; } return null; },
    lv=>{ const t=Math.random();
      if(t<0.35){ for(let k=0;k<100;k++){ const c=drawCards(5,Math.random()<0.7); const all=allNums(c); const a=rnd(1,8), b=rnd(a+1,9); const L=B(a)*10000n, R=B(b)*10000n; const cnt=all.filter(x=>x>L&&x<R).length; if(cnt<4) continue;
-         return { text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 수 중 ${L}보다 크고 ${R}보다 작은 수는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'omr', unit:'개', answer:B(cnt), fm:'count', tool:null,
+         const nf=uniq(all.filter(x=>x>L&&x<R).map(x=>String(x)[0])).length; if(nf*24!==cnt) continue;
+         return { steps:[KS('맨 앞에 올 수 있는 숫자는 몇 개?','num',B(nf),uniq(all.filter(x=>x>L&&x<R).map(x=>String(x)[0])).join(', '),{unit:'개'}),KS('맨 앞이 정해지면 나머지 네 장으로 만드는 수는 몇 개?','num',24n,'4 × 3 × 2 × 1 = 24',{unit:'개'}),KS('모두 몇 개?','num',B(cnt),`${nf} × 24 = ${cnt}`,{unit:'개'})], text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 수 중 ${L}보다 크고 ${R}보다 작은 수는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'omr', unit:'개', answer:B(cnt), fm:'count', tool:null,
            hints:['맨 앞자리에 올 수 있는 카드부터 정해요.', `맨 앞이 정해지면 나머지 네 장으로 만드는 수는 4×3×2×1 = 24개`],
            sol:[`맨 앞에 올 수 있는 숫자: ${uniq(all.filter(x=>x>L&&x<R).map(x=>String(x)[0])).join(', ')}`, `각각 24개씩 → <b>${cnt}개</b>`], bugs:[] }; } return null; }
      if(t<0.65){ for(let k=0;k<200;k++){ const c=drawCards(5,Math.random()<0.6); const all=allNums(c); const T=B(rnd(2,8))*10000n; const below=all.filter(x=>x<T), above=all.filter(x=>x>T); if(!below.length||!above.length) continue;
          const lo=below[below.length-1], hi=above[0]; const dl=T-lo, dh=hi-T; if(dl===dh) continue; const ans= dl<dh?dl:dh, other= dl<dh?dh:dl; if(ans>999n) continue;
-         return { text:`수 카드를 한 번씩 모두 써서 ${T}에 가장 가까운 다섯 자리 수를 만들었어요. 만든 수와 ${T}의 차는?<br>${cardsHTML(c)}`, type:'omr', answer:ans, fm:'near', tool:null,
+         return { steps:[KS(`${T}보다 작은 수 중 가장 큰 수는?`,'num',lo,String(lo)),KS(`${T}보다 큰 수 중 가장 작은 수는?`,'num',hi,String(hi)),KS('두 차 중 더 작은 것은?','num',ans,`${T} − ${lo} = ${dl}, ${hi} − ${T} = ${dh}`)], text:`수 카드를 한 번씩 모두 써서 ${T}에 가장 가까운 다섯 자리 수를 만들었어요. 만든 수와 ${T}의 차는?<br>${cardsHTML(c)}`, type:'omr', answer:ans, fm:'near', tool:null,
            hints:['큰 쪽 후보와 작은 쪽 후보를 둘 다 만들어요.', `후보: ${lo}, ${hi}`], sol:[`${lo} → 차 ${dl}`, `${hi} → 차 ${dh}`, `가까운 쪽 차 <b>${ans}</b>`],
            bugs: other<=999n?[{v:other,tag:'near',msg:'다른 쪽 후보가 더 가까워요. 둘 다 비교!'}]:[] }; } return null; }
      const c=drawCards(5,true); const all=allNums(c); const ev=all.filter(x=>x%2n===0n).length; let naive=0; // 0이 맨 앞인 것까지 센 실수
      const L=c.length; (function rec(s,used){ if(s.length===L){ if(Number(s[L-1])%2===0) naive++; return;} for(let i=0;i<L;i++){ if(used&(1<<i)) continue; rec(s+c[i],used|(1<<i)); } })('',0);
-     return { text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 <b>짝수</b>는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'omr', unit:'개', answer:B(ev), fm:'count', tool:null,
+     const ne=c.filter(x=>x%2===0&&x!==0).length; const okE=24+ne*18===ev;
+     return { steps: okE?[KS('0을 일의 자리에 놓으면 나머지 4장으로 몇 개?','num',24n,'4 × 3 × 2 × 1 = 24',{unit:'개'}),KS('0이 아닌 짝수 카드는 몇 장?','num',B(ne),c.filter(x=>x%2===0&&x!==0).join(', ')||'없어요',{unit:'장'}),KS('0이 아닌 짝수 하나를 일의 자리에 놓으면, 맨 앞에 0이 못 오니까 몇 개?','num',18n,'3 × 3 × 2 × 1 = 18',{unit:'개'}),KS('모두 몇 개?','num',B(ev),`24 + ${ne} × 18 = ${ev}`,{unit:'개'})]:undefined, text:`수 카드를 한 번씩 모두 써서 만들 수 있는 다섯 자리 <b>짝수</b>는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'omr', unit:'개', answer:B(ev), fm:'count', tool:null,
        hints:['일의 자리부터 정해요. 0이 일의 자리에 올 때와 아닐 때를 나눠요.', '0이 일의 자리가 아니면, 맨 앞에 0이 오는 경우를 빼야 해요.'],
        sol:[`일의 자리 짝수 카드: ${c.filter(x=>x%2===0).join(', ')}`, '0이 일의 자리 → 나머지 4장 24개 / 아니면 맨 앞 0 제외해서 18개씩', `<b>${ev}개</b>`],
        bugs: naive!==ev?[{v:B(naive),tag:'lead-zero',msg:'맨 앞에 0이 오는 경우까지 셌어요. 그건 다섯 자리 수가 아니에요!'}]:[] }; }
@@ -2939,14 +2969,14 @@ const JUMP = {
     const L=8, pT=7, pSM=5, pC=3; // 천만, 십만, 천
     const ans=dfsDigits(L, big?'max':'min', (i,d,arr)=>{ if(arr.includes(d)) return false; const p=posOf(L,i); if(p===pT && d!==k) return false; if(p===pC){ const s=arr[L-1-pSM]; if(s*100!==m*d) return false; } if(p===0 && (d%2===1)!==odd) return false; return true; }, ()=>true);
     if(ans===null) return null; const s=String(ans); const sm=s[L-1-pSM], c=s[L-1-pC];
-    return { text:`다음 조건을 모두 만족하는 여덟 자리 수 중 <b>가장 ${big?'큰':'작은'} 수</b>를 쓰세요.<ul class="cond"><li>각 자리 숫자는 모두 달라요.</li><li>천만의 자리 숫자는 ${k}${jo(B(k),'이에요/예요')}.</li><li>십만의 자리 숫자가 나타내는 값은 천의 자리 숫자가 나타내는 값의 ${m}배예요.</li><li>${odd?'홀수':'짝수'}예요.</li></ul>`, type:'num', answer:ans, fm:'value', tool:null,
+    return { steps:[KS('천만의 자리 숫자는?','num',B(k),`조건: 천만의 자리 ${k}`),KS(`(십만의 자리 숫자) = ${m/100} × (천의 자리 숫자)예요. 천의 자리가 1이면 십만의 자리는?`,'num',B(m/100),`${m/100} × 1 = ${m/100}`),KS(`숫자가 겹치지 않고 가장 ${big?'큰':'작은'} 수가 되게 십만의 자리 숫자를 고르면?`,'num',B(sm),`십만 ${sm}, 천 ${c}`),KS('그럼 천의 자리 숫자는?','num',B(c),`${m/100} × ${c} = ${sm}`),KS(`나머지 자리를 ${big?'큰':'작은'} 숫자부터 채우면? (일의 자리는 ${odd?'홀수':'짝수'})`,'num',ans,s)], text:`다음 조건을 모두 만족하는 여덟 자리 수 중 <b>가장 ${big?'큰':'작은'} 수</b>를 쓰세요.<ul class="cond"><li>각 자리 숫자는 모두 달라요.</li><li>천만의 자리 숫자는 ${k}${jo(B(k),'이에요/예요')}.</li><li>십만의 자리 숫자가 나타내는 값은 천의 자리 숫자가 나타내는 값의 ${m}배예요.</li><li>${odd?'홀수':'짝수'}예요.</li></ul>`, type:'num', answer:ans, fm:'value', tool:null,
       hints:[`「${m}배」 조건부터: 십만의 자리 값 = ${m} × 천의 자리 값. 숫자로 바꾸면 (십만의 자리 숫자) × 100 = ${m} × (천의 자리 숫자)`, `되는 짝을 모두 써 보고, 나머지 자리는 ${big?'큰':'작은'} 숫자부터 채워요. ${odd?'홀수':'짝수'}니까 일의 자리 조심!`],
       sol:[`(십만의 자리 숫자) × 100 = ${m} × (천의 자리 숫자) → 짝: ${[1,2,3,4,5,6,7,8,9].filter(b=>{const a=m*b/100; return Number.isInteger(a)&&a>=1&&a<=9&&a!==b;}).map(b=>`(${m*b/100}, ${b})`).join(', ')}`, `천만의 자리는 ${k}, 숫자는 겹치면 안 되고 일의 자리는 ${odd?'홀수':'짝수'}`, `${big?'앞자리부터 가장 큰':'앞자리부터 가장 작은'} 숫자를 넣어 보면 십만 ${sm}, 천 ${c}`, `<b>${ans}</b>`], bugs:[] }; },
   ()=>{ // 같은 숫자가 나타내는 값의 합 → 단위로 묻기
     const d=rnd(2,9); const L=8; const ps=shuffle([0,1,2,3,4,5,6,7]).slice(0,3).sort((a,b)=>b-a); if(Math.min(...ps)<2) return null; const arr=[];
     for(let p=0;p<L;p++){ if(ps.includes(p)) arr[p]=d; else { let x; do{x=rnd(0,9);}while(x===d||(p===7&&x===0)); arr[p]=x; } } if(arr[7]===0) return null;
     const s=arr.slice().reverse().join(''), n=B(s); const sum=ps.reduce((u,p)=>u+B(d)*p10(p),0n); const unit=p10(Math.min(...ps)); const ans=sum/unit;
-    return { text:`<big>${s}</big><br>숫자 ${d}${jo(B(d),'이/가')} 나타내는 값을 모두 더한 수는 ${mixedForm(unit)}${jo(unit,'이/가')} 몇 개인 수인가요?`, type:'num', unit:'개', answer:ans, fm:'value', tool:n,
+    return { steps:[...ps.map(p=>KS(`${PN[p]}의 자리 ${d}${jo(B(d),'이/가')} 나타내는 값은?`,'num',B(d)*p10(p),`${d} 뒤에 0 ${p}개`)),KS('모두 더하면?','num',sum,`${ps.map(p=>B(d)*p10(p)).join(' + ')} = ${sum}`),KS(`${sum}은 ${mixedForm(unit)}${jo(unit,'이/가')} 몇 개?`,'num',ans,`${sum} ÷ ${unit} = ${ans}`,{unit:'개'})], text:`<big>${s}</big><br>숫자 ${d}${jo(B(d),'이/가')} 나타내는 값을 모두 더한 수는 ${mixedForm(unit)}${jo(unit,'이/가')} 몇 개인 수인가요?`, type:'num', unit:'개', answer:ans, fm:'value', tool:n,
       hints:[`${d}${jo(B(d),'이/가')} 세 번 나와요. 각각 어느 자리인지 먼저.`, ps.map(p=>`${PN[p]}의 자리 → ${B(d)*p10(p)}`).join(', ')],
       sol:[placeRow(n), `${ps.map(p=>B(d)*p10(p)).join(' + ')} = ${sum}`, `${sum} ÷ ${unit} = <b>${ans}개</b>`], bugs:[{v:B(d*3),tag:'digit-value',msg:'숫자를 더했어요. 묻는 건 나타내는 값의 합!'}] }; } ],
 
@@ -2955,12 +2985,12 @@ const JUMP = {
     const c=drawCards(4,Math.random()<0.6).sort(); const k=pick(c.filter(x=>x)); const big=Math.random()<0.5; const L=8; const pFix=pick([4,5,6]);
     const ans=dfsDigits(L, big?'max':'min', (i,d,arr)=>{ if(!c.includes(d)) return false; if(arr.filter(x=>x===d).length>=2) return false; if(posOf(L,i)===pFix && d!==k) return false; return true; }, ()=>true);
     if(ans===null) return null;
-    return { text:`수 카드 ${cardsHTML(c)} 를 <b>한 장을 두 번까지</b> 쓸 수 있어요. ${PN[pFix]}의 자리 숫자가 ${k}인 여덟 자리 수 중 <b>가장 ${big?'큰':'작은'}</b> 수를 쓰세요.`, type:'num', answer:ans, fm:'table', tool:null,
+    return { steps:[KS('카드 4장으로 여덟 자리 수를 만들려면 카드마다 몇 번씩 써야 해요?','num',2n,'4 × 2 = 8',{unit:'번'}),KS(`${PN[pFix]}의 자리에 놓을 숫자는?`,'num',B(k),`조건: ${PN[pFix]}의 자리 ${k}`),KS(`맨 앞(천만의 자리) 숫자는? (가장 ${big?'큰':'작은'} 수${big?'':', 0은 맨 앞 X'})`,'num',B(String(ans)[0]),String(ans)),KS('답은?','num',ans,String(ans))], text:`수 카드 ${cardsHTML(c)} 를 <b>한 장을 두 번까지</b> 쓸 수 있어요. ${PN[pFix]}의 자리 숫자가 ${k}인 여덟 자리 수 중 <b>가장 ${big?'큰':'작은'}</b> 수를 쓰세요.`, type:'num', answer:ans, fm:'table', tool:null,
       hints:['카드가 4장인데 여덟 자리 → 모든 카드를 정확히 두 번씩 써야 해요!', `${PN[pFix]}의 자리를 먼저 ${k}로 채우고, 남은 자리는 ${big?'큰':'작은'} 숫자부터 (${k}는 한 번만 더 쓸 수 있어요)`],
       sol:['4장 × 2번 = 8자리 → 모든 카드를 두 번씩', `${PN[pFix]}의 자리 = ${k}`, `${big?'큰':'작은'} 숫자부터 앞자리에${!big?' (맨 앞 0 금지)':''}`, `<b>${ans}</b>`], bugs:[] }; },
   ()=>{ // 여러 번 받아올림 후 0의 개수
     const a=rnd(1,9), b=rnd(30,99), c=rnd(100,300), d=rnd(1,99); const n=B(a)*10000n+B(b)*1000n+B(c)*100n+B(d); const z=zeroCount(n); if(z<1) return null;
-    return { text:`10000이 ${a}개, 1000이 ${b}개, 100이 ${c}개, 1이 ${d}개인 수를 쓸 때, 숫자 0은 모두 몇 개인가요?`, type:'num', unit:'개', answer:B(z), fm:'carry', tool:null,
+    return { steps:[KS(`10000이 ${a}개는?`,'num',B(a*10000),`10000 × ${a} = ${a*10000}`),KS(`1000이 ${b}개는?`,'num',B(b*1000),`1000 × ${b} = ${b*1000}`),KS(`100이 ${c}개는?`,'num',B(c*100),`100 × ${c} = ${c*100}`),KS(`모두 더하면? (1이 ${d}개까지)`,'num',n,`${a*10000} + ${b*1000} + ${c*100} + ${d} = ${n}`),KS('쓴 수에서 0은 몇 개?','num',B(z),String(n),{unit:'개'})], text:`10000이 ${a}개, 1000이 ${b}개, 100이 ${c}개, 1이 ${d}개인 수를 쓸 때, 숫자 0은 모두 몇 개인가요?`, type:'num', unit:'개', answer:B(z), fm:'carry', tool:null,
       hints:['각각 얼마인지 먼저 구해서 더해요.', `${a*10000} + ${b*1000} + ${c*100} + ${d}`],
       sol:[`${a*10000} + ${b*1000} + ${c*100} + ${d} = ${n}`, `0은 <b>${z}개</b>`], bugs:[] }; } ],
 
@@ -2968,24 +2998,24 @@ const JUMP = {
   ()=>{ // 가장 적은 장수로 바꾸기
     const a=rnd(15,95), b=rnd(12,60), c=rnd(11,40); const T=a*1000+b*10000+c*100000; const m=Math.floor(T/1000000), r=T%1000000; const s1=Math.floor(r/100000), s2=Math.floor(r%100000/10000), s3=Math.floor(r%10000/1000);
     const ans=m+s1+s2+s3; if(r%1000) return null;
-    return { text:`천 원짜리 ${a}장, 만 원짜리 ${b}장, 10만 원짜리 수표 ${c}장이 있어요. 이 돈을 100만 원·10만 원 수표와 만 원·천 원 지폐로 <b>장 수가 가장 적게</b> 바꾸면 모두 몇 장인가요?`, type:'num', unit:'장', answer:B(ans), fm:'whole', tool:null,
+    return { steps:[KS('전체 금액은?','num',B(T),`${a*1000} + ${b*10000} + ${c*100000} = ${T}`,{unit:'원'}),KS('100만 원 수표는 몇 장?','num',B(m),`${T} → 앞에서 ${m}`,{unit:'장'}),KS(`남은 ${r}원에서 10만 원 수표는 몇 장?`,'num',B(s1),`100000 × ${s1} = ${s1*100000}`,{unit:'장'}),KS('그다음 만 원 지폐는 몇 장?','num',B(s2),`10000 × ${s2} = ${s2*10000}`,{unit:'장'}),KS('남은 것은 천 원 지폐 몇 장?','num',B(s3),`1000 × ${s3} = ${s3*1000}`,{unit:'장'}),KS('모두 몇 장?','num',B(ans),`${m} + ${s1} + ${s2} + ${s3} = ${ans}`,{unit:'장'})], text:`천 원짜리 ${a}장, 만 원짜리 ${b}장, 10만 원짜리 수표 ${c}장이 있어요. 이 돈을 100만 원·10만 원 수표와 만 원·천 원 지폐로 <b>장 수가 가장 적게</b> 바꾸면 모두 몇 장인가요?`, type:'num', unit:'장', answer:B(ans), fm:'whole', tool:null,
       hints:['전체 금액부터 구해요.', `전체 ${T}원. 큰 돈부터 될 수 있는 대로 많이`],
       sol:[`전체 ${a*1000} + ${b*10000} + ${c*100000} = ${T}원`, `100만 원 ${m}장, 10만 원 ${s1}장, 만 원 ${s2}장, 천 원 ${s3}장`, `${m} + ${s1} + ${s2} + ${s3} = <b>${ans}장</b>`], bugs:[{v:B(a+b+c),tag:'combine',msg:'그대로 세면 안 돼요. 모아서 큰 돈으로 바꿔야 장 수가 줄어요.'}] }; },
   ()=>{ // 수표 장 수·남는 돈 → 다른 단위로
     const x=rnd(12,99), r=rnd(1,9)*10000+rnd(0,9)*1000; const M=x*100000+r;
-    return { text:`어떤 돈을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸었더니 ${x}장이 되고 ${r}원이 남았어요. 같은 돈을 만 원짜리 지폐로 될 수 있는 대로 많이 바꾸면 몇 장이 되나요?`, type:'num', unit:'장', answer:B(Math.floor(M/10000)), fm:'whole', tool:null,
+    return { steps:[KS('처음 돈은 얼마?','num',B(M),`${x} × 100000 + ${r} = ${M}`,{unit:'원'}),KS('만 원은 0이 4개. 끝 네 자리를 가리면 앞에 남는 수는?','num',B(Math.floor(M/10000)),`${String(M).slice(0,-4)} | ${String(M).slice(-4)}`,{unit:'장'})], text:`어떤 돈을 10만 원짜리 수표로 될 수 있는 대로 많이 바꾸었더니 ${x}장이 되고 ${r}원이 남았어요. 같은 돈을 만 원짜리 지폐로 될 수 있는 대로 많이 바꾸면 몇 장이 되나요?`, type:'num', unit:'장', answer:B(Math.floor(M/10000)), fm:'whole', tool:null,
       hints:['먼저 처음 돈이 얼마였는지 거꾸로 구해요.', `${x} × 100000 + ${r} = ${M}원`], sol:[`처음 돈 = ${x*100000} + ${r} = ${M}원`, `만 원(0 네 개) → <b>${Math.floor(M/10000)}장</b>, ${M%10000}원 남음`],
       bugs:[{v:B(x*10),tag:'remain',msg:'남은 돈도 만 원짜리로 바꿀 수 있어요!'}] }; } ],
 
  eok: [
   ()=>{ // 몇 배 한 수에서 값 찾기
     const n=bigNum(3,3,0.2); if(n<100000000n) return null; const k=pick([10,100,1000]); const m=n*B(k); const ps=nonzeroUniqPos(m).filter(p=>p>=8); if(!ps.length) return null; const p=pick(ps), d=digitAt(m,p);
-    return { text:`「${readKor(n)}」의 ${k}배인 수에서 <b>${PN[p]}의 자리 숫자</b>는 무엇인가요?`, type:'num', answer:B(d), fm:'chunk4', tool:null,
+    return { steps:[KS(`「${readKor(n)}」을 숫자로 쓰면?`,'num',n,chunkHTML(n)),KS(`${k}배 하면? (끝에 0을 ${String(k).length-1}개 붙여요)`,'num',m,chunkHTML(m)),KS(`${PN[p]}의 자리 숫자는?`,'num',B(d),placeRow(m))], text:`「${readKor(n)}」의 ${k}배인 수에서 <b>${PN[p]}의 자리 숫자</b>는 무엇인가요?`, type:'num', answer:B(d), fm:'chunk4', tool:null,
       hints:[`먼저 숫자로 쓰고, ${k}배 하면 끝에 0을 ${String(k).length-1}개 붙여요.`, `${k}배 한 수: ${chunkHTML(m)}`],
       sol:[`${readKor(n)} = ${chunkHTML(n)}`, `${k}배 → ${chunkHTML(m)}`, `${PN[p]}의 자리 숫자 <b>${d}</b>`], bugs:[{v:B(digitAt(n,p)),tag:'zeros',msg:`${k}배 하기 전 수에서 찾았어요. ${k}배 하면 숫자들이 왼쪽으로 옮겨가요.`}] }; },
   ()=>{ // 여러 단위 개수 → 0의 개수
     const a=rnd(1,9), b=rnd(12,39), c=rnd(25,80), d=rnd(110,600); const n=B(a)*p10(12)+B(b)*p10(11)+B(c)*p10(9)+B(d)*p10(6); const z=zeroCount(n);
-    return { text:`1조가 ${a}개, 1000억이 ${b}개, 10억이 ${c}개, 100만이 ${d}개인 수를 숫자로 쓰면 0은 모두 몇 개인가요?`, type:'num', unit:'개', answer:B(z), fm:'fill', tool:null,
+    return { steps:[KS(`1000억이 ${b}개는? (조·억·만으로)`,'mixed',B(b)*p10(11),mixedForm(B(b)*p10(11))),KS(`10억이 ${c}개는? (조·억·만으로)`,'mixed',B(c)*p10(9),mixedForm(B(c)*p10(9))),KS(`100만이 ${d}개는? (조·억·만으로)`,'mixed',B(d)*p10(6),mixedForm(B(d)*p10(6))),KS(`${a}조까지 모두 더하면? (조·억·만으로)`,'mixed',n,mixedForm(n)),KS('숫자만으로 쓰면?','num',n,chunkHTML(n)),KS('0은 모두 몇 개?','num',B(z),String(n),{unit:'개'})], text:`1조가 ${a}개, 1000억이 ${b}개, 10억이 ${c}개, 100만이 ${d}개인 수를 숫자로 쓰면 0은 모두 몇 개인가요?`, type:'num', unit:'개', answer:B(z), fm:'fill', tool:null,
       hints:['단위별로 얼마인지 쓰고, 넘치는 것은 위로 올려요.', `${mixedForm(B(b)*p10(11))}, ${mixedForm(B(c)*p10(9))}, ${mixedForm(B(d)*p10(6))}`],
       sol:[`${a}조 + ${mixedForm(B(b)*p10(11))} + ${mixedForm(B(c)*p10(9))} + ${mixedForm(B(d)*p10(6))}`, `= ${mixedForm(n)} = ${chunkHTML(n)}`, `0은 <b>${z}개</b>`], bugs:[] }; } ],
 
@@ -2993,12 +3023,12 @@ const JUMP = {
   ()=>{ // 잘못 계산한 값에서 바른 값
     const p=mixPair(Math.random()<0.6,'+','eok'); if(!p) return null; const A=p.Bv, wrongR=p.A+p.Bv; // 어떤 수 X = p.A, X + A 잘못
     const X=p.A, right=X-A; if(right<=0n) return null;
-    return { text:`어떤 수에서 ${mixedForm(A)}${jo(A,'을/를')} 빼야 할 것을 잘못하여 더했더니 ${mixedForm(wrongR)}${jo(wrongR,'이/가')} 되었어요. 바르게 계산하면 얼마인가요?`, type:'mixed', answer:right, fm:'borrow', tool:null,
+    return { steps:[KS('어떤 수를 구하려면 잘못 더한 결과에서 더해요, 빼요?','choice','빼요','더한 걸 되돌리니까 빼요',{options:['더해요','빼요']}),KS('어떤 수는? (조·억·만으로)','mixed',X,`${mixedForm(wrongR)} − ${mixedForm(A)} = ${mixedForm(X)}`),KS('바르게 빼면? (조·억·만으로)','mixed',right,`${mixedForm(X)} − ${mixedForm(A)} = ${mixedForm(right)}`)], text:`어떤 수에서 ${mixedForm(A)}${jo(A,'을/를')} 빼야 할 것을 잘못하여 더했더니 ${mixedForm(wrongR)}${jo(wrongR,'이/가')} 되었어요. 바르게 계산하면 얼마인가요?`, type:'mixed', answer:right, fm:'borrow', tool:null,
       hints:['먼저 어떤 수를 구해요: 잘못 더한 결과에서 거꾸로 빼기.', `어떤 수 = ${mixedForm(wrongR)} − ${mixedForm(A)} = ${mixedForm(X)}`],
       sol:[`어떤 수 = ${mixedForm(wrongR)} − ${mixedForm(A)} = ${mixedForm(X)}`, `바른 계산: ${mixedForm(X)} − ${mixedForm(A)} = <b>${mixedForm(right)}</b>`], bugs:[{v:X,tag:'k-times',msg:'그건 「어떤 수」예요. 한 번 더 — 바르게 빼야 해요.'},{v:wrongR-A,tag:'k-times',msg:'그건 어떤 수예요. 거기서 한 번 더 빼요.'}] }; },
   ()=>{ // 합과 차로 두 수 찾기
     const p=mixPair(Math.random()<0.5,'+','eok'); if(!p) return null; const big=p.A>p.Bv?p.A:p.Bv, sm=p.A>p.Bv?p.Bv:p.A; if(big===sm) return null; const S=big+sm, D=big-sm;
-    return { text:`두 수의 합은 ${mixedForm(S)}${jo(S,'이고/이고')}, 차는 ${mixedForm(D)}${jo(D,'이에요/예요')}. 두 수 중 <b>큰 수</b>는 얼마인가요?`, type:'mixed', answer:big, fm:'same', tool:null,
+    return { steps:[KS('합 + 차는? (조·억·만으로)','mixed',S+D,`${mixedForm(S)} + ${mixedForm(D)} = ${mixedForm(S+D)}`),KS('합 + 차는 큰 수의 몇 배?','num',2n,'(큰 + 작은) + (큰 − 작은) = 큰 × 2',{unit:'배'}),KS('큰 수는? (조·억·만으로)','mixed',big,`${mixedForm(S+D)} ÷ 2 = ${mixedForm(big)}`)], text:`두 수의 합은 ${mixedForm(S)}${jo(S,'이고/이고')}, 차는 ${mixedForm(D)}${jo(D,'이에요/예요')}. 두 수 중 <b>큰 수</b>는 얼마인가요?`, type:'mixed', answer:big, fm:'same', tool:null,
       hints:['큰 수 + 작은 수 = 합, 큰 수 − 작은 수 = 차. 합과 차를 더하면 큰 수의 2배!', `${mixedForm(S)} + ${mixedForm(D)} = ${mixedForm(S+D)}`],
       sol:[`합 + 차 = 큰 수 × 2 = ${mixedForm(S+D)}`, `큰 수 = ${mixedForm(S+D)} ÷ 2 = <b>${mixedForm(big)}</b>`], bugs:[{v:S+D,tag:'k-times',msg:'그건 큰 수의 2배예요. 반으로 나눠요.'},{v:sm,tag:'direction',msg:'그건 작은 수예요.'}] }; } ],
 
@@ -3007,7 +3037,8 @@ const JUMP = {
     for(let t=0;t<200;t++){ const L=rnd(9,10); const T=makeDigits(L,0.3); const i=rnd(1,3), j=i+rnd(1,3); if(j>=L-1) continue; const gt=Math.random()<0.5;
       const pat=T.split(''); pat[i]='㉠'; pat[j]='㉡'; let cnt=0; for(let a=0;a<=9;a++) for(let b=0;b<=9;b++){ const s=T.split(''); s[i]=String(a); s[j]=String(b); const v=B(s.join('')); if(gt? v>B(T): v<B(T)) cnt++; }
       if(cnt<5||cnt>95) continue;
-      return { text:`㉠, ㉡에는 0부터 9까지의 숫자가 들어갈 수 있어요(같은 숫자도 돼요). 다음이 맞도록 만드는 (㉠, ㉡)은 모두 몇 가지인가요?<br><big>${pat.join('')} ${gt?'&gt;':'&lt;'} ${T}</big>`, type:'num', unit:'가지', answer:B(cnt), fm:'box', tool:B(T),
+      const A1=gt?9-Number(T[i]):Number(T[i]);
+      return { steps:[KS(`㉠이 ${T[i]}보다 ${gt?'크면':'작으면'} 언제나 돼요. 그런 ㉠은 몇 가지?`,'num',B(A1),gt?`${Number(T[i])+1}~9`:(A1?`0~${Number(T[i])-1}`:'없어요'),{unit:'가지'}),KS('그때 ㉡은 아무 숫자나 돼요. ㉡은 몇 가지씩?','num',10n,'0~9',{unit:'가지'}),KS(`㉠ = ${T[i]}일 때 되는 ㉡은 몇 가지?`,'num',B(cnt-A1*10),'㉡ 자리와 그 뒤를 비교',{unit:'가지'}),KS('모두 몇 가지?','num',B(cnt),`${A1} × 10 + ${cnt-A1*10} = ${cnt}`,{unit:'가지'})], text:`㉠, ㉡에는 0부터 9까지의 숫자가 들어갈 수 있어요(같은 숫자도 돼요). 다음이 맞도록 만드는 (㉠, ㉡)은 모두 몇 가지인가요?<br><big>${pat.join('')} ${gt?'&gt;':'&lt;'} ${T}</big>`, type:'num', unit:'가지', answer:B(cnt), fm:'box', tool:B(T),
         hints:[`㉠이 ${T[i]}보다 ${gt?'크면':'작으면'} ㉡은 아무거나(10가지). ㉠이 ${T[i]}와 같을 때만 다음 자리를 봐야 해요.`, `㉠ = ${T[i]}일 때, ㉡ 뒤까지 비교해서 되는 ㉡의 개수를 세요.`],
         sol:[`㉠이 ${gt?'큰':'작은'} 경우: ${gt?9-Number(T[i]):Number(T[i])}가지 × 10 = ${(gt?9-Number(T[i]):Number(T[i]))*10}`, `㉠ = ${T[i]}인 경우: ${cnt-(gt?9-Number(T[i]):Number(T[i]))*10}가지`, `모두 <b>${cnt}가지</b>`],
         bugs:[{v:B((gt?9-Number(T[i]):Number(T[i]))*10),tag:'equal-case',msg:`㉠이 ${T[i]}로 같을 때를 빠뜨렸어요.`}] }; } return null; },
@@ -3015,26 +3046,26 @@ const JUMP = {
     for(let t=0;t<200;t++){ const mid=makeDigits(9,0.3); const i=rnd(2,5); const lo=B(mid.slice(0,i)+String(rnd(0,4))+makeDigits(9-i,0.4).slice(1)), hi=B(mid.slice(0,i)+String(rnd(5,9))+makeDigits(9-i,0.4).slice(1)); const pat=mid.slice(0,i)+'□'+mid.slice(i+1);
       const ok=[]; for(let d=0;d<=9;d++){ const v=B(mid.slice(0,i)+d+mid.slice(i+1)); if(v>lo&&v<hi) ok.push(d); } if(ok.length<2||ok.length>8) continue;
       const fL=pick(['kor','mix','dig']), fH=pick(['kor','mix','dig']);
-      return { text:`0부터 9까지의 숫자 중 □에 들어갈 수 있는 숫자는 모두 몇 개인가요?<br><big>${formOf(lo,fL)} &lt; ${pat} &lt; ${formOf(hi,fH)}</big>`, type:'num', unit:'개', answer:B(ok.length), fm:'box', tool:[lo,hi],
+      return { steps:[...(fL!=='dig'?[KS('왼쪽 수를 숫자만으로 쓰면?','num',lo,chunkHTML(lo))]:[]),...(fH!=='dig'?[KS('오른쪽 수를 숫자만으로 쓰면?','num',hi,chunkHTML(hi))]:[]),KS('□에 0~9를 넣어 보며, 두 조건을 다 맞히는 가장 작은 숫자는?','num',B(ok[0]),`${lo} &lt; ${pat} &lt; ${hi}`),KS('두 조건을 다 맞히는 가장 큰 숫자는?','num',B(ok[ok.length-1]),`${lo} &lt; ${pat} &lt; ${hi}`),KS('모두 몇 개?','num',B(ok.length),`${ok[ok.length-1]} − ${ok[0]} + 1 = ${ok.length}`,{unit:'개'})], text:`0부터 9까지의 숫자 중 □에 들어갈 수 있는 숫자는 모두 몇 개인가요?<br><big>${formOf(lo,fL)} &lt; ${pat} &lt; ${formOf(hi,fH)}</big>`, type:'num', unit:'개', answer:B(ok.length), fm:'box', tool:[lo,hi],
         hints:['세 수를 모두 숫자만 쓴 수로 바꿔요. 자릿수가 모두 같아요.', `${lo}  &lt;  ${pat}  &lt;  ${hi} — 두 조건을 따로 따져서 둘 다 되는 숫자만!`],
         sol:[`${lo} &lt; ${pat} &lt; ${hi}`, `□에 0~9를 넣어 보면 되는 숫자: ${ok.join(', ')}`, `<b>${ok.length}개</b>`], bugs:[] }; } return null; } ],
 
  skip: [
   ()=>{ // 처음으로 어느 자리 숫자가 바뀌는 때
     const e=pick([6,7]); const st=B(rnd(2,8))*p10(e); const S0=niceStart(8); const tp=8; const d0=digitAt(S0,tp); let k=0, v=S0; while(digitAt(v,tp)===d0){ v+=st; k++; if(k>200) return null; } if(k<3) return null;
-    return { text:`${mixedForm(S0)}에서 ${mixedForm(st)}씩 커지게 뛰어 세어요. <b>억의 자리 숫자</b>가 처음으로 바뀌는 것은 몇 번 뛰었을 때인가요?`, type:'num', unit:'번', answer:B(k), fm:'carry', tool:S0,
+    return { steps:[KS('억 아래 부분(만 쪽)은 지금 얼마? (조·억·만으로)','mixed',S0%p10(8),mixedForm(S0%p10(8))),KS('1억까지 남은 양은? (조·억·만으로)','mixed',p10(8)-S0%p10(8),`1억 − ${mixedForm(S0%p10(8))} = ${mixedForm(p10(8)-S0%p10(8))}`),KS(`${mixedForm(st)}씩 몇 번 뛰면 남은 양에 닿거나 넘어요?`,'num',B(k),`${mixedForm(st)} × ${k-1} = ${mixedForm(st*B(k-1))} (모자람), × ${k} = ${mixedForm(st*B(k))}`,{unit:'번'})], text:`${mixedForm(S0)}에서 ${mixedForm(st)}씩 커지게 뛰어 세어요. <b>억의 자리 숫자</b>가 처음으로 바뀌는 것은 몇 번 뛰었을 때인가요?`, type:'num', unit:'번', answer:B(k), fm:'carry', tool:S0,
       hints:[`억의 자리가 바뀌려면 만 쪽이 10000만을 넘어야 해요. 지금 만 쪽은 ${mixedForm(S0%p10(8))}`, `10000만까지 남은 양: ${mixedForm(p10(8)-S0%p10(8))} — ${mixedForm(st)}로 몇 번이면 닿거나 넘을까?`],
       sol:[`억까지 남은 양 = ${mixedForm(p10(8)-S0%p10(8))}`, `${mixedForm(st)} × ${k-1} = ${mixedForm(st*B(k-1))} (아직 모자람), × ${k} = ${mixedForm(st*B(k))} (넘음)`, `<b>${k}번</b>`], bugs:[{v:B(k-1),tag:'equal-case',msg:'그때는 아직 억까지 안 닿아요. 한 번 더!'}] }; },
   ()=>{ // 두 번 뛰기를 거꾸로
     const a=rnd(3,9), b=rnd(4,15); const s1=p10(7), s2=B(rnd(2,6))*p10(6); const X=niceStart(8)+p10(9); const R=X-s1*B(a)+s2*B(b);
-    return { text:`어떤 수에서 ${mixedForm(s1)}씩 <b>작아지게</b> ${a}번 뛰어 센 다음, 다시 ${mixedForm(s2)}씩 <b>커지게</b> ${b}번 뛰어 세었더니 ${mixedForm(R)}${jo(R,'이/가')} 되었어요. 어떤 수는 얼마인가요?`, type:'mixed', answer:X, fm:'reverse', tool:null,
+    return { steps:[KS(`${mixedForm(s2)} × ${b}${jo(B(b),'은/는')}? (조·억·만으로)`,'mixed',s2*B(b),`${s2} × ${b} = ${s2*B(b)}`),KS('커지게 한 것을 되돌리면(빼면)? (조·억·만으로)','mixed',R-s2*B(b),`${mixedForm(R)} − ${mixedForm(s2*B(b))} = ${mixedForm(R-s2*B(b))}`),KS(`${mixedForm(s1)} × ${a}${jo(B(a),'은/는')}? (조·억·만으로)`,'mixed',s1*B(a),`${s1} × ${a} = ${s1*B(a)}`),KS('작아지게 한 것을 되돌리면(더하면)? (조·억·만으로)','mixed',X,`${mixedForm(R-s2*B(b))} + ${mixedForm(s1*B(a))} = ${mixedForm(X)}`)], text:`어떤 수에서 ${mixedForm(s1)}씩 <b>작아지게</b> ${a}번 뛰어 센 다음, 다시 ${mixedForm(s2)}씩 <b>커지게</b> ${b}번 뛰어 세었더니 ${mixedForm(R)}${jo(R,'이/가')} 되었어요. 어떤 수는 얼마인가요?`, type:'mixed', answer:X, fm:'reverse', tool:null,
       hints:['맨 끝에서부터 거꾸로: 커지게 한 건 빼고, 작아지게 한 건 더해요.', `${mixedForm(s2)} × ${b} = ${mixedForm(s2*B(b))}, ${mixedForm(s1)} × ${a} = ${mixedForm(s1*B(a))}`],
       sol:[`${mixedForm(R)} − ${mixedForm(s2*B(b))} = ${mixedForm(R-s2*B(b))}`, `${mixedForm(R-s2*B(b))} + ${mixedForm(s1*B(a))} = <b>${mixedForm(X)}</b>`], bugs:[{v:R+s2*B(b)-s1*B(a),tag:'direction',msg:'거꾸로 할 때는 방향도 거꾸로! 커지게 한 건 빼요.'}] }; },
   ()=>{ // 수직선 두 개 표시값 → 다른 두 점의 차
     const N=10; const i=rnd(1,3), j=i+rnd(3,5); const st=B(rnd(2,9))*p10(pick([6,7])); const Vi=niceStart(8)-niceStart(8)%st+st*3n; const Vj=Vi+st*B(j-i);
     let m1=rnd(0,N), m2=rnd(0,N); if(m1===m2||m1===i||m1===j||m2===i||m2===j) return null; if(m1>m2) [m1,m2]=[m2,m1];
     const labels={}; labels[i]=mixedForm(Vi); labels[j]=mixedForm(Vj); const marks={}; marks[m1]='㉠'; marks[m2]='㉡'; const diff=st*B(m2-m1);
-    return { text:`눈금 사이의 간격은 모두 같아요. ㉡이 나타내는 수와 ㉠이 나타내는 수의 차는 얼마인가요?`, svg:numberLine(N,labels,marks), type:'mixed', answer:diff, fm:'tick', tool:null,
+    return { steps:[KS('두 수가 쓰인 눈금 사이는 몇 칸? (눈금 개수 아님)','num',B(j-i),`${j-i}칸`,{unit:'칸'}),KS('두 수의 차는? (조·억·만으로)','mixed',Vj-Vi,`${mixedForm(Vj)} − ${mixedForm(Vi)} = ${mixedForm(Vj-Vi)}`),KS('한 칸의 크기는? (조·억·만으로)','mixed',st,`${mixedForm(Vj-Vi)} ÷ ${j-i} = ${mixedForm(st)}`),KS('㉠과 ㉡ 사이는 몇 칸?','num',B(m2-m1),`${m2-m1}칸`,{unit:'칸'}),KS('차는? (조·억·만으로)','mixed',diff,`${mixedForm(st)} × ${m2-m1} = ${mixedForm(diff)}`)], text:`눈금 사이의 간격은 모두 같아요. ㉡이 나타내는 수와 ㉠이 나타내는 수의 차는 얼마인가요?`, svg:numberLine(N,labels,marks), type:'mixed', answer:diff, fm:'tick', tool:null,
       hints:['한 칸의 크기부터: 두 수의 차 ÷ 칸 수', `한 칸 = ${mixedForm(Vj-Vi)} ÷ ${j-i} = ${mixedForm(st)}. ㉠과 ㉡ 사이는 몇 칸?`],
       sol:[`한 칸 = ${mixedForm(st)}`, `㉠과 ㉡ 사이 ${m2-m1}칸`, `차 = ${mixedForm(st)} × ${m2-m1} = <b>${mixedForm(diff)}</b>`], bugs:[{v:st*B(m2-m1+1),tag:'gap-tick',msg:'눈금 개수로 셌어요. 칸은 눈금 사이!'}] }; } ],
 
@@ -3042,15 +3073,16 @@ const JUMP = {
   ()=>{ for(let t=0;t<100;t++){ const c=drawCards(6,true); const all=allNums(c).filter(x=>x%2n===0n); const T=B(rnd(2,8))*100000n; let best=null, bd=null, tie=false;
       for(const x of all){ const d=babs(x-T); if(bd===null||d<bd){ bd=d; best=x; tie=false; } else if(d===bd) tie=true; } if(!best||tie) continue;
       const allA=allNums(c); let b2=null, bd2=null; for(const x of allA){ const d=babs(x-T); if(bd2===null||d<bd2){bd2=d;b2=x;} }
-      return { text:`수 카드를 한 번씩 모두 써서 여섯 자리 수를 만들어요. 만들 수 있는 <b>짝수</b> 중 ${T}에 가장 가까운 수는?<br>${cardsHTML(c)}`, type:'num', answer:best, fm:'near', tool:null,
+      const loE=all.filter(x=>x<T).pop(), hiE=all.find(x=>x>T);
+      return { steps:[...(loE!==undefined?[KS(`${T}보다 작은 짝수 중 가장 가까운 수는?`,'num',loE,`차 ${T-loE}`)]:[]),...(hiE!==undefined?[KS(`${T}보다 큰 짝수 중 가장 가까운 수는?`,'num',hiE,`차 ${hiE-T}`)]:[]),KS('둘 중 더 가까운 수는?','num',best,`차 ${bd}`)], text:`수 카드를 한 번씩 모두 써서 여섯 자리 수를 만들어요. 만들 수 있는 <b>짝수</b> 중 ${T}에 가장 가까운 수는?<br>${cardsHTML(c)}`, type:'num', answer:best, fm:'near', tool:null,
         hints:['짝수니까 일의 자리 후보부터. 그다음 앞자리를 목표에 가깝게.', `${T}보다 작은 쪽, 큰 쪽 후보를 둘 다 만들어 차를 비교해요.`],
         sol:[`짝수 조건: 일의 자리 ${c.filter(x=>x%2===0).join(', ')} 중 하나`, `목표 ${T}에 가까운 후보를 양쪽에서 만들어 비교`, `<b>${best}</b> (차 ${bd})`], bugs: b2!==best?[{v:b2,tag:'lastdigit',msg:'가깝긴 한데 짝수가 아니에요!'}]:[] }; } return null; },
   ()=>{ const c=drawCards(5,Math.random()<0.6); const all=allNums(c); const odd=all.filter(x=>x%2n===1n); if(odd.length<3) return null; const ans=odd[odd.length-3];
-    return { text:`수 카드를 한 번씩 모두 써서 만든 다섯 자리 <b>홀수</b> 중 <b>세 번째로 큰</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm:'last', tool:null,
+    return { steps:[KS('가장 큰 홀수는?','num',odd[odd.length-1],String(odd[odd.length-1])),KS('두 번째로 큰 홀수는?','num',odd[odd.length-2],String(odd[odd.length-2])),KS('세 번째로 큰 홀수는?','num',ans,String(ans))], text:`수 카드를 한 번씩 모두 써서 만든 다섯 자리 <b>홀수</b> 중 <b>세 번째로 큰</b> 수는?<br>${cardsHTML(c)}`, type:'num', answer:ans, fm:'last', tool:null,
       hints:['일의 자리에 올 수 있는 홀수 카드부터. 가장 큰 홀수를 먼저 만들어요.', `가장 큰 홀수: ${odd[odd.length-1]}, 두 번째: ${odd[odd.length-2]}`],
       sol:[`홀수 중 큰 순서: ${odd.slice(-3).reverse().join(', ')}`, `세 번째 <b>${ans}</b>`], bugs:[{v:all[all.length-3],tag:'lastdigit',msg:'홀수 조건을 빠뜨렸어요.'},{v:odd[odd.length-2],tag:'k-times',msg:'그건 두 번째예요.'}] }; },
   ()=>{ const c=drawCards(5,true); const all=allNums(c); const f=x=>digitAt(x,2)>digitAt(x,1) && digitAt(x,1)>digitAt(x,0); const cnt=all.filter(f).length; if(cnt<2) return null;
-    return { text:`수 카드를 한 번씩 모두 써서 다섯 자리 수를 만들 때, <b>백의 자리 숫자 &gt; 십의 자리 숫자 &gt; 일의 자리 숫자</b>인 수는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'num', unit:'개', answer:B(cnt), fm:'count', tool:null,
+    return { steps: cnt===16&&c.includes(0)?[KS('0을 뒤 세 자리에 넣는다면, 나머지 4장 중 2장을 고르는 방법은 몇 가지?','num',6n,'4장 중 2장 → 6가지',{unit:'가지'}),KS('그때 남은 2장을 앞 두 자리에 놓는 방법은?','num',2n,'두 장 순서 바꾸기 → 2가지',{unit:'가지'}),KS('0을 앞 두 자리에 남긴다면, 뒤 세 자리용으로 나머지 4장 중 3장을 고르는 방법은?','num',4n,'4장 중 3장 → 4가지',{unit:'가지'}),KS('그때 앞 두 자리 놓는 방법은? (0은 맨 앞 X)','num',1n,'0은 둘째 자리로 → 1가지',{unit:'가지'}),KS('모두 몇 개?','num',B(cnt),`6 × 2 + 4 × 1 = ${cnt}`,{unit:'개'})]:undefined, text:`수 카드를 한 번씩 모두 써서 다섯 자리 수를 만들 때, <b>백의 자리 숫자 &gt; 십의 자리 숫자 &gt; 일의 자리 숫자</b>인 수는 모두 몇 개인가요?<br>${cardsHTML(c)}`, type:'num', unit:'개', answer:B(cnt), fm:'count', tool:null,
       hints:['뒤의 세 자리에 놓을 카드 3장을 고르면, 큰 순서로 놓는 방법은 한 가지뿐이에요.', '남은 2장은 앞의 두 자리에 — 그런데 맨 앞에 0이 오면 안 돼요!'],
       sol:['뒤 세 자리에 쓸 카드 3장 고르기 → 놓는 순서는 1가지', '앞 두 자리: 남은 2장을 2가지로 놓되, 맨 앞 0이면 빼기', `<b>${cnt}개</b>`], bugs:[] }; } ]
 };
@@ -3182,7 +3214,7 @@ function nextProblem(twin){
   if(C.review){ if(!twin){ if(!DB.review.length){ toast('다시 풀기를 모두 끝냈어요!'); return home(); } C.sk=DB.review[0].sk; C.lv=DB.review[0].lv; } }
   if(C.count>0 && C.count%12===0 && !twin && !C.restAsked){ C.restAsked=true; return restCard(); }
   C.restAsked=false;
-  const p=makeProblem(C.sk,C.lv); C.p=p; C.phase='fm'; C.tries=0; C.hints=0; C.fmMiss=0; C.input=p.type==='order'?[]:''; C.t0=Date.now(); C.toolUsed=false; C.twin=twin===true; C.wrongInputs=[];
+  const p=makeProblem(C.sk,C.lv); C.p=p; C.sp=null; C.K=null; { const ks=kstGet(C.sk,C.lv); C.kst=(p.steps&&p.steps.length&&ks.mode==='s')?(ks.ok>=KST_HALF?1:0):null; } C.phase='fm'; C.tries=0; C.hints=0; C.fmMiss=0; C.input=p.type==='order'?[]:''; C.t0=Date.now(); C.toolUsed=false; C.twin=twin===true; C.wrongInputs=[];
   PAD.strokes=[]; PAD.hist=[]; PAD.redraw(); renderLeft(); }
 function restCard(){ $('#left').innerHTML=`<div class="pcard lvup"><div class="em">🌿</div><h2>벌써 12문제!</h2><p>잠깐 물 마시고 올까? 오늘 여기서 끝내도 좋아요.</p>
   <div class="acts"><button class="hint" style="flex:1" id="stop">오늘 끝</button><button class="ok" id="more">조금 더</button></div></div>`;
@@ -3190,7 +3222,7 @@ function restCard(){ $('#left').innerHTML=`<div class="pcard lvup"><div class="e
 function starsHTML(){ const n=DB.sk[SKILLS[C.sk].id].st[C.lv]||0; return `<b>${'★'.repeat(n)}</b>${'☆'.repeat(Math.max(0,5-n))}`; }
 function renderLeft(){
   const s=SKILLS[C.sk], p=C.p;
-  $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="bk">🏠 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span>${C.review?' <span class="lvchip" style="background:#b7791f">다시</span>':''}${C.twin?' <span class="lvchip" style="background:#2a9d5c">한 번 더</span>':''}</div><div class="stars">${starsHTML()}</div></div>
+  $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="bk">🏠 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span>${C.review?' <span class="lvchip" style="background:#b7791f">다시</span>':''}${C.twin?' <span class="lvchip" style="background:#2a9d5c">한 번 더</span>':''}${C.kst!==null&&C.kst!==undefined?' <span class="lvchip" style="background:#6b7a99">🪜 계단</span>':''}</div><div class="stars">${starsHTML()}</div></div>
    <div class="pcard"><div class="ptext">${p.text}</div>${p.svg||''}</div>
    <div id="stage"></div>`;
   $('#bk').onclick=home; renderStage(); }
@@ -3204,6 +3236,7 @@ function renderStage(){
         if(C.fmMiss>=2){ const g=[...st.querySelectorAll('.fmo')].find(x=>opts[+x.dataset.i].ok); g.classList.add('good'); fb.className='fb show h'; fb.innerHTML=`이 문제는 <b>「${SKILLS[C.sk].moves[p.fm]}」</b>가 먼저예요. 눌러서 시작해요.`; }
         else { fb.className='fb show h'; fb.innerHTML='음, 그건 나중 일이에요. 문제가 <b>무엇을 묻는지</b> 한 번 더 읽어 봐요.'; } } });
     return; }
+  if(C.kst!==null&&C.kst!==undefined) return renderSteps(st);
   const autoTool = C.lv<=1 && p.tool;
   st.innerHTML=`<div class="move">첫 수 ✓ <b>${SKILLS[C.sk].moves[p.fm]}</b></div>
     ${p.tool?`<button class="toolbtn" id="tbtn">${autoTool?'자리표 숨기기':'자리표 보기'}</button><div id="tool">${autoTool?toolHTML(p.tool):''}</div>`:''}
@@ -3220,7 +3253,7 @@ function toolHTML(t){ const arr=Array.isArray(t)?t:[t]; const L=Math.max(...arr.
    ${arr.map(n=>{ const s=String(n).padStart(L,' '); return `<tr class="d">${[...s].map((ch,k)=>{ const p=L-1-k; return `<td class="${ch===' '?'':GC[Math.floor(p/4)]}">${ch===' '?'':ch}</td>`; }).join('')}</tr>`; }).join('')}</table></div>`; }
 
 // --- 입력 ---
-function renderInput(){ const p=C.p, el=$('#inp');
+function renderInput(){ const p=C.sp||C.p, el=$('#inp');
   if(['num','omr','mixed'].includes(p.type)){
     const units=p.type==='mixed'; const ks=['1','2','3','4','5','6','7','8','9','0'];
     el.innerHTML=`<div class="disp" id="disp"></div><div class="keys">${ks.map(k=>`<button data-k="${k}">${k}</button>`).join('')}
@@ -3242,7 +3275,7 @@ function renderInput(){ const p=C.p, el=$('#inp');
     const draw=()=>{ $('#seq').innerHTML= C.input.length? C.input.join(' → ') : '<span style="color:#b9b2a2;font-size:17px">순서대로 누르세요</span>'; el.querySelectorAll('[data-v]').forEach(b=>{ if(b.dataset.v!=='reset') b.disabled=C.input.includes(b.dataset.v); }); };
     el.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{ if(C.phase==='done') return; if(b.dataset.v==='reset') C.input=[]; else C.input.push(b.dataset.v); draw(); }); draw(); }
 }
-function drawDisp(){ const p=C.p, d=$('#disp'); if(!d) return; const u=p.unit?`<span class="unit">${p.unit}</span>`:'';
+function drawDisp(){ const p=C.sp||C.p, d=$('#disp'); if(!d) return; const u=p.unit?`<span class="unit">${p.unit}</span>`:'';
   if(p.type==='omr'){ const s=C.input.padStart(3,' '); d.innerHTML=`<div class="omr">${[...s].map(c=>`<span>${c.trim()}</span>`).join('')}</div>${u}`; return; }
   if(!C.input){ d.innerHTML=`<span class="ph">${p.type==='kor'?'한글로 읽은 말':p.type==='mixed'?'숫자와 조·억·만으로':'숫자로'}</span>${u}`; return; }
   if(p.type==='kor'){ d.innerHTML=`<span>${C.input.replace(/ /g,'&nbsp;')}</span>${u}`; return; }
@@ -3269,6 +3302,7 @@ function finish(res, note){ const p=C.p, s=SKILLS[C.sk], rec=DB.sk[s.id]; C.phas
   const t=Math.round((Date.now()-C.t0)/1000);
   DB.att.push({sk:s.id,lv:C.lv,r:res,fm:C.fmMiss===0,bug:C.bug||null,t,d:Date.now(),h:C.hints,tool:C.toolUsed});
   { const nT=DB.att.filter(x=>x.lv>=0&&HUB.dkey(x.d)===HUB.today()).length; if(nT===12) setTimeout(()=>{toast('🎉 오늘 분량 12문제 끝! 더 풀어도 되고, 그만하려면 💾 저장 누르고 처음 화면에서 「← 오늘의 공부」'); clearTimeout(toast._t); toast._t=setTimeout(()=>$('#toast').classList.remove('show'),6000);},600); }
+  if(p.steps&&p.steps.length) kstAlone(C.sk,C.lv,res);
   if(rec.st[C.lv]===undefined) rec.st[C.lv]=0; const before=rec.st[C.lv]; if(res==='o') rec.st[C.lv]=Math.min(5,rec.st[C.lv]+1); else if(res==='x') rec.st[C.lv]=Math.max(0,rec.st[C.lv]-1);
   C.levelUp=false; if(rec.st[C.lv]>=5 && rec.lv<=C.lv){ rec.lv=C.lv+1; C.levelUp=true; }
   if(res==='x'){ DB.review.push({sk:C.sk,lv:C.lv}); DB.works.push({sk:s.id,lv:C.lv,q:p.text.replace(/<[^>]+>/g,' ').slice(0,140),a:answerText(p),w:C.wrongInputs.join(' / '),img:C.workShot||PAD.snapshot(),d:Date.now(),bug:C.bug||null}); }
@@ -3283,6 +3317,43 @@ function finishUI(){ const p=C.p, fb=$('#fb'); $('.stars').innerHTML=starsHTML()
   fb.className='fb show x'; fb.innerHTML=`<div><b>이번엔 풀이를 같이 보자.</b> 답: ${answerText(p)}</div><div class="tagline">한 줄씩 눌러서 봐요. 방법을 알면 다시 할 수 있어!</div>`;
   const sol=$('#sol'); let k=0; const step=()=>{ if(k<p.sol.length){ sol.insertAdjacentHTML('beforeend',`<div class="st">${p.sol[k]}</div>`); k++; sol.lastElementChild.scrollIntoView({behavior:'smooth',block:'nearest'}); } if(k>=p.sol.length){ $('#okb').textContent='같은 방법으로 한 번 더 →'; $('#okb').className='next'; $('#okb').onclick=()=>nextProblem(true); } };
   $('#okb').textContent='다음 줄 보기'; $('#okb').onclick=step; step(); }
+
+// --- 계단 문제 (엄마 11/26: 혼자 2번 연달아 틀리면 계단 4개 → 앞 2개는 칸 전부, 뒤 2개는 칸 줄여서 → 다시 혼자. ★는 혼자 풀 때만) ---
+const KST_MISS=2, KST_N=4, KST_HALF=2;
+function kstGet(si,lv){ DB.kstep=DB.kstep||{}; const k=SKILLS[si].id+':'+lv; return DB.kstep[k]||(DB.kstep[k]={mode:'a',miss:0,ok:0}); }
+function kstAlone(si,lv,res){ const s=kstGet(si,lv); if(res==='x'){ s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } else s.miss=0; }
+function kstStep(si,lv,pass){ const s=kstGet(si,lv); if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
+const kstIdx=(p,stage)=>stage===0||p.steps.length<3?p.steps.map((_,k)=>k):p.steps.map((_,k)=>k).slice(1);
+const kNUM='①②③④⑤⑥⑦⑧⑨';
+function kAns(s){ const a=s.answer; if(s.show) return s.show; if(s.type==='mixed') return mixedForm(a); if(s.type==='order') return a.join(', '); if(s.type==='cmp') return a==='>'?'&gt;':'&lt;'; return String(a)+(s.unit?' '+s.unit:''); }
+function renderSteps(st){ const p=C.p, idx=kstIdx(p,C.kst); const K=C.K||(C.K={cur:0,att:0,rows:[],miss:[],wrong:[],clean:true,tries:0,done:false});
+  const rows=K.rows.map((r,i)=>{ const s=p.steps[r.k]; return `<div class="kstr ${r.ok?'kdone':'kgive'}"><span class="kstn">${kNUM[i]}</span>${s.q} → <b>${kAns(s)}</b> ${r.ok?'✓':''}${r.ok?'':`<div class="kstw">${s.why}</div>`}</div>`; }).join('');
+  const cur=K.cur<idx.length?p.steps[idx[K.cur]]:null;
+  st.innerHTML=`<div class="move">첫 수 ✓ <b>${SKILLS[C.sk].moves[p.fm]}</b></div><div class="kstb">🪜 계단 문제: 작은 칸으로 나눠서 풀어요</div><div id="kstl">${rows}${cur?`<div class="kstr now"><span class="kstn">${kNUM[K.cur]}</span>${cur.q}</div>`:''}</div>
+    ${cur?'<div id="inp"></div><div class="acts"><button class="ok" id="okb">확인</button></div>':''}<div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="kafter"></div>
+    <div class="navrow"><button id="homeb2">🏠 처음으로</button><button id="skipb">건너뛰기 ⟶</button><button id="lvdn">◀ 쉬운 단계</button><button id="lvup">어려운 단계 ▶</button></div>`;
+  navBtns();
+  if(cur){ C.sp={type:cur.type,answer:cur.answer,unit:cur.unit,options:cur.options,text:cur.q,bugs:[]}; C.input=cur.type==='order'?[]:''; renderInput(); $('#okb').onclick=stepSubmit; }
+  else stepFinish(); }
+function stepSubmit(){ const K=C.K, p=C.p, idx=kstIdx(p,C.kst); if(K.done) return; const sp=C.sp, fb=$('#fb');
+  const inp=sp.type==='order'?C.input.slice():C.input; if(sp.type==='order'? inp.length<sp.options.length : !inp) return toast('답을 먼저 넣어요');
+  const r=check(sp,inp); if(r.normalize){ fb.className='fb show h'; fb.innerHTML=r.msg; return; }
+  K.tries++; const go=ok=>{ K.rows.push({k:idx[K.cur],ok}); K.cur++; K.att=0; renderStage(); };
+  if(r.ok) return go(true);
+  K.clean=false; K.wrong.push((K.cur+1)+': '+(Array.isArray(inp)?inp.join(','):inp));
+  if(K.att===0){ K.att=1; fb.className='fb show x'; fb.innerHTML='🤔 다시 한 번 생각해 볼까?'; if(sp.type==='order'){ C.input=[]; renderInput(); } return; }
+  K.miss.push(K.cur); go(false); }
+function stepFinish(){ const K=C.K, p=C.p, s=SKILLS[C.sk], idx=kstIdx(p,C.kst); if(K.done) return; K.done=true; C.phase='steps-done';
+  const t=Math.round((Date.now()-C.t0)/1000); const pass=!K.miss.length; const up=kstStep(C.sk,C.lv,pass);
+  DB.att.push({sk:s.id,lv:C.lv,r:pass?'tri':'x',fm:C.fmMiss===0,bug:null,t,d:Date.now(),h:0,tool:C.toolUsed,
+    steps:{stage:C.kst,n:idx.length,all:p.steps.length,clean:K.clean,miss:K.miss.map(i=>({i:i+1,q:String(p.steps[idx[i]].q).replace(/<[^>]+>/g,' ').slice(0,80)})),wrong:K.wrong,up}});
+  C.count++; save();
+  const fb=$('#fb'); fb.className='fb show '+(pass?'o':'x');
+  fb.innerHTML= pass?`⭕ 작은 칸을 모두 풀었어요!${K.clean?'':' (다시 해서 맞힌 칸도 있어요)'}${up===1?'<div class="tagline">🎉 잘했어요! 다음부터 칸을 줄여 볼게요.</div>':up===2?'<div class="tagline">🎉 계단 4개 끝! 다음부터 혼자 풀어 봐요.</div>':''}`
+    :`정답은 <b>${answerText(p)}</b> 이에요. 막힌 칸은 풀이를 봐 두고, 다음 문제로 가요.`;
+  $('#sol').innerHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
+  $('#kafter').innerHTML=`<div class="acts"><button class="next" id="nx" data-auto="${pass?'ok':'x'}">다음 문제 →</button></div>`; $('#nx').onclick=()=>nextProblem();
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
 
 // --- 모달 ---
 function modal(html){ const m=document.createElement('div'); m.className='modal'; m.innerHTML=`<div class="mbox">${html}</div>`; document.body.appendChild(m); return m; }
@@ -3818,41 +3889,48 @@ S({id:'cap',unit:'들이와 무게',title:'들이: L와 mL, 눈금, 어림',move
  learn:`<p><b>들이</b> = 그릇에 담을 수 있는 양</p><div class="ex">1 L = 1000 mL<br>2 L 50 mL = 2000 mL + 50 mL = <b>2050 mL</b></div><ul><li>L: 리터, mL: 밀리리터</li><li>2 L 50 mL를 250 mL로 쓰면 안 돼요 — 1 L는 1000 mL!</li></ul>`,
  gen:[
   lv=>{ const a=rnd(1,9), b=pick([rnd(1,9)*100,rnd(1,9)*10,rnd(1,99)*10,rnd(1,9)*100+rnd(1,9)*10+rnd(0,9)]); const T=a*1000+b;
-   if(Math.random()<0.5) return {text:`<big>${a} L ${b} mL</big>는 몇 mL인가요?`, type:'num', unit:'mL', answer:T, fm:'conv',
+   if(Math.random()<0.5) return {steps:[KS(`${a} L는 몇 mL?`,'num',a*1000,`1 L = 1000 mL → 1000 × ${a} = ${a*1000}`,{unit:'mL'}),KS(`${a*1000} mL와 ${b} mL를 더하면?`,'num',T,`${a*1000} + ${b} = ${T}`,{unit:'mL'})], text:`<big>${a} L ${b} mL</big>는 몇 mL인가요?`, type:'num', unit:'mL', answer:T, fm:'conv',
     hints:['1 L = 1000 mL',`${a} L = ${a*1000} mL`], sol:[`${a} L = ${a*1000} mL`,`${a*1000} + ${b} = <b>${T} mL</b>`], bugs:[nbug(Number(`${a}${b}`),'unit-1000',`1 L는 1000 mL! ${a} L는 ${a*1000} mL예요.`),nbug(a*100+b,'unit-1000','1 L는 100 mL가 아니라 1000 mL.')]};
-   return {text:`<big>${T} mL</big>는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'conv',
+   return {steps:[KS(`${T} mL 안에 1000 mL가 몇 번 들어가요? (그게 L)`,'num',a,`1000 × ${a} = ${a*1000}`,{unit:'L'}),KS(`남는 mL는?`,'num',b,`${T} − ${a*1000} = ${b}`,{unit:'mL'}),KS(`몇 L 몇 mL?`,'lm',T,`${a} L ${b} mL`,{units:'L'})], text:`<big>${T} mL</big>는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'conv',
     hints:['1000 mL = 1 L',`${T}에서 1000이 몇 번?`], sol:[`${T} = ${a*1000} + ${b}`,`<b>${a} L ${b} mL</b>`], bugs:[nbug(Math.floor(T/100)*1000+T%100,'unit-1000','1 L는 1000 mL예요. 끝 세 자리가 mL!')]}; },
   lv=>{ const t=rnd(0,2);
    if(t===0){ const M=pick([1000,2000,3000]), v=rnd(2,M/100-1)*100; const asLm=M>1000&&Math.random()<0.6;
-     return {text:`물의 양은 얼마인가요? ${asLm?'(몇 L 몇 mL)':'(mL로)'}`, svg:beaker(v,M), type:asLm?'lm':'num', units:'L', unit:asLm?undefined:'mL', answer:v, fm:'read',
+     return {steps:[KS(`작은 눈금 한 칸은 몇 mL?`,'num',100,`큰 눈금 사이를 칸 수로 나누면 한 칸 100 mL`,{unit:'mL'}),KS(`물 높이는 작은 눈금 몇 칸?`,'num',v/100,`${v} mL = 100 mL가 ${v/100}칸`,{unit:'칸'}),KS(asLm?'물의 양은 몇 L 몇 mL?':'물의 양은 몇 mL?',asLm?'lm':'num',v,`100 × ${v/100} = ${v}`,asLm?{units:'L'}:{unit:'mL'})], text:`물의 양은 얼마인가요? ${asLm?'(몇 L 몇 mL)':'(mL로)'}`, svg:beaker(v,M), type:asLm?'lm':'num', units:'L', unit:asLm?undefined:'mL', answer:v, fm:'read',
       hints:['작은 눈금 한 칸이 몇 mL일까? 큰 눈금 사이 칸 수를 세요.','작은 눈금 한 칸 = 100 mL'], sol:['작은 눈금 한 칸 100 mL',`물 높이 = ${v/100}칸`,`<b>${asLm?lm(v):v+' mL'}</b>`],
       bugs:[nbug(v/100*10,'tick','작은 눈금 한 칸은 10 mL가 아니라 100 mL예요.'),nbug(v+100,'tick','칸을 한 칸 더 셌어요.'),nbug(v-100,'tick','칸을 한 칸 덜 셌어요.')]}; }
-   if(t===1){ const o=pick(CAPOBJ); return {text:`<b>${o[0]}</b>의 들이로 알맞은 것을 고르세요.`, type:'choice', options:shuffle(o[1]), answer:o[1][0], fm:'est',
+   if(t===1){ const o=pick(CAPOBJ); return {steps:[KS(`${o[0]}: 1 L(큰 우유갑 하나)보다 많이 들어갈까요?`,'choice',lmOf(o[1][0])>1000?'많이 들어가요':'적게 들어가요',`${o[0]}에는 1 L보다 ${lmOf(o[1][0])>1000?'많이':'적게'} 들어가요`,{options:['많이 들어가요','적게 들어가요']}),KS(`그럼 알맞은 들이는?`,'choice',o[1][0],`${o[0]} → ${o[1][0]}`,{options:shuffle(o[1])})], text:`<b>${o[0]}</b>의 들이로 알맞은 것을 고르세요.`, type:'choice', options:shuffle(o[1]), answer:o[1][0], fm:'est',
      hints:['1 L는 큰 우유갑 하나 정도예요.','200 mL는 작은 우유갑, 종이컵은 그보다 조금 작아요.'], sol:[`<b>${o[1][0]}</b>`], bugs:[]}; }
    const a=rnd(1,5), b=rnd(1,9)*10+rnd(0,1)*rnd(1,9)*100, T=a*1000+b; const R=T+pick([-1,1])*pick([100,10,a*1000+b-(a*100+b)]); const opts=[R,a*1000+(b%100)*10,a*100+b].filter(x=>x>0&&x!==T); const Rv=pick(opts); const ans=cmpS(T,Rv);
-   return {text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${a} L ${b} mL ○ ${Rv} mL</big>`, type:'cmp', answer:ans, fm:'conv',
+   return {steps:[KS(`${a} L ${b} mL는 몇 mL?`,'num',T,`${a*1000} + ${b} = ${T}`,{unit:'mL'}),KS(`${T} mL ○ ${Rv} mL`,'cmp',ans,`${T}와(과) ${Rv}를 비교`)], text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${a} L ${b} mL ○ ${Rv} mL</big>`, type:'cmp', answer:ans, fm:'conv',
     hints:['한 단위로 맞춰요.',`${a} L ${b} mL = ${T} mL`], sol:[`${a} L ${b} mL = ${T} mL`,`${T} ${ans==='>'?'&gt;':ans==='<'?'&lt;':'='} ${Rv}`], bugs:[{v:ans==='>'?'<':'>',tag:'unit-1000',msg:'1 L = 1000 mL로 바꿔서 다시 비교해요.'}]}; },
   lv=>{ const t=rnd(0,2);
    if(t===0){ let p,q; do{p=rnd(3,9);q=rnd(3,9);}while(p===q); const ans=p<q?'가 컵':'나 컵';
-     return {text:`똑같은 물병에 물을 가득 채우려고 해요. 가 컵으로는 ${p}번, 나 컵으로는 ${q}번 부어야 해요.<br>들이가 더 많은 컵은?`, type:'choice', options:['가 컵','나 컵'], answer:ans, fm:'cup',
+     return {steps:[KS(`더 적게 부은 컵은?`,'choice',p<q?'가 컵':'나 컵',`가 컵 ${p}번, 나 컵 ${q}번`,{options:['가 컵','나 컵']}),KS(`적게 부어도 가득 차면 큰 컵이에요. 들이가 더 많은 컵은?`,'choice',ans,`${Math.min(p,q)}번 부은 컵이 더 커요`,{options:['가 컵','나 컵']})], text:`똑같은 물병에 물을 가득 채우려고 해요. 가 컵으로는 ${p}번, 나 컵으로는 ${q}번 부어야 해요.<br>들이가 더 많은 컵은?`, type:'choice', options:['가 컵','나 컵'], answer:ans, fm:'cup',
       hints:['큰 컵이면 몇 번만 부어도 가득 차요.','적게 부은 컵이 더 커요.'], sol:[`${Math.min(p,q)}번 부은 컵이 더 커요`,`<b>${ans}</b>`], bugs:[{v:ans==='가 컵'?'나 컵':'가 컵',tag:'cup',msg:'많이 부어야 하는 컵은 작은 컵이에요.'}]}; }
-   if(t===1){ const c=m50(150,450), p=rnd(3,9), T=c*p; return {text:`들이가 ${c} mL인 컵으로 물을 ${p}번 부었더니 그릇이 가득 찼어요.<br>그릇의 들이는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'conv',
+   if(t===1){ const c=m50(150,450), p=rnd(3,9), T=c*p; return {steps:[KS(`${c} mL를 ${p}번 부으면 몇 mL?`,'num',T,`${c} × ${p} = ${T}`,{unit:'mL'}),KS(`${T} mL는 몇 L 몇 mL?`,'lm',T,`${lm(T)}`,{units:'L'})], text:`들이가 ${c} mL인 컵으로 물을 ${p}번 부었더니 그릇이 가득 찼어요.<br>그릇의 들이는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'conv',
      hints:[`${c} mL를 ${p}번 → ${c} × ${p}`,`${T} mL를 L와 mL로.`], sol:[`${c} × ${p} = ${T} mL`,`<b>${lm(T)}</b>`], bugs:[nbug(c*(p-1),'stop','부은 횟수를 다시 세요.')]}; }
    const actual=rnd(10,29)*100+m10(10,90); const d1=m10(30,300), d2=m10(30,300); if(d1===d2) return null; const e1=actual+pick([-1,1])*d1, e2=actual+pick([-1,1])*d2; const ans=d1<d2?'민지':'준호';
-   return {text:`주전자의 들이를 어림했어요. 실제 들이는 ${lm(actual)}예요.<br>민지: 약 ${lm(e1)} &nbsp; 준호: 약 ${lm(e2)}<br>더 가깝게 어림한 사람은?`, type:'choice', options:['민지','준호'], answer:ans, fm:'est',
+   return {steps:[KS(`민지의 어림은 실제와 몇 mL 차이?`,'num',d1,`${Math.max(actual,e1)} − ${Math.min(actual,e1)} = ${d1}`,{unit:'mL'}),KS(`준호의 어림은 실제와 몇 mL 차이?`,'num',d2,`${Math.max(actual,e2)} − ${Math.min(actual,e2)} = ${d2}`,{unit:'mL'}),KS(`더 가깝게 어림한 사람은?`,'choice',ans,`차이가 작은 사람 → ${ans}`,{options:['민지','준호']})], text:`주전자의 들이를 어림했어요. 실제 들이는 ${lm(actual)}예요.<br>민지: 약 ${lm(e1)} &nbsp; 준호: 약 ${lm(e2)}<br>더 가깝게 어림한 사람은?`, type:'choice', options:['민지','준호'], answer:ans, fm:'est',
     hints:['실제 들이와 얼마나 차이 나는지 각각 구해요.',`민지 차이 ${d1} mL, 준호 차이 ${d2} mL`], sol:[`민지: ${d1} mL 차이`,`준호: ${d2} mL 차이`,`차이가 작은 <b>${ans}</b>`],
     bugs:[{v:ans==='민지'?'준호':'민지',tag:'est',msg:'크게 어림한 게 아니라, 실제와 차이가 작은 쪽이에요.'}]}; },
   lv=>{ for(let t=0;t<40;t++){ const a=rnd(1,4); const base=[a*1000+rnd(1,9)*10, a*1000+rnd(1,9)*100, a*1000+rnd(1,9)*100+rnd(1,9)*10, (a+pick([0,1]))*1000+rnd(0,9)]; const vals=uniq(base); if(vals.length<4) continue;
      const forms=vals.map(v=>Math.random()<0.5?`${v} mL`:lmFull(v)); const big=Math.random()<0.5; const tv=big?Math.max(...vals):Math.min(...vals); const opts=forms.map((f,i)=>`${LBL[i]} ${f}`);
-     return {text:`들이가 ${big?'가장 많은':'가장 적은'} 것을 고르세요.`, type:'choice', options:opts, answer:opts[vals.indexOf(tv)], fm:'conv',
+     return {steps:[KS(`모두 mL로 바꾸면 ${big?'가장 많은':'가장 적은'} 것은 몇 mL?`,'num',tv,vals.map((v,i)=>`${LBL[i]} ${v} mL`).join(', '),{unit:'mL'}),KS(`그럼 들이가 ${big?'가장 많은':'가장 적은'} 것은?`,'choice',opts[vals.indexOf(tv)],`${tv} mL → ${opts[vals.indexOf(tv)]}`,{options:opts})], text:`들이가 ${big?'가장 많은':'가장 적은'} 것을 고르세요.`, type:'choice', options:opts, answer:opts[vals.indexOf(tv)], fm:'conv',
       hints:['모두 mL로 바꿔요.',vals.map((v,i)=>`${LBL[i]} ${v} mL`).join(', ')], sol:[vals.map((v,i)=>`${LBL[i]} ${v} mL`).join(', '),`<b>${opts[vals.indexOf(tv)]}</b>`], bugs:[]}; } return null; },
   lv=>{ for(let t=0;t<60;t++){ const pa=rnd(2,4), pb=rnd(pa+1,6), Bc=m50(100,500); if((pb*Bc)%pa) continue; const A=pb*Bc/pa; if(A%10||A>1500) continue; const x=rnd(1,4), y=rnd(1,4), T=x*A+y*Bc;
      const bugs=[nbug((x+y)*Bc,'cup','가 컵과 나 컵은 크기가 달라요.')]; if((pa*Bc)%pb===0) bugs.push(nbug(x*(pa*Bc/pb)+y*Bc,'cup','같은 양을 더 적게 부었으면 그 컵이 더 커요. 거꾸로 계산했어요.'));
-     return {text:`가 컵으로 ${pa}번 부은 양과 나 컵으로 ${pb}번 부은 양이 같아요. 나 컵의 들이는 ${Bc} mL예요.<br>가 컵으로 ${x}번, 나 컵으로 ${y}번 물을 부으면 모두 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'cup',
+     return {steps:[KS(`나 컵으로 ${pb}번 부은 양은 몇 mL?`,'num',pb*Bc,`${Bc} × ${pb} = ${pb*Bc}`,{unit:'mL'}),KS(`그 양이 가 컵 ${pa}번과 같아요. 가 컵의 들이는?`,'num',A,`${pb*Bc} ÷ ${pa} = ${A}`,{unit:'mL'}),KS(`가 컵 ${x}번과 나 컵 ${y}번은 모두 몇 mL?`,'num',T,`${A} × ${x} + ${Bc} × ${y} = ${T}`,{unit:'mL'}),KS(`몇 L 몇 mL?`,'lm',T,`${lm(T)}`,{units:'L'})], text:`가 컵으로 ${pa}번 부은 양과 나 컵으로 ${pb}번 부은 양이 같아요. 나 컵의 들이는 ${Bc} mL예요.<br>가 컵으로 ${x}번, 나 컵으로 ${y}번 물을 부으면 모두 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:T, fm:'cup',
       hints:[`나 컵 ${pb}번 = ${pb*Bc} mL. 이게 가 컵 ${pa}번과 같아요.`,`가 컵 = ${pb*Bc} ÷ ${pa} = ${A} mL`], sol:[`나 컵 ${pb}번 = ${pb*Bc} mL = 가 컵 ${pa}번 → 가 컵 ${A} mL`,`${A} × ${x} + ${Bc} × ${y} = ${T} mL`,`<b>${lm(T)}</b>`], bugs}; } return null; }
  ]});
 
 // ---------- 6 들이 덧셈·뺄셈 ----------
+// 계단 문제 도우미: 'x L y mL'·'x kg'·'x t' 글을 mL·g로
+const lmOf=s=>{ let v=0; String(s).replace(/(\d+)\s*(L|mL)/g,(m,n,u)=>{ v+=Number(n)*(u==='L'?1000:1); }); return v; };
+const wtOf=s=>{ let v=0; String(s).replace(/(\d+)\s*(t|kg|g)\b/g,(m,n,u)=>{ v+=Number(n)*(u==='t'?1000000:u==='kg'?1000:1); }); return v; };
+function lmSteps(op,u,a1,b1,a2,b2,ans){ const [U1,U2]=UNITS[u]; const W=Math.floor(ans/1000);
+  if(op==='+'){ const cr=b1+b2>=1000; return [KS(`${U2}끼리 더하면? (${b1} + ${b2})`,'num',b1+b2,`${b1} + ${b2} = ${b1+b2}`,{unit:U2}),...(cr?[KS(`1000 ${U2}${JU(U2,'은')} 1 ${U1}${RO(U1)} 올려요. ${b1+b2} ${U2}에서 1000을 빼면?`,'num',b1+b2-1000,`${b1+b2} − 1000 = ${b1+b2-1000}`,{unit:U2})]:[]),KS(`${U1}끼리 더하면?${cr?' (올린 1까지)':''}`,'num',W,`${a1} + ${a2}${cr?' + 1':''} = ${W}`,{unit:U1}),KS(`답은?`,'lm',ans,`${W} ${U1} ${ans%1000} ${U2}`,{units:u})]; }
+  if(b1<b2) return [KS(`${U2}끼리 못 빼요. 1 ${U1}${JU(U1,'을')} 1000 ${U2}${RO(U2)} 바꿔 오면 ${U2}${JU(U2,'은')}?`,'num',b1+1000,`${b1} + 1000 = ${b1+1000}`,{unit:U2}),KS(`${U2}끼리 빼면?`,'num',b1+1000-b2,`${b1+1000} − ${b2} = ${b1+1000-b2}`,{unit:U2}),KS(`${U1}끼리 빼면? (빌려 준 1을 빼고)`,'num',W,`${a1} − 1 − ${a2} = ${W}`,{unit:U1}),KS(`답은?`,'lm',ans,`${W} ${U1} ${ans%1000} ${U2}`,{units:u})];
+  return [KS(`${U2}끼리 빼면?`,'num',b1-b2,`${b1} − ${b2} = ${b1-b2}`,{unit:U2}),KS(`${U1}끼리 빼면?`,'num',W,`${a1} − ${a2} = ${W}`,{unit:U1}),KS(`답은?`,'lm',ans,`${W} ${U1} ${ans%1000} ${U2}`,{units:u})]; }
 function lmPair(op,carry,u){ for(let t=0;t<200;t++){ const a1=rnd(2,9), b1=m10(10,990), a2=rnd(1,op==='+'?9:a1-1), b2=m10(10,990); if(op==='-'&&a2>=a1) continue;
    const c=op==='+'?b1+b2>=1000:b1<b2; if(c!==carry) continue; return {A:a1*1000+b1,B:a2*1000+b2,a1,b1,a2,b2}; } return null; }
 function lmCalc(p,op,u,ctx){ const {A,B,a1,b1,a2,b2}=p; const [U1,U2]=UNITS[u]; const ans=op==='+'?A+B:A-B; const bugs=[];
@@ -3861,7 +3939,7 @@ function lmCalc(p,op,u,ctx){ const {A,B,a1,b1,a2,b2}=p; const [U1,U2]=UNITS[u]; 
   bugs.push(nbug(op==='+'?A-B:A+B,'op','더할지 뺄지 다시 읽어 봐요.'));
   const s1=op==='+'?`${U2}끼리: ${b1} + ${b2} = ${b1+b2}${b1+b2>=1000?` → 1 ${U1} ${b1+b2-1000} ${U2}`:''}`:(b1<b2?`${b1}에서 ${b2}를 못 빼요 → 1 ${U1}${U1==='L'?'를':'을'} 1000 ${U2}${U2==='g'?'으로':'로'}: ${b1+1000} − ${b2} = ${b1+1000-b2}`:`${U2}끼리: ${b1} − ${b2} = ${b1-b2}`);
   const s2=op==='+'?`${U1}끼리: ${a1} + ${a2}${b1+b2>=1000?' + 1':''} = ${Math.floor(ans/1000)}`:`${U1}끼리: ${b1<b2?a1-1:a1} − ${a2} = ${Math.floor(ans/1000)}`;
-  return {text:ctx||`계산하세요.<br><big>${a1} ${U1} ${b1} ${U2} ${op==='+'?'+':'−'} ${a2} ${U1} ${b2} ${U2}</big>`, type:'lm', units:u, answer:ans, fm:b1+b2>=1000&&op==='+'?'carry':op==='-'&&b1<b2?'borrow':'same',
+  return {steps:lmSteps(op,u,a1,b1,a2,b2,ans), text:ctx||`계산하세요.<br><big>${a1} ${U1} ${b1} ${U2} ${op==='+'?'+':'−'} ${a2} ${U1} ${b2} ${U2}</big>`, type:'lm', units:u, answer:ans, fm:b1+b2>=1000&&op==='+'?'carry':op==='-'&&b1<b2?'borrow':'same',
    hints:[`${U1}${JU(U1,'은')} ${U1}끼리, ${U2}${JU(U2,'은')} ${U2}끼리!`,s1], sol:[s1,s2,`<b>${lm(ans,u)}</b>`], bugs}; }
 function calcSkill(u,id,title,unitName,learn,ctxs,l3,l4){
  const [U1,U2]=UNITS[u];
@@ -3878,19 +3956,19 @@ calcSkill('L','capcalc','들이의 덧셈과 뺄셈','들이',
  [{add:(a,b)=>`물통에 물이 ${a} 들어 있어요. 물을 ${b} 더 부으면 물은 모두 몇 L 몇 mL인가요?`, sub:(a,b)=>`주스 ${a} 중에서 ${b}를 마셨어요. 남은 주스는 몇 L 몇 mL인가요?`, diff:(a,b)=>`가 어항에는 물이 ${a}, 나 어항에는 ${b} 들어 있어요. 가 어항의 물은 나 어항보다 몇 L 몇 mL 더 많은가요?`},
   {add:(a,b)=>`어제 우유를 ${a}, 오늘 ${b} 샀어요. 이틀 동안 산 우유는 몇 L 몇 mL인가요?`, sub:(a,b)=>`물탱크에 물이 ${a} 있었는데 ${b}를 썼어요. 남은 물은 몇 L 몇 mL인가요?`, diff:(a,b)=>`빨간 물감 ${a}, 파란 물감 ${b}가 있어요. 빨간 물감이 파란 물감보다 몇 L 몇 mL 더 많은가요?`}],
  lv=>{ if(Math.random()<0.5){ const X=rnd(5,9)*1000, a=rnd(1,3)*1000+m10(10,990), c=rnd(1,2)*1000+m10(10,990); if(a+c>=X) return null; const ans=X-a-c;
-    return {text:`들이가 ${lm(X)}인 물통에 물이 ${lm(a)} 들어 있었어요. 여기에 물을 ${lm(c)} 더 부었어요.<br>물통을 가득 채우려면 물을 몇 L 몇 mL 더 부어야 하나요?`, type:'lm', units:'L', answer:ans, fm:'steps',
+    return {steps:[KS(`지금 물통에 든 물은? (${lm(a)} + ${lm(c)})`,'lm',a+c,`${lm(a)} + ${lm(c)} = ${lm(a+c)}`,{units:'L'}),KS(`가득 채우려면 더 부어야 할 물은? (${lm(X)}에서 빼요)`,'lm',ans,`${lm(X)} − ${lm(a+c)} = ${lm(ans)}`,{units:'L'})], text:`들이가 ${lm(X)}인 물통에 물이 ${lm(a)} 들어 있었어요. 여기에 물을 ${lm(c)} 더 부었어요.<br>물통을 가득 채우려면 물을 몇 L 몇 mL 더 부어야 하나요?`, type:'lm', units:'L', answer:ans, fm:'steps',
      hints:['지금 물통에 든 물부터 구해요.',`${lm(a)} + ${lm(c)} = ${lm(a+c)}`], sol:[`지금 물: ${lm(a)} + ${lm(c)} = ${lm(a+c)}`,`${lm(X)} − ${lm(a+c)} = <b>${lm(ans)}</b>`],
      bugs:[nbug(X-a,'stop','더 부은 물을 빼지 않았어요.'),nbug(a+c,'which','그건 지금 든 물이에요. 더 부어야 할 양을 물어요.'),nbug(X-a+c,'op','더 부은 물은 빼야 해요.')]}; }
    const A=rnd(2,5)*1000+m10(10,990), D=rnd(0,1)*1000+m10(100,900); if(D>=A) return null; const B=A-D, ans=A+B;
-   return {text:`가 병에는 물이 ${lm(A)} 들어 있고, 나 병에는 가 병보다 ${lm(D)} 적게 들어 있어요.<br>두 병의 물은 모두 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:ans, fm:'steps',
+   return {steps:[KS(`나 병의 물은? ("적게"니까 빼요)`,'lm',B,`${lm(A)} − ${lm(D)} = ${lm(B)}`,{units:'L'}),KS(`두 병의 물은 모두?`,'lm',ans,`${lm(A)} + ${lm(B)} = ${lm(ans)}`,{units:'L'})], text:`가 병에는 물이 ${lm(A)} 들어 있고, 나 병에는 가 병보다 ${lm(D)} 적게 들어 있어요.<br>두 병의 물은 모두 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:ans, fm:'steps',
     hints:['먼저 나 병의 물을 구해요.',`나 병 = ${lm(A)} − ${lm(D)} = ${lm(B)}`], sol:[`나 병 = ${lm(B)}`,`${lm(A)} + ${lm(B)} = <b>${lm(ans)}</b>`],
     bugs:[nbug(A+D,'op','"적게"니까 나 병은 빼서 구해요.'),nbug(B,'stop','나 병까지 구했어요! 두 병을 더해요.'),nbug(2*A+D,'op','"적게"예요.')]}; },
  lv=>{ if(Math.random()<0.6){ const B=rnd(1,3)*1000+m10(10,990), D=rnd(0,2)*1000+m10(10,990), A=B+D, S2=A+B; const askBig=Math.random()<0.5;
-    return {text:`두 물병의 들이를 더하면 ${lm(S2)}이고, 큰 물병은 작은 물병보다 ${lm(D)} 더 많이 들어가요.<br>${askBig?'큰':'작은'} 물병의 들이는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:askBig?A:B, fm:'back',
+    return {steps:[KS(`합에서 차이를 빼면? (작은 물병 2개만큼)`,'lm',2*B,`${lm(S2)} − ${lm(D)} = ${lm(2*B)}`,{units:'L'}),KS(`작은 물병 하나의 들이는?`,'lm',B,`${lm(2*B)}의 반 → ${lm(B)}`,{units:'L'}),...(askBig?[KS(`큰 물병의 들이는?`,'lm',A,`${lm(B)} + ${lm(D)} = ${lm(A)}`,{units:'L'})]:[])], text:`두 물병의 들이를 더하면 ${lm(S2)}이고, 큰 물병은 작은 물병보다 ${lm(D)} 더 많이 들어가요.<br>${askBig?'큰':'작은'} 물병의 들이는 몇 L 몇 mL인가요?`, type:'lm', units:'L', answer:askBig?A:B, fm:'back',
      hints:[`큰 물병에서 ${lm(D)}를 덜어 내면 두 물병이 같아져요.`,`${lm(S2)} − ${lm(D)} = ${lm(S2-D)} → 이게 작은 물병 2개`],
      sol:[`${lm(S2)} − ${lm(D)} = ${lm(2*B)} (작은 물병 2개)`,`작은 물병 = ${lm(B)}`,askBig?`큰 물병 = ${lm(B)} + ${lm(D)} = <b>${lm(A)}</b>`:`<b>${lm(B)}</b>`],
      bugs:[nbug(askBig?B:A,'which',askBig?'그건 작은 물병이에요.':'그건 큰 물병이에요.'),nbug(S2-D,'half','그건 작은 물병 <b>2개</b>예요. 반으로 나눠요.'),...(S2%2===0?[nbug(S2/2,'half','차이를 먼저 빼고 나눠요.')]:[])]}; }
-   for(let t=0;t<60;t++){ const c=m50(200,600), y=m50(50,300), x=m50(50,300); const T=3*c+2*y+x; return {text:`가, 나, 다 세 사람이 주스를 마셨어요. 셋이 마신 주스는 모두 ${lm(T)}예요.<br>가는 나보다 ${x} mL 더 마셨고, 나는 다보다 ${y} mL 더 마셨어요. 다가 마신 주스는 몇 mL인가요?`, type:'num', unit:'mL', answer:c, fm:'back',
+   for(let t=0;t<60;t++){ const c=m50(200,600), y=m50(50,300), x=m50(50,300); const T=3*c+2*y+x; return {steps:[KS(`다를 기준으로 하면 가는 다보다 몇 mL 더 마셨어요?`,'num',x+y,`${x} + ${y} = ${x+y}`,{unit:'mL'}),KS(`전체에서 더 마신 양(나 ${y}, 가 ${x+y})을 빼면 몇 mL? (다 3명만큼)`,'num',3*c,`${T} − ${y} − ${x+y} = ${3*c}`,{unit:'mL'}),KS(`다가 마신 주스는?`,'num',c,`${3*c} ÷ 3 = ${c}`,{unit:'mL'})], text:`가, 나, 다 세 사람이 주스를 마셨어요. 셋이 마신 주스는 모두 ${lm(T)}예요.<br>가는 나보다 ${x} mL 더 마셨고, 나는 다보다 ${y} mL 더 마셨어요. 다가 마신 주스는 몇 mL인가요?`, type:'num', unit:'mL', answer:c, fm:'back',
      hints:['다를 기준으로: 나 = 다 + '+y+', 가 = 다 + '+(x+y)+' mL',`세 사람 = 다 3명 + ${2*y+x} mL`], sol:[`나 = 다 + ${y}, 가 = 다 + ${x+y}`,`${T} − ${2*y+x} = ${3*c} (다 3명만큼)`,`다 = ${3*c} ÷ 3 = <b>${c} mL</b>`],
      bugs:[nbug(c+y,'which','그건 나예요.'),nbug(c+x+y,'which','그건 가예요.'),...((T-x-y)%3===0?[nbug((T-x-y)/3,'count-cond','더 마신 양을 사람마다 다시 세어 봐요. 가는 다보다 '+(x+y)+' 더!')]:[])]}; } return null; });
 
@@ -3901,39 +3979,39 @@ S({id:'wt',unit:'들이와 무게',title:'무게: kg, g, t와 저울',moves:{
  learn:`<div class="ex">1 kg = 1000 g &nbsp; 1 t = 1000 kg</div><ul><li>3 kg 40 g = 3040 g (340 g 아니에요!)</li><li>저울은 눈금 한 칸의 값부터: 100 g 사이가 5칸이면 한 칸 20 g</li></ul>`,
  gen:[
   lv=>{ const t=rnd(0,2);
-   if(t===2){ const a=rnd(2,9); if(Math.random()<0.5) return {text:`<big>${a} t</big>은 몇 kg인가요?`, type:'num', unit:'kg', answer:a*1000, fm:'conv', hints:['1 t = 1000 kg',`${a}번`], sol:[`<b>${a*1000} kg</b>`], bugs:[nbug(a*100,'unit-1000','1 t는 1000 kg!')]};
-     return {text:`<big>${a*1000} kg</big>은 몇 t인가요?`, type:'num', unit:'t', answer:a, fm:'conv', hints:['1000 kg = 1 t','1000이 몇 번?'], sol:[`<b>${a} t</b>`], bugs:[nbug(a*10,'unit-1000','1000 kg이 1 t예요.')]}; }
+   if(t===2){ const a=rnd(2,9); if(Math.random()<0.5) return {steps:[KS(`1 t는 몇 kg?`,'num',1000,`1 t = 1000 kg`,{unit:'kg'}),KS(`${a} t는 몇 kg?`,'num',a*1000,`1000 × ${a} = ${a*1000}`,{unit:'kg'})], text:`<big>${a} t</big>은 몇 kg인가요?`, type:'num', unit:'kg', answer:a*1000, fm:'conv', hints:['1 t = 1000 kg',`${a}번`], sol:[`<b>${a*1000} kg</b>`], bugs:[nbug(a*100,'unit-1000','1 t는 1000 kg!')]};
+     return {steps:[KS(`1000 kg은 몇 t?`,'num',1,`1000 kg = 1 t`,{unit:'t'}),KS(`${a*1000} kg 안에 1000 kg이 몇 번?`,'num',a,`1000 × ${a} = ${a*1000}`,{unit:'t'})], text:`<big>${a*1000} kg</big>은 몇 t인가요?`, type:'num', unit:'t', answer:a, fm:'conv', hints:['1000 kg = 1 t','1000이 몇 번?'], sol:[`<b>${a} t</b>`], bugs:[nbug(a*10,'unit-1000','1000 kg이 1 t예요.')]}; }
    const a=rnd(1,9), b=pick([rnd(1,9)*10,rnd(1,9)*100,rnd(11,99)*10,rnd(101,999)]), T=a*1000+b;
-   if(t===0) return {text:`<big>${a} kg ${b} g</big>은 몇 g인가요?`, type:'num', unit:'g', answer:T, fm:'conv', hints:['1 kg = 1000 g',`${a} kg = ${a*1000} g`], sol:[`${a*1000} + ${b} = <b>${T} g</b>`], bugs:[nbug(Number(`${a}${b}`),'unit-1000',`1 kg = 1000 g. ${a} kg = ${a*1000} g!`)]};
-   return {text:`<big>${T} g</big>은 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:T, fm:'conv', hints:['1000 g = 1 kg','끝 세 자리가 g'], sol:[`<b>${a} kg ${b} g</b>`], bugs:[nbug(Math.floor(T/100)*1000+T%100,'unit-1000','끝 세 자리가 g이에요.')]}; },
+   if(t===0) return {steps:[KS(`${a} kg은 몇 g?`,'num',a*1000,`1000 × ${a} = ${a*1000}`,{unit:'g'}),KS(`${a*1000} g과 ${b} g을 더하면?`,'num',T,`${a*1000} + ${b} = ${T}`,{unit:'g'})], text:`<big>${a} kg ${b} g</big>은 몇 g인가요?`, type:'num', unit:'g', answer:T, fm:'conv', hints:['1 kg = 1000 g',`${a} kg = ${a*1000} g`], sol:[`${a*1000} + ${b} = <b>${T} g</b>`], bugs:[nbug(Number(`${a}${b}`),'unit-1000',`1 kg = 1000 g. ${a} kg = ${a*1000} g!`)]};
+   return {steps:[KS(`${T} g 안에 1000 g이 몇 번 들어가요? (그게 kg)`,'num',a,`1000 × ${a} = ${a*1000}`,{unit:'kg'}),KS(`남는 g은?`,'num',b,`${T} − ${a*1000} = ${b}`,{unit:'g'}),KS(`몇 kg 몇 g?`,'lm',T,`${a} kg ${b} g`,{units:'kg'})], text:`<big>${T} g</big>은 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:T, fm:'conv', hints:['1000 g = 1 kg','끝 세 자리가 g'], sol:[`<b>${a} kg ${b} g</b>`], bugs:[nbug(Math.floor(T/100)*1000+T%100,'unit-1000','끝 세 자리가 g이에요.')]}; },
   lv=>{ const t=rnd(0,2);
    if(t===0){ const cfg=pick(DIALS); const v=rnd(1,cfg.max/cfg.minor-1)*cfg.minor; if(cfg.ans==='kgg'&&v<1000) return null; const asLm=cfg.ans==='kgg';
-     return {text:`저울이 가리키는 무게는? ${asLm?'(몇 kg 몇 g)':'(g으로)'}`, svg:dial(v,cfg), type:asLm?'lm':'num', units:'kg', unit:asLm?undefined:'g', answer:v, fm:'read',
+     return {steps:[KS(`작은 눈금 한 칸은 몇 g?`,'num',cfg.minor,`큰 눈금 ${cfg.label} g 사이가 ${cfg.label/cfg.minor}칸 → ${cfg.label} ÷ ${cfg.label/cfg.minor} = ${cfg.minor}`,{unit:'g'}),KS(`바늘 바로 앞(작은 쪽) 큰 눈금은 몇 g?`,'num',Math.floor(v/cfg.label)*cfg.label,`${Math.floor(v/cfg.label)*cfg.label} g`,{unit:'g'}),KS(`거기서 작은 눈금 몇 칸 더 갔어요?`,'num',(v%cfg.label)/cfg.minor,`${v%cfg.label} ÷ ${cfg.minor} = ${(v%cfg.label)/cfg.minor}`,{unit:'칸'}),KS(asLm?'무게는 몇 kg 몇 g?':'무게는 몇 g?',asLm?'lm':'num',v,`${Math.floor(v/cfg.label)*cfg.label} + ${cfg.minor} × ${(v%cfg.label)/cfg.minor} = ${v}`,asLm?{units:'kg'}:{unit:'g'})], text:`저울이 가리키는 무게는? ${asLm?'(몇 kg 몇 g)':'(g으로)'}`, svg:dial(v,cfg), type:asLm?'lm':'num', units:'kg', unit:asLm?undefined:'g', answer:v, fm:'read',
       hints:['숫자가 쓰인 큰 눈금 사이가 몇 칸인지 세요.',`작은 눈금 한 칸 = ${cfg.minor} g`], sol:[`작은 눈금 한 칸 ${cfg.minor} g`,`바늘 = <b>${asLm?lm(v,'kg'):v+' g'}</b>`],
       bugs:[nbug(v+cfg.minor,'tick','한 칸 더 셌어요.'),nbug(v-cfg.minor,'tick','한 칸 덜 셌어요.'),...(cfg.minor!==10?[nbug(Math.floor(v/cfg.label)*cfg.label+(v%cfg.label)/cfg.minor*10,'tick',`작은 눈금 한 칸은 10 g이 아니라 ${cfg.minor} g이에요.`)]:[])]}; }
-   if(t===1){ const o=pick(WOBJ); return {text:`<b>${o[0]}</b>의 무게로 알맞은 것은?`, type:'choice', options:shuffle(o[1]), answer:o[1][0], fm:'est', hints:['1 kg은 큰 우유갑 하나(1 L 물) 정도.','1 t은 1000 kg — 자동차 정도예요.'], sol:[`<b>${o[1][0]}</b>`], bugs:[]}; }
+   if(t===1){ const o=pick(WOBJ); return {steps:[KS(`${o[0]}: 1 kg(큰 우유갑 하나)보다 무거워요?`,'choice',wtOf(o[1][0])>1000?'무거워요':'가벼워요',`${o[0]}은 1 kg보다 ${wtOf(o[1][0])>1000?'무거워요':'가벼워요'}`.replace(/은 1 kg/,' → 1 kg'),{options:['무거워요','가벼워요']}),KS(`그럼 알맞은 무게는?`,'choice',o[1][0],`${o[0]} → ${o[1][0]}`,{options:shuffle(o[1])})], text:`<b>${o[0]}</b>의 무게로 알맞은 것은?`, type:'choice', options:shuffle(o[1]), answer:o[1][0], fm:'est', hints:['1 kg은 큰 우유갑 하나(1 L 물) 정도.','1 t은 1000 kg — 자동차 정도예요.'], sol:[`<b>${o[1][0]}</b>`], bugs:[]}; }
    const a=rnd(1,6), b=rnd(1,9)*10, T=a*1000+b; const R=pick([a*1000+b*10, a*100+b, T+pick([-10,10,100])]); if(R===T) return null; const ans=cmpS(T,R);
-   return {text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${a} kg ${b} g ○ ${R} g</big>`, type:'cmp', answer:ans, fm:'conv', hints:['g으로 맞춰요.',`${a} kg ${b} g = ${T} g`], sol:[`${T} g ${ans==='>'?'&gt;':'&lt;'} ${R} g`], bugs:[{v:ans==='>'?'<':'>',tag:'unit-1000',msg:'1 kg = 1000 g으로 바꿔 다시 비교해요.'}]}; },
+   return {steps:[KS(`${a} kg ${b} g은 몇 g?`,'num',T,`${a*1000} + ${b} = ${T}`,{unit:'g'}),KS(`${T} g ○ ${R} g`,'cmp',ans,`${T}와(과) ${R}를 비교`)], text:`○ 안에 &gt;, =, &lt;를 알맞게 고르세요.<br><big>${a} kg ${b} g ○ ${R} g</big>`, type:'cmp', answer:ans, fm:'conv', hints:['g으로 맞춰요.',`${a} kg ${b} g = ${T} g`], sol:[`${T} g ${ans==='>'?'&gt;':'&lt;'} ${R} g`], bugs:[{v:ans==='>'?'<':'>',tag:'unit-1000',msg:'1 kg = 1000 g으로 바꿔 다시 비교해요.'}]}; },
   lv=>{ const t=rnd(0,2);
-   if(t===0){ const k=rnd(2,6), m=rnd(3,9); const A=pick(['멜론','사과','배']), Bn=pick(['귤','자두']); return {text:`${A} 1개의 무게는 ${Bn} ${k}개의 무게와 같아요. ${Bn} 1개의 무게는 바둑돌 ${m}개의 무게와 같아요.<br>${A} 1개의 무게는 바둑돌 몇 개의 무게와 같나요?`, type:'num', unit:'개', answer:k*m, fm:'link',
+   if(t===0){ const k=rnd(2,6), m=rnd(3,9); const A=pick(['멜론','사과','배']), Bn=pick(['귤','자두']); return {steps:[KS(`${A} 1개는 ${Bn} 몇 개의 무게와 같아요?`,'num',k,`${A} 1개 = ${Bn} ${k}개`,{unit:'개'}),KS(`${Bn} 하나가 바둑돌 ${m}개. ${Bn} ${k}개는 바둑돌 몇 개?`,'num',k*m,`${m} × ${k} = ${k*m}`,{unit:'개'})], text:`${A} 1개의 무게는 ${Bn} ${k}개의 무게와 같아요. ${Bn} 1개의 무게는 바둑돌 ${m}개의 무게와 같아요.<br>${A} 1개의 무게는 바둑돌 몇 개의 무게와 같나요?`, type:'num', unit:'개', answer:k*m, fm:'link',
      hints:[`${Bn} ${k}개를 하나씩 바둑돌로 바꿔요.`,`${Bn} 1개 = 바둑돌 ${m}개, ${k}개면?`], sol:[`${A} 1개 = ${Bn} ${k}개`,`= 바둑돌 ${m} × ${k} = <b>${k*m}개</b>`], bugs:[nbug(k+m,'link','더하는 게 아니라, '+Bn+' 하나마다 바둑돌 '+m+'개씩!')]}; }
-   if(t===1){ const ball=m10(100,400), a=rnd(2,5), box=m50(100,600), T=ball*a+box; return {text:`공 1개의 무게는 ${ball} g이에요. 상자에 공 ${a}개를 넣었더니 상자 무게까지 ${lm(T,'kg')}이 되었어요.<br>빈 상자의 무게는 몇 g인가요?`, type:'num', unit:'g', answer:box, fm:'link',
+   if(t===1){ const ball=m10(100,400), a=rnd(2,5), box=m50(100,600), T=ball*a+box; return {steps:[KS(`공 ${a}개의 무게는 몇 g?`,'num',ball*a,`${ball} × ${a} = ${ball*a}`,{unit:'g'}),...(T>=1000?[KS(`${lm(T,'kg')}은 몇 g?`,'num',T,`${lm(T,'kg')} = ${T} g`,{unit:'g'})]:[]),KS(`빈 상자는 몇 g?`,'num',box,`${T} − ${ball*a} = ${box}`,{unit:'g'})], text:`공 1개의 무게는 ${ball} g이에요. 상자에 공 ${a}개를 넣었더니 상자 무게까지 ${lm(T,'kg')}이 되었어요.<br>빈 상자의 무게는 몇 g인가요?`, type:'num', unit:'g', answer:box, fm:'link',
      hints:[`공 ${a}개의 무게부터.`,`${ball} × ${a} = ${ball*a} g`], sol:[`공 ${a}개 = ${ball*a} g`,`${T} − ${ball*a} = <b>${box} g</b>`], bugs:[nbug(T-ball,'stop','공은 '+a+'개예요.'),nbug(ball*a,'which','그건 공의 무게예요.')]}; }
-   const p=rnd(12,40), q=rnd(12,40); if(p===q) return null; const big=p>q?'지우개':'풀'; return {text:`똑같은 클립으로 무게를 재었어요. 지우개는 클립 ${p}개, 풀은 클립 ${q}개와 무게가 같아요.<br>어느 것이 클립 몇 개만큼 더 무거운가요? (몇 개만 쓰세요)`, type:'num', unit:'개', answer:Math.abs(p-q), fm:'link',
+   const p=rnd(12,40), q=rnd(12,40); if(p===q) return null; const big=p>q?'지우개':'풀'; return {steps:[KS(`더 무거운 것은? (클립이 많을수록 무거워요)`,'choice',big,`지우개 ${p}개, 풀 ${q}개`,{options:['지우개','풀']}),KS(`클립 몇 개만큼 더 무거워요?`,'num',Math.abs(p-q),`${Math.max(p,q)} − ${Math.min(p,q)} = ${Math.abs(p-q)}`,{unit:'개'})], text:`똑같은 클립으로 무게를 재었어요. 지우개는 클립 ${p}개, 풀은 클립 ${q}개와 무게가 같아요.<br>어느 것이 클립 몇 개만큼 더 무거운가요? (몇 개만 쓰세요)`, type:'num', unit:'개', answer:Math.abs(p-q), fm:'link',
      hints:['클립 개수가 많을수록 무거워요.',`${Math.max(p,q)} − ${Math.min(p,q)}`], sol:[`${big}가 더 무거워요`,`${Math.max(p,q)} − ${Math.min(p,q)} = <b>${Math.abs(p-q)}개</b>`], bugs:[nbug(p+q,'op','차이를 구해요.')]}; },
   lv=>{ if(Math.random()<0.5){ for(let t=0;t<40;t++){ const a=rnd(1,4); const vals=uniq([a*1000+rnd(1,9)*10, a*1000+rnd(1,9)*100, a*1000+rnd(1,9)*100+rnd(1,9)*10, (a+pick([0,1]))*1000+rnd(1,9)]); if(vals.length<4) continue;
       const forms=vals.map(v=>Math.random()<0.5?`${v} g`:lmFull(v,'kg')); const big=Math.random()<0.5; const tv=big?Math.max(...vals):Math.min(...vals); const opts=forms.map((f,i)=>`${LBL[i]} ${f}`);
-      return {text:`${big?'가장 무거운':'가장 가벼운'} 것을 고르세요.`, type:'choice', options:opts, answer:opts[vals.indexOf(tv)], fm:'conv', hints:['모두 g으로 바꿔요.',vals.map((v,i)=>`${LBL[i]} ${v} g`).join(', ')], sol:[vals.map((v,i)=>`${LBL[i]} ${v} g`).join(', '),`<b>${opts[vals.indexOf(tv)]}</b>`], bugs:[]}; } return null; }
+      return {steps:[KS(`모두 g으로 바꾸면 ${big?'가장 무거운':'가장 가벼운'} 것은 몇 g?`,'num',tv,vals.map((v,i)=>`${LBL[i]} ${v} g`).join(', '),{unit:'g'}),KS(`그럼 ${big?'가장 무거운':'가장 가벼운'} 것은?`,'choice',opts[vals.indexOf(tv)],`${tv} g → ${opts[vals.indexOf(tv)]}`,{options:opts})], text:`${big?'가장 무거운':'가장 가벼운'} 것을 고르세요.`, type:'choice', options:opts, answer:opts[vals.indexOf(tv)], fm:'conv', hints:['모두 g으로 바꿔요.',vals.map((v,i)=>`${LBL[i]} ${v} g`).join(', ')], sol:[vals.map((v,i)=>`${LBL[i]} ${v} g`).join(', '),`<b>${opts[vals.indexOf(tv)]}</b>`], bugs:[]}; } return null; }
    const per=pick([200,250,300,400,150]), cap=pick([1,2]); const n=Math.floor(cap*1000/per); const over=Math.ceil(cap*1000/per);
-   return {text:`작은 수레에 ${cap} t까지 실을 수 있어요. 한 개에 ${per} kg인 상자를 최대 몇 개까지 실을 수 있나요?`, type:'num', unit:'개', answer:n, fm:'conv',
+   return {steps:[KS(`${cap} t는 몇 kg?`,'num',cap*1000,`1000 × ${cap} = ${cap*1000}`,{unit:'kg'}),KS(`${cap*1000} kg을 넘지 않게 ${per} kg 상자를 최대 몇 개?`,'num',n,`${per} × ${n} = ${per*n}, ${per} × ${n+1} = ${per*(n+1)} → 넘어요`,{unit:'개'})], text:`작은 수레에 ${cap} t까지 실을 수 있어요. 한 개에 ${per} kg인 상자를 최대 몇 개까지 실을 수 있나요?`, type:'num', unit:'개', answer:n, fm:'conv',
     hints:[`${cap} t = ${cap*1000} kg`,`${per}을 몇 번 더하면 ${cap*1000}을 넘지 않을까?`], sol:[`${cap} t = ${cap*1000} kg`,`${per} × ${n} = ${per*n} kg (${n+1}개면 ${per*(n+1)} kg으로 넘어요)`,`<b>${n}개</b>`],
     bugs:[...(over!==n?[nbug(over,'endpoint','그러면 '+cap*1000+' kg을 넘어요. 넘으면 못 실어요.')]:[nbug(n+1,'endpoint','그러면 넘어요.')]),nbug(Math.floor(cap*100/per*10)||-1,'unit-1000','1 t = 1000 kg!')]}; },
   lv=>{ if(Math.random()<0.5){ const a=m10(150,350), p=m10(250,550); if(a===p) return null; const X=2*a+p, Y=a+p; const ask=pick(['배','사과','mix']); const ans=ask==='배'?p:ask==='사과'?a:3*a+2*p;
-     return {text:`사과 2개와 배 1개의 무게는 ${X} g, 사과 1개와 배 1개의 무게는 ${Y} g이에요. (사과끼리, 배끼리 무게가 같아요)<br>${ask==='mix'?'사과 3개와 배 2개의 무게는 몇 g인가요?':ask+' 1개의 무게는 몇 g인가요?'}`, type:'num', unit:'g', answer:ans, fm:'back',
+     return {steps:[KS(`두 저울을 비교하면 다른 것은 사과 1개. 사과 1개는 몇 g?`,'num',a,`${X} − ${Y} = ${a}`,{unit:'g'}),...(ask==='사과'?[]:[KS(`배 1개는 몇 g?`,'num',p,`${Y} − ${a} = ${p}`,{unit:'g'})]),...(ask==='mix'?[KS(`사과 3개와 배 2개는 몇 g?`,'num',ans,`${a} × 3 + ${p} × 2 = ${ans}`,{unit:'g'})]:[])], text:`사과 2개와 배 1개의 무게는 ${X} g, 사과 1개와 배 1개의 무게는 ${Y} g이에요. (사과끼리, 배끼리 무게가 같아요)<br>${ask==='mix'?'사과 3개와 배 2개의 무게는 몇 g인가요?':ask+' 1개의 무게는 몇 g인가요?'}`, type:'num', unit:'g', answer:ans, fm:'back',
       hints:['두 저울을 비교하면 다른 건 무엇일까?',`사과 1개 = ${X} − ${Y} = ${a} g`], sol:[`두 식의 차이 = 사과 1개 = ${a} g`,`배 1개 = ${Y} − ${a} = ${p} g`,ask==='mix'?`${a} × 3 + ${p} × 2 = <b>${ans} g</b>`:`<b>${ans} g</b>`],
       bugs:[nbug(ask==='배'?a:p,'which','그건 '+(ask==='배'?'사과':'배')+'예요.'),...(Y%2===0?[nbug(Y/2,'half','사과와 배는 무게가 달라요. 반으로 나누면 안 돼요.')]:[]),nbug(X-Y,'stop','사과 무게를 구했어요. 이제 묻는 것까지!')].filter(b=>b.v!==String(ans))}; }
    const m=m10(30,120), box=m50(200,600), k1=rnd(2,4), k2=k1+rnd(2,4), A=box+k1*m, B=box+k2*m;
-   return {text:`같은 구슬 ${k1}개를 넣은 상자의 무게는 ${A} g, 같은 구슬 ${k2}개를 넣은 상자의 무게는 ${B} g이에요.<br>빈 상자의 무게는 몇 g인가요?`, type:'num', unit:'g', answer:box, fm:'back',
+   return {steps:[KS(`두 상자의 차이는 구슬 몇 개?`,'num',k2-k1,`${k2} − ${k1} = ${k2-k1}`,{unit:'개'}),KS(`구슬 ${k2-k1}개는 몇 g?`,'num',B-A,`${B} − ${A} = ${B-A}`,{unit:'g'}),KS(`구슬 1개는 몇 g?`,'num',m,`${B-A} ÷ ${k2-k1} = ${m}`,{unit:'g'}),KS(`빈 상자는 몇 g?`,'num',box,`${A} − ${m} × ${k1} = ${box}`,{unit:'g'})], text:`같은 구슬 ${k1}개를 넣은 상자의 무게는 ${A} g, 같은 구슬 ${k2}개를 넣은 상자의 무게는 ${B} g이에요.<br>빈 상자의 무게는 몇 g인가요?`, type:'num', unit:'g', answer:box, fm:'back',
     hints:[`두 상자 차이는 구슬 ${k2-k1}개만큼.`,`구슬 ${k2-k1}개 = ${B-A} g → 구슬 1개 = ${m} g`], sol:[`구슬 ${k2-k1}개 = ${B-A} g, 1개 = ${m} g`,`구슬 ${k1}개 = ${m*k1} g`,`${A} − ${m*k1} = <b>${box} g</b>`],
     bugs:[nbug(m,'which','구슬 무게예요. 빈 상자를 물어요.'),nbug(B-A,'stop','구슬 '+(k2-k1)+'개 무게예요.'),nbug(A-(B-A),'stop','구슬 1개 무게를 먼저 구해요.')]}; }
  ]});
@@ -3944,17 +4022,17 @@ calcSkill('kg','wtcalc','무게의 덧셈과 뺄셈','무게',
  [{add:(a,b)=>`수박의 무게는 ${a}, 멜론의 무게는 ${b}이에요. 두 과일의 무게는 모두 몇 kg 몇 g인가요?`, sub:(a,b)=>`쌀 ${a} 중에서 ${b}로 밥을 지었어요. 남은 쌀은 몇 kg 몇 g인가요?`, diff:(a,b)=>`형의 가방은 ${a}, 내 가방은 ${b}이에요. 형의 가방이 몇 kg 몇 g 더 무거운가요?`},
   {add:(a,b)=>`감자 ${a}와 고구마 ${b}를 샀어요. 산 것은 모두 몇 kg 몇 g인가요?`, sub:(a,b)=>`밀가루 ${a} 중에서 ${b}로 빵을 만들었어요. 남은 밀가루는 몇 kg 몇 g인가요?`, diff:(a,b)=>`큰 호박은 ${a}, 작은 호박은 ${b}이에요. 큰 호박은 작은 호박보다 몇 kg 몇 g 더 무거운가요?`}],
  lv=>{ if(Math.random()<0.5){ const a=rnd(5,9)*1000+m10(10,990), c=rnd(1,3)*1000+m10(10,990), d=rnd(1,3)*1000+m10(10,990), ans=a-c+d; if(c>=a) return null;
-    return {text:`쌀이 ${lm(a,'kg')} 있었어요. 그중 ${lm(c,'kg')}을 먹고, ${lm(d,'kg')}을 더 사 왔어요.<br>지금 쌀은 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:ans, fm:'steps',
+    return {steps:[KS(`먹고 남은 쌀은?`,'lm',a-c,`${lm(a,'kg')} − ${lm(c,'kg')} = ${lm(a-c,'kg')}`,{units:'kg'}),KS(`사 온 쌀을 더하면?`,'lm',ans,`${lm(a-c,'kg')} + ${lm(d,'kg')} = ${lm(ans,'kg')}`,{units:'kg'})], text:`쌀이 ${lm(a,'kg')} 있었어요. 그중 ${lm(c,'kg')}을 먹고, ${lm(d,'kg')}을 더 사 왔어요.<br>지금 쌀은 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:ans, fm:'steps',
      hints:['먹은 것은 빼고, 사 온 것은 더해요.',`${lm(a,'kg')} − ${lm(c,'kg')} = ${lm(a-c,'kg')}`], sol:[`${lm(a,'kg')} − ${lm(c,'kg')} = ${lm(a-c,'kg')}`,`${lm(a-c,'kg')} + ${lm(d,'kg')} = <b>${lm(ans,'kg')}</b>`],
      bugs:[nbug(a-c,'stop','사 온 쌀을 더하지 않았어요.'),nbug(a-c-d,'op','사 온 것은 더해요.'),nbug(a+c+d,'op','먹은 것은 빼요.')]}; }
-   const mom=rnd(50,65)*1000+m10(100,900), kid=rnd(25,35)*1000+m10(100,900); return {text:`엄마가 시훈이를 안고 저울에 올라가면 ${lm(mom+kid,'kg')}이에요. 엄마 혼자 올라가면 ${lm(mom,'kg')}이에요.<br>시훈이의 몸무게는 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:kid, fm:'steps',
+   const mom=rnd(50,65)*1000+m10(100,900), kid=rnd(25,35)*1000+m10(100,900); return {steps:[KS(`둘이 잰 무게는 몇 g?`,'num',mom+kid,`${lm(mom+kid,'kg')} = ${mom+kid} g`,{unit:'g'}),KS(`엄마 혼자 잰 무게는 몇 g?`,'num',mom,`${lm(mom,'kg')} = ${mom} g`,{unit:'g'}),KS(`시훈이 몸무게는 몇 kg 몇 g?`,'lm',kid,`${mom+kid} − ${mom} = ${kid}`,{units:'kg'})], text:`엄마가 시훈이를 안고 저울에 올라가면 ${lm(mom+kid,'kg')}이에요. 엄마 혼자 올라가면 ${lm(mom,'kg')}이에요.<br>시훈이의 몸무게는 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:kid, fm:'steps',
     hints:['둘이 잰 무게에서 엄마 무게를 빼요.','kg은 kg끼리, g은 g끼리.'], sol:[`${lm(mom+kid,'kg')} − ${lm(mom,'kg')} = <b>${lm(kid,'kg')}</b>`], bugs:[nbug(2*mom+kid,'op','빼야 해요.')]}; },
  lv=>{ if(Math.random()<0.5){ const ap=m10(150,320), bk=m10(300,900), n=rnd(5,8), k=rnd(2,4); const X=bk+n*ap, Y=X-k*ap; const ask=Math.random()<0.5?'basket':'apple';
-    return {text:`무게가 같은 사과 ${n}개가 든 바구니의 무게는 ${lm(X,'kg')}이에요. 여기서 사과 ${k}개를 꺼냈더니 ${lm(Y,'kg')}이 되었어요.<br>${ask==='basket'?'빈 바구니의 무게는 몇 g인가요?':'사과 1개의 무게는 몇 g인가요?'}`, type:'num', unit:'g', answer:ask==='basket'?bk:ap, fm:'back',
+    return {steps:[KS(`꺼낸 사과 ${k}개의 무게는 몇 g?`,'num',X-Y,`${X} − ${Y} = ${X-Y}`,{unit:'g'}),KS(`사과 1개는 몇 g?`,'num',ap,`${X-Y} ÷ ${k} = ${ap}`,{unit:'g'}),...(ask==='basket'?[KS(`사과 ${n}개는 몇 g?`,'num',n*ap,`${ap} × ${n} = ${n*ap}`,{unit:'g'}),KS(`빈 바구니는 몇 g?`,'num',bk,`${X} − ${n*ap} = ${bk}`,{unit:'g'})]:[])], text:`무게가 같은 사과 ${n}개가 든 바구니의 무게는 ${lm(X,'kg')}이에요. 여기서 사과 ${k}개를 꺼냈더니 ${lm(Y,'kg')}이 되었어요.<br>${ask==='basket'?'빈 바구니의 무게는 몇 g인가요?':'사과 1개의 무게는 몇 g인가요?'}`, type:'num', unit:'g', answer:ask==='basket'?bk:ap, fm:'back',
      hints:[`꺼낸 사과 ${k}개의 무게 = 두 무게의 차이`,`${X} − ${Y} = ${X-Y} g → 사과 1개 = ${ap} g`], sol:[`사과 ${k}개 = ${X} g − ${Y} g = ${X-Y} g`,`사과 1개 = ${ap} g`,ask==='basket'?`사과 ${n}개 = ${n*ap} g, 바구니 = ${X} − ${n*ap} = <b>${bk} g</b>`:`<b>${ap} g</b>`],
      bugs:[nbug(X-Y,'stop','그건 사과 '+k+'개 무게예요.'),nbug(ask==='basket'?ap:bk,'which','묻는 것을 다시 봐요.'),nbug(Y,'stop','바구니만 남은 게 아니라 사과가 아직 '+(n-k)+'개 들어 있어요.'),nbug(X-n*(X-Y),'stop','사과 1개 무게를 먼저 구해요 (÷ '+k+').')]}; }
    const ap=m10(150,320), bag=m10(300,900), k1=rnd(2,4), k2=k1+rnd(2,4), k3=rnd(1,8); const A=bag+k1*ap, B=bag+k2*ap, ans=bag+k3*ap; if(k3===k1||k3===k2) return null;
-   return {text:`가방에 같은 사과 ${k1}개를 넣으면 ${lm(A,'kg')}, 사과 ${k2}개를 넣으면 ${lm(B,'kg')}이에요.<br>가방에 사과 ${k3}개를 넣으면 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:ans, fm:'back',
+   return {steps:[KS(`사과 ${k2-k1}개의 무게는 몇 g?`,'num',B-A,`${B} − ${A} = ${B-A}`,{unit:'g'}),KS(`사과 1개는 몇 g?`,'num',ap,`${B-A} ÷ ${k2-k1} = ${ap}`,{unit:'g'}),KS(`빈 가방은 몇 g?`,'num',bag,`${A} − ${ap} × ${k1} = ${bag}`,{unit:'g'}),KS(`사과 ${k3}개를 넣으면 몇 kg 몇 g?`,'lm',ans,`${bag} + ${ap} × ${k3} = ${ans}`,{units:'kg'})], text:`가방에 같은 사과 ${k1}개를 넣으면 ${lm(A,'kg')}, 사과 ${k2}개를 넣으면 ${lm(B,'kg')}이에요.<br>가방에 사과 ${k3}개를 넣으면 몇 kg 몇 g인가요?`, type:'lm', units:'kg', answer:ans, fm:'back',
     hints:[`차이는 사과 ${k2-k1}개.`,`사과 1개 = ${B-A} ÷ ${k2-k1} = ${ap} g, 빈 가방 = ${A} − ${k1*ap} = ${bag} g`], sol:[`사과 1개 ${ap} g, 빈 가방 ${bag} g`,`${bag} + ${ap} × ${k3} = <b>${lm(ans,'kg')}</b>`],
     bugs:[nbug(k3*ap,'stop','가방 무게를 빠뜨렸어요.'),nbug(Math.round(A/k1*k3),'stop','가방도 같이 '+k3+'배 했어요. 가방은 하나!')]}; });
 
@@ -3962,36 +4040,51 @@ calcSkill('kg','wtcalc','무게의 덧셈과 뺄셈','무게',
 function pgData(units,n,minV,maxV){ const step=units[units.length-1]; const vals=[]; while(vals.length<n){ const v=rnd(minV/step,maxV/step)*step; if(!vals.includes(v)) vals.push(v); } return vals; }
 function unitSet(lv){ if(lv<=1) return [10,1]; if(lv===2) return pick([[10,5,1],[100,10]]); return pick([[100,10],[10,1],[100,50,10]]); }
 function rangeFor(u){ if(u[0]===100) return [u[u.length-1]*3,u[0]*5-u[u.length-1]]; return [u[u.length-1]*3,59]; }
+const hbat=w=>{ const c=String(w).charCodeAt(String(w).length-1); return c>=0xAC00&&c<=0xD7A3?(c-0xAC00)%28!==0:/[0136780]$/.test(String(w)); };
+const kjo=(w,pr)=>w+pickP(hbat(w),pr);
+const PGNM=u=>u.length===3?['큰','중간','작은']:['큰','작은'];
+// 그래프 한 줄 읽기 계단
+function pgReadSteps(cat,v,units,un){ const cnt=iconsOf(v,units), nm=PGNM(units);
+  return [KS(`큰 그림 하나는 몇 ${un}?`,'num',units[0],`그림 설명: 큰 그림 = ${units[0]}${un}`,{unit:un}),
+   ...cnt.map((c,k)=>KS(`${cat} 줄의 ${nm[k]} 그림은 몇 개?`,'num',c,`${nm[k]} 그림 ${c}개`,{unit:'개'})),
+   KS(`${kjo(cat,'은')} 모두 몇 ${un}?`,'num',v,cnt.map((c,k)=>`${units[k]} × ${c}`).join(' + ')+` = ${v}`,{unit:un})]; }
+// 그림으로 나타내기 계단
+function pgDrawSteps(v,units,un){ const cnt=iconsOf(v,units), nm=PGNM(units); const r1=v-cnt[0]*units[0];
+  const st=[KS(`${v}에 큰 그림(${units[0]}${un})은 몇 개 들어가요?`,'num',cnt[0],`${units[0]} × ${cnt[0]} = ${cnt[0]*units[0]}`,{unit:'개'}),
+   KS(`큰 그림으로 나타내고 남는 수는?`,'num',r1,`${v} − ${cnt[0]*units[0]} = ${r1}`,{unit:un})];
+  for(let k=1;k<units.length;k++) if((k===1?r1:r1-cnt[1]*units[1])>0) st.push(KS(`${k===1?r1:r1-cnt[1]*units[1]}에 ${nm[k]} 그림(${units[k]}${un})은 몇 개?`,'num',cnt[k],`${units[k]} × ${cnt[k]} = ${cnt[k]*units[k]}`,{unit:'개'}));
+  st.push(KS(`그림을 놓아 보세요.`,'pg',cnt,cnt.map((c,k)=>`${nm[k]} ${c}개`).join(', '),{units,unitName:un,value:v}));
+  return st; }
 S({id:'pgread',unit:'그림그래프',title:'그림그래프 읽기',moves:{
   legend:'큰 그림과 작은 그림이 각각 얼마인지 먼저 본다', bigfirst:'큰 그림부터 세고 작은 그림을 더한다', table:'표와 그래프를 맞춰 보고 빠진 칸부터 채운다', cond:'모르는 두 수를 합과 차로 찾는다'},
  learn:`<p>그림그래프는 <b>그림 크기마다 값이 달라요</b>.</p><div class="ex">큰 ● 10명, 작은 • 1명 → ●●●•• = 32명</div><ul><li>그림 <b>개수</b>를 세면 안 되고, 그림마다 값을 더해요</li><li>큰 그림이 많은 줄이 거의 언제나 커요</li></ul>`,
  gen:[
   lv=>{ const set=pick(PGSETS), n=Math.min(4,set.cats.length), units=[10,1]; const vals=pgData(units,n,11,49); const i=rnd(0,n-1); const cnt=iconsOf(vals[i],units);
-   return {text:`${set.cats[i]}의 ${set.what}는 몇 ${set.unitName}인가요?`, svg:pgraph({title:set.title,cats:set.cats.slice(0,n),vals,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[i], fm:'bigfirst',
+   return {steps:pgReadSteps(set.cats[i],vals[i],units,set.unitName), text:`${set.cats[i]}의 ${kjo(set.what,'은')} 몇 ${set.unitName}인가요?`, svg:pgraph({title:set.title,cats:set.cats.slice(0,n),vals,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[i], fm:'bigfirst',
     hints:['아래 그림 설명부터 봐요. 큰 그림은 얼마?',`큰 그림 ${cnt[0]}개 = ${cnt[0]*10}, 작은 그림 ${cnt[1]}개 = ${cnt[1]}`], sol:[`큰 그림 ${cnt[0]}개 → ${cnt[0]*10}`,`작은 그림 ${cnt[1]}개 → ${cnt[1]}`,`<b>${vals[i]}${set.unitName}</b>`],
     bugs:[nbug(cnt[0]+cnt[1],'icon-count','그림 개수를 셌어요. 큰 그림 하나는 10이에요.'),nbug(cnt[1]*10+cnt[0],'icon-size','큰 그림과 작은 그림 값이 바뀌었어요.')]}; },
   lv=>{ const set=pick(PGSETS), n=set.cats.length===5&&Math.random()<0.5?5:4, units=[10,1]; const vals=pgData(units,n,11,59); const g=pgraph({title:set.title,cats:set.cats.slice(0,n),vals,units,unitName:set.unitName}); const t=rnd(0,2);
-   if(t===0){ const big=Math.random()<0.5; const v=big?Math.max(...vals):Math.min(...vals); const opts=set.cats.slice(0,n); return {text:`${set.what}가 ${big?'가장 많은':'가장 적은'} 곳은?`, svg:g, type:'choice', options:opts, answer:opts[vals.indexOf(v)], fm:'bigfirst',
+   if(t===0){ const big=Math.random()<0.5; const v=big?Math.max(...vals):Math.min(...vals); const opts=set.cats.slice(0,n); return {steps:[KS(`${big?'가장 많은':'가장 적은'} 값은 몇 ${set.unitName}? (큰 그림 수부터 비교해요)`,'num',v,vals.map((x,k)=>`${opts[k]} ${x}`).join(', '),{unit:set.unitName}),KS(`그럼 ${big?'가장 많은':'가장 적은'} 곳은?`,'choice',opts[vals.indexOf(v)],`${v}${set.unitName} → ${opts[vals.indexOf(v)]}`,{options:opts})], text:`${kjo(set.what,'이')} ${big?'가장 많은':'가장 적은'} 곳은?`, svg:g, type:'choice', options:opts, answer:opts[vals.indexOf(v)], fm:'bigfirst',
      hints:['큰 그림 수부터 비교해요.','큰 그림 수가 같으면 작은 그림 수를 봐요.'], sol:[vals.map((x,i)=>`${opts[i]} ${x}`).join(', '),`<b>${opts[vals.indexOf(v)]}</b>`],
      bugs:(()=>{ const ic=vals.map(x=>iconsOf(x,units)[0]+iconsOf(x,units)[1]); const w=big?ic.indexOf(Math.max(...ic)):ic.indexOf(Math.min(...ic)); return w!==vals.indexOf(v)?[{v:opts[w],tag:'icon-count',msg:'그림 개수가 아니라 값으로 비교해요. 큰 그림이 많은 쪽이 커요.'}]:[]; })()}; }
-   if(t===1){ const T=vals.reduce((a,b)=>a+b,0); return {text:`${set.what}는 모두 몇 ${set.unitName}인가요?`, svg:g, type:'num', unit:set.unitName, answer:T, fm:'bigfirst',
+   if(t===1){ const T=vals.reduce((a,b)=>a+b,0); return {steps:[...set.cats.slice(0,n).map((c,k)=>KS(`${kjo(c,'은')} 몇 ${set.unitName}?`,'num',vals[k],iconsOf(vals[k],units).map((x,q)=>`${units[q]} × ${x}`).join(' + ')+` = ${vals[k]}`,{unit:set.unitName})),KS(`모두 더하면?`,'num',T,`${vals.join(' + ')} = ${T}`,{unit:set.unitName})], short:[...set.cats.slice(0,n).map((_,k)=>k).filter(k=>k>=2),n], text:`${kjo(set.what,'은')} 모두 몇 ${set.unitName}인가요?`, svg:g, type:'num', unit:set.unitName, answer:T, fm:'bigfirst',
      hints:['줄마다 값을 먼저 구해요.',vals.map((x,i)=>`${set.cats[i]} ${x}`).join(', ')], sol:[vals.join(' + '),`= <b>${T}${set.unitName}</b>`], bugs:[nbug(vals.reduce((a,x)=>a+iconsOf(x,units)[0]+iconsOf(x,units)[1],0),'icon-count','그림 개수를 모두 셌어요.')]}; }
-   const i=vals.indexOf(Math.max(...vals)), j=vals.indexOf(Math.min(...vals)); return {text:`${set.what}가 가장 많은 곳은 가장 적은 곳보다 몇 ${set.unitName} 더 많은가요?`, svg:g, type:'num', unit:set.unitName, answer:vals[i]-vals[j], fm:'bigfirst',
+   const i=vals.indexOf(Math.max(...vals)), j=vals.indexOf(Math.min(...vals)); return {steps:[KS(`가장 많은 곳은 몇 ${set.unitName}?`,'num',vals[i],`${set.cats[i]} ${vals[i]}`,{unit:set.unitName}),KS(`가장 적은 곳은 몇 ${set.unitName}?`,'num',vals[j],`${set.cats[j]} ${vals[j]}`,{unit:set.unitName}),KS(`몇 ${set.unitName} 더 많아요?`,'num',vals[i]-vals[j],`${vals[i]} − ${vals[j]} = ${vals[i]-vals[j]}`,{unit:set.unitName})], text:`${kjo(set.what,'이')} 가장 많은 곳은 가장 적은 곳보다 몇 ${set.unitName} 더 많은가요?`, svg:g, type:'num', unit:set.unitName, answer:vals[i]-vals[j], fm:'bigfirst',
     hints:['가장 많은 곳과 가장 적은 곳을 찾아요.',`${set.cats[i]} ${vals[i]}, ${set.cats[j]} ${vals[j]}`], sol:[`${vals[i]} − ${vals[j]} = <b>${vals[i]-vals[j]}${set.unitName}</b>`], bugs:[nbug(vals[i]+vals[j],'op','차이를 구해요.')]}; },
   lv=>{ const set=pick(PGSETS), n=4, units=unitSet(2); const [lo,hi]=rangeFor(units); const vals=pgData(units,n,lo,hi); const g=pgraph({title:set.title,cats:set.cats.slice(0,n),vals,units,unitName:set.unitName});
-   if(Math.random()<0.5){ const i=rnd(0,n-1), cnt=iconsOf(vals[i],units); return {text:`${set.cats[i]}의 ${set.what}는 몇 ${set.unitName}인가요? (그림 설명을 잘 봐요)`, svg:g, type:'num', unit:set.unitName, answer:vals[i], fm:'legend',
+   if(Math.random()<0.5){ const i=rnd(0,n-1), cnt=iconsOf(vals[i],units); return {steps:pgReadSteps(set.cats[i],vals[i],units,set.unitName), text:`${set.cats[i]}의 ${kjo(set.what,'은')} 몇 ${set.unitName}인가요? (그림 설명을 잘 봐요)`, svg:g, type:'num', unit:set.unitName, answer:vals[i], fm:'legend',
      hints:[`그림 ${units.length}가지: ${units.join(', ')}`,cnt.map((c,k)=>`${units[k]} × ${c}`).join(' + ')], sol:[cnt.map((c,k)=>`${units[k]} × ${c}`).join(' + '),`= <b>${vals[i]}${set.unitName}</b>`],
      bugs:[nbug(units.length===3?cnt[0]*10+cnt[1]+cnt[2]:cnt[0]*10+cnt[1],'icon-size',units.length===3?'중간 그림은 1이 아니라 '+units[1]+'이에요. 그림 설명을 다시 봐요.':'큰 그림은 '+units[0]+', 작은 그림은 '+units[1]+'이에요. 그림 설명을 다시 봐요.'),nbug(cnt.reduce((a,b)=>a+b,0),'icon-count','그림 개수를 셌어요.')]}; }
    const i=rnd(0,n-1); let j; do{j=rnd(0,n-1);}while(j===i); const a=Math.max(vals[i],vals[j]), b=Math.min(vals[i],vals[j]); const A=vals[i]>vals[j]?set.cats[i]:set.cats[j], Bn=vals[i]>vals[j]?set.cats[j]:set.cats[i];
-   return {text:`${A}는 ${Bn}보다 ${set.what}가 몇 ${set.unitName} 더 많은가요?`, svg:g, type:'num', unit:set.unitName, answer:a-b, fm:'legend', hints:['두 줄의 값을 각각 구해요.',`${A} ${a}, ${Bn} ${b}`], sol:[`${a} − ${b} = <b>${a-b}${set.unitName}</b>`], bugs:[nbug(a+b,'op','차이를 구해요.')]}; },
+   return {steps:[KS(`큰 그림 하나는 몇 ${set.unitName}?`,'num',units[0],`그림 설명: 큰 그림 = ${units[0]}${set.unitName}`,{unit:set.unitName}),KS(`${kjo(A,'은')} 몇 ${set.unitName}?`,'num',a,iconsOf(a,units).map((x,q)=>`${units[q]} × ${x}`).join(' + ')+` = ${a}`,{unit:set.unitName}),KS(`${kjo(Bn,'은')} 몇 ${set.unitName}?`,'num',b,iconsOf(b,units).map((x,q)=>`${units[q]} × ${x}`).join(' + ')+` = ${b}`,{unit:set.unitName}),KS(`몇 ${set.unitName} 더 많아요?`,'num',a-b,`${a} − ${b} = ${a-b}`,{unit:set.unitName})], text:`${kjo(A,'은')} ${Bn}보다 ${kjo(set.what,'이')} 몇 ${set.unitName} 더 많은가요?`, svg:g, type:'num', unit:set.unitName, answer:a-b, fm:'legend', hints:['두 줄의 값을 각각 구해요.',`${A} ${a}, ${Bn} ${b}`], sol:[`${a} − ${b} = <b>${a-b}${set.unitName}</b>`], bugs:[nbug(a+b,'op','차이를 구해요.')]}; },
   lv=>{ const set=pick(PGSETS), n=4, units=unitSet(3); const [lo,hi]=rangeFor(units); const vals=pgData(units,n,lo,hi); const T=vals.reduce((a,b)=>a+b,0); const m=rnd(0,n-1); const shown=vals.map((v,i)=>i===m?null:v);
-   if(Math.random()<0.5) return {text:`표와 그림그래프에서 ${set.cats[m]}의 칸이 비어 있어요. 합계를 보고 ${set.cats[m]}의 ${set.what}를 구하세요.`, svg:tableHTML(set.cats.slice(0,n),shown,set.unitName,set.head,T)+pgraph({title:set.title,cats:set.cats.slice(0,n),vals:shown,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[m], fm:'table',
+   if(Math.random()<0.5) return {steps:[KS(`합계는 몇 ${set.unitName}?`,'num',T,`합계 ${T}`,{unit:set.unitName}),KS(`보이는 칸을 모두 더하면?`,'num',T-vals[m],`${vals.filter((_,k)=>k!==m).join(' + ')} = ${T-vals[m]}`,{unit:set.unitName}),KS(`${set.cats[m]}의 ${kjo(set.what,'은')}?`,'num',vals[m],`${T} − ${T-vals[m]} = ${vals[m]}`,{unit:set.unitName})], text:`표와 그림그래프에서 ${set.cats[m]}의 칸이 비어 있어요. 합계를 보고 ${set.cats[m]}의 ${kjo(set.what,'을')} 구하세요.`, svg:tableHTML(set.cats.slice(0,n),shown,set.unitName,set.head,T)+pgraph({title:set.title,cats:set.cats.slice(0,n),vals:shown,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[m], fm:'table',
      hints:['다른 칸을 모두 더해요.',`합계 ${T} − (${vals.filter((_,i)=>i!==m).join(' + ')})`], sol:[`다른 칸 합 = ${T-vals[m]}`,`${T} − ${T-vals[m]} = <b>${vals[m]}${set.unitName}</b>`], bugs:[nbug(T-vals[m],'which','그건 나머지의 합이에요.')]};
    const price=pick([300,500,200,400]); const i=vals.indexOf(Math.max(...vals)); const sset=PGSETS[3]; const g=pgraph({title:sset.title,cats:sset.cats,vals,units,unitName:'개'});
-   return {text:`빵 한 개의 값은 ${price}원이에요. 빵이 가장 많이 팔린 가게는 빵을 팔아 얼마를 받았나요?`, svg:g, type:'num', unit:'원', answer:vals[i]*price, fm:'legend',
+   return {steps:[KS(`빵이 가장 많이 팔린 가게는?`,'choice',sset.cats[i],vals.map((x,k)=>`${sset.cats[k]} ${x}개`).join(', '),{options:sset.cats.slice(0,4)}),KS(`그 가게는 빵을 몇 개 팔았어요?`,'num',vals[i],iconsOf(vals[i],units).map((x,q)=>`${units[q]} × ${x}`).join(' + ')+` = ${vals[i]}`,{unit:'개'}),KS(`${vals[i]}개 × ${price}원은?`,'num',vals[i]*price,`${vals[i]} × ${price} = ${vals[i]*price}`,{unit:'원'})], text:`빵 한 개의 값은 ${price}원이에요. 빵이 가장 많이 팔린 가게는 빵을 팔아 얼마를 받았나요?`, svg:g, type:'num', unit:'원', answer:vals[i]*price, fm:'legend',
     hints:['가장 많이 팔린 가게를 찾아 개수를 읽어요.',`${sset.cats[i]} ${vals[i]}개 × ${price}원`], sol:[`${sset.cats[i]}: ${vals[i]}개`,`${vals[i]} × ${price} = <b>${vals[i]*price}원</b>`], bugs:[nbug(vals[i],'stop','개수예요. 값(원)을 구해요.')]}; },
   lv=>{ for(let t=0;t<60;t++){ const set=pick(PGSETS.slice(0,4)), units=[10,1]; const vals=pgData(units,4,12,58); const D=vals[2]-vals[3]; if(D<=0) continue; const T=vals.reduce((a,b)=>a+b,0); const known=vals[0]+vals[1]; const shown=[vals[0],vals[1],null,null]; const ask=pick([2,3]);
-     return {text:`${set.cats[2]}와 ${set.cats[3]}의 그림이 지워졌어요. ${set.what}는 모두 ${T}${set.unitName}이고, ${set.cats[2]}는 ${set.cats[3]}보다 ${D}${set.unitName} 더 많아요.<br>${set.cats[ask]}의 ${set.what}는 몇 ${set.unitName}인가요?`, svg:pgraph({title:set.title,cats:set.cats.slice(0,4),vals:shown,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[ask], fm:'cond',
+     return {steps:[KS(`보이는 ${kjo(set.cats[0],'과')} ${kjo(set.cats[1],'을')} 더하면?`,'num',known,`${vals[0]} + ${vals[1]} = ${known}`,{unit:set.unitName}),KS(`지워진 두 곳을 합하면?`,'num',T-known,`${T} − ${known} = ${T-known}`,{unit:set.unitName}),KS(`합에서 차를 빼고 반으로 나누면 ${kjo(set.cats[3],'은')}?`,'num',vals[3],`(${T-known} − ${D}) ÷ 2 = ${vals[3]}`,{unit:set.unitName}),...(ask===2?[KS(`${kjo(set.cats[2],'은')}?`,'num',vals[2],`${vals[3]} + ${D} = ${vals[2]}`,{unit:set.unitName})]:[])], text:`${kjo(set.cats[2],'과')} ${set.cats[3]}의 그림이 지워졌어요. ${kjo(set.what,'은')} 모두 ${T}${set.unitName}이고, ${kjo(set.cats[2],'은')} ${set.cats[3]}보다 ${D}${set.unitName} 더 많아요.<br>${set.cats[ask]}의 ${kjo(set.what,'은')} 몇 ${set.unitName}인가요?`, svg:pgraph({title:set.title,cats:set.cats.slice(0,4),vals:shown,units,unitName:set.unitName}), type:'num', unit:set.unitName, answer:vals[ask], fm:'cond',
       hints:[`먼저 지워진 두 곳의 합: ${T} − ${vals[0]} − ${vals[1]}`,`두 곳 합 ${T-known}, 차 ${D}. 큰 쪽에서 ${D}를 빼면 둘이 같아져요.`],
       sol:[`두 곳 합 = ${T} − ${known} = ${T-known}`,`(${T-known} − ${D}) ÷ 2 = ${vals[3]} → ${set.cats[3]}`,`${set.cats[2]} = ${vals[3]} + ${D} = ${vals[2]}`,`<b>${vals[ask]}${set.unitName}</b>`],
       bugs:[nbug(vals[ask===2?3:2],'which','다른 곳의 값이에요.'),nbug(T-known,'stop','두 곳을 합친 값이에요.'),...((T-known)%2===0?[nbug((T-known)/2,'half','두 곳은 '+D+' 차이가 나요. 똑같이 나누면 안 돼요.')]:[])]}; } return null; }
@@ -3999,22 +4092,22 @@ S({id:'pgread',unit:'그림그래프',title:'그림그래프 읽기',moves:{
 
 // ---------- 10 그림그래프 그리기 ----------
 function pgQ(text,svg,v,units,unitName,fm,extra={}){ const ans=iconsOf(v,units);
-  return {text, svg, type:'pg', units, unitName, answer:ans, value:v, fm, hints:extra.hints||[`큰 그림 하나는 ${units[0]}${unitName}. ${v}에 ${units[0]}이 몇 번?`,`큰 그림 ${ans[0]}개, 남은 ${v-ans[0]*units[0]}${units.length===3?` → 중간 그림(${units[1]}) ${ans[1]}개, 작은 그림 ${ans[2]}개`:` → 작은 그림 ${ans[1]}개`}`],
+  return {steps:(extra.ks||[]).concat(pgDrawSteps(v,units,unitName)), text, svg, type:'pg', units, unitName, answer:ans, value:v, fm, hints:extra.hints||[`큰 그림 하나는 ${units[0]}${unitName}. ${v}에 ${units[0]}이 몇 번?`,`큰 그림 ${ans[0]}개, 남은 ${v-ans[0]*units[0]}${units.length===3?` → 중간 그림(${units[1]}) ${ans[1]}개, 작은 그림 ${ans[2]}개`:` → 작은 그림 ${ans[1]}개`}`],
    sol:(extra.pre||[]).concat([`${v} = ${ans.map((c,k)=>`${units[k]} × ${c}`).join(' + ')}`,`큰 그림부터: <b>${ans.map((c,k)=>`${['큰','중간','작은'][units.length===2&&k===1?2:k]} ${c}개`).join(', ')}</b>`]), bugs:extra.bugs||[]}; }
 S({id:'pgdraw',unit:'그림그래프',title:'그림그래프 그리기와 해석',moves:{
   bigfirst:'큰 그림으로 최대한 나타내고 남는 것을 작은 그림으로', table:'표의 빈칸부터 구한다', cond:'조건으로 수를 먼저 구하고 그린다', legend:'그림 단위를 정할 때 그림 수가 너무 많지 않게 한다'},
  learn:`<p>그릴 때는 <b>큰 그림부터</b> 최대한 많이!</p><div class="ex">34명 (큰 그림 10명, 작은 그림 1명) → 큰 그림 3개 + 작은 그림 4개</div><ul><li>작은 그림 10개가 되면 큰 그림 1개로 바꿔요</li><li>세 가지 그림이면 큰 → 중간 → 작은 순서로</li></ul>`,
  gen:[
-  lv=>{ const set=pick(PGSETS), v=rnd(12,58); return pgQ(`${set.cats[0]}의 ${set.what}는 ${v}${set.unitName}이에요. 그림그래프로 그려 보세요. (큰 그림 10${set.unitName}, 작은 그림 1${set.unitName})`,null,v,[10,1],set.unitName,'bigfirst'); },
+  lv=>{ const set=pick(PGSETS), v=rnd(12,58); return pgQ(`${set.cats[0]}의 ${kjo(set.what,'은')} ${v}${set.unitName}이에요. 그림그래프로 그려 보세요. (큰 그림 10${set.unitName}, 작은 그림 1${set.unitName})`,null,v,[10,1],set.unitName,'bigfirst'); },
   lv=>{ const set=pick(PGSETS), units=[10,1]; const vals=pgData(units,4,12,58); const i=rnd(0,3); const shown=vals.map((v,k)=>k===i?null:v);
    return pgQ(`표를 보고 그림그래프의 ${set.cats[i]} 줄을 그려 보세요.`, tableHTML(set.cats.slice(0,4),vals,set.unitName,set.head)+pgraph({title:set.title,cats:set.cats.slice(0,4),vals:shown,units,unitName:set.unitName}), vals[i],units,set.unitName,'bigfirst'); },
   lv=>{ const set=pick(PGSETS); if(Math.random()<0.5){ const v=rnd(11,59); return pgQ(`${set.cats[1]}의 ${set.what} ${v}${set.unitName}을(를) 그려 보세요. 그림은 세 가지예요: 큰 그림 10, 중간 그림 5, 작은 그림 1.`,null,v,[10,5,1],set.unitName,'bigfirst'); }
-   const v=rnd(12,48)*10; return pgQ(`${set.cats[2]}의 ${set.what}는 ${v}${set.unitName}이에요. 큰 그림 100${set.unitName}, 작은 그림 10${set.unitName}으로 그려 보세요.`,null,v,[100,10],set.unitName,'bigfirst'); },
+   const v=rnd(12,48)*10; return pgQ(`${set.cats[2]}의 ${kjo(set.what,'은')} ${v}${set.unitName}이에요. 큰 그림 100${set.unitName}, 작은 그림 10${set.unitName}으로 그려 보세요.`,null,v,[100,10],set.unitName,'bigfirst'); },
   lv=>{ const set=pick(PGSETS), units=pick([[10,1],[100,10]]); const [lo,hi]=rangeFor(units); const vals=pgData(units,4,lo,hi); const T=vals.reduce((a,b)=>a+b,0); const m=rnd(0,3); const shown=vals.map((v,i)=>i===m?null:v);
-   return pgQ(`표의 빈칸을 구해서 그림그래프의 ${set.cats[m]} 줄을 그려 보세요.`, tableHTML(set.cats.slice(0,4),shown,set.unitName,set.head,T)+pgraph({title:set.title,cats:set.cats.slice(0,4),vals:shown,units,unitName:set.unitName}), vals[m],units,set.unitName,'table',{pre:[`빈칸 = ${T} − ${T-vals[m]} = ${vals[m]}`],hints:['합계에서 다른 칸을 빼요.',`빈칸 = ${vals[m]}. 이제 큰 그림부터 그려요.`]}); },
+   return pgQ(`표의 빈칸을 구해서 그림그래프의 ${set.cats[m]} 줄을 그려 보세요.`, tableHTML(set.cats.slice(0,4),shown,set.unitName,set.head,T)+pgraph({title:set.title,cats:set.cats.slice(0,4),vals:shown,units,unitName:set.unitName}), vals[m],units,set.unitName,'table',{ks:[KS(`보이는 칸을 모두 더하면?`,'num',T-vals[m],`${vals.filter((_,k)=>k!==m).join(' + ')} = ${T-vals[m]}`,{unit:set.unitName}),KS(`빈칸(${set.cats[m]})은?`,'num',vals[m],`${T} − ${T-vals[m]} = ${vals[m]}`,{unit:set.unitName})],pre:[`빈칸 = ${T} − ${T-vals[m]} = ${vals[m]}`],hints:['합계에서 다른 칸을 빼요.',`빈칸 = ${vals[m]}. 이제 큰 그림부터 그려요.`]}); },
   lv=>{ for(let t=0;t<50;t++){ const set=pick(PGSETS.slice(0,4)), units=[100,50,10]; const b=rnd(8,22)*10, D=rnd(3,15)*10, a=b+D, T=a+b; const ask=pick([0,1]); const v=ask===0?a:b;
-     return pgQ(`${set.cats[0]}와 ${set.cats[1]}의 ${set.what}를 합하면 ${T}${set.unitName}이고, ${set.cats[0]}가 ${set.cats[1]}보다 ${D}${set.unitName} 더 많아요.<br>${set.cats[ask]}의 ${set.what}를 그림그래프로 그려 보세요. (큰 그림 100, 중간 그림 50, 작은 그림 10)`,null,v,units,set.unitName,'cond',
-      {pre:[`${set.cats[1]} = (${T} − ${D}) ÷ 2 = ${b}`,`${set.cats[0]} = ${b} + ${D} = ${a}`],hints:['합과 차로 먼저 수를 구해요.',`${set.cats[1]} = (${T} − ${D}) ÷ 2 = ${b}, ${set.cats[0]} = ${a}`],
+     return pgQ(`${kjo(set.cats[0],'과')} ${set.cats[1]}의 ${kjo(set.what,'을')} 합하면 ${T}${set.unitName}이고, ${kjo(set.cats[0],'이')} ${set.cats[1]}보다 ${D}${set.unitName} 더 많아요.<br>${set.cats[ask]}의 ${kjo(set.what,'을')} 그림그래프로 그려 보세요. (큰 그림 100, 중간 그림 50, 작은 그림 10)`,null,v,units,set.unitName,'cond',
+      {ks:[KS(`합에서 차를 빼고 반으로 나누면 ${kjo(set.cats[1],'은')}?`,'num',b,`(${T} − ${D}) ÷ 2 = ${b}`,{unit:set.unitName}),...(ask===0?[KS(`${kjo(set.cats[0],'은')}?`,'num',a,`${b} + ${D} = ${a}`,{unit:set.unitName})]:[])],pre:[`${set.cats[1]} = (${T} − ${D}) ÷ 2 = ${b}`,`${set.cats[0]} = ${b} + ${D} = ${a}`],hints:['합과 차로 먼저 수를 구해요.',`${set.cats[1]} = (${T} − ${D}) ÷ 2 = ${b}, ${set.cats[0]} = ${a}`],
        bugs:[{v:iconsOf(ask===0?b:a,units).join(','),tag:'which',msg:'다른 곳의 값으로 그렸어요.'},...(T%20===0?[{v:iconsOf(T/2,units).join(','),tag:'half',msg:'둘은 '+D+' 차이가 나요. 반으로 나누면 안 돼요.'}]:[])]}); } return null; }
  ]});
 
@@ -4126,7 +4219,7 @@ function freshProg(){ const sk={}; SKILLS.forEach(s=>sk[s.id]={lv:0,st:[0,0,0,0,
 let PROG=freshProg(), SAVED_ATT=[], UNSAVED=[], DIRTY=false, DBH=null, DB_STATE='loading';
 const today=()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
 const allAtt=()=>SAVED_ATT.concat(UNSAVED);
-function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; f.pf=d.pf||{}; f.pfrev=d.pfrev||{}; if(d.pfday) f.pfday=d.pfday; f.kstep=d.kstep||{}; return f; }
+function mergeProg(d){ const f=freshProg(); if(!d||!d.sk) return f; SKILLS.forEach(s=>{ if(d.sk[s.id]) f.sk[s.id]=Object.assign(f.sk[s.id],d.sk[s.id]); }); f.whys=d.whys||[]; f.ctime=d.ctime||[]; f.penOnly=!!d.penOnly; f.book=d.book||{}; if(d.resume) f.resume=d.resume; f.pf=d.pf||{}; f.pfrev=d.pfrev||{}; if(d.pfday) f.pfday=d.pfday; f.kstep=d.kstep||{}; if(d.bookU) f.bookU=d.bookU; return f; }
 async function loadDB(){
   const timer=setTimeout(()=>{ if(DB_STATE==='loading'){ DB_STATE='offline'; refreshTop(); } },10000);
   try{ DBH=EMBED?await HUB.db:await claude.use('db'); }catch(e){ DBH=null; }
@@ -4211,7 +4304,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   if($('#pfgo')) $('#pfgo').onclick=startReview;
   $('#go').onclick=()=>{ if(t.kind==='book') bookStart(t.ui,t.gi); else if(t.kind==='lesson') startLesson(t.i); else if(t.kind==='check') startCheck(t.i); else startSolve(t.i,t.lv); };
   document.querySelectorAll('.sk:not(.bkc):not(.g4c)').forEach(b=>b.onclick=()=>skillPage(+b.dataset.i)); document.querySelectorAll('.g4c').forEach(b=>b.onclick=()=>toast(allPassed()?'오늘의 공부 첫 화면 → 수학에서 큰 수를 시작해요.':'3-2 문제를 모두 1~5단계까지 하면 4학년 큰 수가 열려요. 조금만 더!')); $('#parent').onclick=parentGate; bindCommon(); }
-function bookCard(u){ const BOOK=bookObj(); if(!BOOK) return ''; const U=BOOK.units.find(x=>x.title===u); if(!U) return ''; const D=PROG.book||{};
+function bookCard(u){ const BOOK=bookObj(); if(!BOOK) return ''; if(!PROG.bookU){ PROG.bookU=Object.fromEntries(BOOK.units.map(x=>[x.id,x.title])); DIRTY=true; } const U=BOOK.units.find(x=>x.title===u); if(!U) return ''; const D=PROG.book||{};
   const all=U.groups.flatMap(g=>g.items), d=all.filter(it=>D[U.id+'/'+it.id]).length, open=unitDone(u);
   return `<button class="sk bkc ${open?'':'lock'}" data-u="${U.id}"><h3>📘 최상위 문제집 · ${u}</h3><div class="pips"><span class="pip ${d===all.length?'done':open?'now':''}">${open?`${d} / ${all.length}`:'🔒 5단계까지 다 하면 열려요'}</span></div></button>`; }
 function skCard(s,i){ const r=PROG.sk[s.id];
@@ -4387,7 +4480,7 @@ function mountProblem(box,p,opts){
       st.wrong.push(k); if(r.bug&&r.bug.tag) st.tags.push(r.bug.tag); st.lastMsg=(!r.bug&&r.msg)?r.msg:''; askPen(); }; }
   function finish(res,note){ st.done=true; ist.locked=true; st.res=res; const sec=st.secAns!=null?st.secAns:Math.round((Date.now()-st.t0)/1000);
     box.querySelector('#macts').style.display='none';
-    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:p.book?'book:'+p.book:SKILLS[p.sk].id,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,qc:st.qc||null,cond:st.cond||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),penAsk:st.penAsk||null,solSeen:false,fixed:!!st.fixed,learn:null,tutor:st.tutor?{turns:st.tutor.turns,read:st.tutor.read,mom:st.tutor.mom,shorter:st.tutor.shorter,pic:st.tutor.pic||null,end:st.tutor.end,calls:st.tutor.calls,err:st.tutor.err||null}:null}:{})};
+    const rec={d:today(),ts:new Date().toISOString(),mode:opts.mode,sk:p.book?'book:'+p.book:SKILLS[p.sk].id,unit:p.bunit||null,lv:p.lv,res,tries:st.tries,hints:st.hints,wrong:st.wrong,tags:st.tags,sec,fm:p.fm,qc:st.qc||null,cond:st.cond||null,mv:null,why:null,q:stripTags(p.text).slice(0,140),ans:stripTags(answerText(p)),...(solve?{pen:penSnap(st),penAsk:st.penAsk||null,solSeen:false,fixed:!!st.fixed,learn:null,tutor:st.tutor?{turns:st.tutor.turns,read:st.tutor.read,mom:st.tutor.mom,shorter:st.tutor.shorter,pic:st.tutor.pic||null,end:st.tutor.end,calls:st.tutor.calls,err:st.tutor.err||null}:null}:{})};
     const solHTML=p.sol.map(x=>`<div class="st">${x}</div>`).join('');
     if(res==='x'&&solve){ show('x',`정답은 <b>${answerText(p)}</b> 이에요. 괜찮아요, 다음 문제로 가요.<div class="tagline">풀이가 궁금하면 📖 풀이 보기</div>`);
       box.querySelector('#sol').innerHTML=`<button class="solbtn" id="sv">📖 풀이 보기</button>`;
@@ -4651,13 +4744,13 @@ function kstAlone(si,lv,rec){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='x
 function kstStep(si,lv,pass){ const s=kstGet(si,lv); DIRTY=true; if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
 const kstShort=p=>p.short||(p.steps.length>=3?p.steps.map((_,k)=>k).slice(1):p.steps.map((_,k)=>k));
 function mountSteps(box,p,stage,opts){
-  const idx=stage===0?p.steps.map((_,k)=>k):kstShort(p).slice(); const NUM='①②③④⑤';
+  const idx=stage===0?p.steps.map((_,k)=>k):kstShort(p).slice(); const NUM='①②③④⑤⑥⑦⑧';
   const st={tries:0,hints:0,wrong:[],tags:[],t0:Date.now(),done:false,miss:[],clean:true}; let cur=0, att=0; const rows=[];
   box.innerHTML=`${problemCard(p)}<div id="inp"><div class="kstb">🪜 계단 문제: 작은 칸으로 나눠서 풀어요</div><div id="kstl"></div></div>
    <div class="acts" id="macts"><button class="ok" id="okb">확인</button></div><div class="fb" id="fb"></div><div class="sol" id="sol"></div><div id="after"></div>`;
   const fb=box.querySelector('#fb'), list=box.querySelector('#kstl'); const show=(cls,html)=>{ fb.className='fb show '+cls; fb.innerHTML=html; };
-  const sp=s=>({type:s.type,form:s.form||'frac',answer:s.answer,unit:s.unit,options:s.options,units:s.units,bugs:[]}); let ist={};
-  const ansTxt=s=>s.type==='frac'?fh(s.answer):String(s.answer)+(s.unit?' '+s.unit:'');
+  const sp=s=>({type:s.type,form:s.form||'frac',answer:s.answer,unit:s.unit,options:s.options,units:s.units,unitName:s.unitName,value:s.value,bugs:[]}); let ist={};
+  const ansTxt=s=>s.type==='frac'?fh(s.answer):s.type==='lm'?lm(s.answer,s.units):s.type==='pg'?s.answer.map((c,k)=>`${PGNM(s.units)[k]} ${c}개`).join(', '):String(s.answer)+(s.unit?' '+s.unit:'');
   function draw(){ list.innerHTML=rows.map((r,i)=>{ const s=p.steps[r.k]; return `<div class="kstr ${r.ok?'kdone':'kgive'}"><span class="kstn">${NUM[i]}</span>${s.q} → <b>${ansTxt(s)}</b> ${r.ok?'✓':''}${r.ok?'':`<div class="kstw">${s.why}</div>`}</div>`; }).join('')
       +(cur<idx.length?`<div class="kstr now"><span class="kstn">${NUM[cur]}</span>${p.steps[idx[cur]].q}<div id="kin">${inputHTML(sp(p.steps[idx[cur]]))}</div></div>`:'');
     if(cur<idx.length){ ist={}; mountInput(list.querySelector('#kin'),sp(p.steps[idx[cur]]),ist); } }
@@ -4683,7 +4776,7 @@ function mountSteps(box,p,stage,opts){
     const af=box.querySelector('#after'); af.innerHTML=`<div class="acts"><button class="next" id="nx" data-auto="${res==='h'?'ok':'x'}">다음 문제 ▶</button></div>`;
     af.querySelector('#nx').onclick=()=>opts.onNext&&opts.onNext(); setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),60); }
   return st; }
-const stepsTxt=s=>{ const N='①②③④⑤', e=t=>String(t).replace(/[<&]/g,''); return `🪜 계단 문제로 풂(${s.n}칸${s.n<s.all?', 줄인 칸':''}) · ${(s.miss||[]).length?'막힌 칸: '+s.miss.map(m=>(N[m.i-1]||m.i)+' '+e(m.q)).join(' / ')+' (답 보여 줌)':s.clean?'칸마다 한 번에 맞힘':'다시 해서 모두 맞힘'}${s.up===1?' · 다음부터 칸 줄임':s.up===2?' · 다음부터 혼자 풀기':''}`; };
+const stepsTxt=s=>{ const N='①②③④⑤⑥⑦⑧', e=t=>String(t).replace(/[<&]/g,''); return `🪜 계단 문제로 풂(${s.n}칸${s.n<s.all?', 줄인 칸':''}) · ${(s.miss||[]).length?'막힌 칸: '+s.miss.map(m=>(N[m.i-1]||m.i)+' '+e(m.q)).join(' / ')+' (답 보여 줌)':s.clean?'칸마다 한 번에 맞힘':'다시 해서 모두 맞힘'}${s.up===1?' · 다음부터 칸 줄임':s.up===2?' · 다음부터 혼자 풀기':''}`; };
 const fmtStepKey=(q,inp)=>q.type==='frac'?(inp.n||inp.d?(Number(inp.w||0)?inp.w+'과 ':'')+inp.n+'/'+inp.d:String(inp.w||'')):String(inp);
 function startSolve(si,lv){ CUR='solve'; C={si,lv,list:[],idx:-1,t0:Date.now()};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right')); newProblem(); }
@@ -4998,7 +5091,7 @@ function bookPG(g){ const nk=g.legend.length, SZ=nk===3?[26,18,11]:[26,13], CL=[
     :g.rows.map(r=>`<tr><th>${r[0]}</th><td class="pgc">${cell(r[1])}</td></tr>`).join('');
   const head=g.two?`<tr><th>${g.head[0]}</th><th>${g.head[1]}</th><th>${g.head[2]}</th></tr>`:`<tr><th>${g.head[0]}</th><th>${g.head[1]}</th></tr>`;
   return `<div class="bpg"><div class="bpgt">${g.title}</div><table class="bpgtab">${head}${body}</table><div class="bpgl">${g.legend.map((l,k)=>`${ic(k)} ${l}`).join(' &nbsp; ')}</div></div>`; }
-function bookProb(u,it){ const p=Object.assign({},it,{text:bookTxt(it.text)+`<div class="bsrc">📘 ${it.src}</div>`,svg:(it.pgs||[]).map(bookPG).join('')||undefined,hints:(it.hints||[]).map(bookTxt),sol:(it.sol||[]).map(bookTxt),bugs:[],fm:null,lv:5,book:`${u.id}/${it.id}`});
+function bookProb(u,it){ const p=Object.assign({},it,{text:bookTxt(it.text)+`<div class="bsrc">📘 ${it.src}</div>`,svg:(it.pgs||[]).map(bookPG).join('')||undefined,hints:(it.hints||[]).map(bookTxt),sol:(it.sol||[]).map(bookTxt),bugs:[],fm:null,lv:5,book:`${u.id}/${it.id}`,bunit:u.title});
   if(it.type==='frac') p.answer=F(it.answer.w||0,it.answer.n,it.answer.d);
   if(it.type==='set') p.answer=it.answer.map(a=>Array.isArray(a)?F(a[0],a[1],a[2]):a);
   return p; }
