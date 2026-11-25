@@ -299,6 +299,7 @@ async function teachFill(k){ const el=document.getElementById('tcbody'); if(!el)
   if(!L){ el.innerHTML='<p class="muted">기록을 못 불러왔어요.</p>'; return; }
   L.sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:1);
   el.innerHTML=L.length?L.map(teachHTML).join(''):'<p class="muted">이날 가르치기 기록이 없어요.</p>'; }
+const POSK={n:'명사',v:'동사',a:'형용사',d:'부사',p:'대명사',q:'의문사',r:'전치사'};
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
@@ -309,7 +310,7 @@ async function render(){
   const vn=(en.vocab&&en.vocab.n)||V.n||0, vk=(en.vocab&&en.vocab.known)||V.known||0;
   const pred=en.predMin??R.predMin, act=en.actualMin??R.actualMin;
   const cls=R.cls||{};const clsL=Object.entries(cls).filter(([,n])=>n>0).map(([c,n])=>`<li>${CLS[c]||c}: ${n}문장</li>`).join('');
-  h+=`<div class="card"><h2>🇺🇸 영어</h2><div class="row">${stat(vn+'개',`단어 체크 (알아요 ${vk})`)}${stat((en.main||R.n||0)+'문장',`문장 (맞음 ${en.ok||0}${en.skipped?`, 건너뜀 ${en.skipped}`:''})`)}${stat(pred!=null?pred+'분':'–','예측 시간')}${stat(act!=null?act+'분':'–','실제 시간')}</div>
+  h+=`<div class="card"><h2>🇺🇸 영어</h2><div class="row">${stat(vn+'개',`단어 체크 (알아요 ${vk})`)}${stat((en.main||R.n||0)+'문장',`문장 (맞음 ${en.ok||0}${en.skipped?`, 건너뜀 ${en.skipped}`:''})`)}${stat(pred!=null?pred+'분':'–','예측 시간')}${stat(act!=null?act+'분':'–','실제 시간')}</div>${(V.posBad||[]).length?`<div class="muted" style="margin-top:6px">🏷️ 품사 틀림 (${V.posOk||0}/${V.posN||0} 맞힘): ${V.posBad.map(x=>`<b>${esc(x.w)}</b> ${POSK[x.pick]||x.pick||'?'} → ${POSK[x.ans]||x.ans||'?'}`).join(' · ')}</div>`:''}
     ${pred!=null&&act!=null?`<p>예측 ${pred}분 → 실제 ${act}분 · <b>${Math.abs(act-pred)<=Math.max(2,pred*.2)?'<span class="ok">예측이 정확했어요</span>':act>pred?'예상보다 오래 걸렸어요':'예상보다 빨리 끝났어요'}</b></p>`:''}
     ${(()=>{const G=C.routine&&C.routine.g2;const g=G&&G.days&&G.days[k];if(!g)return '';const q=g.quiz||{};
       return `<p>📌 <b>문법 단계: ${esc(STN[g.k]||g.k)}</b>${g.back?' (🔁 다시 다지는 날)':''}<br>혼자 · 철자까지 정확 <b>${g.perfect??'–'} / ${g.n??'–'}</b> · 오늘의 문법 고르기 <b>${q.n?q.ok+' / '+q.n:'–'}</b>${(q.picks||[]).some(p=>p&&!p.ok)?` <span class="muted">(틀린 고르기: ${(q.picks||[]).filter(p=>p&&!p.ok).map(p=>esc(p.v)).join(', ')})</span>`:''}
