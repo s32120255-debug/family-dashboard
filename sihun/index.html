@@ -42,11 +42,13 @@ window.penApply();
           want = true; var first = true, gen = ++G;
           function go(){
             var r = new SR(); rec = r; var started = false;
-            r.lang = 'en-US'; r.interimResults = false; r.continuous = false; r.maxAlternatives = 1;
+            r.lang = 'en-US'; r.interimResults = true; r.continuous = false; r.maxAlternatives = 5;
             r.onstart = function(){ started = true; if(first){ first = false; emit(states, {state:'listening'}); res(); } };
             r.onresult = function(e){
               for(var i = e.resultIndex; i < e.results.length; i++){
-                if(e.results[i].isFinal) emit(finals, {text: e.results[i][0].transcript});
+                var R = e.results[i];
+                if(R.isFinal){ var alts = []; for(var a = 0; a < R.length; a++) alts.push(R[a].transcript); emit(finals, {text: R[0].transcript, alts: alts}); }
+                else emit(states, {state:'speech', text: R[0] && R[0].transcript}); /* 말하는 중(아직 확정 전) → 앱이 침묵 시계를 다시 맞춤 */
               }
             };
             r.onerror = function(e){ if(/not-allowed|service-not-allowed|audio-capture/.test(e.error||'')) want = false; if(first){ want = false; rej({code: e.error || 'error'}); } };
@@ -1238,7 +1240,7 @@ function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}cons
     if(r)h+=`<div class="res ${r.ok?'ok':'slow'}" style="margin-top:10px">${r.ok?'⭕ 맞았어요!':'🔎 정답은 <b>'+'①②③④'[q.a]+' '+esc(q.o[q.a])+'</b>'} · ${esc(q.why)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapQNext" data-auto="${r.ok?'ok':'x'}">${MZ.qi+1<Q.length?'다음 문제 ▶':'오늘 지도 보기 ▶'}</button></div>`}
   else if(MZ.step==='speak'){const L=mapSpeakList();if(!L.length){h+=`<h2>🗣️ 말하기</h2><p>오늘은 말하기 칸이 없어요. 바로 카츄한테 가요.</p><div class="row" style="justify-content:center"><button class="btn big" data-act="mapSpoke">카츄랑 말하기 ▶</button></div>`}
     else{const c=L[MZ.si],r=(d.speak||{})[c.k];h+=`<div class="tip">🗣️ 말하기 ${MZ.si+1} / ${L.length} · 한국어만 보고 소리 내 영어로 말해요</div><div style="font:800 26px 'Noto Sans KR';text-align:center;margin:14px 0">${esc(c.ko)}</div>`;
-      if(!r){if(MZ.listen)h+=`<div class="res ok" style="text-align:center">🎤 듣고 있어요… 영어로 말해요</div>`;
+      if(!r){if(MZ.listen)h+=`<div class="res ok" style="text-align:center">🎤 듣고 있어요… 천천히, 끝까지 말해요${MZ.okJ?' 👍':''}${MZ.live?`<div class="tip">들리는 말: ${esc(MZ.live)}</div>`:''}</div><div class="row" style="justify-content:center"><button class="btn light" data-act="mapMicDone">다 말했어 ⏹</button></div>`;
         else if(MZ.miss)h+=`<div class="res slow" style="text-align:center">${MZ.miss==='quiet'?'🔈 잘 안 들렸어요. 한 번 더 말해 볼까요?':'🔎 조금 다르게 들렸어요. 한 번 더 말해 볼까요?'}${MZ.heardShow?`<div class="tip">들린 말: ${esc(MZ.heardShow)}</div>`:''}</div>`;
         h+=`<div class="row" style="justify-content:center">${DIC&&!MZ.listen?`<button class="btn big" data-act="mapMic">🎤 ${MZ.miss?'다시 말하기':'말하기'}</button>`:''}<button class="btn ${DIC?'light':'big'}" data-act="mapSaid">말했어 ✋</button>${MZ.miss?'<button class="btn light" data-act="mapSaid" data-skip="1">넘어가기 ▶</button>':''}</div>
         <p class="tip" style="text-align:center">${DIC?'🎤를 누르고 말하면 알아듣고 저절로 넘어가요. 마이크가 안 되면 「말했어 ✋」를 눌러요.':'다 말하면 눌러요.'} 걸린 시간을 기록해요(첫날은 기록만).</p>`}
@@ -1265,8 +1267,10 @@ const ACT_MAP={
   mapNext:()=>{const cs=mapCells();if(MZ.i+1<cs.length){MZ.i++;MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.t0=Date.now();render()}},
   mapSay:()=>say(mapCells()[MZ.i].en[0]),
   mapSaid:t=>{mapMicStop();const d=mapDay(),c=mapSpeakList()[MZ.si];d.speak=d.speak||{};d.speak[c.k]={sec:Math.max(1,Math.round((Date.now()-MZ.t0)/1000)),d:today(),how:t&&t.dataset&&t.dataset.skip?'skip':t&&t.how?t.how:'hand',heard:MZ.heardAll||''};MZ.miss=null;MZ.heardShow='';MZ.heardAll='';save();render();say(c.en[0])},
-  mapMic:()=>{if(!DIC||MZ.listen)return;mapDicWire();try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}MZ.listen=true;MZ.heard='';MZ.miss=null;render();
-    DIC.start().catch(()=>{MZ.listen=false;MZ.miss='quiet';render()});clearTimeout(MZ.micT);MZ.micT=setTimeout(()=>{if(MZ&&MZ.listen)DIC.stop().catch(()=>{})},9000)},
+  mapMic:()=>{if(!DIC||MZ.listen)return;mapDicWire();try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}MZ.listen=true;MZ.heard='';MZ.live='';MZ.miss=null;MZ.userDone=false;render();
+    MZ.micAt=MZ.lastAct=Date.now();MZ.okJ=null;clearTimeout(MZ.okT);
+    DIC.start().catch(()=>{MZ.listen=false;MZ.miss='quiet';render()});clearInterval(MZ.micT);MZ.micT=setInterval(mapMicTick,500)},
+  mapMicDone:()=>{if(MZ&&MZ.listen){MZ.userDone=true;DIC.stop().catch(()=>{})}},
   mapSay2:()=>say(mapSpeakList()[MZ.si].en[0]),
   mapSaidNext:()=>{mapMicStop();const L=mapSpeakList();if(MZ.si+1<L.length){MZ.si++;MZ.t0=Date.now();render()}else ACT_MAP.mapSpoke()},
   mapSpoke:()=>{const d=mapDay();d.spoke=new Date().toISOString();save();V={view:'chat'};render()},
@@ -1278,12 +1282,29 @@ const ACT_MAP={
   mapWriteDone:()=>{const d=mapDay();if((d.quiz||[]).length<mapQuiz().length){MZ.step='quiz';MZ.qi=(d.quiz||[]).length;render()}else mapFinish()},
   mapWhy:t=>{const d=mapDay();d.why=d.why||{};const k=t.dataset.k,w=t.dataset.w;if(d.why[k]===w)delete d.why[k];else d.why[k]=w;save();render()}};
 let mapDicOn=false;
-function mapMicStop(){if(MZ){clearTimeout(MZ.micT);if(MZ.listen){MZ.listen=false;try{DIC&&DIC.stop().catch(()=>{})}catch(e){}}}}
+function mapMicStop(){if(MZ){clearInterval(MZ.micT);clearTimeout(MZ.okT);if(MZ.listen){MZ.listen=false;try{DIC&&DIC.stop().catch(()=>{})}catch(e){}}}}
 // 🎤 말하기 자동 넘김(엄마 11/25): 들린 말을 정답과 비교(judge: 주어 첫소리 흐림은 봐줌). 맞으면 저절로 다음. 안 들림 · 다름은 틀림 아님 → 다시 말하기 / 넘어가기
+// 엄마 11/25 「인식은 급하게 되면 안 돼, 최고급으로」: 시훈이는 꺼내는 데 15~47초, 중간에 멈칫함.
+// → 잠깐 조용해도 끊지 않음. 아무 말도 없으면 60초까지 기다림. 말을 시작한 뒤엔 8초 조용해야 끝으로 봄.
+// → 맞게 들려도 바로 넘기지 않고 조금 더 기다림(정확히 맞음 1.5초, 비슷함 3초, 그 사이 다시 말하면 다시 기다림).
+// → 엔진이 준 후보 5개를 모두 정답과 비교해 가장 좋은 것을 씀. ⏹ 「다 말했어」로 직접 끝낼 수도 있음.
+const MIC_WAIT=60000,MIC_HUSH=8000,MIC_OK={exact:1500,fuzzy:3000},JRANK={exact:0,fuzzy:1,wrong:2,unclear:3};
+function mapBest(c,base,alts){let best=null;(alts&&alts.length?alts:['']).forEach(a=>{const t=(base+' '+(a||'')).trim(),j=judge(c.en,t);if(!best||JRANK[j]<JRANK[best.j])best={t,j}});return best}
+function mapAccept(){if(!MZ||!MZ.listen||MZ.step!=='speak'||V.view!=='map')return;MZ.heardAll=MZ.heard;mapMicStop();const si=MZ.si;ACT_MAP.mapSaid({how:'mic',dataset:{}});setTimeout(()=>{if(MZ&&MZ.step==='speak'&&MZ.si===si&&V.view==='map')ACT_MAP.mapSaidNext()},1800)}
+function mapArm(j){clearTimeout(MZ.okT);MZ.okJ=j;MZ.okT=setTimeout(mapAccept,MIC_OK[j])}
+function mapMicTick(){if(!MZ||!MZ.listen){clearInterval(MZ&&MZ.micT);return}const n=Date.now();
+  if(MZ.okJ)return; // 맞게 들림 → 기다렸다 넘어감
+  if((MZ.heard?n-MZ.lastAct>MIC_HUSH:false)||n-MZ.micAt>MIC_WAIT){clearInterval(MZ.micT);DIC.stop().catch(()=>{})}}
 function mapDicWire(){if(mapDicOn||!DIC)return;mapDicOn=true;
-  DIC.onFinal(({text})=>{if(!MZ||!MZ.listen||V.view!=='map'||MZ.step!=='speak')return;MZ.heard=(MZ.heard+' '+text).trim();const c=mapSpeakList()[MZ.si];if(!c)return;const j=judge(c.en,MZ.heard);
-    if(j==='exact'||j==='fuzzy'){MZ.heardAll=MZ.heard;mapMicStop();const si=MZ.si;ACT_MAP.mapSaid({how:'mic',dataset:{}});setTimeout(()=>{if(MZ&&MZ.step==='speak'&&MZ.si===si&&V.view==='map')ACT_MAP.mapSaidNext()},1800)}});
-  DIC.onState(({state})=>{if(state!=='idle'||!MZ||!MZ.listen||V.view!=='map')return;clearTimeout(MZ.micT);MZ.listen=false;const h=(MZ.heard||'').trim();MZ.heardShow=h;MZ.heardAll=h;MZ.miss=h?'diff':'quiet';render()})}
+  DIC.onFinal(({text,alts})=>{if(!MZ||!MZ.listen||V.view!=='map'||MZ.step!=='speak')return;const c=mapSpeakList()[MZ.si];if(!c)return;MZ.lastAct=Date.now();
+    const b=mapBest(c,MZ.heard||'',alts&&alts.length?alts:[text]);MZ.heard=b.t;MZ.live=MZ.heard;
+    if(b.j==='exact'||b.j==='fuzzy'){if(!MZ.okJ||JRANK[b.j]<=JRANK[MZ.okJ])mapArm(b.j)}else{clearTimeout(MZ.okT);MZ.okJ=null}
+    render()});
+  DIC.onState(({state,text})=>{if(!MZ||!MZ.listen||V.view!=='map')return;
+    if(state==='speech'){MZ.lastAct=Date.now();if(MZ.okJ)mapArm(MZ.okJ);return}
+    if(state!=='idle')return;clearInterval(MZ.micT);const c=mapSpeakList()[MZ.si],h=(MZ.heard||'').trim();
+    if(c&&h){const j=judge(c.en,h);if(j==='exact'||j==='fuzzy'){mapAccept();return}}
+    clearTimeout(MZ.okT);MZ.okJ=null;MZ.listen=false;MZ.heardShow=h;MZ.heardAll=h;MZ.miss=h?'diff':'quiet';render()})}
 function mapFinish(){const d=mapDay();if(!d)return;if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));mapS().done[d.set]=mapS().done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
 function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length)return '';const C={green:'🟢',yellow:'🟡',gray:'⬜','':'·'};
   let h='<div class="card"><h2>🗺️ 내 지도 (문법 칸 확인)</h2><p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 틀림(다음에 배울 칸). 난이도 조정할 때 보는 기록이에요.</p>';
