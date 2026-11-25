@@ -152,7 +152,8 @@ details .list{margin-top:6px}
 .solved .list{margin-top:6px}
 .solved .item.done .t{text-decoration:none;color:var(--fg)}
 .fab{position:fixed;right:max(20px,env(safe-area-inset-right,0px));bottom:max(20px,env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;border:none;background:var(--accent);color:var(--card);font-size:30px;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(15,27,45,.25);z-index:30;display:grid;place-items:center;padding:0}
-.fab:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
+.topadd{width:44px;height:44px;border-radius:50%;border:none;background:var(--accent);color:var(--card);font-size:26px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;flex:none}
+.topadd:focus-visible,.fab:focus-visible{outline:3px solid var(--fg);outline-offset:3px}
 .wrap{padding-bottom:96px!important}
 .moneyopt{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:8px}
 .moneyopt[open]{padding-bottom:12px}
@@ -181,7 +182,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 11</p>
+ <p style="font-size:.75rem">버전 12</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -200,6 +201,7 @@ details .list{margin-top:6px}
  <header class="top">
   <span id="topCat"></span>
   <div><h1>서윤 보드</h1><div class="sub" id="today"></div></div>
+  <button class="topadd" id="topAdd" aria-label="적기" title="적기">+</button>
   <div class="who" id="who"></div>
  </header>
 
@@ -453,10 +455,12 @@ function sendHome(x){
 
 /* 어디서든 + : 「일단 적기」에 한 줄 넣기 */
 function quickAdd(){if(!db)return toast("로그인 후에 적을 수 있어요");
- modal(`<form class="modal" id="qf"><h3>일단 적기</h3><input name="t" placeholder="생각나는 거 한 줄로" aria-label="일단 적기" autocomplete="off"><div class="row"><button type="button" class="btn" id="qc">닫기</button><button class="btn primary">적기</button></div></form>`);
+ modal(`<form class="modal" id="qf"><h3>적기</h3><input name="t" placeholder="생각나는 거 한 줄로" aria-label="내용" autocomplete="off">
+ <label>어디에<select name="dest">${DESTS.map(([v,l])=>`<option value="${esc(v)}"${v==="inbox"?" selected":""}>${l}</option>`).join("")}</select></label><div class="row"><button type="button" class="btn" id="qc">닫기</button><button class="btn primary">적기</button></div></form>`);
  $("qc").onclick=closeForm;
- $("qf").onsubmit=e=>{e.preventDefault();const t=e.target.t.value.trim();if(!t)return;closeForm();add({tab:"inbox",text:t},"일단 적기에 넣었어요")}}
-$("fab").onclick=quickAdd;
+ $("qf").onsubmit=e=>{e.preventDefault();const t=e.target.t.value.trim();if(!t)return;const v=e.target.dest.value;closeForm();
+  const lab=(DESTS.find(x=>x[0]===v)||[,""])[1];add({...parseDest(v),text:t},`${lab}에 넣었어요`)}}
+$("fab").onclick=quickAdd;$("topAdd").onclick=quickAdd;
 
 /* ---------- 저장 ---------- */
 async function run(p,ok){try{await p;if(ok)toast(ok)}catch(e){toast("저장하지 못했어요: "+(e&&e.message||"연결을 확인해 주세요"))}}
@@ -631,7 +635,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=11;
+const VERSION=12;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
