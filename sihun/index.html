@@ -1236,9 +1236,18 @@ function mapPickR(){const M=mapS(),A=MAPALL(),o={gray:0,yellow:1,green:2,'':3};r
 function mapSetOf(d){if(!d)return null;if(d.set!=='R')return MAPSET[d.set];const A=MAPALL(),cells=(d.rk||[]).map(k=>A[k]).filter(Boolean),sets=[...new Set(cells.map(c=>c.set))];
   return {t:'다시 채우기 · 느린 칸과 다음에 배울 칸',rule:['오늘은 지금까지 지도에서 <b>느렸던 칸 · 다음에 배울 칸</b>을 다시 채워요. 원리가 기억 안 나면 아래를 한 번 보고 가요.'].concat(sets.map(k=>`<b>${esc(MAPSET[k].t)}</b><br>`+MAPSET[k].rule[sets.length>2?0:1]||MAPSET[k].rule[0])),
     cells,quiz:sets.flatMap(k=>MAPSET[k].quiz||[]).filter((q,i)=>i%Math.max(1,Math.ceil(sets.length*5/5))===0).slice(0,5),words:[]}}
-function mapDay(){const M=mapS(),k=mapSetToday();if(!k)return null;const key=mapDKey();if(!M.days[key]){M.days[key]={set:k,start:new Date().toISOString()};if(k==='R')M.days[key].rk=mapPickR()}return M.days[key]}
+function mapDay(){const M=mapS(),k=mapSetToday();if(!k)return null;const key=mapDKey();if(!M.days[key]){M.days[key]={set:k,start:new Date().toISOString()};if(k==='R')M.days[key].rk=mapPickR();else M.days[key].revK=mapRevPick(k,key.startsWith('try:')?addDays(today(),1):today())}return M.days[key]}
 function mapCells(){const d=mapDay();const S=mapSetOf(d);return S?S.cells:[]}
 function mapCN(c){return c.n||stageName(c.k)}
+// 🧠 외우기(엄마 11/25 「외우기부터 시작하자」): 단어 다음, 원리 전에 오늘 예문 10개를 듣고 따라 말하며 외움 → 그다음 안 보고 씀
+// 🔁 예문 망각곡선(엄마 11/25): 쓴 예문은 1·3·7·14·30일 뒤 다시 나옴(🟢면 다음 간격, 아니면 1일부터). 하루 최대 MAP_REVMAX문장, 오늘 칸 다 쓴 뒤
+const MAP_REVMAX=5;
+function mapRevPick(k,dt){const M=mapS(),A=MAPALL(),cur=new Set(((MAPSET[k]||{}).cells||[]).map(c=>c.k));return Object.entries(M.sr||{}).filter(([key,r])=>A[key]&&!cur.has(key)&&!r.done&&r.due<=dt).sort((a,b)=>a[1].due.localeCompare(b[1].due)).slice(0,MAP_REVMAX).map(x=>x[0])}
+function mapRevCells(d){const A=MAPALL();return ((d&&d.revK)||[]).map(k=>A[k]).filter(Boolean)}
+function mapRevLeft(d){return mapRevCells(d).some(c=>!(d.rev||{})[c.k])}
+function mapSrCell(k,col){const M=mapS();M.sr=M.sr||{};const r=M.sr[k],t=today();if(!r){M.sr[k]={st:0,due:addDays(t,1)};return}if(r.done||r.due>t)return;
+  if(col==='green'){const st=(r.st||0)+1;M.sr[k]=st>=SRI.length?{st,done:t}:{st,due:addDays(t,SRI[st])}}else M.sr[k]={st:0,due:addDays(t,1)}}
+const mapAn=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');
 function mapWordsToday(){const k=mapSetToday();const S=k&&MAPSET[k];return S&&S.words?S.words.map(x=>x[0]):[]}
 function mapColor(c){return !c?'':!c.ok?'gray':c.sec<=MAP_FAST?'green':'yellow'}
 const MAPC={green:['#2a9d5c','#e3f6ea','🟢'],yellow:['#d9a21b','#fff4d6','🟡'],gray:['#9aa3b5','#eef1f6','⬜'],'':['#c3cbe0','#fff','·']};
@@ -1250,11 +1259,19 @@ function mapChatScript(){const by={};mapCells().forEach(c=>by[c.en[0]]=c);return
 function mapSpeakList(){const M=mapS();let L=mapGreen();if(!L.length)L=mapCells().filter(c=>mapColor(M.cells[c.k])==='yellow');return L.slice(0,3)}
 function mapQuiz(){const S=mapSetOf(mapDay());return S?S.quiz||[]:[]}
 function mapOpen(){const d=mapDay();if(!d)return;const M=mapS(),cs=mapCells();
-  let step='rule';if(d.ruleAt)step='pred';if(d.pred!=null)step='cell';if(cs.every(c=>M.cells[c.k]&&M.cells[c.k].d===today()))step=d.spoke?(chatDone(dayRec(today()))?(d.write&&d.write.at?((d.quiz||[]).length<mapQuiz().length?'quiz':'end'):'write'):'chat'):'speak';if(d.end)step='end';if(step==='end'&&!d.end){mapFinish();return}
+  let step=d.memoAt||d.ruleAt?'rule':'memo';if(d.ruleAt)step='pred';if(d.pred!=null)step='cell';if(cs.every(c=>M.cells[c.k]&&M.cells[c.k].d===today()))step=!d.spoke&&mapRevLeft(d)?'rev':d.spoke?(chatDone(dayRec(today()))?(d.write&&d.write.at?((d.quiz||[]).length<mapQuiz().length?'quiz':'end'):'write'):'chat'):'speak';if(d.end)step='end';if(step==='end'&&!d.end){mapFinish();return}
   if(step==='chat'){V={view:'chat'};render();return}
-  MZ={step,w:0,qi:(d.quiz||[]).length,i:cs.findIndex(c=>!(M.cells[c.k]&&M.cells[c.k].d===today())),si:0,t0:Date.now(),fb:null};if(MZ.i<0)MZ.i=0;V={view:'map'};render()}
+  MZ={step,w:0,ri:Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k])),qi:(d.quiz||[]).length,i:cs.findIndex(c=>!(M.cells[c.k]&&M.cells[c.k].d===today())),si:0,t0:Date.now(),fb:null};if(MZ.i<0||step==='memo')MZ.i=0;V={view:'map'};render();if(step==='memo')say(cs[0].en[0])}
 function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}const S=mapSetOf(d),cs=S.cells,M=mapS();let h=topbar('🗺️ 내 지도 채우기',true)+'<div class="card">';
-  if(MZ.step==='rule'){h+=`<div class="tip">${esc(S.t)} · 먼저 원리 한 장</div><h2 style="margin:6px 0 10px">이것만 알면 돼요</h2>${S.rule.map(r=>`<div class="res ok" style="text-align:left">${r}</div>`).join('')}
+  if(MZ.step==='memo'){const c=cs[MZ.i];h+=`<div class="tip">🧠 외우기 ${MZ.i+1} / ${cs.length} · ${esc(S.t)} · 오늘 문장을 먼저 외워요. 조금 뒤 안 보고 써요</div>
+    <div style="font:800 24px 'Noto Sans KR';text-align:center;margin:14px 0 8px">${esc(c.ko)}</div><div class="ans" style="text-align:center;font-size:24px">${esc(c.en[0])} <button class="btn light sm" data-act="mapSay">🔊</button></div>
+    <p class="tip" style="text-align:center">🔊 듣고 소리 내어 두 번 따라 말해요 · ${esc(mapCN(c))}</p><div class="row" style="justify-content:center"><button class="btn big" data-act="mapMemoNext">${MZ.i+1<cs.length?'외웠어 · 다음 ▶':'다 외웠어 ▶'}</button></div>`}
+  else if(MZ.step==='rev'){const R=mapRevCells(d),c=R[MZ.ri],fb=MZ.fb;h+=`<div class="tip">🔁 복습 문장 ${MZ.ri+1} / ${R.length} · 전에 외운 문장 다시 꺼내기 · ${esc(mapCN(c))}</div><div style="font:800 26px 'Noto Sans KR';text-align:center;margin:14px 0">${esc(c.ko)}</div>`;
+    if(!fb)h+=`<p class="tip" style="text-align:center">안 보고 영어로 써요</p><div class="row"><input id="min" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="done" data-enter="mapRevChk" style="flex:1;min-width:0;font:700 20px 'Noto Sans KR';padding:12px 14px;border:2px solid #2b4d86;border-radius:12px"></div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapRevChk">확인 ▶</button><button class="btn light" data-act="mapRevIdk">🤔 기억 안 나</button></div>`;
+    else{const col=fb.col,C=MAPC[col];h+=`<div class="res ${col==='gray'?'slow':'ok'}" style="text-align:center;border:2px solid ${C[0]}"><div style="font-size:20px;font-weight:800">${col==='green'?'🟢 바로 꺼냈어요! 다음엔 더 나중에 나와요':col==='yellow'?'🟡 맞았어요! 내일 한 번 더':'⬜ 내일 한 번 더 나와요'}</div>
+      <div class="ans" style="margin-top:6px">${esc(c.en[0])} <button class="btn light sm" data-act="mapRevSay">🔊</button></div>${col==='gray'&&fb.typed?`<div class="tip">내가 쓴 것: ${esc(fb.typed)}</div>`:''}</div>
+      <div class="row" style="justify-content:center"><button class="btn big" data-act="mapRevNext" data-auto="${col==='gray'?'x':'ok'}">${MZ.ri+1<R.length?'다음 ▶':'말하기로 ▶'}</button></div>`}}
+  else if(MZ.step==='rule'){h+=`<div class="tip">${esc(S.t)} · 먼저 원리 한 장</div><h2 style="margin:6px 0 10px">이것만 알면 돼요</h2>${S.rule.map(r=>`<div class="res ok" style="text-align:left">${r}</div>`).join('')}
     <div class="row" style="justify-content:center"><button class="btn big" data-act="mapRuleOk">알겠어 ▶</button></div>`}
   else if(MZ.step==='pred'){h+=`<h2>${cs.length}칸 중에 몇 칸이나 바로 맞힐 것 같아?</h2><p class="tip">"바로" = 블록 없이, 철자까지 맞게, 20초 안에.</p>
     <div class="mins">${Array.from({length:cs.length+1},(_,n)=>`<button class="chip ${d.pred===n?'sel':''}" data-act="mapPred" data-n="${n}">${n}칸</button>`).join('')}</div>
@@ -1288,12 +1305,17 @@ function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}cons
   $('#main').innerHTML=h+'</div>';const inp=$('#min')||$('#mwr');if(inp)setTimeout(()=>inp.focus(),50)}
 const ACT_MAP={
   mapStart:()=>{if(vNeedToday()){vStart();return}mapOpen()},
+  mapMemoNext:()=>{const cs=mapCells();if(MZ.i+1<cs.length){MZ.i++;render();say(cs[MZ.i].en[0])}else{const d=mapDay();d.memoAt=new Date().toISOString();save();MZ.i=0;MZ.step='rule';render()}},
+  mapRevChk:()=>{if(!MZ||MZ.fb)return;const inp=$('#min');const v=(inp&&inp.value||'').trim();if(!v)return;const d=mapDay(),c=mapRevCells(d)[MZ.ri];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));const ok=c.en.some(e=>mapAn(e)===mapAn(v));mapRevRec(d,c,{ok,sec,typed:v});say(c.en[0])},
+  mapRevIdk:()=>{if(!MZ||MZ.fb)return;const d=mapDay(),c=mapRevCells(d)[MZ.ri];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));mapRevRec(d,c,{ok:false,sec,typed:'(기억 안 나)'});say(c.en[0])},
+  mapRevSay:()=>{const c=mapRevCells(mapDay())[MZ.ri];if(c)say(c.en[0])},
+  mapRevNext:()=>{const d=mapDay(),R=mapRevCells(d);if(MZ.ri+1<R.length){MZ.ri++;MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.fb=null;MZ.t0=Date.now();render()}},
   mapRuleOk:()=>{const d=mapDay();d.ruleAt=new Date().toISOString();save();MZ.step='pred';render()},
   mapPred:t=>{const d=mapDay();d.pred=+t.dataset.n;save();MZ.step='cell';MZ.t0=Date.now();MZ.fb=null;render()},
   mapChk:()=>{if(!MZ||MZ.fb)return;const inp=$('#min');const v=(inp&&inp.value||'').trim();if(!v)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));
-    const an=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');const ok=c.en.some(e=>an(e)===an(v));const M=mapS();M.cells[c.k]={ok,sec,typed:v,d:today(),set:mapDay().set};const col=mapColor(M.cells[c.k]);MZ.fb={col,typed:v};save();render();say(c.en[0])},
-  mapIdk:()=>{if(!MZ||MZ.fb)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));const M=mapS();M.cells[c.k]={ok:false,sec,typed:'(모르겠어)',d:today(),set:mapDay().set};MZ.fb={col:'gray',typed:''};save();render();say(c.en[0])},
-  mapNext:()=>{const cs=mapCells();if(MZ.i+1<cs.length){MZ.i++;MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.t0=Date.now();render()}},
+    const an=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');const ok=c.en.some(e=>an(e)===an(v));const M=mapS();M.cells[c.k]={ok,sec,typed:v,d:today(),set:mapDay().set};const col=mapColor(M.cells[c.k]);if(mapDay().set!=='A')mapSrCell(c.k,col);MZ.fb={col,typed:v};save();render();say(c.en[0])},
+  mapIdk:()=>{if(!MZ||MZ.fb)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));const M=mapS();M.cells[c.k]={ok:false,sec,typed:'(모르겠어)',d:today(),set:mapDay().set};if(mapDay().set!=='A')mapSrCell(c.k,'gray');MZ.fb={col:'gray',typed:''};save();render();say(c.en[0])},
+  mapNext:()=>{const cs=mapCells();if(MZ.i+1<cs.length){MZ.i++;MZ.fb=null;MZ.t0=Date.now();render()}else if(mapRevLeft(mapDay())){const d=mapDay();MZ.step='rev';MZ.ri=Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k]));MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.t0=Date.now();render()}},
   mapSay:()=>say(mapCells()[MZ.i].en[0]),
   mapSaid:t=>{mapMicStop();const d=mapDay(),c=mapSpeakList()[MZ.si];d.speak=d.speak||{};d.speak[c.k]={sec:Math.max(1,Math.round((Date.now()-MZ.t0)/1000)),d:today(),how:t&&t.dataset&&t.dataset.skip?'skip':t&&t.how?t.how:'hand',heard:MZ.heardAll||''};MZ.miss=null;MZ.heardShow='';MZ.heardAll='';save();render();say(c.en[0])},
   mapMic:()=>{if(!DIC||MZ.listen)return;mapDicWire();try{TTS&&TTS.stop&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}MZ.listen=true;MZ.heard='';MZ.live='';MZ.miss=null;MZ.userDone=false;render();
@@ -1334,6 +1356,7 @@ function mapDicWire(){if(mapDicOn||!DIC)return;mapDicOn=true;
     if(state!=='idle')return;clearInterval(MZ.micT);const c=mapSpeakList()[MZ.si],h=(MZ.heard||'').trim();
     if(c&&h){const j=judge(c.en,h);if(j==='exact'||j==='fuzzy'){mapAccept();return}}
     clearTimeout(MZ.okT);MZ.okJ=null;MZ.listen=false;MZ.heardShow=h;MZ.heardAll=h;MZ.miss=h?'diff':'quiet';render()})}
+function mapRevRec(d,c,r){const M=mapS();d.rev=d.rev||{};d.rev[c.k]=Object.assign({d:today()},r);M.cells[c.k]=Object.assign({},r,{d:today(),set:c.set});const col=mapColor(M.cells[c.k]);mapSrCell(c.k,col);MZ.fb={col,typed:r.typed};save();render()}
 function mapFinish(){const d=mapDay();if(!d)return;if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));const M=mapS();if(M.done[d.set]&&M.done[d.set]!==today()&&d.set!=='R'){M.again=M.again||{};M.again[d.set]=today()}M.done[d.set]=M.done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
 function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length)return '';const C={green:'🟢',yellow:'🟡',gray:'⬜','':'·'};
   let h='<div class="card"><h2>🗺️ 내 지도 (문법 칸 확인)</h2><p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 틀림(다음에 배울 칸). 난이도 조정할 때 보는 기록이에요.</p>';
@@ -1347,7 +1370,7 @@ function mapHomeHTML(){const d=mapDay(),S=mapSetOf(d),M=mapS();const n=S.cells.f
   if(d.end)return `<div class="card"><h2>🗺️ 오늘 지도 끝! ✅</h2>${mapGrid()}<div class="row"><button class="btn" data-act="mapStart">결과 다시 보기</button><button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`;
   return `<div class="card"><h2>🗺️ 오늘은 내 지도 채우기</h2><p class="tip">${esc(S.t)} · 오늘은 5문장 대신이에요</p><p>문법 지도에서 <b>내가 어디까지 아는지</b> 칸을 채워요. 칸마다 한국어 한 문장을 보고 <b>블록 없이 바로 영어로</b> 써요. 쉬운 단어만 나와요.</p>
    <p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 다음에 배울 칸</p>
-   ${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> → ② 지도 채우기 → ③ 말하기 → ④ 카츄 → ⑤ 내 이야기 쓰기 → 덤: 내신 5문제</div>`:''}
+   ${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> → ② 🧠 예문 외우기 → ③ 원리 → ④ 지도 채우기 → ⑤ 🔁 복습 문장 → ⑥ 말하기 → ⑦ 카츄 → ⑧ 내 이야기 쓰기 → 덤: 내신 5문제</div>`:''}
    <div class="row"><button class="btn big" data-act="mapStart">${vNeedToday()?'▶ 단어 시작':n?`▶ 이어서 하기 (${n} / ${S.cells.length})`:'▶ 시작'}</button></div></div>`}
 // 문장 끝난 뒤 다음 할 것: 틈새 → 카츄
 function afterHTML(){const D=(RLOG.days||{})[today()];if(!D||!D.end)return '';
@@ -7938,7 +7961,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else{const st=stats(s.k);
       const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
         :(M32()?`<button class="go math" data-h="open" data-app="m32">▶ 3-2 이어서 하기</button><button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>`:`<button class="go math" data-h="plan">${st.n?'▶ 큰 수 이어서 하기':'▶ 시작'}</button><button class="go light" data-h="open" data-app="m32">3-2 복습 열기</button>`)+`<button class="go light" data-h="open" data-app="concept">개념 확인 열기</button>`;
-      body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.k==='en'&&stats('en').mode==='map'?'단어 → 🗺️ 내 지도 채우기 → 말하기 → 카츄 → 내 이야기 쓰기':s.sub}</p>${status(s.k)}${btn}</div>`}
+      body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.k==='en'&&stats('en').mode==='map'?'단어 → 🧠 외우기 → 🗺️ 내 지도 → 🔁 복습 → 말하기 → 카츄 → 내 이야기':s.sub}</p>${status(s.k)}${btn}</div>`}
     $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
