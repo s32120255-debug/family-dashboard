@@ -45,6 +45,7 @@ window.liveMic=function(ta,onState,lang){
     e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();end();
     doneP.then(function(){setTimeout(function(){if(b.isConnected&&!b.disabled)b.click()},120)})}
   root.addEventListener('click',grab,true);
+  try{if(!window.__sttWarm||Date.now()-window.__sttWarm>300000){window.__sttWarm=Date.now();var wid='warm-'+Date.now().toString(36);window.claude.use('db').then(function(DB){if(DB)DB.doc('stt/'+wid).set({warm:1}).then(function(){setTimeout(function(){try{DB.doc('stt/'+wid).delete()}catch(x){}},20000)},function(){})},function(){})}}catch(x){} /* 서버 미리 깨우기(소리 없음, 값 0) */
   md.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}}).then(function(s){stream=s;if(!on){s.getTracks().forEach(function(t){t.stop()});return}
     t0s=Date.now();seg();tick=setInterval(function(){show();if(Date.now()-t0s>MAX)end()},500);show()},function(){if(on){on=false;if(onState)onState(false)}doneRes();badge.remove();
     try{alert('마이크를 쓸 수 없어요. 글로 쓰거나 패드에 써 줘요.')}catch(x){}});
