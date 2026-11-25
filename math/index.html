@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795650881";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795651151";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3061,7 +3061,18 @@ const ROT=["NS","A2","KN","GP","GS","GV","GR","OF","CO","E1","D1","MJ","DJ","MN"
 const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
 function freshCore(){return{v:1,cfg:{plan:clone(PLAN0),order:ORDER0.slice(),carryOn:false,noCarry:true,tc:{}},ts:{},lastDay:null,carry:{},savedAt:0}}
 /* 사람마다 기록을 따로 */
-const PROFILES=[{id:"sihun",name:"시훈",icon:"🥷"},{id:"mom",name:"엄마",icon:"🐱"},{id:"dad",name:"아빠",icon:"🐻"}];
+const PROFILES=[{id:"sihun",name:"시훈",icon:"🥷"},{id:"mom",name:"엄마",icon:"🦊"},{id:"dad",name:"아빠",icon:"🦉"}];
+/* 계정별 캐릭터와 말투 (11/26 sy): 시훈 = 고양이 닌자(냥·옹), 엄마 = 여우 닌자(~지롱, ~군), 아빠 = 부엉이 사부(~다오, ~구려, ~소).
+   문구는 고양이 말투로 한 번만 쓰고, 화면에 그릴 때 로그인한 사람 말투로 바꿈 */
+const CHAR={sihun:["🐱","고양이 닌자"],mom:["🦊","여우 닌자"],dad:["🦉","부엉이 사부"]};
+const ssB=c=>{const k=c.charCodeAt(0)-0xAC00;return k>=0&&k<11172&&k%28===20};
+function toneText(t,pid){if((pid!=="mom"&&pid!=="dad")||!/[냥옹]/.test(t))return t;const fox=pid==="mom";
+  t=t.replace(/([가-힣])(냥|옹)\?/g,(m,c)=>ssB(c)?c+(fox?"지롱?":"소?"):c==="이"?(fox?"이지롱?":"이오?"):c==="거"?(fox?"거지롱?":"것이오?"):c+(fox?"롱?":"오?"));
+  t=t.replace(/([가-힣])다(냥|옹)/g,(m,c,e)=>ssB(c)?c+(fox?(e==="옹"?"군":"지롱"):(e==="옹"?"소":"구려")):c+(fox?(e==="옹"?"다지롱":"다롱"):"다오"));
+  t=t.replace(/자(냥|옹)/g,fox?"자롱":"세나");
+  return t.replace(/([가-힣])(냥|옹)(?![가-힣])/g,(m,c)=>c+(fox?"롱":"오"))}
+function toneNode(n){if(PID!=="mom"&&PID!=="dad")return;try{if(view==="who")return}catch(e){return}if(n.nodeType===3){const v=toneText(n.nodeValue,PID);if(v!==n.nodeValue)n.nodeValue=v;return}if(n.nodeType!==1)return;const w=document.createTreeWalker(n,NodeFilter.SHOW_TEXT);let x;while((x=w.nextNode())){const v=toneText(x.nodeValue,PID);if(v!==x.nodeValue)x.nodeValue=v}}
+try{new MutationObserver(ms=>{if(PID!=="mom"&&PID!=="dad")return;ms.forEach(m=>{if(m.type==="characterData")toneNode(m.target);else m.addedNodes.forEach(toneNode)})}).observe(app,{childList:true,subtree:true,characterData:true})}catch(e){}
 let PID=null;try{PID=localStorage.getItem("sihun-app-pid")}catch(e){}
 if(!PROFILES.some(p=>p.id===PID))PID="sihun";
 const kCore=()=>PID==="sihun"?KCORE:KCORE+"-"+PID,kDays=()=>PID==="sihun"?KDAYS:KDAYS+"-"+PID;
@@ -3243,7 +3254,7 @@ const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||
 function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
   const tot=p=>{const d=FAM[p.id].day,pl=d?Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
   const pass=p=>Object.keys(FAM[p.id].core.ts||{}).filter(id=>TYPES[id]&&(famSt(FAM[p.id].core,id)||{}).ok).length;
-  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
+  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="small muted">${CHAR[p.id][1]}</span><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
   const ids=S.cfg.order.filter(id=>TYPES[id]&&P.some(p=>famSt(FAM[p.id].core,id)));
   const rows=ids.map(id=>`<tr><th>${TYPES[id].name}</th>${P.map(p=>{const x=famSt(FAM[p.id].core,id);return `<td class="${x&&x.ok?"ok":""}${p.id===PID?" me":""}">${!x?"·":x.ok?"통과":x.mx?`${x.n}<i>/${x.mx}</i>`:"하는 중"}</td>`}).join("")}</tr>`).join("");
   const miss=PROFILES.filter(p=>!P.includes(p)).map(p=>p.name);
@@ -3387,7 +3398,7 @@ function growthLine(){
 }
 const CHEER=["오늘도 한 판 가보자냥!","틀려도 괜찮다옹. 다시 보면 된다냥.","정확하게 먼저. 빠르기는 따라온다냥.","어제의 너보다 1초만 줄여 보자옹.","닌자는 조용히 빠르다냥. 가보자!"];
 function greetModal(){const g=growthLine();const c=CHEER[(new Date().getDate()+Object.keys(DAYS).length)%CHEER.length];
-  return `<div class="veil"><div class="sheet"><p style="font-size:20px">🐱 시계는 내가 크는 걸 보는 거다냥!</p>
+  return `<div class="veil"><div class="sheet"><p style="font-size:20px">${CHAR[PID][0]} 시계는 내가 크는 걸 보는 거다냥!</p>
    <p class="muted">${g||c}</p>
    <button class="bigbtn" data-act="greetok">시작!</button></div></div>`}
 let PRED={t:null,w:null};
