@@ -128,7 +128,7 @@ details .list{margin-top:6px}
 .lwho{display:grid;gap:6px}.lwho h3{margin:0;font-family:var(--display);font-size:1.2rem;display:flex;gap:8px;align-items:baseline}.lwho h3 small{font-family:var(--body);font-size:.95rem;font-weight:700;font-variant-numeric:tabular-nums}
 .ltiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ltile{display:flex;align-items:center;gap:8px;min-width:0;border:1.5px solid var(--line);background:var(--bg);border-radius:12px;padding:10px 12px;cursor:pointer;text-align:left;min-height:52px}
-.ltile .ic{font-size:1.1rem;flex:none}.ltile .nm{font-size:.8rem;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ltile .ic{font-size:1.1rem;flex:none}.ltile .nm{font-size:.95rem;color:var(--fg);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ltile b{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}.ltile .ask{color:var(--muted);font-weight:400;font-size:.9rem}
 .lright{display:flex;justify-content:flex-end}
 .lform{display:grid;gap:8px}.lform input,.lform select{border:1.5px solid var(--line);border-radius:10px;padding:9px 10px;background:var(--card);min-width:0;width:100%}
@@ -147,6 +147,11 @@ details .list{margin-top:6px}
 .lstack{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px}
 .lbar span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lock{z-index:45}
+.ltile.card{flex-wrap:wrap}
+.ltile .goal{flex:1 1 100%;font-size:.82rem;color:var(--muted);display:grid;gap:4px}
+.ltile .goal small{font-size:.78rem}
+.gbar{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden}.gbar span{display:block;height:100%;background:var(--accent)}
+.card h2 small,.lwho h3 small{word-spacing:normal;margin-left:4px}
 .edit{border:none;background:none;color:var(--accent);font-size:.82rem;cursor:pointer;padding:2px 4px;white-space:nowrap}
 .edit:hover{text-decoration:underline}
 .note{flex:1 1 100%;font-size:.85rem;color:var(--muted);padding-left:34px;overflow-wrap:anywhere}
@@ -184,7 +189,7 @@ details .list{margin-top:6px}
  <button class="btn primary" id="loginBtn" hidden>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
- <p style="font-size:.75rem">버전 13</p>
+ <p style="font-size:.75rem">버전 14</p>
 </div></div>
 
 <div class="gate lock" id="lock" hidden><div class="box">
@@ -558,7 +563,9 @@ function ledgerPanel(){
  const sumOf=l=>l.reduce((s,a)=>{const v=acctBal(a);return v==null?s:s+v},0);
  const bal=`<section class="card"><h2>잔고 <small>${A.length?"전체 "+won(sumOf(A)):""}</small></h2>
  ${A.length?who.map(w=>{const l=A.filter(a=>(a.who||"")===w);return`<div class="lwho"><h3>${esc(w||"우리")} <small>${won(sumOf(l))}</small></h3><div class="ltiles">${l.map(a=>{const v=acctBal(a);
-  return`<button class="ltile" data-ledacct="${esc(a.name)}" aria-label="${esc(a.name)} 잔액 맞추기" title="${esc(a.name)}"><span class="ic" aria-hidden="true">${acctIcon(a.type)}</span><b>${v==null?`<span class="ask">적어 주세요</span>`:(v<0?"−":"")+won(Math.abs(v))}</b></button>`}).join("")}</div></div>`}).join(""):`<p class="empty" style="margin:0">통장이나 상품권을 칸으로 만들면 잔고가 보여요.</p>`}
+  if(a.type==="card"){const m=today().slice(0,7);const used=ledger.filter(x=>x.acct===a.name&&x.kind!=="in"&&String(x.d||"").startsWith(m)).reduce((s,x)=>s+Number(x.amt||0),0);const g=Number(a.goal||0);
+   return`<button class="ltile card" data-ledacct="${esc(a.name)}" aria-label="${esc(a.name)} 설정" title="${esc(a.name)}"><span class="ic" aria-hidden="true">${acctIcon(a.type)}</span><span class="nm">${esc(a.name)}</span><b>이번 달 ${won(used)}</b>${g?`<span class="goal"><span class="gbar"><span style="width:${Math.min(100,used/g*100)}%"></span></span>${used>=g?"혜택 실적 채웠어요":`혜택까지 ${won(g-used)} 남음`} <small>(목표 ${won(g)})</small></span>`:`<span class="goal ask">혜택 실적 금액을 적어 두면 남은 돈이 보여요</span>`}</button>`}
+  return`<button class="ltile" data-ledacct="${esc(a.name)}" aria-label="${esc(a.name)} 잔액 맞추기" title="${esc(a.name)}"><span class="ic" aria-hidden="true">${acctIcon(a.type)}</span><span class="nm">${esc(a.name)}</span><b>${v==null?`<span class="ask">적어 주세요</span>`:(v<0?"−":"")+won(Math.abs(v))}</b></button>`}).join("")}</div></div>`}).join(""):`<p class="empty" style="margin:0">통장이나 상품권을 칸으로 만들면 잔고가 보여요.</p>`}
  <div class="lright"><button class="btn small" data-ledaddacct="1">＋ 돈 칸 추가</button></div></section>`;
  const D=ledDraft;const cats=ledCats();
  const form=`<section class="card"><h2>적기</h2>
@@ -629,16 +636,22 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||
   $("lac").onclick=closeForm;$("laf").onsubmit=ev=>{ev.preventDefault();const g=ev.target;const n=g.n.value.trim();if(!n)return;
    if(n===CASH||ledAccts().some(a=>a.name===n))return toast("같은 이름이 있어요");closeForm();run(db.ledCfg({accts:[...ledAccts(),{name:n,who:g.w.value.trim(),type:g.t.value}]}),"칸을 만들었어요")};return}
  if(d.ledacct){const a=ledAccts().find(z=>z.name===d.ledacct);if(!a)return;const v=acctBal(a);
-  modal(`<form class="modal" id="lbf"><h3>${esc(a.name)} 잔액</h3><p class="hint">지금 통장(상품권)에 있는 돈을 적으면 여기에 맞춰요. 그 뒤로 적는 입금·출금이 더하고 빠져요.</p><label>지금 잔액 (원)<input name="a" inputmode="numeric" value="${v==null?"":fmtAmt(v)}" placeholder="적어 주세요"></label>
-  <div class="row"><span class="left"><button type="button" class="btn small" id="lbd">이 칸 지우기</button></span><button type="button" class="btn" id="lbc">취소</button><button class="btn primary">맞추기</button></div></form>`);
+  modal(`<form class="modal" id="lbf"><h3>${esc(a.name)}</h3><label>이름<input name="nm" value="${esc(a.name)}"></label><label>누구 돈<input name="w" value="${esc(a.who||"")}"></label>${a.type==="card"?`<label>혜택 받으려면 한 달에 써야 하는 돈 (원)<input name="goal" inputmode="numeric" value="${a.goal?fmtAmt(a.goal):""}" placeholder="예: 300,000"></label><input type="hidden" name="a" value="">`:`<p class="hint">지금 통장(상품권)에 있는 돈을 적으면 여기에 맞춰요. 그 뒤로 적는 입금·출금이 더하고 빠져요.</p><label>지금 잔액 (원)<input name="a" inputmode="numeric" value="${v==null?"":fmtAmt(v)}" placeholder="적어 주세요"></label>`}
+  <div class="row"><span class="left"><button type="button" class="btn small" id="lbd">이 칸 지우기</button></span><button type="button" class="btn" id="lbc">취소</button><button class="btn primary">저장</button></div></form>`);
   $("lbc").onclick=closeForm;
   $("lbd").onclick=()=>{if(!confirm(`「${a.name}」 칸을 지울까요? 적어 둔 기록은 남아요.`))return;closeForm();run(db.ledCfg({accts:ledAccts().filter(z=>z.name!==a.name)},true),"칸을 지웠어요")};
-  $("lbf").onsubmit=ev=>{ev.preventDefault();const s=ev.target.a.value.trim();const neg=/^[−-]/.test(s);const n=toNum(s);if(n==null)return toast("금액을 적어 주세요");closeForm();
-   run(db.ledCfg({bals:{[a.name]:{amt:neg?-n:n,at:Date.now()}}}),"잔액을 맞췄어요")};return}
+  $("lbf").onsubmit=async ev=>{ev.preventDefault();const g=ev.target;const nm=g.nm.value.trim()||a.name,w=g.w.value.trim();const goal=g.goal?(toNum(g.goal.value)||null):(a.goal||null);
+   if(nm!==a.name&&(nm===CASH||ledAccts().some(z=>z.name===nm)))return toast("같은 이름이 있어요");
+   const s=g.a.value.trim();const neg=/^[−-]/.test(s);const n=toNum(s);closeForm();
+   const bals={};const old=(ledCfg.bals||{})[a.name];
+   if(n!=null)bals[nm]={amt:neg?-n:n,at:Date.now()};else if(nm!==a.name&&old)bals[nm]=old;
+   const cfg={};if(nm!==a.name||w!==(a.who||"")||goal!==(a.goal||null))cfg.accts=ledAccts().map(z=>z.name===a.name?{...z,name:nm,who:w,goal}:z);if(Object.keys(bals).length)cfg.bals=bals;
+   if(!Object.keys(cfg).length)return;
+   try{await db.ledCfg(cfg);if(nm!==a.name)for(const x of ledger.filter(x=>x.acct===a.name))await db.ledUpd(x.id,{acct:nm});toast("저장했어요")}catch(e){toast("저장하지 못했어요: "+(e&&e.message||""))}};return}
 });
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=13;
+const VERSION=14;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION&&sessionStorage.getItem("syReload")!==String(j.v)){sessionStorage.setItem("syReload",String(j.v));location.replace(location.pathname+"?v="+j.v)}}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkVersion()});
