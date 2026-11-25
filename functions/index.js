@@ -811,3 +811,41 @@ exports.enChat = onDocumentCreated(
     }
   }
 );
+
+// ===================================================================================
+// 🎤 녹음 받아쓰기(엄마 11/25 "마이크가 불안정, 계속 소리 나서 산만" → 「녹음 후 서버가 받아쓰기」 선택).
+// 앱은 띵 소리 나는 브라우저 음성 인식 대신 녹음만 해요(50초마다 한 조각). 조각을 sihun/data/stt/{id} 에
+// {audio(base64 webm/opus), lang, at} 로 쓰면, 여기서 Google Speech-to-Text로 글자로 바꿔 같은 문서에 res {text}를 채워요.
+// 소리 파일은 글자로 바꾼 뒤 지워요(문서에 안 남김). 값: 1분에 약 20원.
+const STT_LIMIT = 800; // 하루 조각 수 상한
+const STT_HINTS = {
+  "ko-KR": ["형아", "카츄", "분의", "분모", "분자", "진분수", "가분수", "대분수", "자연수", "나누기", "곱하기", "더하기", "빼기", "몫", "나머지", "들이", "무게", "킬로그램", "그램", "리터", "밀리리터", "그림그래프", "전체", "남은", "똑같이"],
+  "en-US": ["Katchu", "basketball", "defense"],
+};
+exports.stt = onDocumentCreated(
+  { document: "sihun/data/stt/{id}", region: "asia-northeast3", timeoutSeconds: 60, memory: "512MiB", maxInstances: 5, minInstances: 1 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.audio || req.res) return;
+    const lang = req.lang === "en-US" ? "en-US" : "ko-KR";
+    const done = (res) => snap.ref.set(packDoc({ at: req.at || "", lang, sec: req.sec || 0, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("stt", req.at)) > STT_LIMIT) return done({ text: "", err: "limit" });
+    const speech = require("@google-cloud/speech");
+    const client = new speech.SpeechClient();
+    const base = { encoding: "WEBM_OPUS", sampleRateHertz: 48000, languageCode: lang, enableAutomaticPunctuation: true };
+    const tryRec = async (config) => {
+      const [r] = await client.recognize({ config, audio: { content: req.audio } });
+      return (r.results || []).map((x) => (x.alternatives && x.alternatives[0] ? x.alternatives[0].transcript : "")).join(" ").replace(/\s+/g, " ").trim();
+    };
+    try {
+      let text;
+      try { text = await tryRec({ ...base, model: "latest_long", speechContexts: [{ phrases: STT_HINTS[lang] }] }); }
+      catch (e1) { console.warn("stt latest_long failed, retrying default", e1 && e1.code, e1 && e1.message); text = await tryRec(base); }
+      return done({ text });
+    } catch (e) {
+      console.error("stt", e && e.code, e && e.message);
+      return done({ text: "", err: String((e && e.code) || (e && e.message) || "error") });
+    }
+  }
+);
