@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}</style>
+<title>시훈 연산 교과 대조 점검</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* 배치: 폰 한 줄 세로 흐름. 맨 위 결론 세 칸 → 고칠 목록 → 학기별 접는 대조표 */
+:root{--bg:#f6f7f5;--card:#ffffff;--fg:#1c2421;--mute:#5d6964;--line:#dfe4e0;--accent:#1f6f5c;
+ --ok:#1f7a4d;--okbg:#e2f3e9;--thin:#8a5a00;--thinbg:#fbeecd;--no:#a8322a;--nobg:#fbe3e0;--new:#2b5fa8;--newbg:#e1ebf9;
+ --font:"Noto Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141917;--card:#1d2421;--fg:#e8eeea;--mute:#9aa8a1;--line:#2f3a35;--accent:#6fcfb4;
+ --ok:#7fd6a4;--okbg:#17382a;--thin:#f0c56a;--thinbg:#3d3113;--no:#ff9c92;--nobg:#45201d;--new:#9dc0f5;--newbg:#1c2f4d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#141917;--card:#1d2421;--fg:#e8eeea;--mute:#9aa8a1;--line:#2f3a35;--accent:#6fcfb4;
+ --ok:#7fd6a4;--okbg:#17382a;--thin:#f0c56a;--thinbg:#3d3113;--no:#ff9c92;--nobg:#45201d;--new:#9dc0f5;--newbg:#1c2f4d;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:16px;line-height:1.6;word-break:keep-all;
+ padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:1.45rem;line-height:1.3;margin:0;text-wrap:balance}
+h2{font-size:1.1rem;margin:0 0 8px;text-wrap:balance}
+p{margin:0}
+.sub{color:var(--mute);font-size:.88rem}
+.verdict{display:flex;flex-direction:column;gap:10px}
+.v{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.v b.tag{display:inline-block;font-size:.8rem;padding:1px 9px;border-radius:99px;margin-bottom:4px}
+.t-ok{background:var(--okbg);color:var(--ok)}.t-no{background:var(--nobg);color:var(--no)}.t-q{background:var(--thinbg);color:var(--thin)}
+ol,ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:8px}
+li b{font-weight:700}
+.note{font-size:.9rem;color:var(--mute)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:.82rem;color:var(--mute)}
+.c{display:inline-block;font-size:.75rem;font-weight:700;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.ok{background:var(--okbg);color:var(--ok)}.thin{background:var(--thinbg);color:var(--thin)}.no{background:var(--nobg);color:var(--no)}.new{background:var(--newbg);color:var(--new)}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px}
+details+details{margin-top:8px}
+summary{cursor:pointer;padding:11px 14px;font-weight:700;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+summary span{font-weight:400;font-size:.82rem;color:var(--mute);text-align:right}
+.rows{border-top:1px solid var(--line)}
+.r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:.93rem}
+.r:last-child{border-bottom:0}
+.r>div{min-width:0}
+.r small{grid-column:1/-1;color:var(--mute);font-size:.84rem}
+.now{color:var(--accent)}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</head><body><main>
+<header>
+<h1>이 연산 커리큘럼으로 가도 될까</h1>
+<p class="sub">2026년 11월 25일 · 앱을 만든 쪽과 따로, 앱 코드와 2022 개정 교육과정(초3~중3)을 하나씩 맞춰 본 결과</p>
+</header>
+
+<section class="verdict">
+<div class="v"><b class="tag t-ok">괜찮은 것</b>
+<p>무엇을 어떤 차례로 배우는지, 뼈대는 교과와 맞아요. 초3~초6 계산 기준 31개 가운데 28개가 들어 있고, 분수·약수와 배수·정수·일차함수·이차함수는 촘촘해요. <b>초등 구간은 지금 뼈대 그대로 가도 됩니다.</b></p></div>
+<div class="v"><b class="tag t-no">고쳐야 할 것</b>
+<p>세 가지예요. ① 하루 세트를 나눠 주는 방식 때문에 뒤쪽 유형이 사실상 안 나와요. ② 교과에 있는데 빠진 계산이 15개쯤 있어요. ③ 중3의 인수분해·이차방정식·제곱근이 너무 얕아요. 수능까지 가는 길에서 가장 중요한 줄기라, <b>중학교 구간은 아직 믿고 맡길 수준이 아니에요.</b> 다만 시훈이가 거기 닿기까지 시간이 있어요.</p></div>
+<div class="v"><b class="tag t-q">아직 확인 못 한 것</b>
+<p>교육부 고시 원문 파일은 열리지 않아서, 성취기준 목록을 옮겨 둔 사본 세 곳을 서로 맞춰 보고 썼어요. 5~6학년 목록은 요약본이라 덜 확실해요. 문제 하나하나의 정답과 설명이 맞는지는 이번에 보지 않았어요. 학기 구분은 교과서 기준이라 출판사마다 조금 달라요.</p></div>
+</section>
+
+<section>
+<h2>고칠 목록 (급한 차례)</h2>
+<ol>
+<li><b>하루 세트 나누는 방식.</b> 매일 고정으로 나오는 유형 말고 나머지 64개 유형(<span class="num">5,947</span>단계, 전체의 84%)이 "돌아가며 하루 1세트" 한 칸을 나눠 써요. 한 세트를 통과해야 한 단계 올라가니, 매일 통과해도 그 칸만으로는 16년이 걸려요. 고정 유형은 다 통과해도 자동으로 빠지지 않아요. → 통과한 유형은 빠지고 다음 유형이 그 자리에 들어오게, 지금 학기 유형부터 세트를 받게 바꿔야 해요. 전체 단계 수 자체는 하루 20세트면 6년 안에 충분히 돌 수 있는 양이에요.</li>
+<li><b>이미 잘하는 유형도 단계를 다 밟아야 해요.</b> "바로 통과"는 단계가 없는 유형에만 걸려 있는데, 지금은 거의 모든 유형에 단계가 있어요. 예: 세 자리×한 자리는 144단계라 아무리 빨라도 144세트. 건너뛰기를 원치 않으셨으니, 잘하는 유형은 단계 수를 줄이는 쪽을 권해요.</li>
+<li><b>단계 수가 중요도와 거꾸로예요.</b> 큰 수 읽기 446단계, 어림하기 271단계인데, 이차방정식 20, 인수분해 19, 두 자리로 나누기(첫 유형) 14, 소수의 뜻 4단계예요. 답의 크기로 기계적으로 쪼갠 결과라, 어려운 곳이 오히려 급하게 뛰어요.</li>
+<li><b>초등에서 빠진 계산.</b> 분수↔소수 바꾸기(1/4 = 0.25), 대분수×대분수, 자연수÷분수와 대분수가 낀 ÷분수, 계산 전에 어림하기, 수 네 개 이상·괄호 두 겹 혼합 계산, 소수 두·세 자리의 자릿값(10배, 1/10).</li>
+<li><b>중학교에서 빠진 계산.</b> 소인수분해로 최대공약수·최소공배수, 괄호와 거듭제곱이 섞인 정수·유리수 계산, 분수 꼴 일차식, 계수가 분수·소수인 방정식과 연립방정식, 문자×식 전개와 식÷문자, 분모의 유리화, 앞 계수가 1이 아닌 인수분해, 근의 공식과 제곱 꼴로 푸는 이차방정식, 30°·45°·60° 삼각비 값, 부채꼴, 기둥·뿔·구의 겉넓이와 부피, 상대도수.</li>
+<li><b>잠금(먼저 통과해야 열리는 조건)이 빠진 곳 6군데.</b>
+ <ul>
+ <li>평균: 초5 내용인데 중1로 묶이고 "음수 계산" 뒤에 잠겨 있어요. 초5로 옮기기.</li>
+ <li>유리수의 계산: 분수 곱셈·나눗셈을 쓰는데 그 통과를 안 봐요.</li>
+ <li>비와 비율, 유한소수: 나눠서 소수로 만드는 계산을 쓰는데 소수 나눗셈을 안 봐요.</li>
+ <li>원의 둘레·넓이: 3.14를 곱하는데 소수 곱셈을 안 봐요.</li>
+ <li>이차함수: 제곱 꼴로 바꾸기와 x절편을 묻는데 전개·인수분해·이차방정식을 안 봐요.</li>
+ <li>두 자리×두 자리, 계산 순서: 앞 곱셈·나눗셈 통과 없이 열려요.</li>
+ </ul></li>
+<li><b>차례 한 곳.</b> 분수 길에서 분모 같은 대분수 덧셈·뺄셈(초4-2)이 분모 다른 분수 덧셈·뺄셈(초5-1) 뒤에 있어요. 앞으로 옮기기.</li>
+<li><b>고등 과정은 아직 0개.</b> 앱은 중3에서 끝나요. 지금 급하지 않지만 "수능까지"라고 하려면 언젠가 채워야 해요.</li>
+</ol>
+</section>
+
+<section>
+<h2>학년·학기별 대조표</h2>
+<p class="legend"><span><span class="c ok">있음</span> 충분</span><span><span class="c thin">얕음</span> 있지만 단계가 적거나 일부만</span><span><span class="c no">없음</span></span><span><span class="c new">새 버전</span> 지금 만드는 중인 판에만 있고 아직 안 올라감</span></p>
+<p class="note" style="margin:6px 0 12px">괄호 안 숫자는 단계 수. 문장제·사고력, 계산이 아닌 도형 내용은 범위 밖이라 뺐어요.</p>
+
+<details open><summary>초3 1학기 <span>거의 다 있음</span></summary><div class="rows">
+<div class="r"><div>세 자리 덧셈·뺄셈</div><span class="c ok">있음</span><small>146단계</small></div>
+<div class="r"><div>나눗셈 (구구단 범위), 두 자리×한 자리</div><span class="c ok">있음</span><small>몫찾기 10, 곱셈 80</small></div>
+<div class="r"><div>길이(mm, km)와 시간 더하기·빼기</div><span class="c ok">있음</span><small>시계 읽기와 초 단위는 새 버전에서 추가</small></div>
+<div class="r"><div>분수의 뜻</div><span class="c ok">있음</span><small>24단계</small></div>
+<div class="r"><div>소수 한 자리의 뜻과 크기</div><span class="c thin">얕음</span><small>4단계뿐</small></div>
+</div></details>
+
+<details open><summary><span class="now" style="font-weight:700;font-size:1rem;text-align:left">초3 2학기 (지금)</span> <span>올라간 판에 3개 빠짐</span></summary><div class="rows">
+<div class="r"><div>세 자리×한 자리, 두 자리×두 자리</div><span class="c ok">있음</span><small>144, 194단계</small></div>
+<div class="r"><div>한 자리로 나누기, 나머지</div><span class="c ok">있음</span><small>61, 29단계</small></div>
+<div class="r"><div>가분수·대분수, 크기 비교, ○의 몇 분의 몇</div><span class="c ok">있음</span><small>촘촘함. 시훈이 약점인 "48의 3/8"이 여기</small></div>
+<div class="r"><div>들이·무게 단위 바꾸기</div><span class="c ok">있음</span><small>174단계</small></div>
+<div class="r"><div>들이·무게 더하기·빼기</div><span class="c new">새 버전</span><small>올라가면 해결</small></div>
+<div class="r"><div>원의 반지름·지름</div><span class="c new">새 버전</span><small></small></div>
+<div class="r"><div>그림그래프 읽기</div><span class="c new">새 버전</span><small></small></div>
+</div></details>
+
+<details><summary>초4 1학기 <span>나눗셈 첫 계단이 급함</span></summary><div class="rows">
+<div class="r"><div>큰 수 (만, 억)</div><span class="c ok">있음</span><small>446단계, 너무 많음</small></div>
+<div class="r"><div>세 자리×두 자리</div><span class="c ok">있음</span><small>186단계</small></div>
+<div class="r"><div>두 자리로 나누기</div><span class="c thin">얕음</span><small>첫 유형이 14단계. 그다음 세 자리÷두 자리는 212단계</small></div>
+<div class="r"><div>계산 전에 어림하기</div><span class="c no">없음</span><small>2022 개정에서 새로 강조된 기준</small></div>
+<div class="r"><div>규칙 찾기</div><span class="c thin">얕음</span><small>10단계</small></div>
+<div class="r"><div>등호 (양쪽이 같다)</div><span class="c ok">있음</span><small>95단계. 방정식 준비로 좋음</small></div>
+<div class="r"><div>각도 계산, 막대그래프</div><span class="c new">새 버전</span><small></small></div>
+</div></details>
+
+<details><summary>초4 2학기 <span>소수 첫 부분 얕음</span></summary><div class="rows">
+<div class="r"><div>분모 같은 분수 덧셈·뺄셈 (대분수 포함)</div><span class="c ok">있음</span><small>차례가 초5 내용 뒤로 밀려 있음</small></div>
+<div class="r"><div>소수 두·세 자리의 뜻, 10배와 1/10</div><span class="c thin">얕음</span><small>크기 비교만 조금</small></div>
+<div class="r"><div>소수 덧셈·뺄셈</div><span class="c ok">있음</span><small>85단계</small></div>
+<div class="r"><div>꺾은선그래프 읽기</div><span class="c no">없음</span><small>계산은 아니라 급하지 않음</small></div>
+</div></details>
+
+<details><summary>초5 1학기 <span>강함</span></summary><div class="rows">
+<div class="r"><div>계산 순서 (괄호 포함)</div><span class="c thin">얕음</span><small>188단계지만 수 3개짜리뿐</small></div>
+<div class="r"><div>약수·배수, 최대공약수, 최소공배수</div><span class="c ok">있음</span><small>매우 촘촘함</small></div>
+<div class="r"><div>규칙과 대응 (함수 상자)</div><span class="c ok">있음</span><small>함수로 이어지는 줄기</small></div>
+<div class="r"><div>약분·통분, 분모 다른 분수 덧셈·뺄셈</div><span class="c ok">있음</span><small></small></div>
+<div class="r"><div>둘레와 넓이</div><span class="c new">새 버전</span><small></small></div>
+</div></details>
+
+<details><summary>초5 2학기 <span>2개 빠짐</span></summary><div class="rows">
+<div class="r"><div>이상·이하, 올림·버림·반올림</div><span class="c ok">있음</span><small>271단계, 많음</small></div>
+<div class="r"><div>분수 곱셈</div><span class="c thin">얕음</span><small>대분수×대분수 없음</small></div>
+<div class="r"><div>소수 곱셈</div><span class="c ok">있음</span><small></small></div>
+<div class="r"><div>분수↔소수 바꾸기와 크기 비교</div><span class="c no">없음</span><small>중2 유형에만 조금. 학기는 추정</small></div>
+<div class="r"><div>평균</div><span class="c thin">얕음</span><small>유형은 있는데 중1로 묶여 잠김</small></div>
+</div></details>
+
+<details><summary>초6 1학기 <span>거의 다 있음</span></summary><div class="rows">
+<div class="r"><div>분수÷자연수, 소수÷자연수</div><span class="c ok">있음</span><small></small></div>
+<div class="r"><div>비와 비율, 백분율(%)</div><span class="c ok">있음</span><small>102단계</small></div>
+<div class="r"><div>직육면체 부피·겉넓이</div><span class="c new">새 버전</span><small></small></div>
+<div class="r"><div>띠그래프·원그래프</div><span class="c no">없음</span><small>백분율 계산은 위에 있음</small></div>
+</div></details>
+
+<details><summary>초6 2학기 <span>분수 나눗셈 일부 빠짐</span></summary><div class="rows">
+<div class="r"><div>분수÷분수</div><span class="c thin">얕음</span><small>자연수÷분수, 대분수가 낀 것 없음</small></div>
+<div class="r"><div>소수÷소수</div><span class="c ok">있음</span><small></small></div>
+<div class="r"><div>비례식, 비례배분</div><span class="c ok">있음</span><small>145단계</small></div>
+<div class="r"><div>원의 둘레·넓이</div><span class="c new">새 버전</span><small>10단계로 얕음</small></div>
+</div></details>
+
+<details><summary>중1 1학기 <span>뼈대 좋음, 섞인 계산 없음</span></summary><div class="rows">
+<div class="r"><div>소인수분해 (수를 소수의 곱으로)</div><span class="c thin">얕음</span><small>10단계. 최대공약수·최소공배수 연결 없음</small></div>
+<div class="r"><div>정수 덧셈·뺄셈·곱셈·나눗셈</div><span class="c ok">있음</span><small>135, 88단계</small></div>
+<div class="r"><div>유리수(음수 분수) 계산</div><span class="c thin">얕음</span><small>한 번 계산만. 괄호·거듭제곱 섞인 것 없음</small></div>
+<div class="r"><div>식의 값, 일차식 계산</div><span class="c thin">얕음</span><small>분수 꼴 식 없음</small></div>
+<div class="r"><div>일차방정식</div><span class="c thin">얕음</span><small>76단계지만 계수가 분수·소수인 것 없음</small></div>
+<div class="r"><div>좌표, 정비례·반비례</div><span class="c ok">있음</span><small></small></div>
+</div></details>
+
+<details><summary>중1 2학기 <span>대부분 빠짐</span></summary><div class="rows">
+<div class="r"><div>평균·중앙값·최빈값</div><span class="c ok">있음</span><small>161단계</small></div>
+<div class="r"><div>다각형의 각</div><span class="c thin">얕음</span><small>6단계</small></div>
+<div class="r"><div>부채꼴 호의 길이·넓이</div><span class="c no">없음</span><small></small></div>
+<div class="r"><div>기둥·뿔·구의 겉넓이와 부피</div><span class="c no">없음</span><small></small></div>
+<div class="r"><div>상대도수</div><span class="c no">없음</span><small></small></div>
+</div></details>
+
+<details><summary>중2 1학기 <span>함수 강함, 식 계산 일부 빠짐</span></summary><div class="rows">
+<div class="r"><div>순환소수</div><span class="c ok">있음</span><small></small></div>
+<div class="r"><div>지수법칙 (거듭제곱 계산 규칙)</div><span class="c thin">얕음</span><small>23단계. 고등 지수·로그의 뿌리</small></div>
+<div class="r"><div>문자식 곱셈·나눗셈, 덧셈·뺄셈</div><span class="c thin">얕음</span><small>문자×식 전개, 식÷문자 없음</small></div>
+<div class="r"><div>일차부등식</div><span class="c ok">있음</span><small>246단계</small></div>
+<div class="r"><div>연립방정식</div><span class="c thin">얕음</span><small>30단계. 분수·소수 계수 없음</small></div>
+<div class="r"><div>일차함수 (기울기, 절편, 식 구하기)</div><span class="c ok">있음</span><small>181단계</small></div>
+</div></details>
+
+<details><summary>중2 2학기 <span>전체 37단계뿐</span></summary><div class="rows">
+<div class="r"><div>경우의 수와 확률</div><span class="c thin">얕음</span><small>8단계</small></div>
+<div class="r"><div>닮음비</div><span class="c thin">얕음</span><small>29단계</small></div>
+<div class="r"><div>피타고라스 정리</div><span class="c ok">있음</span><small>앱에선 중3으로 표시됨</small></div>
+<div class="r"><div>이등변삼각형·평행사변형 각 계산</div><span class="c no">없음</span><small></small></div>
+</div></details>
+
+<details><summary>중3 1학기 <span>가장 약한 곳</span></summary><div class="rows">
+<div class="r"><div>제곱근(√) 계산</div><span class="c thin">얕음</span><small>33단계. 분모의 유리화 없음</small></div>
+<div class="r"><div>곱셈 공식 (전개)</div><span class="c ok">있음</span><small>50단계</small></div>
+<div class="r"><div>인수분해</div><span class="c thin">얕음</span><small>19단계. 앞 계수가 1이 아닌 것 없음</small></div>
+<div class="r"><div>이차방정식</div><span class="c thin">얕음</span><small>20단계. 근의 공식 없음 (중3 교과서 내용, 내 지식 기준)</small></div>
+<div class="r"><div>이차함수</div><span class="c ok">있음</span><small>301단계</small></div>
+</div></details>
+
+<details><summary>중3 2학기 <span>삼각비 얕음</span></summary><div class="rows">
+<div class="r"><div>삼각비 (sin, cos, tan)</div><span class="c thin">얕음</span><small>16단계. 30°·45°·60° 값 없음</small></div>
+<div class="r"><div>분산·표준편차</div><span class="c ok">있음</span><small>176단계</small></div>
+<div class="r"><div>원주각</div><span class="c no">없음</span><small></small></div>
+</div></details>
+
+<details><summary>고등 <span>아직 없음</span></summary><div class="rows">
+<div class="r"><div>다항식, 지수·로그, 삼각함수, 미적분 계산</div><span class="c no">없음</span><small>앱은 중3에서 끝남</small></div>
+</div></details>
+</section>
+
+<section>
+<h2>어떻게 확인했나</h2>
+<ul class="note">
+<li>앱: 저장소에 올라간 판(v19, 91유형 <span class="num">7,096</span>단계)과 만드는 중인 판(102유형 <span class="num">8,950</span>단계)을 실제로 띄워 유형·단계·잠금·하루 계획을 뽑았어요.</li>
+<li>교과: 2022 개정 수학과 교육과정 성취기준 초3~4 44개, 초5~6 39개, 중학교 60개 목록과 맞췄어요. 고시 원문(국가교육과정정보센터)은 자동 열람이 막혀 사본으로 확인했고, 성취기준 해설은 보지 못했어요.</li>
+<li>앱 코드는 건드리지 않았어요.</li>
+</ul>
+</section>
+</main>
+</body></html>
