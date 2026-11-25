@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795566684";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795568258";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -267,7 +267,7 @@ const divs=N=>{const r=[];for(let i=1;i<=N;i++)if(N%i===0)r.push(i);return r};
 /* make(p) → {html (문제, [[i]] = 답칸), a:[정답], kind:'num'|'ox'|'plot', fig?, text}
    steps(p) → {head, fig?, list:[{h,a,kind?,hints}]}  : 답을 먼저 주지 않고 빈칸을 채우며 찾는 순서 틀 */
 const TYPES={
- A1:{hard:p=>(gg(p.N).length>=3?1:0)+(p.N>=30?1:0),name:"몫찾기",code:"A1",ex:"27 → 3, 9",sec:3,allow:3,why:"나눗셈, 약수·배수, 약분에 그대로 쓰인다냥.",
+ A1:{hard:p=>(gg(p.N).length>=3?1:0)+(p.N>=30?1:0),name:"몫찾기",code:"A1",ex:"27 → 3, 9",sec:3,why:"나눗셈, 약수·배수, 약분에 그대로 쓰인다냥.",
   idea:"구구단에서 이 수가 나오는 곳을 모두 찾는다냥.",
   lv:["몫찾기1 (2~5단)","몫찾기2 (2~9단, 40 아래)","몫찾기3 (전부)"],
   rand:L=>{const ok=N=>L===0?gg(N).some(a=>a<=5&&N/a<=5):L===1?N<40:true;let N;do{N=pick(GGN)}while(!ok(N));return{N}},key:p=>""+p.N,
@@ -275,10 +275,9 @@ const TYPES={
   steps:({N})=>({head:`${N}${eun(N)} 구구단 어디에?`,list:gg(N).map((a,k)=>({h:`${k?"또 있다냥":"찾았다냥"}: ${a} × [[0]] = ${N}`,a:[String(N/a)],hints:[`${a}단을 떠올려 보자냥.`]})).concat([{h:`그래서 답: ${gg(N).join(", ")} · 모두 [[0]]개`,a:[String(gg(N).length)],hints:["위에 나온 단을 세어 보자냥."]}])}),
   pat:(p,g)=>`${p.N} 몫찾기`},
 
- A3:{hard:p=>(p.k>=6&&p.k<10?1:0),name:"배수",code:"A3",ex:"7 → 7, 14, 21, 28, 35",sec:5,allow:3,why:"공배수 → 통분으로 가는 길이다냥.",
+ A3:{hard:p=>(p.k>=6&&p.k<10?1:0),name:"배수",code:"A3",ex:"7 → 7, 14, 21, 28, 35",sec:5,why:"공배수 → 통분으로 가는 길이다냥.",
   idea:"같은 수를 계속 더하면 다음 배수다냥.",
-  lv:["배수1 (2·3·4·5·10)","배수2 (6·7·8·9)","배수3 (11~50)"],
-  rand:L=>({k:pick([[2,3,4,5,10],[6,7,8,9],[11,12,15,20,25,50]][Math.min(L,2)])}),key:p=>""+p.k,
+  rand:()=>({k:pick([2,3,4,5,6,7,8,9,10,11,12,15,20,25,50])}),key:p=>""+p.k,
   make:({k})=>({kind:"multi",big:String(k),need:[1,2,3,4,5].map(i=>String(k*i)),text:`${k}의 배수 5개`}),
   steps:({k})=>({head:`${k}의 배수 5개`,list:[
     {h:`${k} × 1 = [[0]]`,a:[String(k)],hints:["1번 곱하면 그대로다냥."]},
@@ -287,7 +286,7 @@ const TYPES={
     {h:`그다음 둘: [[0]] [[1]]`,a:[String(4*k),String(5*k)],hints:[`계속 ${k}씩 더하자냥.`]}]}),
   pat:(p,g)=>`${p.k}의 배수`},
 
- A6:{hard:p=>(divs(p.N).length>=6?1:0)+(p.N>=30?.5:0),name:"약수",code:"A6",ex:"8 → 1, 2, 4, 8",sec:5,allow:3,why:"공약수 → 약분 → 분수 곱셈으로 가는 길이다냥.",
+ A6:{hard:p=>(divs(p.N).length>=6?1:0)+(p.N>=30?.5:0),name:"약수",code:"A6",ex:"8 → 1, 2, 4, 8",sec:5,why:"공약수 → 약분 → 분수 곱셈으로 가는 길이다냥.",
   idea:"두 수의 곱으로 짝을 지으면 빠짐없이 찾는다냥.",
   lv:["약수1 (~20)","약수2 (~50)","약수3 (~100)"],
   rand:L=>{const R=[[4,20,6],[21,50,8],[51,100,12]][Math.min(L,2)];let N;do{N=ri(R[0],R[1])}while(divs(N).length>R[2]);return{N}},key:p=>""+p.N,
@@ -490,7 +489,7 @@ function loadLocal(){S=freshCore();DAYS={};
   if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
 loadLocal();
 
-const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??(T.allow||1),n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
+const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??99,n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
 const tst=id=>{const t=S.ts[id]||(S.ts[id]={runs:[],start:null,target:null,grad:false,gradDays:[],conceptDone:false,pool:[]});if(!t.facts)t.facts={};return t};
 const lvl=id=>TYPES[id].scaffold?(tst(id).level||0):1;
 const finalPQ=id=>tc(id).sec*(lvl(id)===0?2:1);
@@ -686,7 +685,7 @@ function vPlay(){
   const lives=Array.from({length:allow},(_,k)=>`<i class="${k<allow-wn?"f":""}"></i>`).join("");
   const stT=tst(RUN.type),lrT=lastRun(RUN.type),goal=stT.target?["목표",stT.target*n]:lrT?["지난번",lrT.t/lrT.n*n]:["기준",finalPQ(RUN.type)*n];
   return `${bar(`<span class="prog">${RUN.label?RUN.label+" · ":""}${Math.min(doneN+1,n)} / ${n}</span>`,`<span class="clockwrap"><span class="clock" id="clock">${fmt(elapsed())}</span><span class="goal">${goal[0]} ${fmt(goal[1])}</span></span>`)}
-   <div class="lives" aria-label="남은 실수 ${Math.max(0,allow-wn)}개">${lives}${wn>allow?`<span class="small muted">기록만 남기는 세트</span>`:""}</div>
+   ${allow>=99?"":`<div class="lives" aria-label="남은 실수 ${Math.max(0,allow-wn)}개">${lives}${wn>allow?`<span class="small muted">기록만 남기는 세트</span>`:""}</div>`}
    <div class="stage">${q.kind==="plot"?`<div class="fig">${coordSVG(null,RUN.user,true)}</div>`:figHTML(q)}
      ${q.kind==="multi"?`<div class="big">${q.big}</div><div class="cnt">[${(it.found||[]).length}/${q.need.length}]</div>${(it.found||[]).length?`<div class="found">`:"<div>"}${(it.found||[]).map(v=>`<span>${v}</span>`).join("")}</div><div class="qline">${boxesHTML("[[0]]",RUN.vals,0,RUN.boxState)}</div>`
        :`<div class="qline ${q.cls||""}">${boxesHTML(q.html,RUN.vals,q.kind==="num"?RUN.act:-1,RUN.boxState)}</div>`}
@@ -947,7 +946,7 @@ function vParent(){
       <div class="row small"><button class="nb" data-act="mv" data-arg="${id}|-1" ${ix===0?"disabled":""}>위로</button><button class="nb" data-act="mv" data-arg="${id}|1" ${ix===S.cfg.order.length-1?"disabled":""}>아래로</button><button class="nb" data-act="popen" data-arg="${id}">${open?"닫기":"기준 바꾸기"}</button><button class="nb" data-act="preview" data-arg="${id}">미리 보기</button></div>
       ${open?`<div class="more">
         <label>문제당 초 (최종 기준)<input id="sec-${id}" type="number" step="0.5" min="1" max="60" value="${c.sec}" data-ch="sec" data-arg="${id}"></label>
-        <label>오답 허용<input id="allow-${id}" type="number" step="1" min="0" max="10" value="${c.allow}" data-ch="allow" data-arg="${id}"></label>
+        <label>오답 허용 (99 = 제한 없음)<input id="allow-${id}" type="number" step="1" min="0" max="99" value="${c.allow}" data-ch="allow" data-arg="${id}"></label>
         <label>세트당 문제 수<input id="n-${id}" type="number" step="1" min="5" max="40" value="${c.n}" data-ch="n" data-arg="${id}"></label>
         <label>출발 기록 (${c.n}문제, 예 1:20)<input id="start-${id}" type="text" inputmode="numeric" placeholder="${id==="A1"?"수피온 1:05~1:46":"비우면 3세트 평균"}" value="${st.start?fmt(st.start*c.n):""}" data-ch="start" data-arg="${id}"></label>
         <label class="full row" style="flex-direction:row"><input id="home-${id}" type="checkbox" ${c.home?"checked":""} data-ch="home" data-arg="${id}"> 집에서 따로 함 (앱에서 빼고 통과로 쳐요)</label>
