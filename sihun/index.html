@@ -602,7 +602,7 @@ table.dt{border-collapse:collapse;margin:6px 0 10px;font-size:17px;background:#f
 .big.tbig{margin-top:10px;background:#fff7e8;border:2px solid #f2c46d;color:#4a3500;box-shadow:0 4px 0 #e0c27a}.big.tbig .s{opacity:1;color:#5c4200}.big.tbig.done .s{color:#24543d}.big.tbig.done{box-shadow:0 4px 0 #9bd3b0;color:#1f4d36}.big.tbig .t{color:#7a4b00}.big.tbig.done{background:#f1faf4;border-color:#9bd3b0}.big.tbig.done .t{color:#2f6b4f}
 .tintro{background:#fff7e8;border:2px solid #f2c46d;border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.6}.tpick{display:block;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;font-size:17px;line-height:1.5;cursor:pointer}.tpick .tk{display:block;font-size:13px;font-weight:700;color:#a0670a;margin-bottom:4px}
 .tmy{margin-top:8px;font-size:16px;color:#2f6b4f}.tutor.teach .tlog{max-height:440px}.twork{margin-top:8px;padding:8px 10px;background:#fff;border:2px dashed #e4572e;border-radius:10px;font-size:18px}.tpadm{font-size:13px;color:var(--soft);margin-top:4px}
-.tdone{text-align:center;margin:12px 0 4px;font-size:20px}.tdone .em{font-size:40px}.tord{margin-top:10px;background:#f6f9ff;border:1.5px solid #b9cbe8;border-radius:14px;padding:10px 12px}.toh{font-weight:700;margin-bottom:6px}.tos{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #cfd8e8;font-size:17px}.tos .tn{flex:0 0 26px;height:26px;border-radius:50%;background:#2f4a7a;color:#fff;text-align:center;line-height:26px;font-size:14px}.tos small{display:block;font-size:13px;color:#a0670a}.tos.asked .tn{background:#f2b233}
+.tutor.teach .tb.ai,.tlogd .tb.ai{min-width:min(240px,88%)}.tav{width:46px;height:46px;border-radius:12px;float:left;margin:0 10px 4px 0;background:#fff}.tav.big{width:72px;height:72px;border-radius:16px}.tnm{display:block;font-size:14px;color:#a0670a}.tb.ai::after,.tintro::after,.twait::after{content:'';display:block;clear:both}.tdone{text-align:center;margin:12px 0 4px;font-size:20px}.tdone .em{font-size:40px}.tord{margin-top:10px;background:#f6f9ff;border:1.5px solid #b9cbe8;border-radius:14px;padding:10px 12px}.toh{font-weight:700;margin-bottom:6px}.tos{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #cfd8e8;font-size:17px}.tos .tn{flex:0 0 26px;height:26px;border-radius:50%;background:#2f4a7a;color:#fff;text-align:center;line-height:26px;font-size:14px}.tos small{display:block;font-size:13px;color:#a0670a}.tos.asked .tn{background:#f2b233}
 .tlogd{border:1.5px solid var(--line);border-radius:12px;padding:8px 10px;margin:8px 0;background:#fff}.tlogd summary{cursor:pointer;font-size:15px}.tlogd .tlog{margin-top:8px}.tlink,.tstop{font-size:15px;color:var(--soft);text-decoration:underline;background:none;border:0;padding:4px}
 .solbtn{margin-top:8px;padding:10px 16px;border-radius:12px;background:var(--chip);border:1.5px solid var(--line);font-size:17px;font-weight:600}
 .skipq{margin-top:6px;font-size:15px;color:var(--soft);text-decoration:underline}
@@ -4215,7 +4215,7 @@ function teachHome(mom){ mom=mom===true; CUR='teach'; TC=null;
   app().innerHTML=`<div class="wrap">${topBar('🧑‍🏫 AI에게 가르치기',mom?'👩 엄마 직접 해 보기 · 시훈이 기록에 안 남아요':'오늘 1문제 · 카츄에게 설명해 줘요')}<div id="tch" class="note">문제 고르는 중…</div></div>`; bindCommon();
   teachCands().then(cs=>{ const el=$('#tch'); if(!el||CUR!=='teach') return; el.className='';
     if(!cs.length){ el.innerHTML='<p class="note">가르칠 문제를 못 찾았어요. 인터넷을 확인하고 다시 들어와 주세요.</p>'; return; }
-    el.innerHTML=`<div class="tintro">⚡ <b>카츄</b>는 시훈이를 형아라고 부르는 동생이에요. 이 문제를 처음 봐서 잘 몰라요.<br>시훈이가 <b>처음부터 순서대로</b> 알려 주면 돼요. 말로 해도 되고, 오른쪽 패드에 식을 써도 돼요.</div>
+    el.innerHTML=`<div class="tintro"><img class="tav big" src="icons/cat-study.svg?v=1" alt="카츄">⚡ <b>카츄</b>는 시훈이를 형아라고 부르는 동생이에요. 이 문제를 처음 봐서 잘 몰라요.<br>시훈이가 <b>처음부터 순서대로</b> 알려 주면 돼요. 말로 해도 되고, 오른쪽 패드에 식을 써도 돼요.</div>
       <div class="sec">어떤 문제를 가르쳐 줄까?</div>${cs.map((c,i)=>`<button class="tpick" data-i="${i}"><span class="tk">${c.kind==='today'?'오늘 맞힌 문제':c.kind==='past'?`${String(c.d).slice(5).replace('-','/')}에 맞힌 문제`:'새 문제 · 풀면서 가르쳐요'}${c.src==='book'?' · 📘 최상위 문제집':''}</span>${picEsc(c.q.length>110?c.q.slice(0,110)+'…':c.q)}</button>`).join('')}`;
     el.querySelectorAll('.tpick').forEach(b=>b.onclick=()=>teachStart(cs[+b.dataset.i],mom)); }); }
 function teachStart(c,mom){ CUR='teachrun';
@@ -4227,7 +4227,7 @@ function teachStart(c,mom){ CUR='teachrun';
   const first='형아, 나 이 문제 처음 봐. 어떻게 푸는 거야? 처음부터 순서대로 알려 줘!';
   TC.turns.push({who:'ai',text:first}); teachSay(first); teachReply(); }
 function teachDraw(ctl){ const tb=$('#tbx'); if(!tb||!TC) return;
-  const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'⚡ ':'🙋 '}${picEsc(t.text)}${t.work?`<div class="twork"><b>카츄 풀이</b><br>${picEsc(t.work).replace(/\n/g,'<br>')}</div>`:''}${t.pad?'<div class="tpadm">✍️ 패드에 쓴 것도 같이 보냈어요</div>':''}</div>`;
+  const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>':'🙋 '}${picEsc(t.text)}${t.work?`<div class="twork"><b>카츄 풀이</b><br>${picEsc(t.work).replace(/\n/g,'<br>')}</div>`:''}${t.pad?'<div class="tpadm">✍️ 패드에 쓴 것도 같이 보냈어요</div>':''}</div>`;
   tb.innerHTML=`<div class="tlog">${TC.turns.map(bub).join('')}</div><div class="tctl">${ctl||''}</div>`; const l=tb.querySelector('.tlog'); l.scrollTop=l.scrollHeight; tb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
 function teachReply(){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; let MIC=null;
   teachDraw(`<textarea class="tans" id="th" rows="3" placeholder="${SR?'🎤 누르고 설명해요. 다 말하면 「보내기」!':'여기에 설명을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;line-height:1.5;min-height:84px;resize:vertical"></textarea><div class="acts">${SR?'<button class="ok" id="tm">🎤 말로 설명</button>':''}<button class="hint" id="ts" style="flex:0 0 auto">보내기 ▶</button></div><div class="tsub">✍️ 오른쪽 패드에 식을 쓰면 같이 보내져요 · <button class="tlink" id="tl">🔊 다시 듣기</button> · <button class="tstop" id="tq">그만할래요</button></div>`);
@@ -4249,7 +4249,7 @@ async function teachAsk(s,final){ const id=`${TC.id}-a${++TC.seq}`, c=TC.c;
   await DBH.doc('m32teachai/'+id).set(req); TC.calls++;
   for(let i=0;i<75;i++){ await new Promise(r=>setTimeout(r,i<5?1500:1000)); if(!TC) return {state:'error',err:'left'}; try{ const sn=await DBH.doc('m32teachai/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) return d.res; }catch(e){} }
   return {state:'error',err:'timeout'}; }
-async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait">⚡ 카츄가 생각하고 있어요…</div>`);
+async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait"><img class="tav" src="icons/cat-study.svg?v=1" alt="카츄">⚡ 카츄가 생각하고 있어요…</div>`);
   const final=TC.n>=TEACH_MAX; let r;
   if(!tutorOK()) r={state:'error',err:'db'}; else { try{ r=await teachAsk(s,final); }catch(e){ r={state:'error',err:String(e&&e.message||e)}; } }
   if(TC!==T0||CUR!=='teachrun') return;
@@ -4269,7 +4269,7 @@ function teachFinish(end,silent){ if(!TC||TC.end) return; TC.end=end;
   if(!TC.mom&&TC.n>0){ const T=teachP(); T.days[today()]={done:true,end,key:TC.c.key,id:TC.id,n:TC.n}; const ks=Object.keys(T.days).sort(); ks.slice(0,Math.max(0,ks.length-60)).forEach(k=>delete T.days[k]); TEACH_DIRTY=true; DIRTY=true; refreshTop(); }
   teachSave(); if(silent) return;
   const ok=end==='done'||end==='max', ord=TC.order||[];
-  teachDraw(`<div class="tdone"><div class="em">${ok?'🎉':'🌿'}</div><b>${ok?'카츄가 이해했어요!':'오늘 가르치기는 여기까지!'}</b></div>
+  teachDraw(`<div class="tdone"><img src="icons/cat-done.svg?v=1" alt="" style="width:110px;height:110px;border-radius:24px;display:block;margin:0 auto 6px"><div class="em">${ok?'🎉':'🌿'}</div><b>${ok?'카츄가 이해했어요!':'오늘 가르치기는 여기까지!'}</b></div>
     ${ord.length?`<div class="tord"><div class="toh">📝 시훈이가 가르친 순서</div>${ord.map((o,i)=>`<div class="tos ${o.asked?'asked':''}"><span class="tn">${i+1}</span><span>${picEsc(o.text)}${o.asked?'<small>🔍 카츄가 물어봐서 꺼낸 단계</small>':''}</span></div>`).join('')}</div>`:''}
     ${TC.correct===false?`<div class="fb show h">정답은 <b>${picEsc(TC.c.ans)}</b>이에요. 풀이를 같이 봐요.</div><div class="sol">${(TC.c.sol||[]).map(x=>`<div class="st">${picEsc(x)}</div>`).join('')}</div>`:''}
     <div class="acts"><button class="next" id="tfin">${TC.mom?'다른 문제로 해 보기':'수학 처음으로 ▶'}</button></div>`);
@@ -4285,7 +4285,7 @@ function teachLogHTML(x){ const E=picEsc, h=x.have||{};
    <div class="pcard sm">${E((x.prob||{}).q||'')}<div>정답: <b>${E((x.prob||{}).ans||'')}</b>${(x.prob||{}).strat?` · 🃏 ${E(x.prob.strat)}`:''} · ${{today:'그날 맞힌 문제',past:'예전에 맞힌 문제',new:'새 문제'}[(x.prob||{}).kind]||''}</div></div>
    <div class="sm">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · ❗ 설명한 답이 정답과 달랐어요':''}</div>
    ${(x.skipped||[]).length?`<div class="sm">🔍 건너뛴 단계: ${x.skipped.map(E).join(' / ')}</div>`:''}
-   <div class="tlog" style="max-height:none">${(x.turns||[]).map(t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'⚡ ':'🙋 '}${E(t.text)}${t.work?`<div class="twork"><b>카츄 틀린 풀이</b><br>${E(t.work).replace(/\n/g,'<br>')}</div>`:''}</div>`).join('')}</div>
+   <div class="tlog" style="max-height:none">${(x.turns||[]).map(t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>':'🙋 '}${E(t.text)}${t.work?`<div class="twork"><b>카츄 틀린 풀이</b><br>${E(t.work).replace(/\n/g,'<br>')}</div>`:''}</div>`).join('')}</div>
    ${(x.order||[]).length?`<div class="tord"><div class="toh">📝 시훈이가 가르친 순서</div>${x.order.map((o,i)=>`<div class="tos ${o.asked?'asked':''}"><span class="tn">${i+1}</span><span>${E(o.text)}${o.asked?'<small>🔍 카츄가 물어봐서 나옴</small>':''}</span></div>`).join('')}</div>`:''}
    ${(x.mom||[]).length?`<div class="sm">👩 메모: ${x.mom.map(E).join(' / ')}</div>`:''}${x.img?`<div class="penview"><img src="${x.img}" alt="패드"></div>`:''}</details>`; }
 function teachMomBind(){ $('#tmom').onclick=()=>teachHome(true); const el=$('#tlogs'); if(!DBH){ el.textContent='기록을 못 불러왔어요.'; return; }
