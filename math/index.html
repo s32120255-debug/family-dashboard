@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795643632";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795644039";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -104,6 +104,7 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .side button{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;min-height:64px;display:flex;flex-direction:column;gap:2px}
 .side b{font-family:var(--f-disp);font-weight:400;font-size:19px}
 .side span{font-size:13px;color:var(--ink-2)}
+.du-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);font-size:18px}.du-row b{font-family:var(--f-disp);font-weight:400;font-size:20px}.du-self{color:var(--pri,#2c5fa5);font-weight:700}
 .gate{position:relative;overflow:hidden}
 .gate .fill{position:absolute;left:0;bottom:0;height:4px;background:var(--blue);width:0}
 .gate.hold .fill{width:100%;transition:width 1.2s linear}
@@ -3067,6 +3068,50 @@ async function connectDB(light){
     if(changed&&(view==="home"||view==="parent"||view==="report"||view==="mine"))render();
   }catch(e){sync=FBU?"err":"local"}
 }
+/* ───────── 대결: 엄마 vs 시훈. 같은 문제를 따로 풀고 맞힌 수 → 시간으로 견줌. 기록·단계에는 안 들어감 ───────── */
+const KDUEL="sihun-app-duel-v1",JO={sihun:{eun:"은",iga:"이",gwa:"과",ro:"으로"},mom:{eun:"는",iga:"가",gwa:"와",ro:"로"}};let DU={rounds:[],savedAt:0};
+const duLoad=()=>{try{const d=JSON.parse(localStorage.getItem(KDUEL)||"null");if(d&&d.rounds)DU=d}catch(e){}};
+const duMerge=(A,B)=>{const m=new Map();[...(A.rounds||[]),...(B.rounds||[])].forEach(r=>{const o=m.get(r.k);if(!o){m.set(r.k,clone(r));return}Object.keys(r.res||{}).forEach(w=>{if(!o.res[w]||(r.res[w].at||0)<(o.res[w].at||0))o.res[w]=r.res[w]})});
+  return{rounds:[...m.values()].sort((a,b)=>a.at-b.at).slice(-60),savedAt:Math.max(A.savedAt||0,B.savedAt||0)}};
+async function duSync(push){try{localStorage.setItem(KDUEL,JSON.stringify(DU))}catch(e){}
+  if(!DB)return;try{const r=await DB.doc("duel/log").get(),c=r.exists?r.data():null,n0=JSON.stringify(DU.rounds);if(c&&c.rounds)DU=duMerge(DU,c);
+    if(push||!c||JSON.stringify(DU.rounds)!==JSON.stringify(c.rounds)){DU.savedAt=Date.now();await DB.doc("duel/log").set(clone(DU))}
+    try{localStorage.setItem(KDUEL,JSON.stringify(DU))}catch(e){}if(JSON.stringify(DU.rounds)!==n0&&view==="duel")render()}catch(e){}}
+const duOther=()=>PROFILES.find(p=>p.id!==PID),duMe=()=>PROFILES.find(p=>p.id===PID);
+const duKid=()=>{if(PID==="sihun")return S;try{const c=JSON.parse(localStorage.getItem(KCORE)||"null");return c&&c.ts?c:null}catch(e){return null}};
+const duOK=id=>{const T=TYPES[id];return T&&!T.seq&&!T.scaffold&&!HIDE_BANK.includes(id)&&!HSIDS.includes(id)};
+function duPick(K){const ts=(K&&K.ts)||{},used=DU.rounds.slice(-3).map(r=>r.type);
+  let c=Object.keys(ts).filter(id=>duOK(id)&&(ts[id].runs||[]).length&&!LIGHT.has(id));if(c.length<3)c=["T12","A1","A3","B5","A6","NS"].filter(duOK);
+  const f=c.filter(id=>!used.includes(id)),L=f.length?f:c,id=L[Math.floor(Math.random()*L.length)];return{type:id,step:Math.min((ts[id]||{}).step||0,stepMax(TYPES[id])||0)}}
+function duRand(seed,fn){const R=Math.random;let a=seed>>>0;Math.random=()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return((t^(t>>>14))>>>0)/4294967296};try{return fn()}finally{Math.random=R}}
+function duProbs(r){const T=TYPES[r.type];return duRand(r.seed,()=>{const out=[],keys=new Set();for(let g=0;g<600&&out.length<10;g++){const p=T.rand(r.step),k=T.key(p);if(keys.has(k))continue;keys.add(k);out.push(p)}
+  while(out.length<10)out.push(T.rand(r.step));return out.map(p=>{const q=T.make(p,1);if(q.sg===undefined)q.sg=!!T.sg;if(T.ml&&!q.ml)q.ml=T.ml;return{p,q}})})}
+const duCur=()=>DU.rounds[DU.rounds.length-1]||null;
+const duWin=r=>{const a=r.res.sihun,b=r.res.mom;if(!a||!b)return null;return a.c!==b.c?(a.c>b.c?"sihun":"mom"):Math.abs(a.t-b.t)<.5?"tie":a.t<b.t?"sihun":"mom"};
+async function duNew(){await duSync();const c=duCur();if(c&&TYPES[c.type]&&!(c.res.sihun&&c.res.mom))return;let K=duKid();if(PID!=="sihun"&&DB){try{const r=await DB.doc("app/core").get(),v=r.exists?r.data():null;if(v&&v.ts)K=v}catch(e){}}
+  const pk=duPick(K),t=today(),n=DU.rounds.filter(r=>r.d===t).length+1;DU.rounds.push({k:t+"#"+n+"-"+Math.floor(Math.random()*1e6),d:t,type:pk.type,step:pk.step,seed:Math.floor(Math.random()*2**31),at:Date.now(),res:{}});duSync(true)}
+function duStart(){const r=duCur();if(!r||r.res[PID]||!TYPES[r.type])return;PREVIEW=false;RUN={type:r.type,duel:r.k};RUN.probs=duProbs(r);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
+  RUN.items=RUN.probs.map(()=>({ms:0,tries:[],skip:false,mis:0,ok:false,ok1:false}));RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred=null;RUN.started=Date.now();RUN.user=null;RUN.rev=null;view="play";beginQ();render()}
+function duFinish(){const r=DU.rounds.find(x=>x.k===RUN.duel),n=RUN.probs.length,t=Math.round(RUN.items.reduce((a,b)=>a+b.ms,0)/100)/10,c=RUN.items.filter(x=>x.ok1).length;
+  if(r&&!r.res[PID])r.res[PID]={c,n,t,at:Date.now()};RUN=null;view="duel";render();duSync(true)}
+/* 지난 대결의 나와 견주기: 좋아진 것만 말함 */
+function duSelf(r){const me=r.res[PID];if(!me)return "";const pv=DU.rounds.filter(x=>x!==r&&x.type===r.type&&x.res[PID]&&x.at<r.at).pop();
+  if(pv){const o=pv.res[PID],dq=o.t/o.n-me.t/me.n;if(me.c>o.c)return `지난 대결의 나보다 ${me.c-o.c}개 더 맞혔다냥.`;if(me.c===o.c&&dq>=.1)return `지난 대결의 나보다 문제당 ${dq.toFixed(1)}초 빨라졌다냥.`}
+  const lr=(tst(r.type).runs||[]).slice(-1)[0];if(lr&&lr.n){const dq=lr.t/lr.n-me.t/me.n;if(dq>=.1&&me.c===me.n)return `평소의 나보다 문제당 ${dq.toFixed(1)}초 빨랐다냥.`}
+  return me.c===me.n?"하나도 안 틀렸다냥.":"끝까지 풀었다냥."}
+const duLine=(w,x)=>`<div class="du-row"><span>${PROFILES.find(p=>p.id===w).icon} ${PROFILES.find(p=>p.id===w).name}</span><b>${x?`${x.c}개 맞힘`:"아직"}</b><span class="tab">${x?fmt(x.t)+" ("+x.t.toFixed(1)+"초)":""}</span></div>`;
+function vDuel(){const r=duCur(),me=duMe(),ot=duOther(),T=r&&TYPES[r.type];let body="";
+  if(!r||!T||(r.res.sihun&&r.res.mom)){
+    if(r&&T){const w=duWin(r),nm=w==="tie"?"":PROFILES.find(p=>p.id===w).name;
+      body+=`<div class="card"><p class="small muted">${T.name} · 10문제</p>${duLine("sihun",r.res.sihun)}${duLine("mom",r.res.mom)}
+        <h3 style="margin-top:10px">${w==="tie"?"비겼다냥! 둘 다 대단하다옹.":w===PID?`${nm} 승리다냥!`:`이번 판은 ${nm}${JO[w].iga} 이겼다옹.`}</h3>
+        <p>${r.res.sihun.c!==r.res.mom.c?"맞힌 수로 갈렸다냥.":w==="tie"?"":"맞힌 수가 같아서 시간으로 갈렸다냥."}</p><p class="du-self">${duSelf(r)}</p></div>`}
+    body+=`<button class="bigbtn" data-act="dunew">${r?"새 판 만들기":"첫 판 만들기"}</button><p class="small muted" style="text-align:center">같은 문제를 둘이 따로 푼다냥. 맞힌 수가 먼저, 같으면 시간이다냥.</p>`}
+  else if(!r.res[PID]){body+=`<div class="card"><h3>${T.name} · 10문제</h3><p>${r.res[ot.id]?`${ot.name}${JO[ot.id].eun} 벌써 풀었다냥. 결과는 풀고 나면 보인다냥.`:`${ot.name}${JO[ot.id].gwa} 같은 문제를 푼다냥.`}</p><p class="small muted">처음에 바로 맞힌 것만 센다냥. 기록과 단계에는 안 들어간다냥.</p></div><button class="bigbtn" data-act="dustart">대결 시작</button>`}
+  else{body+=`<div class="card"><p class="small muted">${T.name} · 10문제</p>${duLine(PID,r.res[PID])}<h3 style="margin-top:10px">${ot.name} 차례를 기다린다냥.</h3><p class="du-self">${duSelf(r)}</p><p class="small muted">${ot.name}${JO[ot.id].iga} 이 앱에서 "${ot.name}"${JO[ot.id].ro} 들어가 대결을 누르면 같은 문제가 나온다냥.</p></div><button class="nb" style="align-self:center" data-act="durefresh">새로 보기</button>`}
+  const done=DU.rounds.filter(x=>x.res.sihun&&x.res.mom&&TYPES[x.type]),wk=done.filter(x=>Date.parse(today())-Date.parse(x.d)<7*864e5),cnt=w=>wk.filter(x=>duWin(x)===w).length;
+  const hist=done.slice(-6).reverse().filter(x=>x!==r||true).map(x=>{const w=duWin(x);return `<p class="small tab">${x.d.slice(5)} · ${TYPES[x.type].name} · 🥷 ${x.res.sihun.c}개 ${x.res.sihun.t.toFixed(0)}초 · 🐱 ${x.res.mom.c}개 ${x.res.mom.t.toFixed(0)}초 → ${w==="tie"?"비김":PROFILES.find(p=>p.id===w).name}</p>`}).join("");
+  return `${bar("대결 🥷 vs 🐱")}<div class="page">${body}${done.length?`<div class="card"><h3>지난 판</h3><p class="small">이번 주 · 시훈 ${cnt("sihun")} : 엄마 ${cnt("mom")}${cnt("tie")?` · 비김 ${cnt("tie")}`:""}</p>${hist}</div>`:""}</div>`}
 /* 구글 로그인 + 가족 저장소(Firestore). 로그인 안 해도 앱은 그대로 됨 */
 let FB=null,FBU=null,FBMSG="",FBBUSY=false;
 const fbCan=()=>/^https?:/.test(location.protocol)&&!(window.claude&&window.claude.use);
@@ -3105,7 +3150,7 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint}[view]||vHome;
+  const f={bank:vBank,who:vWho,mine:vMine,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel}[view]||vHome;
   app.innerHTML=f()+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
@@ -3147,6 +3192,7 @@ function vHome(){
    <div class="side">
      <button data-act="go" data-arg="mine"><b>내 기록</b><span>얼마나 빨라졌나</span></button>
      <button data-act="pin"><b>부모님</b><span>비밀번호</span></button>
+     <button data-act="duel" style="grid-column:span 2"><b>${duOther().name}${JO[duOther().id].gwa} 대결</b><span>같은 문제를 따로 풀고 견준다냥</span></button>
      <button data-act="gw" data-arg="open" style="grid-column:span 2"><b>오늘의 그래프</b><span>표 → 점 → 선, 그다음 종이에 그린다냥 · 오늘 ${(gwS().log[today()]||0)}/${gwS().per||3}장</span></button>
    </div></div>`;
 }
@@ -3353,6 +3399,7 @@ function nextQ(){
 }
 function finishSet(){
   stopTick();stopClock();
+  if(RUN.duel){duFinish();return}
   if(PREVIEW){const id=RUN.type;RUN={type:id};MSG="";view="intro";modal=()=>`<div class="veil"><div class="sheet"><h3>미리 보기 끝</h3><p class="small muted">${TYPES[id].name} 세트를 끝까지 봤어요. 기록은 남지 않았어요.</p><button class="bigbtn" data-act="pvback">다른 것 보기</button></div></div>`;render();return}
   const id=RUN.type,c=tc(id),st=tst(id),T=TYPES[id];
   const n=RUN.probs.length,t=RUN.items.reduce((a,b)=>a+b.ms,0)/1000,w=RUN.items.filter(x=>!x.ok1).length;
@@ -3705,7 +3752,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){S=clone(B[d].core);loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fbin:()=>fbLogin(),fbout:()=>fbLogout(),duel:()=>{duLoad();go("duel");duSync()},dunew:async()=>{await duNew();if(duCur()&&!duCur().res[PID])duStart();else render()},dustart:()=>duStart(),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
