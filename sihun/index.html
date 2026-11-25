@@ -7658,6 +7658,7 @@ function pvHW(){const nchk=HW.reduce((a,h)=>a+h.items.filter(i=>i.chk).length,0)
 const KO_PLAN={steps:[],custom:{},add:{}};
 /* 보충(엄마 지정): 그 날짜 요일 순서 맨 뒤에 붙음. 11/24 엄마 "비문학 숙제 오늘 보충으로" */
 KO_PLAN.add['2026-11-24']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'문단 쪼개 읽기 → 근거 문장 찾기'}];
+KO_PLAN.add['2026-11-25']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'읽으면서 주어·서술어 → 왜? 찾기 (하는 데까지만)'}];
 function dayBase(d){return dayBase0(d).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
 function dayBase0(d){if(KO_PLAN.custom[d])return KO_PLAN.custom[d].slice();const wd=new Date(d+'T12:00:00').getDay();const W=MAXW;const R=Array.from({length:W},(_,i)=>i+1);
   if(wd===0)return [];
