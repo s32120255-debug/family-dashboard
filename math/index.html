@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795649076";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795649424";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -168,7 +168,7 @@ details.card summary{cursor:pointer;padding:4px 0}
 @media print{@page{size:A4 portrait;margin:10mm}html,body,#app{height:auto!important;overflow:visible!important;display:block!important;background:#fff!important;max-width:none!important;padding:0!important}body::before,body::after{display:none!important}.noprint{display:none!important}.page.gprint{overflow:visible!important;display:block!important;padding:0!important}.psheet{border:1px solid #777;break-inside:avoid;page-break-inside:avoid;height:132mm;margin:0 0 6mm;box-sizing:border-box;font-size:12pt}.psheet .pg{width:50%}}
 /* 작은 화면: 그림이 키패드에 밀려 잘리지 않게 그림을 남은 높이에 맞춤 (11/26) */
 .stage:has(.fig){container-type:size;justify-content:flex-start}
-.stage .fig svg{max-height:max(120px,calc(100cqh - 124px))}
+.stage .fig svg{max-height:max(120px,calc(100cqh - var(--gwr,124px)))}
 @media(max-height:700px){.pad{gap:6px;padding-block:6px 8px}.key{font-size:27px}.stage{gap:4px}}
 
 /* 키패드 */
@@ -3772,22 +3772,37 @@ function gwSVG(s,o={}){const q=!!s.q,lo=q?0:-6,hi=q?10:6,W=320,m=q?24:16,u=(W-2*
   for(let i=lo;i<=hi;i++)if(i&&i%2===0)h+=svgT(X(i),Y(0)+13,MN(i),11,ik)+svgT(X(0)-5,Y(i)+4,MN(i),11,ik,"end");
   (o.lines||[]).forEach(([l,c])=>{if(l.c){let dd="";for(let x=lo;x<=hi+1e-9;x+=.1){const y=gwY(l,x);if(y<lo-.3||y>hi+.3)continue;dd+=(dd?"L":"M")+X(x).toFixed(1)+" "+Y(Math.max(lo-.3,Math.min(hi+.3,y))).toFixed(1)}if(dd)h+=`<path d="${dd}" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;return}const d=l.d||1,P=[[lo,gwY(l,lo)],[hi,gwY(l,hi)],[(lo-l.b)*d/l.a,lo],[(hi-l.b)*d/l.a,hi]].filter(p=>p[0]>=lo-1e-9&&p[0]<=hi+1e-9&&p[1]>=lo-1e-9&&p[1]<=hi+1e-9).sort((a,b)=>a[0]-b[0]);if(P.length>1){const A=P[0],B=P[P.length-1];h+=`<line x1="${X(A[0])}" y1="${Y(A[1])}" x2="${X(B[0])}" y2="${Y(B[1])}" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`}});
   (o.pts||[]).forEach(([x,y,c,lab])=>{h+=`<circle cx="${X(x)}" cy="${Y(y)}" r="5.5" fill="${c}"/>`;if(lab)h+=svgT(X(x)+(x>=hi-2?-8:8),Y(y)-7,`(${MN(x)}, ${MN(y)})`,11,c,x>=hi-2?"end":"start")});
+  const mk=o.marks;if(mk){const mc="#e8a100",ac="#1f9d55";
+    if(mk.vline!=null)h+=`<line x1="${X(mk.vline)}" y1="${Y(lo)}" x2="${X(mk.vline)}" y2="${Y(hi)}" stroke="${mc}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+    (mk.rings||[]).forEach(([x,y])=>{if(x>=lo&&x<=hi&&y>=lo&&y<=hi)h+=`<circle cx="${X(x)}" cy="${Y(y)}" r="12" fill="none" stroke="${mc}" stroke-width="4"/>`});
+    if(mk.arr){const [x0,y0,x1,y1]=mk.arr,dx=x1-x0,dy=y1-y0;h+=`<line x1="${X(x0)}" y1="${Y(y0)}" x2="${X(x1)}" y2="${Y(y0)}" stroke="${ac}" stroke-width="4" stroke-linecap="round"/><line x1="${X(x1)}" y1="${Y(y0)}" x2="${X(x1)}" y2="${Y(y1)}" stroke="${ac}" stroke-width="4" stroke-linecap="round"/>`+svgT((X(x0)+X(x1))/2,Y(y0)+(dy>=0?15:-7),`옆으로 ${dx}`,12,ac)+svgT(X(x1)+6,(Y(y0)+Y(y1))/2+4,dy>=0?`위로 ${dy}`:`아래로 ${-dy}`,12,ac,"start")}}
   if(o.tap)for(let x=lo;x<=hi;x++)for(let y=lo;y<=hi;y++)h+=`<circle cx="${X(x)}" cy="${Y(y)}" r="${u/2}" fill="transparent" data-act="gwpt" data-arg="${x},${y}"/>`;
   return h+"</svg>"}
 let GS=null;
-function gwSteps(s){const L=gwLines(s),st=[];
-  if(s.g===6)st.push({k:"tab",ln:0},{k:"plot",ln:0},{k:"line",ln:0},{k:"plot",ln:1,shift:1},{k:"line",ln:1},{k:"ask",h:`옮긴 직선: y = ${TM(s.a,"x")} + [[0]]`,a:[L[1].b],hint:"옮긴 직선이 y축과 만나는 곳을 본다냥."});
-  else if(s.g===4)st.push({k:"plot",ln:0},{k:"line",ln:0},{k:"ask",h:`y = [[0]]x + [[1]]`,a:[s.a,s.b],hint:"옆으로 1칸 갈 때 위아래로 가는 칸 수가 x 앞의 수, y축과 만나는 곳이 뒤의 수다냥."});
+/* 질문 종류마다 처음 한 번 보여 주는 예시 (지금 문제와 다른 그래프) */
+const GWEX={
+ si:{s:{g:0,a:2,b:1,q:1},marks:{rings:[[0,1]],arr:[1,3,2,5]},t:["<b>y축</b>은 세로로 선 굵은 줄이다냥. 선이 y축과 만나는 점(노란 동그라미)의 높이가 1이니까 <b>y = 1</b>이다옹.","초록 길을 본다냥. 옆으로 1칸 가면 위로 2칸 올라간다옹. 그래서 x가 1 늘면 y는 <b>2</b>씩 변한다냥."]},
+ dn:{s:{g:1,a:-2,b:8,q:1},marks:{rings:[[0,8]],arr:[1,6,2,4]},t:["선이 y축(세로 굵은 줄)과 만나는 점의 높이가 8이니까 <b>y = 8</b>이다냥.","초록 길을 본다옹. 옆으로 1칸 가면 아래로 2칸 내려간다냥. 그래서 y는 <b>2</b>씩 준다옹."]},
+ eq:{s:{g:2,a:2,b:-1},marks:{rings:[[0,-1]],arr:[1,1,2,3]},t:["옆으로 1칸 갈 때 위로 2칸 가니까 x 앞의 수는 <b>2</b>다냥. 내려가면 −를 붙인다옹.","y축과 만나는 점의 높이가 −1이니까 뒤의 수는 <b>−1</b>이다냥. 그래서 y = 2x − 1이다옹."]},
+ meet:{s:{g:5,a:1,b:1,a2:-1,b2:3,r:1,s:2},marks:{rings:[[1,2]]},t:["두 선이 겹치는 점이 <b>만나는 점</b>이다냥.","가운데(0)에서 옆으로 1칸, 위로 2칸이니까 <b>(1, 2)</b>다옹. 옆으로 먼저, 위아래는 다음이다냥."]},
+ shift:{s:{g:6,a:2,b:0,p:0,u:3},marks:{rings:[[0,3]]},t:["파란 선이 옮긴 선이다냥. 기울어진 정도는 그대로다옹.","옮긴 선이 y축과 만나는 높이가 3이니까 <b>y = 2x + 3</b>이다냥."]},
+ vtx:{s:{g:8,c:1,p:1,u:-2},marks:{rings:[[1,-2]],vline:1},t:["가장 낮은(또는 높은) 점이 <b>꼭짓점</b>이다냥. 여기서는 옆으로 1, 아래로 2니까 (1, −2)다옹.","꼭짓점을 지나는 세로줄(노란 점선)로 접으면 양쪽이 딱 겹친다냥. 그 줄이 <b>x = 1</b>이다옹."]},
+ meet2:{s:{g:9,c:1,p:0,u:0,a:1,b:2,x1:-1,x2:2},marks:{rings:[[-1,1],[2,4]]},t:["곡선과 직선이 겹치는 점이 두 개 있다냥.","왼쪽 점은 옆으로 −1칸, 오른쪽 점은 옆으로 2칸이다옹. 그래서 <b>x = −1 또는 x = 2</b>다냥."]}};
+const gwEk=s=>s.g===9?"meet2":s.c?"vtx":s.g===6?"shift":s.g===5?"meet":s.g===4?"eq":s.q&&s.a<0?"dn":"si";
+function gwSteps(s){const R=gwSteps0(s),ek=gwEk(s),i=R.findIndex(x=>x.k==="ask");if(i>=0){R[i].ek=ek;if(!(gwS().seen||{})[ek])R.splice(i,0,{k:"ex",ek,first:1})}return R}
+function gwSteps0(s){const L=gwLines(s),st=[];
+  if(s.g===6)st.push({k:"tab",ln:0},{k:"plot",ln:0},{k:"line",ln:0},{k:"plot",ln:1,shift:1},{k:"line",ln:1},{k:"ask",h:`옮긴 직선: y = ${TM(s.a,"x")} + [[0]]`,a:[L[1].b],hint:"옮긴 직선이 y축과 만나는 곳을 본다냥.",qs:["파란 선이 y축(세로 굵은 줄)과 만나는 높이는 몇이냥?"],hs:["파란 선 위에서 x가 0인 점을 찾는다냥. 그 점의 높이를 읽는다옹."],mk:()=>[{rings:[[0,L[1].b]]}]});
+  else if(s.g===4)st.push({k:"plot",ln:0},{k:"line",ln:0},{k:"ask",h:`y = [[0]]x + [[1]]`,a:[s.a,s.b],hint:"옆으로 1칸 갈 때 위아래로 가는 칸 수가 x 앞의 수, y축과 만나는 곳이 뒤의 수다냥.",qs:["옆으로 1칸 갈 때 위아래로 몇 칸 가냥? 내려가면 −다옹. (x 앞의 수)","선이 y축(세로 굵은 줄)과 만나는 높이는 몇이냥? (뒤의 수)"],hs:["초록 길을 따라 센다냥. 옆으로 1칸 갈 때 위로 가면 +, 아래로 가면 −다옹.","노란 동그라미의 높이를 읽는다냥. 0보다 아래면 −다옹."],mk:()=>[{arr:[0,s.b,1,s.b+s.a]},{rings:[[0,s.b]]}]});
   else{L.forEach((l,j)=>st.push({k:"tab",ln:j},{k:"plot",ln:j},{k:"line",ln:j}));
-    if(s.g===9)st.push({k:"ask",h:`<span class="sub">만나는 점의 x좌표 (작은 것부터)</span><span class="sub">x = [[0]] 또는 x = [[1]]</span>`,a:[s.x1,s.x2],hint:"곡선과 직선이 겹치는 두 점을 찾아 옆으로 몇 칸인지 읽는다냥."});
-    else if(s.c)st.push({k:"ask",h:`<span class="sub">꼭짓점 ( [[0]] , [[1]] )</span><span class="sub">접는 세로줄 x = [[2]]</span>`,a:[s.p,s.u,s.p],hint:`가장 ${s.c>0?"낮은":"높은"} 점이 꼭짓점이다냥. 그 점을 지나는 세로줄로 접으면 양쪽이 겹친다옹.`});
-    else if(s.g===5)st.push({k:"ask",h:`만나는 점 ( [[0]] , [[1]] )`,a:[s.r,s.s],hint:"두 직선이 겹치는 한 점을 읽는다냥. 옆으로 먼저, 위아래는 다음이다옹."});
-    else if(s.q&&s.a<0)st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 1 늘면 y는 [[1]]씩 준다</span>`,a:[s.b,-s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 한 칸 갈 때 몇 칸 내려가는지 센다옹."});
-    else st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 ${s.d||1} 늘면 y는 [[1]]씩 변한다</span>`,a:[s.b,s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 갈 때 위아래로 몇 칸 가는지 센다옹. 내려가면 −다냥."})}
+    if(s.g===9)st.push({k:"ask",h:`<span class="sub">만나는 점의 x좌표 (작은 것부터)</span><span class="sub">x = [[0]] 또는 x = [[1]]</span>`,a:[s.x1,s.x2],hint:"곡선과 직선이 겹치는 두 점을 찾아 옆으로 몇 칸인지 읽는다냥.",qs:["곡선과 직선이 겹치는 두 점 중 왼쪽 점은 옆으로 몇 칸이냥?","오른쪽 점은 옆으로 몇 칸이냥?"],hs:["노란 동그라미 중 왼쪽 점이다냥. 가운데(0)에서 옆으로 몇 칸인지 센다옹. 왼쪽이면 −다냥.","노란 동그라미 중 오른쪽 점이다냥. 가운데(0)에서 옆으로 몇 칸이냥?"],mk:()=>{const m={rings:[[s.x1,gwY(L[0],s.x1)],[s.x2,gwY(L[0],s.x2)]]};return[m,m]}});
+    else if(s.c)st.push({k:"ask",h:`<span class="sub">꼭짓점 ( [[0]] , [[1]] )</span><span class="sub">접는 세로줄 x = [[2]]</span>`,a:[s.p,s.u,s.p],hint:`가장 ${s.c>0?"낮은":"높은"} 점이 꼭짓점이다냥. 그 점을 지나는 세로줄로 접으면 양쪽이 겹친다옹.`,qs:[`가장 ${s.c>0?"낮은":"높은"} 점은 가운데(0)에서 옆으로 몇 칸이냥?`,"그 점의 높이는 몇이냥?","그 점을 지나는 세로줄은 x = 몇이냥?"],hs:["노란 동그라미가 꼭짓점이다냥. 옆으로 몇 칸인지 센다옹. 왼쪽이면 −다냥.","노란 동그라미의 높이를 읽는다냥. 0보다 아래면 −다옹.","노란 점선이 x축의 어느 수를 지나냥?"],mk:()=>[{rings:[[s.p,s.u]]},{rings:[[s.p,s.u]]},{rings:[[s.p,s.u]],vline:s.p}]});
+    else if(s.g===5)st.push({k:"ask",h:`만나는 점 ( [[0]] , [[1]] )`,a:[s.r,s.s],hint:"두 직선이 겹치는 한 점을 읽는다냥. 옆으로 먼저, 위아래는 다음이다옹.",qs:["두 선이 겹치는 점은 가운데(0)에서 옆으로 몇 칸이냥?","그 점의 높이는 몇이냥?"],hs:["노란 동그라미가 만나는 점이다냥. 옆으로 몇 칸인지 센다옹. 왼쪽이면 −다냥.","노란 동그라미가 위아래로 몇 칸이냥? 아래면 −다옹."],mk:()=>{const m={rings:[[s.r,s.s]]};return[m,m]}});
+    else if(s.q&&s.a<0)st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 1 늘면 y는 [[1]]씩 준다</span>`,a:[s.b,-s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 한 칸 갈 때 몇 칸 내려가는지 센다옹.",qs:["선이 y축(세로 굵은 줄)과 만나는 점의 높이는 몇이냥?","옆으로 1칸 가면 아래로 몇 칸 내려가냥?"],hs:["노란 동그라미를 본다냥. 표에서 x = 0일 때 y가 몇이었냥?","초록 길을 따라 센다냥. 옆으로 1칸 갈 때 아래로 몇 칸이냥?"],mk:()=>[{rings:[[0,s.b]]},{arr:[0,s.b,1,s.b+s.a]}]});
+    else st.push({k:"ask",h:`<span class="sub">y축과 만나는 곳: y = [[0]]</span><span class="sub">x가 ${s.d||1} 늘면 y는 [[1]]씩 변한다</span>`,a:[s.b,s.a],hint:"y축은 세로로 선 굵은 줄이다냥. 옆으로 갈 때 위아래로 몇 칸 가는지 센다옹. 내려가면 −다냥.",qs:["선이 y축(세로 굵은 줄)과 만나는 점의 높이는 몇이냥?",`옆으로 ${s.d||1}칸 가면 위아래로 몇 칸 가냥?${s.q?"":" 내려가면 −다옹."}`],hs:["노란 동그라미를 본다냥. 표에서 x = 0일 때 y가 몇이었냥?",`초록 길을 따라 센다냥. 옆으로 ${s.d||1}칸 갈 때 위로 몇 칸이냥?${s.q?"":" 아래로 가면 −다옹."}`],mk:()=>[{rings:[[0,s.b]]},{arr:[0,s.b,s.d||1,s.b+s.a]}]})}
   st.push({k:"paper"});return st}
 function gwLoad(i){const s=GWL[i];GS={i,s,steps:gwSteps(s),si:0,vals:[],ok:[],act:0,found:[[],[]],drawn:[false,false],say:s.g===4?"두 점을 찍는다냥. 옆으로 x, 위로 y다옹.":s.c?"x 자리에 수를 넣어 y를 구한다냥. 괄호 → 제곱 → 곱하기다옹.":"x 자리에 수를 넣어 y를 구한다냥."}}
 const gwAns=st=>st.k==="tab"?gwPts(GS.s,st.ln).map(p=>p[1]):st.a||[];
-function gwNext(){GS.si++;GS.vals=[];GS.ok=[];GS.act=0;const st=GS.steps[GS.si];GS.say=st.k==="tab"?"두 번째 식도 표를 채운다냥.":st.k==="plot"?(st.shift?`점을 모두 ${GS.s.p?`옆으로 ${MN(GS.s.p)}칸`:""}${GS.s.p&&GS.s.u?", ":""}${GS.s.u?`위로 ${MN(GS.s.u)}칸`:""} 옮겨 찍는다냥. (−는 왼쪽·아래다옹)`:"표의 짝을 점으로 찍는다냥. 옆으로 x, 위로 y다옹."):st.k==="line"?(gwLines(GS.s)[st.ln].c?"점을 부드러운 곡선으로 잇는다냥. 자는 안 쓴다옹.":"점이 한 줄로 섰다냥. 자를 대고 이어 보자옹."):st.k==="ask"?"그래프를 보고 답한다냥.":"";render()}
+function gwNext(){GS.si++;GS.vals=[];GS.ok=[];GS.act=0;const st=GS.steps[GS.si];GS.say=st.k==="tab"?"두 번째 식도 표를 채운다냥.":st.k==="plot"?(st.shift?`점을 모두 ${GS.s.p?`옆으로 ${MN(GS.s.p)}칸`:""}${GS.s.p&&GS.s.u?", ":""}${GS.s.u?`위로 ${MN(GS.s.u)}칸`:""} 옮겨 찍는다냥. (−는 왼쪽·아래다옹)`:"표의 짝을 점으로 찍는다냥. 옆으로 x, 위로 y다옹."):st.k==="line"?(gwLines(GS.s)[st.ln].c?"점을 부드러운 곡선으로 잇는다냥. 자는 안 쓴다옹.":"점이 한 줄로 섰다냥. 자를 대고 이어 보자옹."):st.k==="ask"?(st.qs?st.qs[0]:"그래프를 보고 답한다냥."):"";GS.help=false;render()}
 function gwKey(k){const st=GS&&GS.steps[GS.si];if(!st||(st.k!=="tab"&&st.k!=="ask"))return;const A=gwAns(st);let v=GS.vals[GS.act]||"";
   if(k==="del"){GS.vals[GS.act]=v.slice(0,-1);render();return}
   if(k==="clr"){GS.vals[GS.act]="";render();return}
@@ -3795,14 +3810,16 @@ function gwKey(k){const st=GS&&GS.steps[GS.si];if(!st||(st.k!=="tab"&&st.k!=="as
   if(k==="n"||k==="ok"){gwCheck();return}
   if(!/^\d$/.test(k)||v.length>=3)return;v=GS.vals[GS.act]=v+k;if(v.length>=String(A[GS.act]).length)gwCheck();else render()}
 function gwCheck(){const st=GS.steps[GS.si],A=gwAns(st),v=GS.vals[GS.act];if(!v||v==="-")return;
-  if(v===String(A[GS.act])){GS.ok[GS.act]=1;GS.say=pick(["맞다냥!","좋다옹!","그렇다냥!"]);const nx=A.findIndex((_,j)=>!GS.ok[j]);if(nx<0){gwNext();return}GS.act=nx}
-  else{GS.vals[GS.act]="";if(st.k==="tab"){const p=gwPts(GS.s,st.ln)[GS.act];GS.say=`x 자리에 ${MN(p[0])}${eul(Math.abs(p[0]))} 넣고 천천히 계산한다냥. ${gwLines(GS.s)[st.ln].c?"괄호 → 제곱 → 곱하기 순서다옹.":"곱하기 먼저다옹."}`}else GS.say=st.hint}
+  if(v===String(A[GS.act])){GS.ok[GS.act]=1;GS.say=pick(["맞다냥!","좋다옹!","그렇다냥!"]);const nx=A.findIndex((_,j)=>!GS.ok[j]);if(nx<0){gwNext();return}GS.act=nx;GS.help=false;if(st.qs&&st.qs[nx])GS.say="맞다냥! "+st.qs[nx]}
+  else{GS.vals[GS.act]="";if(st.k==="tab"){const p=gwPts(GS.s,st.ln)[GS.act];GS.say=`x 자리에 ${MN(p[0])}${eul(Math.abs(p[0]))} 넣고 천천히 계산한다냥. ${gwLines(GS.s)[st.ln].c?"괄호 → 제곱 → 곱하기 순서다옹.":"곱하기 먼저다옹."}`}else{GS.say=(st.hs&&st.hs[GS.act])||st.hint;GS.help=true}}
   render()}
 function gwTap(a){const st=GS&&GS.steps[GS.si];if(!st||st.k!=="plot")return;const [x,y]=a.split(",").map(Number),need=gwPts(GS.s,st.ln),F=GS.found[st.ln];
   if(F.some(p=>p[0]===x&&p[1]===y))return;if(need.some(p=>p[0]===x&&p[1]===y)){F.push([x,y]);GS.say=`(${MN(x)}, ${MN(y)}) 찍었다냥!`;if(F.length>=need.length){gwNext();return}}
   else GS.say=`거긴 (${MN(x)}, ${MN(y)})다냥. 옆으로 x만큼 먼저, 그다음 위아래로 y만큼이다옹.`;render()}
 function gwAct(a){const g=gwS();
   if(a==="open"){gwLoad(g.i);go("graph");return}
+  if(a==="exok"){const st=GS.steps[GS.si];if(st.first&&!PREVIEW){g.seen=g.seen||{};g.seen[st.ek]=1;save()}gwNext();return}
+  if(a==="exagain"){const st=GS.steps[GS.si];if(st.k==="ask"){GS.steps.splice(GS.si,0,{k:"ex",ek:st.ek});GS.vals=[];GS.ok=[];GS.act=0;render()}return}
   if(a==="line"){const st=GS.steps[GS.si];GS.drawn[st.ln]=true;gwNext();return}
   if(a==="done"){if(!PREVIEW){g.log[today()]=(g.log[today()]||0)+1;g.i=Math.min(GS.i+1,GWL.length-1);save(today())}
     if((g.log[today()]||0)>=(g.per||3)&&!GS.more){GS={fin:true};render();return}gwLoad(g.i);GS.more=GS.more;render();return}
@@ -3822,9 +3839,10 @@ function vGraph(){const g=gwS();if(!GS)gwLoad(g.i);
   if(st.k==="tab"){body=`<div class="qline sm stack">${head}</div><div class="qline">${boxesHTML(gwTable(s,st.ln,1),GS.vals,GS.act,GS.ok.map(v=>v?"ok":""))}</div>`;foot=padHTML(kind)}
   else if(st.k==="plot"){const need=gwPts(s,st.ln),F=GS.found[st.ln];body=`<div class="qline sm">${need.map(p=>`<span class="sub" style="${F.some(q=>q[0]===p[0]&&q[1]===p[1])?"opacity:.35;text-decoration:line-through":""}">(${MN(p[0])}, ${MN(p[1])})</span>`).join(" ")}</div><div class="fig">${gwSVG(s,{pts,lines,tap:1})}</div>`}
   else if(st.k==="line"){body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="line">${L[st.ln].c?"부드럽게 잇기":"자를 대고 잇기"}</button></div>`}
-  else if(st.k==="ask"){body=`<div class="fig">${gwSVG(s,{pts,lines})}</div><div class="qline sm stack">${boxesHTML(st.h.startsWith("<span")?st.h:`<span class="sub">${st.h}</span>`,GS.vals,GS.act,GS.ok.map(v=>v?"ok":""))}</div>`;foot=padHTML(kind)}
+  else if(st.k==="ex"){const E=GWEX[st.ek],EL2=gwLines(E.s);body=`<div class="qline sm stack"><span class="sub">먼저 보기다냥 (다른 그래프)</span></div><div class="fig">${gwSVG(E.s,{lines:EL2.map((l,j)=>[l,GWC[j]]),marks:E.marks})}</div><div class="notice" style="text-align:left;font-size:15px">${E.t.map((x,i)=>`${"①②③"[i]} ${x}`).join("<br>")}</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="exok">알겠다냥, 내 차례</button></div>`}
+  else if(st.k==="ask"){const M=GS.help&&st.mk?st.mk()[GS.act]:null;body=`<div class="fig">${gwSVG(s,{pts,lines,marks:M})}</div><div class="qline sm stack">${boxesHTML(st.h.startsWith("<span")?st.h:`<span class="sub">${st.h}</span>`,GS.vals,GS.act,GS.ok.map(v=>v?"ok":""))}</div><button class="nb" style="align-self:center;font-size:14px;min-height:34px" data-act="gw" data-arg="exagain">설명 다시 보기</button>`;foot=padHTML(kind)}
   else{body=`<div class="qline sm stack">${head}</div><div class="fig">${gwSVG(s,{pts,lines})}</div><div class="notice" style="text-align:left;font-size:15px"><b>이제 종이에 똑같이 옮겨 그린다냥.</b><br>① 식을 쓴다 ② 표를 옮겨 적는다 ③ 점을 찍고 옆에 좌표를 쓴다 ④ ${s.c?"점을 부드러운 곡선으로 잇는다":"자를 대고 선을 긋는다"} ⑤ 아래 칸을 채운다</div>`;foot=`<div class="pad" style="grid-template-columns:1fr"><button class="key go" data-act="gw" data-arg="done">다 그렸다냥</button></div>`}
-  return `${bar(`오늘의 그래프 · ${GS.i+1} / ${GWL.length}`,`<span class="small muted">오늘 ${g.log[today()]||0}/${g.per||3}장</span>`)}<div class="stage">${body}<div class="say blue">${GS.say||""}</div></div>${foot}`}
+  return `${bar(`오늘의 그래프 · ${GS.i+1} / ${GWL.length}`,`<span class="small muted">오늘 ${g.log[today()]||0}/${g.per||3}장</span>`)}<div class="stage" style="--gwr:${st.k==="ex"?250:st.k==="ask"?(GS.steps[GS.si].a.length>2?250:GS.help?215:200):st.k==="paper"?190:124}px">${body}<div class="say blue">${GS.say||""}</div></div>${foot}`}
 /* 종이용 양식 (A4 한 쪽에 2장) */
 let GP=null;
 function gwSheetHTML(s,no){const L=s?gwLines(s):[],two=L.length>1,row=(t,v="")=>`<tr><th>${t}</th><td>${v}</td></tr>`;
