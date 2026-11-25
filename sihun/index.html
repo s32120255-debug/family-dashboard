@@ -4306,13 +4306,13 @@ function teachHome(mom){ mom=mom===true; CUR='teach'; TC=null;
       <div class="sec">어떤 문제를 가르쳐 줄까?</div>${cs.map((c,i)=>`<button class="tpick" data-i="${i}"><span class="tk">${c.kind==='today'?'오늘 맞힌 문제':c.kind==='past'?`${String(c.d).slice(5).replace('-','/')}에 맞힌 문제`:'새 문제 · 풀면서 가르쳐요'}${c.src==='book'?' · 📘 최상위 문제집':''}</span>${picEsc(c.q.length>110?c.q.slice(0,110)+'…':c.q)}</button>`).join('')}`;
     el.querySelectorAll('.tpick').forEach(b=>b.onclick=()=>teachStart(cs[+b.dataset.i],mom)); }); }
 function teachStart(c,mom){ CUR='teachrun';
-  TC={id:`${today()}-${SID}-${Date.now().toString(36)}`,c,mom:!!mom,t0:Date.now(),turns:[],n:0,calls:0,seq:0,wrongDone:false,have:null,skipped:[],moms:[],order:[],end:null,correct:null,lastN:0,lastImg:'',err:null};
+  TC={id:`${today()}-${SID}-${Date.now().toString(36)}`,c,mom:!!mom,t0:Date.now(),turns:[],n:0,calls:0,seq:0,wrongDone:false,have:null,skipped:[],moms:[],order:[],end:null,correct:null,lastN:0,lastImg:'',err:null,hist:null};
   app().innerHTML=`<div class="solve"><section class="left" id="left"></section><section class="right">${padHTML()}</section></div>`; PAD=mountPad($('.right'));
   $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="tback">⏮ 처음으로</button><div class="stitle">🧑‍🏫 AI에게 가르치기<div class="cnt">${mom?'👩 엄마 해 보기 · 기록 안 남음':'카츄에게 순서대로 알려 줘요'}</div></div>${saveBtnHTML()}</div>
     <div class="pcard">${c.html}${c.svg?`<div class="picwrap">${c.svg}</div>`:''}${c.kind!=='new'?`<div class="tmy">✔ 시훈이가 구한 답: <b>${picEsc(c.ans)}</b></div>`:''}</div><div class="tutor teach" id="tbx"></div>`;
   $('#tback').onclick=()=>{ if(TC&&!TC.end&&TC.n>0){ if(!confirm('가르치기를 그만할까요? 지금까지 한 건 남아요.')) return; teachFinish('stopped',true); } if(TC&&TC.mom) return teachHome(true); home(); }; bindSave();
   const first='형아, 나 이 문제 처음 봐. 어떻게 푸는 거야? 처음부터 순서대로 알려 줘!';
-  TC.turns.push({who:'ai',text:first}); teachSay(first); teachReply(); }
+  TC.turns.push({who:'ai',text:first}); teachSay(first); teachReply(); teachHistLoad(); }
 function teachDraw(ctl){ const tb=$('#tbx'); if(!tb||!TC) return;
   const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>':'🙋 '}${picEsc(t.text)}${t.work?`<div class="twork"><b>카츄 풀이</b><br>${picEsc(t.work).replace(/\n/g,'<br>')}</div>`:''}${t.pad?'<div class="tpadm">✍️ 패드에 쓴 것도 같이 보냈어요</div>':''}</div>`;
   tb.innerHTML=`<div class="tlog">${TC.turns.map(bub).join('')}</div><div class="tctl">${ctl||''}</div>`; const l=tb.querySelector('.tlog'); l.scrollTop=l.scrollHeight; tb.scrollIntoView({behavior:'smooth',block:'nearest'}); }
@@ -4329,16 +4329,31 @@ function teachReply(){ const SR=window.SpeechRecognition||window.webkitSpeechRec
     TC.lastN=pn; TC.lastImg=s.img||''; TC.n++; TC.turns.push({who:'me',text:txt||'(패드에 써서 설명했어요)',pad:padNew?1:0}); teachStep(s); };
   tb.querySelector('#tl').onclick=()=>{ const a=TC.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) teachSay(a.text); };
   tb.querySelector('#tq').onclick=()=>{ stopMic(); if(TC.n>0||confirm('카츄에게 아직 하나도 안 알려 줬어요. 그만할까요?')) teachFinish('stopped'); }; }
-async function teachAsk(s,final){ const id=`${TC.id}-a${++TC.seq}`, c=TC.c;
+// 엄마 11/25 "시훈이가 막히는 지점을 공략해서 질문": 최근 30일 수학 기록(틀림·헤맴·실수 표시·과외쌤 메모)과
+// 지난 가르치기에서 건너뛴 단계를 모아 카츄에게 같이 보내요. 카츄는 이걸 보고 그 지점부터 콕 집어 물어요.
+function teachHistAtt(c){ const A=allAtt().filter(x=>x&&x.d&&x.d>=dAgo(30)&&(x.res!=='o'||(x.tries||0)>1||(x.tags||[]).length||(x.hints||0)>0));
+  const same=A.filter(x=>x.sk===c.sk).slice(-5), other=A.filter(x=>x.sk!==c.sk).slice(-3);
+  return same.concat(other).map(x=>{ const w=(x.wrong||[]).slice(0,2).map(fmtKey).join(', '), m=x.tutor&&x.tutor.mom?String(Array.isArray(x.tutor.mom)?x.tutor.mom.slice(-1)[0]:x.tutor.mom).slice(0,120):'';
+    return `- [${x.sk===c.sk?'같은 단원':'다른 단원'}] ${String(x.q||'').slice(0,90)} → ${x.res==='o'?'맞힘':x.res==='h'?'헤매다 맞힘':x.res==='s'?'건너뜀':'틀림'}${w?` (처음 쓴 답: ${w}, 정답 ${x.ans})`:''}${(x.tags||[]).length?` 실수 표시: ${[...new Set(x.tags)].join(',')}`:''}${m?` / 과외쌤 메모: ${m}`:''}`; }).join('\n'); }
+async function teachHistLoad(){ if(!TC||TC.hist!=null) return; const T0=TC; let past='';
+  try{ if(DBH&&DB_STATE==='ok'){ const qs=await DBH.collection('m32teach').limit(300).get(); const L=qs.docs.map(d=>d.data()).filter(x=>x&&x.ts&&x.id!==T0.id).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,5);
+    past=L.map(x=>`- ${String(x.prob&&x.prob.q||'').slice(0,60)}: 건너뜀 ${(x.skipped||[]).slice(0,4).join(' / ')||'없음'}${(x.mom||[]).length?` / 메모: ${String(x.mom[x.mom.length-1]).slice(0,120)}`:''}`).join('\n'); } }catch(e){}
+  if(TC!==T0) return; const att=teachHistAtt(T0.c); TC.hist=[att?'최근 수학에서 막힌 곳:\n'+att:'',past?'지난 카츄 가르치기에서 건너뛴 단계:\n'+past:''].filter(Boolean).join('\n').slice(0,2500); }
+async function teachAsk(s,final,onPart){ if(TC&&TC.hist==null){ try{ await Promise.race([teachHistLoad(),new Promise(r=>setTimeout(r,1500))]); }catch(e){} } const id=`${TC.id}-a${++TC.seq}`, c=TC.c;
   const req={at:today(),date:today(),ts:new Date().toISOString(),mom:TC.mom?1:0,problem:{q:c.q,ans:c.ans,sol:c.sol||[],strat:c.strat||'',kind:c.kind,res:c.res||''},
-    turns:TC.turns.map(t=>({who:t.who,text:t.text+(t.work?'\n[카츄가 보여 준 틀린 풀이] '+t.work:'')+(t.pad?' (패드에도 씀)':'')})),n:TC.n,max:TEACH_MAX,final:final?1:0,wrongDone:TC.wrongDone?1:0,img:(s&&s.img)||''};
+    turns:TC.turns.map(t=>({who:t.who,text:t.text+(t.work?'\n[카츄가 보여 준 틀린 풀이] '+t.work:'')+(t.pad?' (패드에도 씀)':'')})),n:TC.n,max:TEACH_MAX,final:final?1:0,wrongDone:TC.wrongDone?1:0,hist:TC.hist||'',img:(s&&s.img)||''};
   { let room=900000-req.img.length; req.photos=((s&&s.photos)||[]).slice().reverse().filter(x=>(room-=x.length)>=0).reverse(); }
   await DBH.doc('m32teachai/'+id).set(req); TC.calls++;
-  for(let i=0;i<75;i++){ await new Promise(r=>setTimeout(r,i<5?1500:1000)); if(!TC) return {state:'error',err:'left'}; try{ const sn=await DBH.doc('m32teachai/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) return d.res; }catch(e){} }
+  // 엄마 11/25 "카츄 반응 너무 느리다": 0.4초마다 확인 + 카츄 말이 나오는 대로(m32teachp) 먼저 보여 줘요
+  const t0=Date.now(); let part='';
+  while(Date.now()-t0<100000){ await new Promise(r=>setTimeout(r,400)); if(!TC) return {state:'error',err:'left'};
+    try{ const sn=await DBH.doc('m32teachai/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) return d.res; }catch(e){}
+    if(onPart){ try{ const sp=await DBH.doc('m32teachp/'+id).get(); const x=sp.exists?sp.data():null; if(x&&x.say&&x.say!==part){ part=x.say; onPart(part); } }catch(e){} } }
   return {state:'error',err:'timeout'}; }
 async function teachStep(s){ const T0=TC; teachDraw(`<div class="twait"><img class="tav" src="icons/cat-study.svg?v=1" alt="카츄">⚡ 카츄가 생각하고 있어요…</div>`);
   const final=TC.n>=TEACH_MAX; let r;
-  if(!tutorOK()) r={state:'error',err:'db'}; else { try{ r=await teachAsk(s,final); }catch(e){ r={state:'error',err:String(e&&e.message||e)}; } }
+  const onPart=say=>{ if(TC!==T0) return; const w=$('#tbx .twait'); if(w) w.outerHTML=`<div class="tb ai tpart"><img class="tav" src="icons/cat-study.svg?v=1" alt="카츄"><b class="tnm">⚡ 카츄</b>${picEsc(say)}…</div>`; else { const pb=$('#tbx .tpart'); if(pb) pb.lastChild.textContent=say+'…'; } const l=$('#tbx .tlog'); if(l) l.scrollTop=l.scrollHeight; };
+  if(!tutorOK()) r={state:'error',err:'db'}; else { try{ r=await teachAsk(s,final,onPart); }catch(e){ r={state:'error',err:String(e&&e.message||e)}; } }
   if(TC!==T0||CUR!=='teachrun') return;
   if(!r||r.state==='error'||r.state==='limit'||!r.say){ TC.err=r&&(r.err||r.state); const last=TC.turns.pop(); TC.n--;
     teachDraw(`<div class="fb show h">${r&&r.state==='limit'?'오늘은 카츄가 너무 많이 이야기해서 쉬어야 해요.':'카츄 연결이 잠깐 안 됐어요.'}</div><div class="acts">${r&&r.state==='limit'?'':'<button class="ok" id="tre">다시 보내기</button>'}<button class="hint" id="tq2" style="flex:0 0 auto">그만할래요</button></div>`);

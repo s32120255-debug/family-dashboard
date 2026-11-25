@@ -393,13 +393,26 @@ async function callJson(system, content, schema, opts) {
     system, messages: [{ role: "user", content }],
   };
   if (opts.think) base.thinking = { type: "adaptive" };
+  if (opts.fast) base.speed = "fast"; // Opus 5.5 빠른 모드(값 2배, 말 나오는 속도 최대 2.5배)
   let res;
+  const run = (params, beta) => {
+    const st = beta ? client.beta.messages.stream({ ...params, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }) : client.messages.stream(params);
+    if (opts.onText) { opts.onText(null); st.on("text", (d) => opts.onText(d)); }
+    return st.finalMessage();
+  };
+  const plain = { ...base }; delete plain.speed;
   try {
-    res = await client.beta.messages.stream({ ...base, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" }).finalMessage();
+    res = await run(base, true);
   } catch (e1) {
-    if (!(e1 && e1.status === 400)) throw e1;
-    console.warn(opts.tag, "fallback params rejected, retrying plain", e1.message);
-    res = await client.messages.stream(base).finalMessage();
+    if (!(e1 && (e1.status === 400 || (e1.status === 429 && base.speed)))) throw e1;
+    console.warn(opts.tag, "fallback/fast params rejected, retrying plain", e1.status, e1.message);
+    if (base.speed && e1.status === 400) {
+      try { res = await run(base, false); } catch (e2) {
+        if (!(e2 && (e2.status === 400 || e2.status === 429))) throw e2;
+        console.warn(opts.tag, "fast mode rejected, retrying standard", e2.status, e2.message);
+        res = await run(plain, false);
+      }
+    } else res = await run(plain, false);
   }
   if (res.stop_reason === "refusal") return { refusal: true, model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } };
   const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
@@ -588,6 +601,8 @@ ${SIHUN_ABOUT}
 - 조건(문제 속 숫자·말)을 하나 빼먹었으면 "문제에 ○○라고도 써 있던데, 그건 안 써도 돼?"라고 물어.
 - 왜 그 계산인지 말 안 했으면 "왜 더하는 게 아니라 빼는 거야?"처럼 물어.
 - 시훈이가 이미 말한 건 다시 묻지 마. 한 걸음씩.
+- "요즘 막힌 지점" 기록이 오면, 그건 시훈이가 실제로 자주 넘어지는 곳이야(예: "남은 것의 ○/○"에서 "남은"을 놓침, 분수의 전체를 잘못 잡음, 조건 하나 빼먹음). 이 문제에서 같은 함정이 나오는 자리가 있으면, 시훈이가 그 부분을 말로 분명히 꺼낼 때까지 거기를 먼저 콕 집어 물어. 예: "근데 형아, 3/4은 처음 전체의 3/4이야, 아니면 남은 것의 3/4이야?" 일부러 틀린 풀이도 될 수 있으면 그 함정으로 만들어. 기록이나 "예전에 틀렸지?" 같은 말은 절대 꺼내지 마(처음 보는 척).
+- 최고의 과외 선생님처럼 정확해야 해: 묻기 전에 앱 풀이 단계와 정답으로 이 문제를 직접 끝까지 풀어 보고, 시훈이 설명의 어느 줄이 맞고 어디가 빠졌는지 확인한 다음 질문해. 시훈이 설명이 맞는데 틀린 것처럼 묻지 마.
 - 손글씨를 잘못 읽었을 수 있어. 숫자가 확실하지 않으면 "여기 ○○라고 쓴 거 맞아?"라고 먼저 확인해.
 - 전략 카드 이름이 주어지면, 시훈이가 방법을 설명한 뒤 한 번쯤 "이런 걸 뭐라고 해? 무슨 방법이야?"처럼 물어봐도 돼(필수 아님).
 일부러 틀린 풀이(딱 한 번, wrongDone이 0일 때만):
@@ -625,7 +640,7 @@ const TEACH_SCHEMA = {
   },
 };
 exports.m32Teach = onDocumentCreated(
-  { document: "sihun/data/m32teachai/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3 },
+  { document: "sihun/data/m32teachai/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 120, maxInstances: 3, minInstances: 1 },
   async (event) => {
     const snap = event.data;
     const req = unpackDoc(snap && snap.data());
@@ -640,6 +655,7 @@ exports.m32Teach = onDocumentCreated(
       `앱 풀이 단계(시훈이 설명과 비교용, 그대로 말하지 마): ${(p.sol || []).join(" / ")}`,
       p.strat ? `이 문제 전략 카드: ${p.strat}` : "",
       how,
+      req.hist ? `시훈이가 요즘 막힌 지점(앱 기록, 시훈이에게 기록 얘기는 하지 마):\n${String(req.hist).slice(0, 2500)}` : "",
       `시훈이 말 횟수 n=${req.n || 0} (최대 ${req.max || 5}), wrongDone=${req.wrongDone ? 1 : 0}, final=${req.final ? 1 : 0}`,
       "지금까지 대화:",
       ...(req.turns || []).map((t) => `${t.who === "ai" ? "카츄" : "시훈"}: ${t.text}`),
@@ -654,7 +670,20 @@ exports.m32Teach = onDocumentCreated(
     });
     content.push({ type: "text", text: lines.join("\n") });
     try {
-      const r = await callJson(TEACH_SYSTEM, content, TEACH_SCHEMA, { tag: "m32Teach", max: 6000, effort: "medium" });
+      // 엄마 11/25 "카츄 반응 너무 느리다": 답 전체(정리·메모 칸까지)를 기다리지 않고, 카츄가 하는 말(say)이 나오는 대로
+      // 작은 문서 m32teachp/{id} 에 0.35초마다 써서 앱이 바로 보여 줘요.
+      // 엄마 11/25 "비용 올라가도 돼, 최고의 과외 선생님 수준": 빠른 모드(speed fast, 값 2배) + 생각 깊게(effort high) + 늘 켜 둔 서버 1대.
+      const pref = getFirestore().doc("sihun/data/m32teachp/" + event.params.id);
+      let buf = "", lastSay = "", lastAt = 0, chain = Promise.resolve();
+      const push = (force) => {
+        const m = /"say"\s*:\s*"((?:[^"\\]|\\.)*)/.exec(buf); if (!m) return;
+        let raw = m[1].replace(/\\u[0-9a-fA-F]{0,3}$/, "").replace(/\\$/, ""), say;
+        try { say = JSON.parse('"' + raw + '"'); } catch (e) { return; }
+        if (!say || say === lastSay) return; const now = Date.now(); if (!force && now - lastAt < 350) return;
+        lastSay = say; lastAt = now; chain = chain.then(() => pref.set(packDoc({ say, at: req.at || "" }))).catch(() => {});
+      };
+      const r = await callJson(TEACH_SYSTEM, content, TEACH_SCHEMA, { tag: "m32Teach", max: 8000, effort: "high", fast: true, onText: (d) => { if (d === null) { buf = ""; return; } buf += d; push(false); } });
+      push(true); await chain;
       if (r.refusal) return done({ state: "error", err: "refusal", say: "", mom: "", model: r.model, usage: r.usage });
       return done({ ...r.out, model: r.model, usage: r.usage });
     } catch (e) {
