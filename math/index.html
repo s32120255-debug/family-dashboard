@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795568551";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795569063";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -682,7 +682,7 @@ function elapsed(){if(!RUN)return 0;let s=RUN.items.reduce((a,b)=>a+b.ms,0);if(R
 function startTick(){stopTick();tick=setInterval(()=>{const c=$("#clock");if(c)c.textContent=fmt(elapsed())},250)}
 function stopTick(){if(tick){clearInterval(tick);tick=null}}
 function vPlay(){
-  const i=curIdx(),pr=RUN.probs[i],q=pr.q,n=RUN.probs.length,doneN=RUN.items.filter(x=>x.ok||x.tries.length>=(q.kind==="ox"?1:2)).length;
+  const i=curIdx(),pr=RUN.probs[i],q=pr.q,n=RUN.probs.length,doneN=RUN.items.filter((x,k)=>x.ok||(RUN.probs[k].q.kind==="ox"&&x.tries.length>=1)).length;
   const it=RUN.items[i],allow=tc(RUN.type).allow,wn=RUN.items.reduce((a,x)=>a+(x.wn!=null?x.wn:(x.tries.length&&!x.ok1?1:0)),0);
   const lives=Array.from({length:allow},(_,k)=>`<i class="${k<allow-wn?"f":""}"></i>`).join("");
   const stT=tst(RUN.type),lrT=lastRun(RUN.type),goal=stT.target?["목표",stT.target*n]:lrT?["지난번",lrT.t/lrT.n*n]:["기준",finalPQ(RUN.type)*n];
@@ -705,7 +705,7 @@ function typeKey(k){
   if((k==="&"||k==="\\")&&(!q.fr||v.includes(k)||(k==="&"&&v.includes("\\"))||!v||/[&\\]$/.test(v)))return;
   if(k==="del"){ctx.vals[ctx.act]=v.slice(0,-1)}
   else{if(v.length>=(q.fr?9:4))return;if(v==="0"&&k!=="&"&&k!=="\\")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
-  ctx.boxState=[];ctx.say=view==="play"?"":ctx.say;
+  ctx.boxState=[];ctx.say=view==="play"&&!/^(정답|남은)/.test(ctx.say||"")?"":ctx.say;
   softRender();
   if(view==="play"&&k!=="del")autoGo(q);
 }
@@ -718,7 +718,7 @@ function autoGo(q){const v=RUN.vals[RUN.act]||"";if(!v)return;const i=curIdx();
   if(RUN.act<q.a.length-1){RUN.act++;softRender();return}
   if(q.a.every((_,k)=>RUN.vals[k]))setTimeout(()=>{if(view==="play"&&curIdx()===i)submit()},120)}
 function softRender(){ // 숫자칸만 다시 그리기 (빠르게)
-  if(view==="play"){const q=RUN.probs[curIdx()].q;const el=$(".qline");if(el)el.innerHTML=q.kind==="multi"?boxesHTML("[[0]]",RUN.vals,0,RUN.boxState):boxesHTML(q.html,RUN.vals,RUN.act,RUN.boxState);const s=$(".say");if(s)s.textContent=RUN.say}
+  if(view==="play"){const q=RUN.probs[curIdx()].q;const el=$(".qline");if(el)el.innerHTML=q.kind==="multi"?boxesHTML("[[0]]",RUN.vals,0,RUN.boxState):boxesHTML(q.html,RUN.vals,RUN.act,RUN.boxState);const s=$(".say");if(s)s.innerHTML=RUN.say}
   else render();
 }
 function submit(){if(view==="play"&&RUN.lock)return;
@@ -742,17 +742,22 @@ function judgeMulti(g){
   if(q.need.includes(g)){it.found.push(g);RUN.say="";
     if(it.found.length===q.need.length){it.ok=true;it.ok1=it.wn===0;it.tries.push(it.found.join(","));stopClock();render();RUN.lock=true;setTimeout(nextQ,250);return}
     render();return}
+  if(!it.misUsed&&q.need.some(x=>!it.found.includes(x)&&oneOff(g,x))){slip(it);return}
   it.wn++;it.tries.push(g);if(!it.pat)it.pat=TYPES[RUN.type].pat(pr.p,[g])||"";
-  if(it.wn>=2){stopClock();nextQ();return}
-  RUN.say="다시 보자냥";RUN.boxState=["again"];render();
+  const left=q.need.filter(x=>!it.found.includes(x));
+  RUN.say=it.wn>=3?`남은 답: ${left.join(", ")} 다냥. 써 보자`:"틀렸다냥. 다시!";RUN.boxState=["again"];render();
 }
+/* 클릭 미스: 한 글자만 다르면 문제마다 한 번은 오답으로 안 침 */
+const oneOff=(x,y)=>{x=String(x);y=String(y);if(x.length!==y.length)return false;let d=0;for(let k=0;k<x.length;k++)if(x[k]!==y[k])d++;return d===1};
+function slip(it){it.misUsed=true;it.mis=(it.mis||0)+1;RUN.say="손이 미끄러졌냥? 다시 쳐 보자";RUN.vals=[];RUN.act=0;RUN.boxState=[];render()}
 function judge(given){
   const i=curIdx(),pr=RUN.probs[i],q=pr.q,it=RUN.items[i];
   const ok=[q.a,...(q.alts||[])].some(a=>a.every((v,k)=>v===given[k]));
+  if(!ok&&!it.misUsed&&q.kind==="num"&&oneOff(given.join("|"),q.a.join("|"))){slip(it);return}
   it.tries.push(given.join("|"));
   if(ok){it.ok=true;if(it.tries.length===1)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();RUN.lock=true;setTimeout(nextQ,220);return}
   if(it.tries.length===1){it.pat=TYPES[RUN.type].pat(pr.p,given)||"";}
-  if(it.tries.length===1&&q.kind!=="ox"){RUN.say="다시 보자냥";RUN.vals=q.kind==="plot"?[]:[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
+  if(q.kind!=="ox"){RUN.say=it.tries.length>=3?`정답은 ${q.a.map(fview).join(" , ")} 다냥. 그대로 써 보자`:"틀렸다냥. 다시!";RUN.vals=[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();return}
   stopClock();nextQ();
 }
 function nextQ(){
