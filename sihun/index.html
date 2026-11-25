@@ -1178,7 +1178,7 @@ function chat(){$('#main').innerHTML=topbar('⚡ 카츄랑 말하기',true)+'<di
 // 순서: 원리 한 장 → 예측(몇 칸 바로?) → 지도 칸 → 말하기(초록 칸 소리 내 말하기, 시간 기록) → 카츄(영어, 2문장) → ✍️ 내 이야기 → (30분 밖 덤) 📝 내신 5문제 → 결과(예측 비교 · 막힌 이유)
 // ✍️ 내 이야기(엄마 11/25): 카츄랑 한국어로 짧게 이야기 → 영어로 쓰고 싶은 말을 한국어 한 문장으로 정함 → 영어로 쓰기(be · do 범위). 채점 없음, 기록만(엄마가 봄)
 // 문법 단계(g2)는 건드리지 않아요. 결과는 RLOG.map 에만 기록 (다음 단계는 엄마와 정한 뒤)
-const MAP_FROM='2026-11-26',MAP_FAST=20;
+const MAP_FROM='2026-11-25',MAP_FAST=20;
 const MAPSET={A:{t:'be동사 · There 10칸',rule:[
   'be동사(am · is · are · was · were)는 <b>"="</b> 표시예요. 앞(<b>무엇이</b> = 주어)과 뒤(<b>어떠하다 · 어디에 있다</b>)를 이어 줘요. 국어에서 배운 그 틀이에요.<div class="ans" style="margin-top:4px">I = happy → I am happy.</div><div class="tip">I(무엇이) + am happy(어떠하다)</div>',
   '안 그렇다고 할 땐 <b>= 바로 뒤에 not</b><div class="ans" style="margin-top:4px">I am not happy.</div>',
@@ -2008,6 +2008,15 @@ function wireDic(){
   if(!VC.mig1122){const K=VC.words||{};Object.keys(K).forEach(k=>{if(K[k]&&K[k].known===false)delete K[k]});const vs=VC.session;
     if(vs&&vs.res){Object.keys(vs.res).forEach(k=>{if(!vs.res[k]||!vs.res[k].known)delete vs.res[k]});const D=(VC.days||{})[vs.date];if(D){const r=Object.values(vs.res);D.n=r.length;D.known=r.filter(x=>x.known).length;delete D.end;delete D.forced;delete D.skipped;delete D.min}}
     VC.mig1122=1;VC.updated=new Date().toISOString();LS.set('vcheck',VC);if(DB)DB.doc('vocab/check').set(JSON.parse(JSON.stringify(VC))).catch(()=>{})}
+  // 엄마 11/25 저녁 「앞에 기록 다 지워, 오늘부터 시작」: 영어 기록(문장·문법 단계·지도·카츄·단어)을 한 번만 비움.
+  // 지우기 전 전부 백업 → sihun/data/backup/en1125 (서버) + en50:bak1125:rlog / en50:bak1125:vcheck (이 기기). 되돌릴 땐 이 백업을 다시 넣으면 됨.
+  if(!RLOG.reset1125&&!window.HUBTRY){const at=new Date().toISOString(),bR=JSON.parse(JSON.stringify(RLOG)),bV=JSON.parse(JSON.stringify(VC));
+    LS.set('bak1125:rlog',bR);LS.set('bak1125:vcheck',bV);
+    if(DB){try{await DB.doc('backup/en1125').set({at,rlog:bR,vcheck:bV})}catch(e){}}
+    try{Object.keys(localStorage).filter(k=>k.startsWith('enchat:')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+    RLOG={items:{},days:{},reset1125:at,updated:at};VC={words:{},days:{},mig1122:1,bak1125at:at,reset1125:at,updated:at};
+    LS.set('rlog',RLOG);LS.set('vcheck',VC);
+    if(DB){DB.doc('log/routine').set(JSON.parse(JSON.stringify(RLOG))).catch(()=>{});DB.doc('vocab/check').set(JSON.parse(JSON.stringify(VC))).catch(()=>{})}}
   // 엄마 11/25: 단어 기록 지우기 전 백업(한 번만, 되돌릴 수 있게)
   if(!VC.bak1125at&&Object.keys(VC.words||{}).length){const bak=JSON.parse(JSON.stringify(VC));VC.bak1125at=new Date().toISOString();LS.set('vcheck_bak1125',bak);if(DB)DB.doc('vocab/check_bak1125').set(bak).catch(()=>{});VC.updated=new Date().toISOString();LS.set('vcheck',VC);if(DB)DB.doc('vocab/check').set(JSON.parse(JSON.stringify(VC))).catch(()=>{})}
   // 엄마 11/22: 중간에 그만둔 단어 체크도 다음 날 남은 단어부터 (어제 몰랐던 단어 빈칸 복습을 맨 앞에)
