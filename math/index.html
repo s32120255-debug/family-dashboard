@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795650749";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795650881";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3243,11 +3243,11 @@ const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||
 function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
   const tot=p=>{const d=FAM[p.id].day,pl=d?Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
   const pass=p=>Object.keys(FAM[p.id].core.ts||{}).filter(id=>TYPES[id]&&(famSt(FAM[p.id].core,id)||{}).ok).length;
-  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
+  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
   const ids=S.cfg.order.filter(id=>TYPES[id]&&P.some(p=>famSt(FAM[p.id].core,id)));
   const rows=ids.map(id=>`<tr><th>${TYPES[id].name}</th>${P.map(p=>{const x=famSt(FAM[p.id].core,id);return `<td class="${x&&x.ok?"ok":""}${p.id===PID?" me":""}">${!x?"·":x.ok?"통과":x.mx?`${x.n}<i>/${x.mx}</i>`:"하는 중"}</td>`}).join("")}</tr>`).join("");
   const miss=PROFILES.filter(p=>!P.includes(p)).map(p=>p.name);
-  return `${bar("가족 발자국")}<div class="page"><div class="notice" style="text-align:left"><b>어른과 아이는 통과 속도가 다르다냥.</b><br>엄마·아빠는 더 짧은 시간 안에 풀어야 통과한다옹. 어른이 더 빡빡하다냥.</div><div class="fam-top">${top}</div>
+  return `${bar("가족 발자국")}<div class="page"><div class="notice" style="text-align:left"><b>어른 통과 기준은 더 빡빡하다냥.</b><br>엄마·아빠는 어른 통과 기준이라 더 짧은 시간 안에 풀어야 통과한다옹. 시훈이는 아이 통과 기준이다냥.</div><div class="fam-top">${top}</div>
    ${ids.length?`<div class="card" style="padding:8px"><table class="fam-t"><tr><th></th>${P.map(p=>`<th>${p.icon}</th>`).join("")}</tr>${rows}</table></div><p class="small muted" style="text-align:center">숫자는 지금 단계 / 전체 단계다냥. 같은 길을 각자 걸어간다옹.</p>`:`<div class="notice">아직 푼 것이 없다냥. 한 세트 풀고 오면 여기에 보인다옹.</div>`}
    ${miss.length?`<p class="small muted" style="text-align:center">${miss.join(", ")}${miss.length>1?"는":JO[PROFILES.find(p=>p.name===miss[0]).id].eun} 아직 시작 전이거나, 로그인하면 보인다냥.</p>`:""}
    <button class="nb" style="align-self:center" data-act="fam">새로 보기</button></div>`}
@@ -3343,7 +3343,7 @@ function vHome(){
     const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
     return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${STEPT(T)?stepLabel(T,st.step||0):T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span>${pathTxt(id)}</button>`}).join("");
   return `${bar(dayLabel(today()),`<button class="nb" data-act="pin">관리자</button><button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`,1)}<div class="page">
-   ${(()=>{const n=Object.values(DAYS).reduce((a,d)=>a+(d.sets||[]).reduce((x,y)=>x+(y.n||0),0),0);if(!n)return "";const b=n/BOOKN;return `<p class="small muted" style="text-align:center;margin:-6px 0">지금까지 <b>${n.toLocaleString()}문제</b> · 연산 문제집 <b>${b<10?b.toFixed(1):Math.round(b)}권</b>쯤 풀었다냥</p>`})()}
+   ${(()=>{const n=Object.values(DAYS).reduce((a,d)=>a+(d.sets||[]).reduce((x,y)=>x+(y.n||0),0),0);if(!n)return "";const b=n/BOOKN;return `<p class="small muted" style="text-align:center;margin:-6px 0">지금까지 <b>${n.toLocaleString()}문제</b> · 시중 연산 문제집 <b>${b<10?b.toFixed(1):Math.round(b)}권</b>쯤 풀었다냥</p>`})()}
    ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${STEPT(TYPES[nx])?stepLabel(TYPES[nx],tst(nx).step||0):TYPES[nx].ex}</span>${pathTxt(nx)}</button>`
      :`<div class="notice good"><b>오늘 ${totalOwed}판 끝! 수고했다냥.</b></div>`}
    ${carryN?`<p class="small muted">점선 = 지난번에 남은 판 (${carryN})</p>`:""}
@@ -3356,8 +3356,8 @@ function vHome(){
 
 TYPES.MM.conAt=Array.from({length:17},(_,i)=>i);/* 단계마다 방법이 달라서 단계마다 예시 먼저 */
 TYPES.PF.link="머리셈 곱셈에서 48 × 25를 12 × 4 × 25로 쪼갰던 거다냥. 수를 끝까지 쪼개면 소인수분해다옹.";TYPES.PL.link="머리셈 곱셈의 쪼개서 짝 맞추기를 두 수에 같이 하는 거다냥.";TYPES.PE.link="머리셈 곱셈에서 19 × 21 = 20 × 20 − 1로 풀었던 거다냥. 그게 (a − 1)(a + 1) = a² − 1이다옹.";TYPES.FZ.link="머리셈 곱셈을 거꾸로 하는 거다냥. 399를 19 × 21로 되돌리던 것처럼 식을 곱으로 되돌린다옹.";
-/* 연산 문제집 한 권을 1,000문제로 어림 (하루 2쪽 약 25문제 × 주 5일 × 8주) */
-const BOOKN=1000;
+/* 시중 연산 문제집 한 권을 1,500문제로 어림 (150쪽 안팎, 직접 센 수는 아님) */
+const BOOKN=1500;
 /* 달력: 날마다 그날 푼 시간(분). 남과 견주지 않고 내 기록만 */
 let CALM=null,CALD=null;
 const calSec=k=>((DAYS[k]||{}).sets||[]).reduce((a,x)=>a+(x.t||0),0),calMin=sec=>sec>0?Math.max(1,Math.round(sec/60)):0;
@@ -3827,7 +3827,7 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      </div>
    ${tiredHTML()}
-   ${PID!=="sihun"?`<div class="card"><h3>어른 속도 기준</h3><p class="small muted">${pname()} 계정은 통과 시간을 아이 기준보다 짧게 잡아요. 초등 3학년은 단순한 계산 속도가 어른의 절반쯤이에요. 다만 폰으로 답을 누르는 시간은 어른도 비슷해서 60%에서 시작해요.</p><div class="row" style="align-items:center"><span>아이 기준의</span><button class="nb" data-act="adk" data-arg="-1">−</button><b>${Math.round(spdK()*100)}%</b><button class="nb" data-act="adk" data-arg="1">+</button><span class="small muted">예: 아이 30초 → ${pname()} ${Math.round(30*spdK())}초</span></div></div>`:""}
+   ${PID!=="sihun"?`<div class="card"><h3>어른 통과 기준</h3><p class="small muted">${pname()} 계정은 통과 시간을 아이 기준보다 짧게 잡아요. 초등 3학년은 단순한 계산 속도가 어른의 절반쯤이에요. 다만 폰으로 답을 누르는 시간은 어른도 비슷해서 60%에서 시작해요.</p><div class="row" style="align-items:center"><span>아이 기준의</span><button class="nb" data-act="adk" data-arg="-1">−</button><b>${Math.round(spdK()*100)}%</b><button class="nb" data-act="adk" data-arg="1">+</button><span class="small muted">예: 아이 30초 → ${pname()} ${Math.round(30*spdK())}초</span></div></div>`:""}
    <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML()}
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
