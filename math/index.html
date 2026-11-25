@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795598281";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795599679";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -104,6 +104,7 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .stage{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center;overflow-y:auto;align-items:center;gap:8px;padding-block:4px;text-align:center}
 .qline{font-family:var(--f-disp);font-size:44px;line-height:1.35;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 8px;font-variant-numeric:tabular-nums}
 .qline.mid{font-size:34px}
+.qline.sm{font-size:27px;gap:4px 5px}
 .qline.txt{font-size:28px}
 .fbox{border:3px solid var(--blue);border-radius:12px;padding:0 12px;background:var(--card);color:var(--blue)}
 .arr{color:var(--ink-2);font-size:.8em}
@@ -116,6 +117,9 @@ details.card summary{cursor:pointer;padding:4px 0}
 .ftab .box{width:46px;height:46px;font-size:24px}
 .qline.stack{flex-direction:column;gap:10px}
 .qline .sub{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.qline sup{align-self:flex-start;font-size:.58em;line-height:1;margin-left:-.3em}
+.qline sup .box{font-size:1em;min-width:1.3em;height:1.25em;border-width:2px;border-radius:8px;padding:0 .1em}
+.st sup .box{font-size:16px;min-width:1.4em;height:1.4em}
 .qline.five .box{min-width:1.9em;padding:0 .1em}
 .qline.five .sub{gap:6px}
 .box{display:inline-flex;align-items:center;justify-content:center;min-width:1.6em;height:1.3em;padding:0 .2em;border:3px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
@@ -221,6 +225,21 @@ const fAns=(N,D)=>{const g=GCD(N,D),n=N/g,d=D/g;if(d===1)return{a:String(n),alts
 const fmLeft=p=>{const{L,n,d,k,w,n2,d2}=p;return L===2?`${k} × ${fr(n,d)}`:L<=1?`${fr(n,d)} × ${k}`:L===3?`${w} ${fr(n,d)} × ${k}`:`${w?w+" ":""}${fr(n,d)} × ${fr(n2,d2)}`};
 const nlSVG=(d,W,k,s)=>{const x0=18,x1=282,u=(x1-x0)/(W*d);let r=`<line x1="${x0}" y1="40" x2="${x1}" y2="40" stroke="#333" stroke-width="2.5"/>`;for(let i=0;i<=W*d;i++){const x=x0+i*u,big=i%d===0;r+=`<line x1="${x}" y1="${big?28:33}" x2="${x}" y2="${big?52:47}" stroke="#333" stroke-width="${big?2.5:1.5}"/>`;if(big)r+=`<text x="${x}" y="72" font-size="22" font-weight="700" text-anchor="middle" fill="#333">${s+i/d}</text>`}if(k!=null){const x=x0+k*u;r+=`<path d="M${x-8} 6 L${x+8} 6 L${x} 22 Z" fill="#e05a47"/>`}return `<svg class="wide" viewBox="0 0 300 80" style="width:100%">${r}</svg>`};
 const fr=(n,d)=>`<span class="fr"><span>${n}</span><span>${d}</span></span>`;
+/* 중학교: 부호 · 유리수 */
+const MN=n=>n<0?"−"+(-n):String(n),SG=n=>n<0?`(−${-n})`:String(n),PM=c=>`${c<0?"−":"+"} ${Math.abs(c)}`,XP=c=>`x ${PM(c)}`;
+const CX=c=>c===1?"":c===-1?"−":MN(c),CXm=c=>MN(c),SP=e=>e>1?`<sup>${e}</sup>`:"";
+const SFR=(a,b)=>a<0?`(−${fr(-a,b)})`:fr(a,b);
+function qrVal(p){const{a,b,c,d,op}=p;let N,D;if(op==="+"){N=a*d+c*b;D=b*d}else if(op==="−"){N=a*d-c*b;D=b*d}else if(op==="×"){N=a*c;D=b*d}else{N=a*d;D=b*c}if(D<0){N=-N;D=-D}const g=GCD(Math.abs(N),D)||1;return[N/g,D/g]}
+const sRed=(N,D)=>{const g=GCD(Math.abs(N),D)||1;return[N/g,D/g]};
+const sAns=(N,D)=>{[N,D]=sRed(N,D);return D===1?String(N):`${N<0?"-":""}${Math.abs(N)}\\${D}`};
+const sAlt=(N,D)=>{[N,D]=sRed(N,D);const A=Math.abs(N);if(D===1||A<D)return[];return[[`${N<0?"-":""}${Math.floor(A/D)}&${A%D}\\${D}`]]};
+function eqText(p){const{L,x,a,b,c,k}=p;
+  if(L===0)return `x ${PM(b)} = ${MN(x+b)}`;if(L===1)return `${a}x = ${MN(a*x)}`;
+  if(L===3){const R=(a-c)*x+b;return `${a}x ${PM(b)} = ${c===1?"":c}x${R?" "+PM(R):""}`}
+  if(L===4){const R=k*(x-1)-x;return `${k}(x − 1) = x${R?" "+PM(R):""}`}
+  return `${a}x ${PM(b)} = ${MN(a*x+b)}`}
+const decParts3=v=>[String(Math.floor(v/1000)),String(v%1000).padStart(3,"0").replace(/0+$/,"")];
+
 const TREE="https://claude.ai/artifact/Bqfnoo9oaMFU7b8p1nfYcc";
 
 /* 곱셈 오답 모양 */
@@ -895,6 +914,267 @@ const TYPES={
      :{h:`${s?s+"에서 ":"0에서 "}[[0]]칸 왔다`,a:[String(k)],hints:["화살표까지 세 봐."]}]}},
   pat:()=>"수직선"},
 
+ /* ───── 함수: 대응과 식 (5-1) ───── */
+ FX:{optional:true,name:"대응과 식",code:"5-1",ex:"□ = △ × 3,  y = 2 × x + 1",sec:5,why:"함수의 식 세우기 첫걸음이에요. 중학교 정비례·일차함수로 이어져요.",idea:"넣는 수가 하나 늘 때 나오는 수가 얼마씩 느는지 보면 규칙이 보인다냥.",
+  lv:["상자 두 번 (× 다음 +)","대응표 빈칸 (두 번 규칙)","식 만들기: y = □ × x","식 만들기: y = x + □","식 만들기: y = □ × x + □","거꾸로: 나온 수 보고 넣은 수"],
+  rand:L=>{const a=ri(2,6),b=ri(1,9),x=ri(1,9);return{L,a,b,x}},key:p=>[p.L,p.a,p.b,p.x].join("."),
+  make:({L,a,b,x})=>{const f=v=>a*v+b;
+    if(L===0)return{html:`<span>${x}</span><span class="arr">→</span><span class="fbox">×${a}</span><span class="arr">→</span><span class="fbox">+${b}</span><span class="arr">→</span>[[0]]`,a:[String(f(x))],kind:"num",cls:"mid",text:`상자 ${x}×${a}+${b}`};
+    if(L===1){const xs=[1,2,3,x+3];return{html:`<table class="ftab"><tr><th>x</th>${xs.map(v=>`<td>${v}</td>`).join("")}</tr><tr><th>y</th>${xs.map((v,i)=>i<3?`<td>${f(v)}</td>`:`<td>[[0]]</td>`).join("")}</tr></table>`,a:[String(f(xs[3]))],kind:"num",cls:"txt",text:`표 ×${a}+${b}`}}
+    const tab=(g,xs)=>`<table class="ftab"><tr><th>x</th>${xs.map(v=>`<td>${v}</td>`).join("")}</tr><tr><th>y</th>${xs.map(v=>`<td>${g(v)}</td>`).join("")}</tr></table>`;
+    if(L===2)return{html:`${tab(v=>a*v,[1,2,3,4])}<span class="sub">y = [[0]] × x</span>`,a:[String(a)],kind:"num",cls:"txt stack",text:`y=□×x (${a})`};
+    if(L===3)return{html:`${tab(v=>v+b,[1,2,3,4])}<span class="sub">y = x + [[0]]</span>`,a:[String(b)],kind:"num",cls:"txt stack",text:`y=x+□ (${b})`};
+    if(L===4)return{html:`${tab(f,[1,2,3,4])}<span class="sub">y = [[0]] × x + [[1]]</span>`,a:[String(a),String(b)],kind:"num",cls:"txt stack",text:`y=${a}x+${b}`};
+    return{html:`<span class="sub">y = ${a} × x + ${b}</span><span class="sub">y가 ${f(x)}이면 x = [[0]]</span>`,a:[String(x)],kind:"num",cls:"mid stack",text:`${a}x+${b}=${f(x)}`}},
+  steps:({L,a,b,x})=>{const f=v=>a*v+b;
+    if(L===0)return{head:`${x} → ×${a} → +${b}`,list:[{h:`${x} × ${a} = [[0]]`,a:[String(a*x)],hints:["먼저 첫 상자."]},{h:`${a*x} + ${b} = [[0]]`,a:[String(f(x))],hints:["두 번째 상자."]}]};
+    if(L===1||L===4)return{head:"규칙 찾기",list:[{h:`x가 1 늘 때 y는 [[0]]씩 는다`,a:[String(a)],hints:[`${f(2)} − ${f(1)}`]},{h:`x = 1일 때 ${a} × 1 = ${a}, y는 ${f(1)}. 더한 수 [[0]]`,a:[String(b)],hints:[`${f(1)} − ${a}`]},L===1?{h:`x = ${x+3}이면 ${a} × ${x+3} + ${b} = [[0]]`,a:[String(f(x+3))],hints:["계산해."]}:{h:`y = [[0]] × x + [[1]]`,a:[String(a),String(b)],hints:["위 두 수."]}]};
+    if(L===2)return{head:"y = □ × x",list:[{h:`x = 1일 때 y = [[0]]`,a:[String(a)],hints:["표에서 찾아."]},{h:`y는 x의 [[0]]배`,a:[String(a)],hints:["다른 칸도 맞는지 봐."]}]};
+    if(L===3)return{head:"y = x + □",list:[{h:`x = 1일 때 y = [[0]]`,a:[String(1+b)],hints:["표에서 찾아."]},{h:`y − x = [[0]]`,a:[String(b)],hints:["빼 봐."]}]};
+    return{head:`y = ${a} × x + ${b}, y = ${f(x)}`,list:[{h:`${b}${eul(b)} 되돌리면 ${f(x)} − ${b} = [[0]]`,a:[String(a*x)],hints:["뒤에서부터."]},{h:`${a*x} ÷ ${a} = [[0]]`,a:[String(x)],hints:["× 되돌리기."]}]}},
+  pat:()=>"대응 규칙"},
+
+ /* ───── 중1 ───── */
+ PF:{optional:true,sg:false,name:"거듭제곱·소인수분해",code:"중1-1",ex:"2³ = 8,  60 = 2² × 3 × 5",sec:7,why:"최대공약수·최소공배수, 약분, 제곱근의 바탕이에요.",idea:"작은 소수(2, 3, 5, 7)로 계속 나누면 소인수분해가 된다냥.",
+  lv:["거듭제곱의 값 (2³)","같은 수 곱 → 거듭제곱 (2×2×2 = 2^□)","2와 3으로만 (72 = 2^□ × 3^□)","2·3·5로 (180 = 2^□ × 3^□ × 5^□)","약수의 개수 (소인수분해로)"],
+  rand:L=>{if(L===0){const b=ri(2,5);return{L,b,e:ri(2,b===2?6:b===3?4:3)}}if(L===1)return{L,b:ri(2,9),e:ri(2,6)};if(L===2){let p,q;do{p=ri(1,5);q=ri(1,3)}while(2**p*3**q>300);return{L,p,q}}
+    let p,q,r;do{p=ri(1,3);q=ri(1,2);r=ri(1,2)}while(2**p*3**q*5**r>900);return{L,p,q,r}},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,b,e}=p;
+    if(L===0)return{html:`${b}<sup>${e}</sup> = [[0]]`,a:[String(b**e)],kind:"num",cls:"mid",text:`${b}^${e}`};
+    if(L===1)return{html:`${Array(e).fill(b).join(" × ")} = ${b}<sup>[[0]]</sup>`,a:[String(e)],kind:"num",cls:"mid",text:`${b}×…(${e}번)`};
+    if(L===2){const N=2**p.p*3**p.q;return{html:`${N} = 2<sup>[[0]]</sup> × 3<sup>[[1]]</sup>`,a:[String(p.p),String(p.q)],kind:"num",cls:"mid",text:`${N} 소인수분해`}}
+    const N=2**p.p*3**p.q*5**p.r;if(L===3)return{html:`${N} = 2<sup>[[0]]</sup> × 3<sup>[[1]]</sup> × 5<sup>[[2]]</sup>`,a:[String(p.p),String(p.q),String(p.r)],kind:"num",cls:"mid",text:`${N} 소인수분해`};
+    return{html:`<span class="sub">${N} = 2<sup>${p.p}</sup> × 3<sup>${p.q}</sup> × 5<sup>${p.r}</sup></span><span class="sub">약수는 [[0]]개</span>`,a:[String((p.p+1)*(p.q+1)*(p.r+1))],kind:"num",cls:"mid stack",text:`${N} 약수 개수`}},
+  steps:p=>{const{L,b,e}=p;
+    if(L<=1)return{head:L===0?`${b}<sup>${e}</sup>`:`${b}를 ${e}번 곱하기`,list:[{h:`${b}를 [[0]]번 곱한다`,a:[String(e)],hints:["작은 숫자(지수)가 곱하는 횟수."]},...(L===0?[{h:`${Array(e).fill(b).join(" × ")} = [[0]]`,a:[String(b**e)],hints:["차례로 곱해."]}]:[])]};
+    if(L<=3){const N=L===2?2**p.p*3**p.q:2**p.p*3**p.q*5**p.r,M=N/2**p.p;return{head:`${N} 소인수분해`,list:[{h:`2로 몇 번 나뉘어? [[0]]번 (남는 수 ${M})`,a:[String(p.p)],hints:["2로 계속 나눠 봐."]},{h:`${M}${eun(M)} 3으로 [[0]]번`,a:[String(p.q)],hints:["3으로 계속 나눠 봐."]},...(L===3?[{h:`남은 수는 5로 [[0]]번`,a:[String(p.r)],hints:["5로 나눠 봐."]}]:[])]}}
+    return{head:"약수의 개수",list:[{h:`지수에 1씩 더해서 곱해: (${p.p}+1) × (${p.q}+1) × (${p.r}+1) = [[0]]`,a:[String((p.p+1)*(p.q+1)*(p.r+1))],hints:["2를 0~"+p.p+"번 고르는 방법이 "+(p.p+1)+"가지."]}]}},
+  pat:()=>"소인수분해"},
+
+ ZI:{optional:true,sg:true,name:"정수의 덧셈·뺄셈",code:"중1-1",ex:"(−7) + 3,  5 − (−2)",sec:5,why:"중학교 모든 계산의 바탕이에요. 음수 키 − 를 써요.",idea:"부호가 같으면 더하고 부호를 붙인다. 다르면 큰 쪽에서 작은 쪽을 빼고 큰 쪽 부호다냥. 빼기 음수는 더하기다옹.",
+  lv:["양수 + 음수 (한 자리)","음수 + 음수","빼기 음수 = 더하기","두 자리 덧셈·뺄셈","세 수 계산"],
+  rand:L=>{const R=L===3?[10,60]:[1,9],r=()=>ri(R[0],R[1]);if(L===0)return{L,a:r(),b:-r()};if(L===1)return{L,a:-r(),b:-r()};if(L===2)return{L,a:ri(-9,9)||3,b:-r(),sub:1};if(L===3)return{L,a:r()*pick([1,-1]),b:r()*pick([1,-1]),sub:ri(0,1)};return{L,a:ri(-9,9)||2,b:ri(-9,9)||-4,c:ri(-9,9)||5}},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{a,b,c,sub}=p,v=c!=null?a+b+c:sub?a-b:a+b;const ex=c!=null?`${SG(a)} + ${SG(b)} + ${SG(c)}`:`${SG(a)} ${sub?"−":"+"} ${SG(b)}`;return{html:`${ex} = [[0]]`,a:[String(v)],kind:"num",cls:"mid",text:ex}},
+  steps:p=>{const{a,b,c,sub}=p;if(c!=null)return{head:`${SG(a)} + ${SG(b)} + ${SG(c)}`,list:[{h:`앞의 둘: ${SG(a)} + ${SG(b)} = [[0]]`,a:[String(a+b)],hints:["두 수씩."]},{h:`${SG(a+b)} + ${SG(c)} = [[0]]`,a:[String(a+b+c)],hints:["남은 수."]}]};
+    const B=sub?-b:b;return{head:`${SG(a)} ${sub?"−":"+"} ${SG(b)}`,list:[...(sub?[{h:`빼기 ${SG(b)}는 더하기 [[0]]`,a:[String(-b)],hints:["부호를 바꿔."]}]:[]),{h:`${SG(a)} + ${SG(B)}: 부호가 같아? (O/X)`,a:[(a>=0)===(B>=0)?"O":"X"],kind:"ox",hints:["둘 다 +이거나 둘 다 −?"]},{h:`답 [[0]]`,a:[String(a+B)],hints:[(a>=0)===(B>=0)?"크기끼리 더하고 같은 부호.":"큰 크기에서 작은 크기를 빼고, 큰 쪽 부호."]}]}},
+  pat:()=>"정수 덧셈·뺄셈"},
+
+ ZM:{optional:true,sg:true,name:"정수의 곱셈·나눗셈",code:"중1-1",ex:"(−6) × 4,  (−24) ÷ (−3)",sec:5,why:"일차식, 방정식 계산에 바로 쓰여요.",idea:"음수가 짝수 개면 +, 홀수 개면 −다냥.",
+  lv:["곱셈 (한 자리)","나눗셈","세 수 곱하기","거듭제곱 (−2)³","곱셈·나눗셈 먼저, 덧셈 나중"],
+  rand:L=>{const s=()=>pick([1,-1]),r=()=>ri(2,9);if(L===0)return{L,a:r()*s(),b:r()*s()};if(L===1){const q=r()*s(),b=r()*s();return{L,a:q*b,b}}if(L===2)return{L,a:r()*s(),b:ri(2,5)*s(),c:ri(2,4)*s()};if(L===3)return{L,a:-ri(1,3),e:ri(2,5)};return{L,a:r()*s(),b:r()*s(),c:ri(-9,9)||3}},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,c,e}=p;let ex,v;if(L===0){ex=`${SG(a)} × ${SG(b)}`;v=a*b}else if(L===1){ex=`${SG(a)} ÷ ${SG(b)}`;v=a/b}else if(L===2){ex=`${SG(a)} × ${SG(b)} × ${SG(c)}`;v=a*b*c}else if(L===3){ex=`(${MN(a)})<sup>${e}</sup>`;v=a**e}else{ex=`${SG(a)} × ${SG(b)} + ${SG(c)}`;v=a*b+c}
+    return{html:`${ex} = [[0]]`,a:[String(v)],kind:"num",cls:"mid",text:ex.replace(/<[^>]+>/g,"")}},
+  steps:p=>{const{L,a,b,c,e}=p;if(L===3)return{head:`(${MN(a)})<sup>${e}</sup>`,list:[{h:`음수를 ${e}번 곱해: ${e%2?"홀수":"짝수"}번이니 부호는 ${e%2?"−":"+"}. 크기 ${-a}<sup>${e}</sup> = [[0]]`,a:[String((-a)**e)],hints:["크기만 먼저."]},{h:`답 [[0]]`,a:[String(a**e)],hints:["부호를 붙여."]}]};
+    if(L===4)return{head:`${SG(a)} × ${SG(b)} + ${SG(c)}`,list:[{h:`곱셈 먼저 ${SG(a)} × ${SG(b)} = [[0]]`,a:[String(a*b)],hints:["부호부터."]},{h:`${SG(a*b)} + ${SG(c)} = [[0]]`,a:[String(a*b+c)],hints:["더해."]}]};
+    const vals=L===2?[a,b,c]:[a,b],neg=vals.filter(v=>v<0).length,mag=L===1?Math.abs(a/b):vals.reduce((x,y)=>x*Math.abs(y),1),v=L===1?a/b:vals.reduce((x,y)=>x*y,1);
+    return{head:L===1?`${SG(a)} ÷ ${SG(b)}`:vals.map(SG).join(" × "),list:[{h:`음수가 [[0]]개`,a:[String(neg)],hints:["−가 붙은 수를 세."]},{h:`크기만 계산하면 [[0]]`,a:[String(mag)],hints:["부호 빼고."]},{h:`답 (${neg%2?"홀수 개라 −":"짝수 개라 +"}) [[0]]`,a:[String(v)],hints:["부호를 붙여."]}]}},
+  pat:()=>"정수 곱셈·나눗셈"},
+
+ ZA:{optional:true,sg:true,name:"절댓값과 수의 크기",code:"중1-1",ex:"|−7| = 7,  ① −3 ② −8 큰 쪽",sec:4,why:"정수 계산의 부호 판단이 빨라져요.",idea:"절댓값은 0에서 떨어진 거리. 음수는 절댓값이 클수록 작다냥.",
+  lv:["절댓값 구하기","절댓값이 같은 두 수 중 음수","음수끼리 큰 쪽","양수·음수·0 섞어 큰 쪽","절댓값이 작은 쪽"],
+  rand:L=>{const a=ri(1,30);if(L<=1)return{L,a:L===0?a*pick([1,-1]):a};let x,y;do{x=L===2?-ri(1,20):ri(-15,15);y=L===2?-ri(1,20):ri(-15,15)}while(x===y||(L===4&&Math.abs(x)===Math.abs(y)));return{L,x,y}},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,x,y}=p;if(L===0)return{html:`| ${MN(a)} | = [[0]]`,a:[String(Math.abs(a))],kind:"num",cls:"mid",text:`|${a}|`};if(L===1)return{html:`<span class="sub">절댓값이 ${a}인 수 중</span><span class="sub">음수는 [[0]]</span>`,a:[String(-a)],kind:"num",cls:"mid stack",text:`절댓값 ${a} 음수`};
+    const big=L===4?(Math.abs(x)<Math.abs(y)?"1":"2"):x>y?"1":"2";return{html:`<span class="sub">① ${MN(x)}　② ${MN(y)}</span><span class="sub">${L===4?"절댓값이 작은 쪽":"큰 쪽"} [[0]]번</span>`,a:[big],kind:"num",cls:"mid stack",text:`${x} vs ${y}`,sg:false}},
+  steps:p=>{const{L,a,x,y}=p;if(L<=1)return{head:L===0?`|${MN(a)}|`:`절댓값 ${a}`,list:[{h:`0에서 떨어진 거리 [[0]]`,a:[String(Math.abs(a))],hints:["부호를 떼."]},...(L===1?[{h:`음수로 쓰면 [[0]]`,a:[String(-a)],hints:["− 를 붙여."]}]:[])]};
+    return{head:`① ${MN(x)}　② ${MN(y)}`,list:[{h:`①의 절댓값 [[0]]`,a:[String(Math.abs(x))],hints:["부호를 떼."]},{h:`②의 절댓값 [[0]]`,a:[String(Math.abs(y))],hints:["부호를 떼."]},{h:`${L===4?"절댓값이 작은 쪽":"큰 쪽 (음수는 절댓값이 클수록 작다)"} [[0]]번`,a:[L===4?(Math.abs(x)<Math.abs(y)?"1":"2"):x>y?"1":"2"],hints:["수직선에서 오른쪽이 크다냥."]}]}},
+  pat:()=>"절댓값"},
+
+ QR:{optional:true,sg:true,name:"유리수의 계산",code:"중1-1",ex:"(−2/5) + 4/5,  (−3/4) × 2/9",sec:8,why:"방정식, 식의 값 계산에 분수가 섞여 나와요.",idea:"부호를 먼저 정하고, 크기는 초등 분수 계산 그대로다냥. 입력: − 분자 \\ 분모",
+  lv:["분모 같은 덧셈·뺄셈","분모 다른 덧셈","분모 다른 뺄셈","곱셈","나눗셈"],
+  rand:L=>{let p,g=0;do{const b=ri(2,9),d=L===0?b:ri(2,9);p={L,a:ri(1,b-1)*pick([1,-1]),b,c:ri(1,d-1)*pick([1,-1]),d,op:L===0?pick(["+","−"]):L===1?"+":L===2?"−":L===3?"×":"÷"}}while((GCD(Math.abs(p.a),p.b)!==1||GCD(Math.abs(p.c),p.d)!==1||(L>=1&&L<=2&&p.b===p.d)||qrVal(p)[0]===0)&&g++<200);return p},
+  key:p=>JSON.stringify(p),
+  make:p=>{const[N,D]=qrVal(p),A=sAns(N,D);return{html:`${SFR(p.a,p.b)} ${p.op} ${SFR(p.c,p.d)} = [[0]]`,a:[A],alts:sAlt(N,D),kind:"num",fr:true,cls:"mid",text:`${p.a}/${p.b} ${p.op} ${p.c<0?`(${p.c}/${p.d})`:p.c+"/"+p.d}`.replace(/-/g,"−")}},
+  steps:p=>{const[N,D]=qrVal(p);return{head:`${SFR(p.a,p.b)} ${p.op} ${SFR(p.c,p.d)}`,list:[{h:`답이 음수일까? (맞으면 O)`,a:[N<0?"O":"X"],kind:"ox",hints:[p.op==="×"||p.op==="÷"?"음수가 홀수 개면 −.":"절댓값이 큰 쪽 부호를 따라가."]},{h:`크기만 계산 (기약분수) [[0]]`,a:[sAns(Math.abs(N),D)],alts:sAlt(Math.abs(N),D),fr:true,hints:["초등 분수 계산 그대로."]},{h:`답 [[0]]`,a:[sAns(N,D)],alts:sAlt(N,D),fr:true,hints:["부호를 붙여."]}]}},
+  pat:()=>"유리수 계산"},
+
+ EV:{optional:true,sg:true,name:"식의 값",code:"중1-1",ex:"x = −2일 때 3x + 5",sec:6,why:"함숫값, 공식에 넣기가 다 식의 값이에요.",idea:"문자 자리에 괄호를 치고 수를 넣는다냥.",
+  lv:["x가 양수 (2x + 1)","x가 음수 (3x − 4)","x² 들어감","두 문자 (3a − 2b)"],
+  rand:L=>({L,a:ri(2,6)*pick([1,1,-1]),b:ri(1,9)*pick([1,-1]),x:L===0?ri(1,9):-ri(1,6),y:-ri(1,5)*pick([1,-1])}),
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,x,y}=p;let ex,v,giv;if(L<=1){ex=`${CX(a)}x ${b<0?"−":"+"} ${Math.abs(b)}`;v=a*x+b;giv=`x = ${MN(x)}`}else if(L===2){ex=`x² ${b<0?"−":"+"} ${Math.abs(b)}`;v=x*x+b;giv=`x = ${MN(x)}`}else{ex=`${CX(a)}a ${b<0?"−":"+"} ${CX(Math.abs(b))}b`;v=a*x+b*y;giv=`a = ${MN(x)}, b = ${MN(y)}`}
+    return{html:`<span class="sub">${giv}일 때</span><span class="sub">${ex} = [[0]]</span>`,a:[String(v)],kind:"num",cls:"mid stack",text:`${giv}: ${ex}`}},
+  steps:p=>{const{L,a,b,x,y}=p;if(L<=1)return{head:`x = ${MN(x)}`,list:[{h:`${SG(a)} × ${SG(x)} = [[0]]`,a:[String(a*x)],hints:["곱셈 부호부터."]},{h:`${SG(a*x)} ${b<0?"−":"+"} ${Math.abs(b)} = [[0]]`,a:[String(a*x+b)],hints:["더하거나 빼."]}]};
+    if(L===2)return{head:`x = ${MN(x)}`,list:[{h:`x² = ${SG(x)} × ${SG(x)} = [[0]]`,a:[String(x*x)],hints:["음수 × 음수 = 양수."]},{h:`${x*x} ${b<0?"−":"+"} ${Math.abs(b)} = [[0]]`,a:[String(x*x+b)],hints:["계산해."]}]};
+    return{head:`a = ${MN(x)}, b = ${MN(y)}`,list:[{h:`${SG(a)} × ${SG(x)} = [[0]]`,a:[String(a*x)],hints:["a 자리."]},{h:`${SG(b)} × ${SG(y)} = [[0]]`,a:[String(b*y)],hints:["b 자리 (앞의 부호 포함)."]},{h:`더하면 [[0]]`,a:[String(a*x+b*y)],hints:["두 수를 더해."]}]}},
+  pat:()=>"대입"},
+
+ LE:{optional:true,sg:true,name:"일차식의 계산",code:"중1-1",ex:"3(x + 2) = 3x + 6,  (5x + 2) − (2x − 4)",sec:7,why:"방정식 풀기의 바로 앞 단계예요.",idea:"x는 x끼리, 수는 수끼리 모은다냥. 괄호 앞이 −면 안의 부호가 다 바뀐다옹.",
+  lv:["동류항 (2x + 5x)","분배 3(x + 2)","덧셈 (2x+3) + (4x−1)","뺄셈 (5x+2) − (2x−4)","음수 분배 −2(3x − 1)"],
+  rand:L=>{const r=()=>ri(1,9)*pick([1,-1]);let p,g=0;do{if(L===0)p={L,a:ri(1,9),b:r()};else if(L===1)p={L,k:ri(2,6),a:1,b:r()};else if(L<=3)p={L,a:ri(1,9),b:r(),c:ri(1,9),d:r()};else p={L,k:-ri(2,5),a:ri(1,5),b:r()}}while(g++<200&&((L===0&&p.a+p.b===0)||(L>=2&&L<=3&&(p.a+(L===3?-1:1)*p.c===0||p.b+(L===3?-1:1)*p.d===0))));return p},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,c,d,k}=p;
+    if(L===0)return{html:`${CX(a)}x ${b<0?"−":"+"} ${CX(Math.abs(b))}x = [[0]]x`,a:[String(a+b)],kind:"num",cls:"mid",text:`${a}x+${b}x`};
+    if(L===1||L===4){const ex=`${L===4?MN(k):k}(${CX(a)}x ${b<0?"−":"+"} ${Math.abs(b)})`;return{html:`${ex} = [[0]]x + [[1]]`,a:[String(k*a),String(k*b)],kind:"num",cls:"mid",text:ex.replace(/<[^>]+>/g,"")}}
+    const ex=`(${CX(a)}x ${b<0?"−":"+"} ${Math.abs(b)}) ${L===3?"−":"+"} (${CX(c)}x ${d<0?"−":"+"} ${Math.abs(d)})`,s=L===3?-1:1;return{html:`<span class="sub">${ex}</span><span class="sub">= [[0]]x + [[1]]</span>`,a:[String(a+s*c),String(b+s*d)],kind:"num",cls:"mid stack",text:ex}},
+  steps:p=>{const{L,a,b,c,d,k}=p;if(L===0)return{head:"x끼리",list:[{h:`${a} ${b<0?"−":"+"} ${Math.abs(b)} = [[0]]`,a:[String(a+b)],hints:["계수끼리 계산."]}]};
+    if(L===1||L===4)return{head:"분배",list:[{h:`${SG(k)} × ${a}x = [[0]]x`,a:[String(k*a)],hints:["괄호 안 첫째 항에 곱해."]},{h:`${SG(k)} × ${SG(b)} = [[0]]`,a:[String(k*b)],hints:["둘째 항에도."]}]};
+    const s=L===3?-1:1;return{head:L===3?"괄호 앞이 −":"덧셈",list:[...(L===3?[{h:`괄호를 풀면 −${CX(c)}x 와 [[0]]`,a:[String(-d)],hints:["부호가 바뀐다냥."]}]:[]),{h:`x끼리 ${a} ${s<0?"−":"+"} ${c} = [[0]]`,a:[String(a+s*c)],hints:["계수끼리."]},{h:`수끼리 ${SG(b)} + ${SG(s*d)} = [[0]]`,a:[String(b+s*d)],hints:["상수끼리."]}]}},
+  pat:()=>"일차식"},
+
+ EQ:{optional:true,sg:true,name:"일차방정식",code:"중1-1",ex:"2x + 3 = 11,  5x − 2 = 3x + 6",sec:8,why:"문장제를 식으로 풀 수 있게 돼요. 중학교 수학의 중심이에요.",idea:"이항하면 부호가 바뀐다. x는 왼쪽, 수는 오른쪽으로 모은다냥.",
+  lv:["x + a = b","ax = b","ax + b = c","양쪽에 x (5x − 2 = 3x + 6)","괄호 2(x − 1) = x + 4","해가 음수"],
+  rand:L=>{const x=L===5?-ri(1,9):ri(1,12),a=ri(2,7),b=ri(1,15)*pick([1,-1]),c=ri(1,a-1);return{L,x,a,b,c,k:ri(2,4)}},key:p=>JSON.stringify(p),
+  make:p=>{const ex=eqText(p);return{html:`${ex}, x = [[0]]`,a:[String(p.x)],kind:"num",cls:"mid",text:ex}},
+  steps:p=>{const{L,x,a,b,c,k}=p;if(L===0)return{head:eqText(p),list:[{h:`${MN(b)}${eul(Math.abs(b))} 이항하면 x = ${MN(x+b)} ${b<0?"+":"−"} ${Math.abs(b)} = [[0]]`,a:[String(x)],hints:["부호를 바꿔 옮겨."]}]};
+    if(L===1)return{head:eqText(p),list:[{h:`양쪽을 ${a}로 나누면 x = [[0]]`,a:[String(x)],hints:[`${a*x} ÷ ${a}`]}]};
+    if(L===4){const R=k*(x-1)-x;return{head:eqText(p),list:[{h:`괄호를 풀면 ${k}x − ${k} = x${R?" "+PM(R):""}. x끼리 모으면 [[0]]x`,a:[String(k-1)],hints:[`${k}x − x`]},{h:`수끼리: ${SG(R)} + ${k} = [[0]]`,a:[String(R+k)],hints:["이항."]},{h:`x = [[0]]`,a:[String(x)],hints:["나눠."]}]}}
+    if(L===3){const r=(a-c)*x+b;return{head:eqText(p),list:[{h:`x끼리 왼쪽: ${a}x − ${c}x = [[0]]x`,a:[String(a-c)],hints:["이항하면 부호가 바뀐다."]},{h:`수끼리 오른쪽: ${MN(r)} − ${SG(b)} = [[0]]`,a:[String(r-b)],hints:["이항."]},{h:`x = [[0]]`,a:[String(x)],hints:["나눠."]}]}}
+    return{head:eqText(p),list:[{h:`${MN(b)}${eul(Math.abs(b))} 이항: ${a}x = [[0]]`,a:[String(a*x)],hints:["부호를 바꿔 옮겨."]},{h:`x = [[0]]`,a:[String(x)],hints:[`÷ ${a}`]}]}},
+  pat:()=>"이항"},
+
+ PV:{optional:true,sg:true,name:"정비례와 반비례",code:"중1-1",ex:"y = 3x,  y = 12/x",sec:6,why:"함수의 첫 단원. 일차함수·이차함수로 이어져요.",idea:"정비례 y = ax: x가 2배면 y도 2배. 반비례 y = a/x: x × y가 늘 a다냥.",
+  lv:["정비례 y = ax, 함숫값","정비례 a 구하기","반비례 y = a/x, 함숫값","반비례 a 구하기","음수가 섞인 정비례·반비례"],
+  rand:L=>{const a=ri(2,9)*(L===4?pick([1,-1]):1),x=L===4?ri(1,6)*pick([1,-1]):ri(1,9);if(L<=1||(L===4&&Math.random()<.5))return{L,t:"d",a,x};const ds=divs(Math.abs(a)*6).filter(v=>v<=12);const A=Math.abs(a)*6*(a<0?-1:1),X=pick(ds)*(L===4?pick([1,-1]):1);return{L,t:"i",a:A,x:X}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,t,a,x}=p;if(t==="d")return L===1?{html:`<span class="sub">y가 x에 정비례, x = ${MN(x)}일 때 y = ${MN(a*x)}</span><span class="sub">y = [[0]]x</span>`,a:[String(a)],kind:"num",cls:"mid stack",text:`정비례 a (${x},${a*x})`}
+      :{html:`<span class="sub">y = ${MN(a)}x 에서</span><span class="sub">x = ${MN(x)}이면 y = [[0]]</span>`,a:[String(a*x)],kind:"num",cls:"mid stack",text:`y=${a}x, x=${x}`};
+    return L===3?{html:`<span class="sub">y가 x에 반비례, x = ${MN(x)}일 때 y = ${MN(a/x)}</span><span class="sub">y = ${fr("[[0]]","x")}</span>`,a:[String(a)],kind:"num",cls:"mid stack",text:`반비례 a (${x},${a/x})`}
+      :{html:`<span class="sub">y = ${fr(MN(a),"x")} 에서</span><span class="sub">x = ${MN(x)}이면 y = [[0]]</span>`,a:[String(a/x)],kind:"num",cls:"mid stack",text:`y=${a}/x, x=${x}`}},
+  steps:p=>{const{L,t,a,x}=p;if(t==="d")return{head:"정비례 y = ax",list:L===1?[{h:`a = y ÷ x = ${MN(a*x)} ÷ ${SG(x)} = [[0]]`,a:[String(a)],hints:["나눠."]}]:[{h:`${MN(a)} × ${SG(x)} = [[0]]`,a:[String(a*x)],hints:["곱해."]}]};
+    return{head:"반비례 y = a / x",list:L===3?[{h:`a = x × y = ${SG(x)} × ${SG(a/x)} = [[0]]`,a:[String(a)],hints:["곱해."]}]:[{h:`${MN(a)} ÷ ${SG(x)} = [[0]]`,a:[String(a/x)],hints:["나눠."]}]}},
+  pat:()=>"비례"},
+
+ /* ───── 중2 ───── */
+ RD:{optional:true,name:"유한소수와 순환소수",code:"중2-1",ex:"3/8 = 0.375,  0.4̇ = 4/9",sec:7,why:"분수와 소수를 자유롭게 오가는 힘이에요.",idea:"분모를 소인수분해해서 2와 5만 있으면 유한소수. 0.ȧ = a/9, 0.ȧḃ = ab/99다냥.",
+  lv:["분수 → 소수 (분모 2·4·5·8·20·25)","유한소수가 될까? (O/X)","순환마디 찾기","0.ȧ, 1.ȧ → 분수","0.ȧḃ → 분수"],
+  rand:L=>{if(L===0){let d,n;do{d=pick([2,4,5,8,20,25]);n=ri(1,d-1)}while(GCD(n,d)!==1||decParts3(Math.round(n/d*1000))[1][0]==="0");return{L,n,d}}if(L===1){const d=pick([6,7,8,12,14,15,16,20,24,25,30,35,40]);return{L,n:ri(1,d-1),d}}if(L===2){let m;do{m=ri(10,98)}while(m%11===0);return{L,m}}if(L===3)return{L,m:ri(1,8),w:ri(0,2)};let m;do{m=ri(10,98)}while(m%11===0);return{L,m}},
+  key:p=>JSON.stringify(p),
+  make:p=>{const{L,n,d,m}=p;if(L===0){const v=Math.round(n/d*1000);const[w,f]=decParts3(v);return{html:`${fr(n,d)} = [[0]] . [[1]]`,a:[w,f],kind:"num",cls:"mid",text:`${n}/${d}→소수`}}
+    if(L===1){const g=GCD(n,d),D=d/g;let x=D;while(x%2===0)x/=2;while(x%5===0)x/=5;return{html:`${fr(n,d)}는 유한소수?`,a:[x===1?"O":"X"],kind:"ox",cls:"txt",text:`${n}/${d} 유한?`}}
+    if(L===2){const s=String(m);return{html:`<span class="sub">0.${s}${s}${s}…</span><span class="sub">순환마디 [[0]]</span>`,a:[s],kind:"num",cls:"mid stack",text:`0.${s}${s}…`}}
+    if(L===3){const w=p.w;return{html:`${w}.${m}${m}${m}… = [[0]]`,a:[sAns(9*w+m,9)],alts:sAlt(9*w+m,9),kind:"num",fr:true,cls:"mid",text:`${w}.${m}… → 분수`}}
+    const s=String(m);return{html:`0.${s}${s}… = [[0]]`,a:[sAns(m,99)],alts:sAlt(m,99),kind:"num",fr:true,cls:"mid",text:`0.${s}… → 분수`}},
+  steps:p=>{const{L,n,d,m}=p;if(L===0){const P=10%d===0?10:100%d===0?100:1000;return{head:`${fr(n,d)} → 소수`,list:[{h:`분모를 ${P}로: ${fr(n,d)} = ${fr("[[0]]",P)}`,a:[String(n*P/d)],hints:[`분모에 ${P/d}를 곱해.`]},{h:`그래서 [[0]] . [[1]]`,a:decParts3(Math.round(n/d*1000)),hints:["소수점 아래 자리 수 = 0의 개수."]}]}}
+    if(L===1){const g=GCD(n,d),D=d/g;let x=D;while(x%2===0)x/=2;while(x%5===0)x/=5;return{head:`${fr(n,d)}`,list:[{h:`기약분수의 분모 [[0]]`,a:[String(D)],hints:["약분해 봐."]},{h:`2와 5만으로 된 분모면 유한소수. 유한?`,a:[x===1?"O":"X"],kind:"ox",hints:["소인수분해해 봐."]}]}}
+    if(L===2)return{head:"순환마디",list:[{h:`되풀이되는 부분 [[0]]`,a:[String(m)],hints:["처음 반복되는 묶음."]}]};
+    const D=L===3?9:99,w=L===3?p.w:0;return{head:`${w}.${m}… → 분수`,list:[{h:`0.${m}… = ${fr(m,"[[0]]")}`,a:[String(D)],hints:[L===3?"순환마디가 한 자리면 분모 9.":"두 자리면 99."]},...(w?[{h:`${w} + ${fr(m,9)} = [[0]] (가분수)`,a:[sAns(9*w+m,9)],alts:sAlt(9*w+m,9),fr:true,hints:[`${w} = ${fr(9*w,9)}`]}]:[{h:`약분하면 [[0]]`,a:[sAns(m,D)],alts:sAlt(m,D),fr:true,hints:["최대공약수로 나눠."]}])]}},
+  pat:()=>"순환소수"},
+
+ EX:{optional:true,name:"지수법칙",code:"중2-1",ex:"a² × a³ = a⁵,  (a²)³ = a⁶",sec:5,why:"단항식 계산, 이차식, 고등 지수로 이어져요.",idea:"곱하면 지수끼리 더하기, 거듭제곱의 거듭제곱은 곱하기, 나누면 빼기다냥.",
+  lv:["a^m × a^n","(a^m)^n","a^m ÷ a^n","(ab)^n = a^□ b^□","2^□ = 32 (수로)"],
+  rand:L=>{const m=ri(2,6),n=ri(2,5);if(L===2)return{L,m:m+n,n};if(L===4){const b=pick([2,3,5]);return{L,b,e:ri(2,b===2?7:4)}}return{L,m,n,v:pick(["a","x","y"])}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,m,n,v,b,e}=p;if(L===0)return{html:`${v}<sup>${m}</sup> × ${v}<sup>${n}</sup> = ${v}<sup>[[0]]</sup>`,a:[String(m+n)],kind:"num",cls:"mid",text:`${v}^${m}×${v}^${n}`};
+    if(L===1)return{html:`(${v}<sup>${m}</sup>)<sup>${n}</sup> = ${v}<sup>[[0]]</sup>`,a:[String(m*n)],kind:"num",cls:"mid",text:`(${v}^${m})^${n}`};
+    if(L===2)return{html:`a<sup>${m}</sup> ÷ a<sup>${n}</sup> = a<sup>[[0]]</sup>`,a:[String(m-n)],kind:"num",cls:"mid",text:`a^${m}÷a^${n}`};
+    if(L===3)return{html:`(a<sup>${m}</sup>b)<sup>${n}</sup> = a<sup>[[0]]</sup>b<sup>[[1]]</sup>`,a:[String(m*n),String(n)],kind:"num",cls:"mid",text:`(a^${m}b)^${n}`};
+    return{html:`${b}<sup>[[0]]</sup> = ${b**e}`,a:[String(e)],kind:"num",cls:"mid",text:`${b}^□=${b**e}`}},
+  steps:p=>{const{L,m,n,b,e}=p;const r=[[`지수끼리 더해: ${m} + ${n} = [[0]]`,m+n],[`지수끼리 곱해: ${m} × ${n} = [[0]]`,m*n],[`지수끼리 빼: ${m} − ${n} = [[0]]`,m-n]];if(L<=2)return{head:"지수법칙",list:[{h:r[L][0],a:[String(r[L][1])],hints:["법칙을 떠올려."]}]};
+    if(L===3)return{head:"괄호 밖 지수는 안의 모든 것에",list:[{h:`a: ${m} × ${n} = [[0]]`,a:[String(m*n)],hints:["곱해."]},{h:`b: 1 × ${n} = [[0]]`,a:[String(n)],hints:["b는 지수 1."]}]};
+    return{head:`${b}를 몇 번?`,list:[{h:`${b}를 계속 곱해 ${b**e}가 되는 횟수 [[0]]`,a:[String(e)],hints:[`${b}, ${b*b}, ${b**3}, …`]}]}},
+  pat:()=>"지수법칙"},
+
+ MO:{optional:true,sg:true,name:"단항식의 곱셈·나눗셈",code:"중2-1",ex:"3x × 4x² = 12x³,  12x³ ÷ 4x",sec:7,why:"다항식 전개, 인수분해의 바탕이에요.",idea:"수는 수끼리, 문자는 지수법칙으로 계산한다냥.",
+  lv:["곱셈 3x × 4x²","나눗셈 12x³ ÷ 4x","부호가 섞인 곱 (−2x)² × 3x","두 문자 6a²b × 2ab"],
+  rand:L=>{if(L===1){const b=ri(2,6),q=ri(2,6),n=ri(1,3);return{L,a:b*q*pick([1,-1]),m:n+ri(1,3),b,n}}return{L,a:ri(2,6)*(L===2?-1:pick([1,-1])),m:ri(1,3),b:ri(2,6),n:ri(1,3),c:ri(1,3),d:ri(1,2)}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,m,b,n,c,d}=p;if(L===0)return{html:`${CXm(a)}x${SP(m)} × ${b}x${SP(n)} = [[0]]x<sup>[[1]]</sup>`,a:[String(a*b),String(m+n)],kind:"num",cls:"mid",text:`${a}x^${m}×${b}x^${n}`};
+    if(L===1)return{html:`${MN(a)}x${SP(m)} ÷ ${b}x${SP(n)} = [[0]]x<sup>[[1]]</sup>`,a:[String(a/b),String(m-n)],kind:"num",cls:"mid",text:`${a}x^${m}÷${b}x^${n}`};
+    if(L===2)return{html:`(${MN(a)}x)² × ${b}x${SP(n)} = [[0]]x<sup>[[1]]</sup>`,a:[String(a*a*b),String(2+n)],kind:"num",cls:"mid",text:`(${a}x)²×${b}x^${n}`};
+    return{html:`${CXm(a)}a${SP(m)}b${SP(d)} × ${b}a${SP(c)}b = [[0]]a<sup>[[1]]</sup>b<sup>[[2]]</sup>`,a:[String(a*b),String(m+c),String(d+1)],kind:"num",cls:"mid sm",text:`${a}a^${m}b^${d}×${b}a^${c}b`}},
+  steps:p=>{const{L,a,m,b,n,c,d}=p;if(L===1)return{head:"나눗셈",list:[{h:`수끼리 ${MN(a)} ÷ ${b} = [[0]]`,a:[String(a/b)],hints:["부호 먼저."]},{h:`지수끼리 ${m} − ${n} = [[0]]`,a:[String(m-n)],hints:["빼."]}]};
+    if(L===2)return{head:"거듭제곱 먼저",list:[{h:`(${MN(a)}x)² = [[0]]x²`,a:[String(a*a)],hints:["음수 × 음수 = 양수."]},{h:`${a*a} × ${b} = [[0]]`,a:[String(a*a*b)],hints:["수끼리."]},{h:`지수 2 + ${n} = [[0]]`,a:[String(2+n)],hints:["더해."]}]};
+    if(L===3)return{head:"수·a·b 따로",list:[{h:`수끼리 [[0]]`,a:[String(a*b)],hints:["곱해."]},{h:`a 지수 ${m} + ${c} = [[0]]`,a:[String(m+c)],hints:["더해."]},{h:`b 지수 ${d} + 1 = [[0]]`,a:[String(d+1)],hints:["b만 있으면 지수 1."]}]};
+    return{head:"곱셈",list:[{h:`수끼리 ${MN(a)} × ${b} = [[0]]`,a:[String(a*b)],hints:["곱해."]},{h:`지수끼리 ${m} + ${n} = [[0]]`,a:[String(m+n)],hints:["x만 있으면 지수 1."]}]}},
+  pat:()=>"단항식"},
+
+ PA:{optional:true,sg:true,name:"다항식의 덧셈·뺄셈",code:"중2-1",ex:"(2x + 3y) − (x − 5y)",sec:7,why:"연립방정식, 이차식 전개의 바탕이에요.",idea:"괄호 앞이 −면 부호를 다 바꾸고, 같은 문자끼리 모은다냥.",
+  lv:["덧셈 (2x+3y) + (x−5y)","뺄셈 (3a−b) − (a−4b)","분배까지 2(x−3y) − 3(x+y)","이차식 (x² + 3x) − (2x² − x)"],
+  rand:L=>{const r=()=>ri(1,7)*pick([1,-1]);return{L,a:ri(1,7),b:r(),c:ri(1,7)*pick([1,-1]),d:r(),k:ri(2,4),j:ri(2,4)*pick([1,-1])}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,c,d,k,j}=p,V=L===1?["a","b"]:L===3?["x²","x"]:["x","y"],T=(u,w)=>`${CX(u)}${V[0]} ${w<0?"−":"+"} ${CX(Math.abs(w))}${V[1]}`;let ex,A,B;
+    if(L===2){ex=`${k}(${T(a,b)}) ${j<0?"−":"+"} ${Math.abs(j)}(${T(Math.abs(c),d)})`;A=k*a+j*Math.abs(c);B=k*b+j*d}else{const s=L===0?1:-1;ex=`(${T(a,b)}) ${s<0?"−":"+"} (${T(Math.abs(c),d)})`;A=a+s*Math.abs(c);B=b+s*d}
+    return{html:`<span class="sub">${ex}</span><span class="sub">= [[0]]${V[0]} + [[1]]${V[1]}</span>`,a:[String(A),String(B)],kind:"num",cls:"mid stack",text:ex}},
+  steps:p=>{const q=TYPES.PA.make(p);return{head:q.text,list:[{h:`앞 문자끼리 모으면 계수 [[0]]`,a:[q.a[0]],hints:["괄호 앞 부호와 수를 곱해서 모아."]},{h:`뒤 문자끼리 [[0]]`,a:[q.a[1]],hints:["같은 방법으로."]}]}},
+  pat:()=>"다항식"},
+
+ IN:{optional:true,sg:true,name:"일차부등식",code:"중2-1",ex:"2x + 3 > 11 → x > 4",sec:8,why:"범위 문제, 고등 부등식의 바탕이에요.",idea:"방정식처럼 풀되, 음수로 곱하거나 나누면 부등호 방향이 바뀐다냥. 방향: > 는 1, < 는 2",
+  lv:["x + a > b","ax < b","ax + b > c","음수로 나누기 (방향 바뀜)","양쪽에 x"],
+  rand:L=>{const x=ri(-6,9),a=ri(2,6),b=ri(1,12)*pick([1,-1]),g=pick([">","<"]);return{L,x,a:L===3?-a:a,b,g,c:ri(1,a-1)}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,x,a,b,g,c}=p;let ex,dir=g;if(L===0)ex=`x ${PM(b)} ${g} ${MN(x+b)}`;else if(L===1||L===3){ex=`${MN(a)}x ${g} ${MN(a*x)}`;if(a<0)dir=g===">"?"<":">"}else if(L===2)ex=`${a}x ${PM(b)} ${g} ${MN(a*x+b)}`;else {const R0=(a-c)*x+b;ex=`${a}x ${PM(b)} ${g} ${c===1?"":c}x${R0?" "+PM(R0):""}`}
+    return{html:`<span class="sub">${ex}</span><span class="sub">x [[0]] [[1]]</span><span class="sub small muted">첫 칸: > 는 1, < 는 2</span>`,a:[dir===">"?"1":"2",String(x)],kind:"num",cls:"mid stack",text:ex,dir}},
+  steps:p=>{const q=TYPES.IN.make(p);return{head:q.text,list:[{h:`방정식처럼 풀면 경계 x = [[0]]`,a:[String(p.x)],hints:["= 로 바꿔서 풀어 봐."]},{h:`음수로 곱하거나 나눴으면 방향이 바뀐다. 방향 (> 1, < 2) [[0]]`,a:[q.a[0]],hints:[p.L===3?"음수로 나눴지?":"양수로만 나눴지?"]}]}},
+  pat:()=>"부등식"},
+
+ SY:{optional:true,sg:true,name:"연립일차방정식",code:"중2-1",ex:"x + y = 10, x − y = 4",sec:10,why:"두 가지 모르는 수 문장제를 풀어요.",idea:"한 문자를 없애고(더하거나 빼서) 남은 하나부터 구한다냥.",
+  lv:["더하면 y가 없어짐","빼면 x가 없어짐","한 식에 곱해서","대입 (y = 2x)","해가 음수"],
+  rand:L=>{const x=L===4?ri(-6,6)||-2:ri(1,L===3?12:9),y=L===4?ri(-6,6)||-3:ri(1,9);let e;if(L===0)e=[[1,1],[1,-1]];else if(L===1)e=[[2,1],[1,1]];else if(L===2)e=[[1,2],[3,1]];else if(L===3)e=[[0,0],[1,1]];else e=[[pick([1,2]),1],[1,-1]];return{L,x,y:L===3?2*x:y,e}},key:p=>JSON.stringify([p.L,p.x,p.y,p.e]),
+  make:p=>{const{L,x,y,e}=p,F=(a,b)=>`${CX(a)}x ${b<0?"−":"+"} ${CX(Math.abs(b))}y = ${MN(a*x+b*y)}`;const s1=L===3?`y = 2x`:F(...e[0]),s2=F(...e[1]);return{html:`<span class="sub">${s1}</span><span class="sub">${s2}</span><span class="sub">x = [[0]], y = [[1]]</span>`,a:[String(x),String(y)],kind:"num",cls:"mid stack",text:`${s1} / ${s2}`}},
+  steps:p=>{const{L,x,y}=p;const tip=["두 식을 더해 봐.","두 식을 빼 봐.","한 식에 수를 곱해서 계수를 맞춰.","y 자리에 2x를 넣어.","더하거나 빼서 한 문자를 없애."][L];return{head:TYPES.SY.make(p).text,list:[{h:`한 문자를 없애고 x = [[0]]`,a:[String(x)],hints:[tip]},{h:`x를 넣으면 y = [[0]]`,a:[String(y)],hints:["아무 식에나 넣어."]}]}},
+  pat:()=>"연립방정식"},
+
+ LF:{optional:true,sg:true,name:"일차함수",code:"중2-1",ex:"y = 2x + 3,  기울기, 절편",sec:7,why:"그래프를 식으로, 식을 그래프로 읽는 힘이에요.",idea:"y = ax + b에서 a는 기울기(x가 1 늘 때 y 증가량), b는 y절편이다냥.",
+  lv:["함숫값 y = ax + b","기울기·y절편 읽기","두 점으로 기울기","x절편","두 점 지나는 직선 y = □x + □"],
+  rand:L=>{let a=ri(1,5)*pick([1,-1]),b=ri(1,9)*pick([1,-1]),x=ri(-5,5),x2;do{x2=ri(-5,5)}while(x2===x);if(L===3){const r=ri(1,6)*pick([1,-1]);b=-a*r;return{L,a,b,r}}if(x2<x)[x,x2]=[x2,x];return{L,a,b,x,x2}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,x,x2,r}=p,Fx=`y = ${CX(a)}x ${b<0?"−":"+"} ${Math.abs(b)}`;if(L===0)return{html:`<span class="sub">${Fx}</span><span class="sub">x = ${MN(x)}이면 y = [[0]]</span>`,a:[String(a*x+b)],kind:"num",cls:"mid stack",text:`${Fx}, x=${x}`};
+    if(L===1)return{html:`<span class="sub">${Fx}</span><span class="sub">기울기 [[0]], y절편 [[1]]</span>`,a:[String(a),String(b)],kind:"num",cls:"mid stack",text:Fx};
+    const P1=`(${MN(x)}, ${MN(a*x+b)})`,P2=`(${MN(x2)}, ${MN(a*x2+b)})`;if(L===2)return{html:`<span class="sub">${P1}, ${P2} 지나는 직선</span><span class="sub">기울기 [[0]]</span>`,a:[String(a)],kind:"num",cls:"mid stack",text:`${P1},${P2} 기울기`};
+    if(L===3)return{html:`<span class="sub">${Fx}</span><span class="sub">x절편 [[0]]</span>`,a:[String(r)],kind:"num",cls:"mid stack",text:`${Fx} x절편`};
+    return{html:`<span class="sub">${P1}, ${P2} 지나는 직선</span><span class="sub">y = [[0]]x + [[1]]</span>`,a:[String(a),String(b)],kind:"num",cls:"mid stack",text:`${P1},${P2} 직선`}},
+  steps:p=>{const{L,a,b,x,x2,r}=p;if(L===0)return{head:"대입",list:[{h:`${a} × ${SG(x)} = [[0]]`,a:[String(a*x)],hints:["곱해."]},{h:`${SG(a*x)} + ${SG(b)} = [[0]]`,a:[String(a*x+b)],hints:["더해."]}]};
+    if(L===1)return{head:"y = ax + b",list:[{h:`x 앞의 수 [[0]]`,a:[String(a)],hints:["기울기."]},{h:`뒤의 수 [[0]]`,a:[String(b)],hints:["부호까지."]}]};
+    if(L===3)return{head:"x절편: y = 0일 때 x",list:[{h:`${CX(a)}x ${PM(b)} = 0 → x = [[0]]`,a:[String(r)],hints:["방정식 풀기."]}]};
+    const list=[{h:`y의 증가량 ${MN(a*x2+b)} − ${SG(a*x+b)} = [[0]]`,a:[String(a*(x2-x))],hints:["뒤 − 앞."]},{h:`x의 증가량 ${MN(x2)} − ${SG(x)} = [[0]]`,a:[String(x2-x)],hints:["뒤 − 앞."]},{h:`기울기 = 나누면 [[0]]`,a:[String(a)],hints:["y 증가량 ÷ x 증가량."]}];
+    if(L===4)list.push({h:`(${MN(x)}, ${MN(a*x+b)}) 대입: b = ${MN(a*x+b)} − ${SG(a*x)} = [[0]]`,a:[String(b)],hints:["b = y − ax."]});return{head:"두 점",list}},
+  pat:()=>"일차함수"},
+
+ /* ───── 중3 ───── */
+ SQ:{optional:true,sg:true,name:"제곱근과 근호 계산",code:"중3-1",ex:"√49 = 7,  √12 = 2√3,  2√3 + 5√3",sec:7,why:"이차방정식, 피타고라스, 고등 수학 전체에 쓰여요.",idea:"근호 안의 제곱인 수를 밖으로 꺼낸다냥. √a × √b = √(ab).",
+  lv:["√(제곱수)","음의 제곱근 −√64","근호 밖으로 √12 = □√□","곱셈 √3 × √12","덧셈·뺄셈 2√3 + 5√3","나눗셈 √50 ÷ √2"],
+  rand:L=>{const n=ri(2,15),k=ri(2,6),s=pick([2,3,5,6,7]);if(L<=1)return{L,n};if(L===2)return{L,k,s};if(L===3)return{L,s,k};if(L===4){let a,b;do{a=ri(1,7);b=ri(1,7)*pick([1,-1])}while(a+b===0);return{L,s,a,b}}return{L,s,k}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,n,k,s,a,b}=p;if(L===0)return{html:`√${n*n} = [[0]]`,a:[String(n)],kind:"num",cls:"mid",text:`√${n*n}`};if(L===1)return{html:`−√${n*n} = [[0]]`,a:[String(-n)],kind:"num",cls:"mid",text:`-√${n*n}`};
+    if(L===2)return{html:`√${k*k*s} = [[0]]√[[1]]`,a:[String(k),String(s)],kind:"num",cls:"mid",text:`√${k*k*s}`};if(L===3)return{html:`√${s} × √${s*k*k} = [[0]]`,a:[String(s*k)],kind:"num",cls:"mid",text:`√${s}×√${s*k*k}`};
+    if(L===4)return{html:`${a}√${s} ${b<0?"−":"+"} ${Math.abs(b)}√${s} = [[0]]√${s}`,a:[String(a+b)],kind:"num",cls:"mid",text:`${a}√${s}${b<0?"-":"+"}${Math.abs(b)}√${s}`};
+    return{html:`√${s*k*k} ÷ √${s} = [[0]]`,a:[String(k)],kind:"num",cls:"mid",text:`√${s*k*k}÷√${s}`}},
+  steps:p=>{const{L,n,k,s,a,b}=p;if(L<=1)return{head:"제곱해서 되는 수",list:[{h:`[[0]] × 같은 수 = ${n*n}`,a:[String(n)],hints:["제곱수를 떠올려."]},...(L===1?[{h:`앞에 − 가 있으니 [[0]]`,a:[String(-n)],hints:["음수."]}]:[])]};
+    if(L===2)return{head:`√${k*k*s}`,list:[{h:`${k*k*s} = [[0]] × ${s}`,a:[String(k*k)],hints:["제곱수로 나눠 봐."]},{h:`√${k*k} = [[0]]을 밖으로`,a:[String(k)],hints:["제곱근."]}]};
+    if(L===3)return{head:"√a × √b = √(ab)",list:[{h:`√${s*s*k*k} → ${s*s*k*k} = [[0]]²`,a:[String(s*k)],hints:["제곱해서 되는 수."]}]};
+    if(L===4)return{head:"√ 부분이 같으면 앞의 수끼리",list:[{h:`${a} + ${SG(b)} = [[0]]`,a:[String(a+b)],hints:["계수끼리."]}]};
+    return{head:"√a ÷ √b = √(a÷b)",list:[{h:`${s*k*k} ÷ ${s} = [[0]]`,a:[String(k*k)],hints:["나눠."]},{h:`√${k*k} = [[0]]`,a:[String(k)],hints:["제곱근."]}]}},
+  pat:()=>"제곱근"},
+
+ PE:{optional:true,sg:true,name:"다항식의 전개",code:"중3-1",ex:"(x + 3)(x − 5) = x² − 2x − 15",sec:8,why:"인수분해와 이차방정식의 거꾸로예요.",idea:"(x + a)(x + b) = x² + (a + b)x + ab 다냥.",
+  lv:["(x + a)(x + b), 양수","(x + a)(x − b)","(x + a)²","(x + a)(x − a)","(px + a)(x + b)"],
+  rand:L=>{const a=ri(1,9),b=ri(1,9);if(L===0)return{L,a,b};if(L===1)return{L,a,b:-b};if(L===2)return{L,a:a*pick([1,-1]),b:0};if(L===3){const c=ri(1,12);return{L,a:c,b:-c}}return{L,p:ri(2,4),a:a*pick([1,-1]),b:b*pick([1,-1])}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b}=p,P=p.p||1;let ex;if(L===2)ex=`(x ${a<0?"−":"+"} ${Math.abs(a)})²`;else ex=`(${P>1?P:""}x ${a<0?"−":"+"} ${Math.abs(a)})(x ${b<0?"−":"+"} ${Math.abs(b)})`;const B=L===2?a:b;
+    return{html:`<span class="sub">${ex}</span><span class="sub">= ${P>1?"[[0]]x² + [[1]]x + [[2]]":"x² + [[0]]x + [[1]]"}</span>`,a:P>1?[String(P),String(P*B+a),String(a*B)]:[String(a+B),String(a*B)],kind:"num",cls:"mid stack",text:ex}},
+  steps:p=>{const{L,a,b}=p,P=p.p||1,B=L===2?a:b;return{head:TYPES.PE.make(p).text,list:[{h:`x의 계수: ${P>1?`${P} × ${SG(B)} + ${SG(a)}`:`${SG(a)} + ${SG(B)}`} = [[0]]`,a:[String(P*B+a)],hints:["바깥끼리 + 안쪽끼리."]},{h:`상수항: ${SG(a)} × ${SG(B)} = [[0]]`,a:[String(a*B)],hints:["뒤끼리 곱해."]}]}},
+  pat:()=>"전개"},
+
+ FZ:{optional:true,sg:true,name:"인수분해",code:"중3-1",ex:"x² + 7x + 12 = (x + 3)(x + 4)",sec:9,why:"이차방정식을 푸는 가장 빠른 방법이에요.",idea:"곱해서 상수항, 더해서 x의 계수가 되는 두 수를 찾는다냥.",
+  lv:["공통인수 3x² + 6x = □x(x + □)","두 수 모두 양수","음수가 섞임","완전제곱식 (x + □)²","합차 x² − 9 = (x + □)(x − □)"],
+  rand:L=>{const a=ri(1,9),b=ri(1,9);if(L===0)return{L,k:ri(2,6),c:ri(1,9)};if(L===1)return{L,a:Math.min(a,b),b:Math.max(a,b)};if(L===2){let u,v;do{u=ri(1,9)*pick([1,-1]);v=-ri(1,9)}while(u+v===0);return{L,a:Math.min(u,v),b:Math.max(u,v)}}if(L===3)return{L,a:a*pick([1,-1])};return{L,a:ri(2,12)}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b,k,c}=p;if(L===0)return{html:`${k}x² + ${k*c}x = [[0]]x(x + [[1]])`,a:[String(k),String(c)],kind:"num",cls:"mid",text:`${k}x²+${k*c}x`};
+    if(L===3)return{html:`x² ${2*a<0?"−":"+"} ${Math.abs(2*a)}x + ${a*a} = (x + [[0]])²`,a:[String(a)],kind:"num",cls:"mid",text:`x²${2*a}x+${a*a}`};
+    if(L===4)return{html:`x² − ${a*a} = (x + [[0]])(x − [[1]])`,a:[String(a),String(a)],kind:"num",cls:"mid",text:`x²-${a*a}`};
+    const s=a+b,pr=a*b,ex=`x² ${s<0?"−":"+"} ${Math.abs(s)===1?"":Math.abs(s)}x ${pr<0?"−":"+"} ${Math.abs(pr)}`;return{html:`<span class="sub">${ex}</span><span class="sub">= (x + [[0]])(x + [[1]])</span><span class="sub small muted">작은 수부터</span>`,a:[String(a),String(b)],kind:"num",cls:"mid stack",text:ex}},
+  steps:p=>{const{L,a,b,k,c}=p;if(L===0)return{head:"공통인수",list:[{h:`두 항에 모두 있는 것: [[0]]x`,a:[String(k)],hints:["수의 최대공약수와 x."]},{h:`남는 것 x + [[0]]`,a:[String(c)],hints:[`${k*c} ÷ ${k}`]}]};
+    if(L===3)return{head:"완전제곱식",list:[{h:`상수항 ${a*a} = [[0]]² (x 계수의 반)`,a:[String(a)],hints:["x 계수 ÷ 2, 부호까지."]}]};
+    if(L===4)return{head:"합차",list:[{h:`${a*a} = [[0]]²`,a:[String(a)],hints:["제곱수."]}]};
+    return{head:"곱과 합",list:[{h:`곱해서 ${a*b}, 더해서 ${a+b}: 작은 수 [[0]]`,a:[String(a)],hints:["약수 짝을 찾아."]},{h:`큰 수 [[0]]`,a:[String(b)],hints:["나머지 하나."]}]}},
+  pat:()=>"인수분해"},
+
+ QE:{optional:true,sg:true,name:"이차방정식",code:"중3-1",ex:"x² − 5x + 6 = 0 → x = 2, 3",sec:9,why:"넓이·속력 문장제, 이차함수와 x축이 만나는 점이에요.",idea:"인수분해해서 (x − a)(x − b) = 0 이면 x = a 또는 b다냥. 작은 해부터 써.",
+  lv:["x² = k (양수 해)","(x − a)(x − b) = 0","인수분해해서 풀기 (양수 해)","음수 해가 섞임","중근 (x − a)² = 0"],
+  rand:L=>{if(L===0)return{L,a:ri(2,13)};if(L===4)return{L,a:ri(-9,9)||4};let a,b;do{a=L===3?ri(-9,9):ri(1,9);b=L===3?ri(-9,9):ri(1,9)}while(a===b||(L===3&&(a>0&&b>0||a+b===0||a*b===0)));return{L,a:Math.min(a,b),b:Math.max(a,b)}},key:p=>JSON.stringify(p),
+  make:p=>{const{L,a,b}=p;if(L===0)return{html:`x² = ${a*a}, 양수 해 x = [[0]]`,a:[String(a)],kind:"num",cls:"mid",text:`x²=${a*a}`};if(L===4)return{html:`x² ${-2*a<0?"−":"+"} ${Math.abs(2*a)}x + ${a*a} = 0, x = [[0]]`,a:[String(a)],kind:"num",cls:"mid",text:`(${XP(-a)})² = 0`};
+    const ex=L===1?`(x ${-a<0?"−":"+"} ${Math.abs(a)})(x ${-b<0?"−":"+"} ${Math.abs(b)}) = 0`:`x² ${-(a+b)<0?"−":"+"} ${Math.abs(a+b)===1?"":Math.abs(a+b)}x${a*b?" "+PM(a*b):""} = 0`;return{html:`<span class="sub">${ex}</span><span class="sub">x = [[0]] 또는 [[1]] (작은 해부터)</span>`,a:[String(a),String(b)],kind:"num",cls:"mid stack",text:ex}},
+  steps:p=>{const{L,a,b}=p;if(L===0)return{head:"제곱근",list:[{h:`[[0]]² = ${a*a}`,a:[String(a)],hints:["제곱수."]}]};if(L===4)return{head:"완전제곱",list:[{h:`(x − [[0]])² = 0`,a:[String(a)],hints:["x 계수의 반, 부호 반대."]}]};
+    return{head:"인수분해",list:[...(L>=2?[{h:`곱 ${a*b}, 합 ${-(a+b)}인 두 수 중 작은 수 [[0]]`,a:[String(Math.min(-a,-b))],hints:["인수분해처럼."]}]:[]),{h:`(${XP(-a)})(${XP(-b)}) = 0 이니 작은 해 [[0]]`,a:[String(a)],hints:["괄호가 0이 되는 x."]},{h:`큰 해 [[0]]`,a:[String(b)],hints:["다른 괄호."]}]}},
+  pat:()=>"이차방정식"},
+
+ QF:{optional:true,sg:true,name:"이차함수",code:"중3-1",ex:"y = 2x², 꼭짓점 (2, 3)",sec:8,why:"포물선 그래프, 최댓값·최솟값의 바탕이에요.",idea:"y = a(x − p)² + q 의 꼭짓점은 (p, q)다냥.",
+  lv:["함숫값 y = ax²","함숫값 y = ax² + bx + c","꼭짓점 y = (x − p)² + q","꼭짓점 y = a(x − p)² + q","완전제곱식으로 꼭짓점 y = x² − 4x + 1"],
+  rand:L=>({L,a:ri(1,3)*pick([1,-1]),b:ri(1,6)*pick([1,-1]),c:ri(1,9)*pick([1,-1]),x:ri(-4,4),p:ri(1,5)*pick([1,-1]),q:ri(1,9)*pick([1,-1])}),key:p=>JSON.stringify(p),
+  make:pp=>{const{L,a,b,c,x,p,q}=pp;if(L===0)return{html:`<span class="sub">y = ${CX(a)}x²</span><span class="sub">x = ${MN(x)}이면 y = [[0]]</span>`,a:[String(a*x*x)],kind:"num",cls:"mid stack",text:`y=${a}x², x=${x}`};
+    if(L===1)return{html:`<span class="sub">y = x² ${b<0?"−":"+"} ${Math.abs(b)===1?"":Math.abs(b)}x ${c<0?"−":"+"} ${Math.abs(c)}</span><span class="sub">x = ${MN(x)}이면 y = [[0]]</span>`,a:[String(x*x+b*x+c)],kind:"num",cls:"mid stack",text:`y = x² ${PM(b)}x ${PM(c)}, x = ${MN(x)}`};
+    const A=L===2||L===4?1:a,ex=L===4?`y = x² ${-2*p<0?"−":"+"} ${Math.abs(2*p)}x${p*p+q?" "+PM(p*p+q):""}`:`y = ${CX(A)}(x ${-p<0?"−":"+"} ${Math.abs(p)})² ${q<0?"−":"+"} ${Math.abs(q)}`;
+    return{html:`<span class="sub">${ex}</span><span class="sub">꼭짓점 ( [[0]] , [[1]] )</span>`,a:[String(p),String(q)],kind:"num",cls:"mid stack",text:ex}},
+  steps:pp=>{const{L,a,b,c,x,p,q}=pp;if(L===0)return{head:"대입",list:[{h:`x² = [[0]]`,a:[String(x*x)],hints:["제곱은 양수."]},{h:`${x*x} × ${SG(a)} = [[0]]`,a:[String(a*x*x)],hints:["곱해."]}]};
+    if(L===1)return{head:"대입",list:[{h:`x² = [[0]]`,a:[String(x*x)],hints:["제곱."]},{h:`${SG(b)} × ${SG(x)} = [[0]]`,a:[String(b*x)],hints:["곱해."]},{h:`모두 더하면 [[0]]`,a:[String(x*x+b*x+c)],hints:[`${x*x} + ${SG(b*x)} + ${SG(c)}`]}]};
+    if(L===4)return{head:"완전제곱식으로",list:[{h:`x 계수의 반 (부호 반대) p = [[0]]`,a:[String(p)],hints:[`${-2*p} ÷ 2 의 부호를 바꿔.`]},{h:`q = 상수항 − p² = ${p*p+q} − ${p*p} = [[0]]`,a:[String(q)],hints:["빼."]}]};
+    return{head:"y = a(x − p)² + q",list:[{h:`괄호 안이 0이 되는 x: p = [[0]]`,a:[String(p)],hints:["x − p = 0."]},{h:`뒤의 수 q = [[0]]`,a:[String(q)],hints:["부호까지."]}]}},
+  pat:()=>"이차함수"},
  C1:{name:"분모 같은 분수 덧셈",code:"C1",ex:"2/7 + 3/7",sec:3,why:"대분수 덧셈, 분모가 다른 분수 계산으로 이어져요.",idea:"1/7이 몇 개인지 세요.",
   lv:["분모 3~5","분모 6~9","분모 10~15","전체"],
   rand:L=>{const d=[ri(3,5),ri(6,9),ri(10,15),ri(3,15)][Math.min(L,3)],a=ri(1,d-2);return{d,a,b:ri(1,d-1-a)}},key:p=>p.d+"/"+p.a+"/"+p.b,
@@ -933,6 +1213,9 @@ REF("CD",CDLV);TYPES.GC.lv=TYPES.CD.lv;TYPES.GC.rand=L=>TYPES.CD.rand(L);
 REF("DJ",[["2·3인지",0,p=>p.k<=3],["4·5인지",0,p=>p.k>=4],["6·7인지",1,p=>p.k<=7],["8·9인지",1,p=>p.k>=8],["10~15인지",2,p=>p.k<=15],["16~20인지",2,p=>p.k>15]]);
 REF("E3",[["2~5씩 더하기",0,p=>p.k<=5],["6~12씩 더하기",0,p=>p.k>=6],["몇 배씩",1],["차가 늘어남",2]]);
 REF("U1",[["m → cm",0],["cm가 한 자리 (3m 5cm)",0,p=>p.b<10],["L → mL",1,p=>p.u==="L"],["kg → g",1,p=>p.u==="kg"],["km → m",1,p=>p.u==="km"],["거꾸로 cm → m cm",2,p=>p.u==="m"],["거꾸로 mL·g·m → 큰 단위",2,p=>p.u!=="m"]]);
+REF("CO",[["넣는 상자 +1~5",0,p=>p.k<=5],["넣는 상자 +6~9",0,p=>p.k>=6],["넣는 상자 × 2·3",1,p=>p.k<=3],["넣는 상자 × 4·5",1,p=>p.k>=4],["표 채우기 (+)",2,p=>p.op==="+"],["표 채우기 (×)",2,p=>p.op==="×"],["규칙 찾기 (+)",3,p=>p.op==="+"],["규칙 찾기 (×)",3,p=>p.op==="×"],["좌표 읽기",4],["좌표 찍기",5,p=>p.m==="plot"]]);
+const MID=["PF", "ZI", "ZM", "ZA", "QR", "EV", "LE", "EQ", "PV", "RD", "EX", "MO", "PA", "IN", "SY", "LF", "SQ", "PE", "FZ", "QE", "QF"];
+MID.forEach(id=>{const T=TYPES[id],m=T.make;T.make=(p,l)=>{const q=m(p,l);if(q.text)q.text=q.text.replace(/-(?=\d)/g,"−");return q}});
 Object.values(TYPES).forEach(T=>{if(!T.lv||T.seq||T.lv.length<2||/혼합|전체/.test(T.lv[T.lv.length-1]))return;const n=T.lv.length,r=T.rand;T.lv=[...T.lv,"전체 (앞 단계 섞어서)"];T.rand=L=>r(L>=n?ri(0,n-1):L)});
 /* 2022 개정 교과 단원 (학년-학기 · 단원). 교과서마다 단원 이름이 조금 다를 수 있음 */
 const RETIRED=["T19"],HIDE_BANK=["FR"];
@@ -943,13 +1226,26 @@ const CUR={A1:["3-1","나눗셈"],B4:["3-1","덧셈과 뺄셈"],B5:["3-1","곱�
  B12:["5-1","자연수의 혼합 계산"],A3:["5-1","약수와 배수"],A6:["5-1","약수와 배수"],A7:["5-1","약수와 배수"],MJ:["5-1","약수와 배수"],DJ:["5-1","약수와 배수"],MN:["5-1","약수와 배수"],CD:["5-1","약수와 배수"],GC:["5-1","약수와 배수"],CM:["5-1","약수와 배수"],LC:["5-1","약수와 배수"],
  CO:["5-1","규칙과 대응"],C2:["5-1","약분과 통분"],C3:["5-1","약분과 통분"],FT:["5-1","약분과 통분"],C4:["5-1","약분과 통분"],C5:["5-1","분수의 덧셈과 뺄셈"],
  FM:["5-2","분수의 곱셈"],DC:["5-2","소수의 곱셈"],FD:["6-1","분수의 나눗셈 (÷ 분수는 6-2)"],
+ FX:["5-1","규칙과 대응"],
+ PF:["중1-1","소인수분해"],ZI:["중1-1","정수와 유리수"],ZM:["중1-1","정수와 유리수"],ZA:["중1-1","정수와 유리수"],QR:["중1-1","정수와 유리수"],EV:["중1-1","문자와 식"],LE:["중1-1","문자와 식"],EQ:["중1-1","일차방정식"],PV:["중1-1","좌표평면과 그래프"],
+ RD:["중2-1","유리수와 순환소수"],EX:["중2-1","식의 계산"],MO:["중2-1","식의 계산"],PA:["중2-1","식의 계산"],IN:["중2-1","일차부등식"],SY:["중2-1","연립일차방정식"],LF:["중2-1","일차함수와 그래프"],
+ SQ:["중3-1","제곱근과 실수"],PE:["중3-1","다항식의 곱셈과 인수분해"],FZ:["중3-1","다항식의 곱셈과 인수분해"],QE:["중3-1","이차방정식"],QF:["중3-1","이차함수와 그래프"],
  T12:["보충","12~19단"],NL:["보충","수직선 위 분수"],E1:["보충","등식 (중1 방정식 준비)"],E4:["보충","거꾸로 풀기 (중1 방정식 준비)"],PR:["보충","소수 판별 (중1 소인수분해 준비)"]};
-const SEMS=["3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","보충"],NOW_SEM="3-2";
+const SEMS=["3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","중1-1","중1-2","중2-1","중2-2","중3-1","중3-2","보충"],NOW_SEM="3-2";
+const semName=sem=>sem==="보충"?"보충 (교과 밖)":sem[0]==="중"?`중학교 ${sem[1]}학년 ${sem[3]}학기`:sem.replace("-","학년 ")+"학기";
+/* 잠금: 앞 단계를 통과(졸업 또는 마지막 단계)해야 열림. 이미 풀어 본 유형, 부모님이 세트를 넣은 유형은 안 잠김 */
+const PRE={B11:["B9"],B12:["B7"],A7:["A6"],MJ:["A3"],DJ:["A6"],MN:["A3"],CD:["A6"],GC:["CD"],CM:["A3"],LC:["CM"],DA:["D1"],DC:["DA"],PR:["A7"],E4:["E1"],E3:["CO"],FX:["CO"],
+ PF:["CD"],ZI:["B12"],ZM:["ZI"],ZA:["ZI"],QR:["ZM","C5"],EV:["ZM"],LE:["EV"],EQ:["LE","E4"],PV:["EQ","CO"],
+ RD:["C3","DA"],EX:["PF"],MO:["EX","ZM"],PA:["LE"],IN:["EQ"],SY:["EQ"],LF:["PV"],SQ:["EX"],PE:["PA"],FZ:["PE"],QE:["FZ"],QF:["LF","SQ"]};
+const passedT=id=>{const T=TYPES[id],st=S.ts[id];if(!T||!st)return false;return !!st.grad||(STEPT(T)&&(st.step||0)>=stepMax(T))};
+const lockBy=id=>{const st=S.ts[id];if(st&&(st.runs||[]).length||(S.cfg.plan[id]||0)>0)return [];return (PRE[id]||[]).filter(x=>TYPES[x]&&!passedT(x))};
+const isLocked=id=>lockBy(id).length>0;
+const lockTxt=id=>`🔒 ${lockBy(id).map(x=>TYPES[x].name).join(", ")} 통과하면 열려요`;
 const FRP=["FA","FN","FU","FV1","FV2","FC","NL","C1","FS","C2","C3","FT","C4","C5","CA","FM","FD"];
-const ORDER0=["T12","A1","A3","B5","A6","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5"].filter((x,i,a)=>a.indexOf(x)===i);
+const ORDER0=["T12","A1","A3","B5","A6","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5","FX",...MID].filter((x,i,a)=>a.indexOf(x)===i);
 /* 하루 10판: 12~19단1 몫찾기3 배수1 두자리×한자리2 약수1 분수길1 + 돌아가며1 */
 const PLAN0={A1:3,A3:1,B5:2,A6:1,T12:1,FR:1};
-const ROT=["OF","CO","E1","D1","MJ","DJ","MN","PR","CD","GC","CM","LC","B4","B9","B7","B12","B11","DA","DC","E3","E4","U1","U2"];
+const ROT=["OF","CO","E1","D1","MJ","DJ","MN","PR","CD","GC","CM","LC","B4","B9","B7","B12","B11","DA","DC","E3","E4","U1","U2","FX",...MID];
 
 /* ───────── 상태 ───────── */
 const KCORE="sihun-app-core-v1",KDAYS="sihun-app-days-v1";
@@ -970,6 +1266,7 @@ function loadLocal(){S=freshCore();DAYS={};
   if(!S.cfg.t12first){S.cfg.t12first=true;const o=S.cfg.order;o.splice(o.indexOf("T12"),1);o.unshift("T12")}
   if(!S.cfg.coAdded){S.cfg.coAdded=true;if(!S.cfg.plan.CO)S.cfg.plan.CO=1}
   if(!S.cfg.all3){S.cfg.all3=true;["E1","C2","D1"].forEach(id=>{if(!S.cfg.plan[id])S.cfg.plan[id]=1});if(DAYS[today()])DAYS[today()].plan=planNow()}
+  if(!S.cfg.coRef){S.cfg.coRef=true;const st=S.ts.CO;if(st&&st.step)st.step=[0,2,4,6,8,9,10][Math.min(st.step,6)]}
   if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.includes("T19")&&o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
 loadLocal();
 
@@ -989,7 +1286,7 @@ function ensureToday(){
   if(!DAYS[t])DAYS[t]={plan:{},carry,done:{},sets:[],savedAt:0};
   DAYS[t].plan=planNow();S.lastDay=t;save(t);
 }
-function newToday(){if(S.cfg.newRot===false)return null;const L=ROT.filter(id=>!(S.ts[id]||{}).grad&&!(S.cfg.tc[id]||{}).home&&!(S.cfg.plan[id]>0));if(!L.length)return null;return L[Math.floor(Date.parse(today())/864e5)%L.length]}
+function newToday(){if(S.cfg.newRot===false)return null;const L=ROT.filter(id=>!isLocked(id)&&!(S.ts[id]||{}).grad&&!(S.cfg.tc[id]||{}).home&&!(S.cfg.plan[id]>0));if(!L.length)return null;return L[Math.floor(Date.parse(today())/864e5)%L.length]}
 function fracNow(){if(S.cfg.fracPath===false)return null;return FRP.find(id=>!(S.ts[id]||{}).grad&&!(S.cfg.tc[id]||{}).home)||null}
 function planNow(){const p={},fp=fracNow();S.cfg.order.forEach(id=>{const n=S.cfg.plan[id]||0;if(id==="FR"&&fp&&n>0){p[fp]=1;return}if(n>0&&!tc(id).home&&!p[id])p[id]=n});const nt=newToday();if(nt)p[nt]=1;return p}
 function owed(id){const d=D();return (d.plan[id]||0)+(d.carry[id]||0)}
@@ -1108,16 +1405,18 @@ function vIntro(){
 /* 문제 풀이 엔진 (세트와 방법 찾기가 같이 씀) */
 function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d)\]\]/g,(m,i)=>{i=+i;return `<button class="box ${i===act?"act":""} ${state&&state[i]||""}" data-act="box" data-arg="${i}">${fview(vals[i]||"")}</button>`})}
 /* 분수 한 줄 입력: 자연수 & 분자 \ 분모 (수피온과 같은 순서) */
-function fparse(v){const m=String(v).match(/^(\d*)(&?)(\d*)(\\?)(\d*)$/);if(!m)return null;if(!m[2]&&!m[4])return{w:m[1]};return m[2]?{w:m[1],n:m[3],d:m[5],bar:!!m[4]}:{w:"",n:m[1],d:m[5],bar:true}}
-function fview(v){if(!/[&\\]/.test(v))return esc(v);const f=fparse(v);if(!f)return esc(v);const sp='<span class="ph"></span>';
-  return `${f.w?`<span>${esc(f.w)}</span>`:""}<span class="fr"><span>${f.n?esc(f.n):sp}</span><span>${f.d?esc(f.d):sp}</span></span>`}
+function fparse(v){const m=String(v).match(/^(-?)(\d*)(&?)(\d*)(\\?)(\d*)$/);if(!m)return null;const sg=m[1];if(!m[3]&&!m[5])return{sg,w:m[2]};return m[3]?{sg,w:m[2],n:m[4],d:m[6],bar:!!m[5]}:{sg,w:"",n:m[2],d:m[6],bar:true}}
+function fview(v){v=String(v);if(!/[&\\]/.test(v))return esc(v).replace(/-/g,"−");const f=fparse(v);if(!f)return esc(v);const sp='<span class="ph"></span>';
+  return `${f.sg?"<span>−</span>":""}${f.w?`<span>${esc(f.w)}</span>`:""}<span class="fr"><span>${f.n?esc(f.n):sp}</span><span>${f.d?esc(f.d):sp}</span></span>`}
+const padKind=q=>q.kind==="ox"||q.kind==="plot"||q.kind==="multi"?q.kind:q.fr?(q.sg?"sfrac":"frac"):q.sg?"signed":q.kind;
 function padHTML(kind,canSubmit){
   if(kind==="ox")return `<div class="ox"><button data-act="ox" data-arg="O" aria-label="맞아요">O</button><button data-act="ox" data-arg="X" aria-label="아니에요">X</button></div>`;
   if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
   const K=n=>`<button class="key" data-key="${n}">${n}</button>`;
   const okk=S&&S.cfg&&S.cfg.okKey;
-  if(kind==="frac")return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key nk" data-key="amp" aria-label="자연수 다음">&amp;</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="bs" aria-label="분수 막대">\\</button>${K(7)}${K(8)}${K(9)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button><button class="key" data-key="0" style="grid-column:span 2">0</button>${okk?'<button class="key go" data-key="ok">확인</button>':""}<button class="key nk" data-key="n" ${okk?"":'style="grid-column:span 2"'}>n</button></div>`;
-  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음" ${okk?"":'style="grid-row:span 3;height:auto"'}>n</button>${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':""}<button class="key" data-key="0" style="grid-column:span 3">0</button></div>`;
+  const MK='<button class="key nk" data-key="mn" aria-label="음수 부호">−</button>';
+  if(kind==="frac"||kind==="sfrac")return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key nk" data-key="amp" aria-label="자연수 다음">&amp;</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="bs" aria-label="분수 막대">\\</button>${K(7)}${K(8)}${K(9)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${kind==="sfrac"?MK+K(0):'<button class="key" data-key="0" style="grid-column:span 2">0</button>'}${okk?'<button class="key go" data-key="ok">확인</button>':""}<button class="key nk" data-key="n" ${okk?"":'style="grid-column:span 2"'}>n</button></div>`;
+  return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음" ${okk?"":'style="grid-row:span 3;height:auto"'}>n</button>${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':""}${kind==="signed"?MK+'<button class="key" data-key="0" style="grid-column:span 2">0</button>':'<button class="key" data-key="0" style="grid-column:span 3">0</button>'}</div>`;
 }
 function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
 
@@ -1142,7 +1441,7 @@ function buildSet(id,lvOver){
   for(const [w,p] of scored){if(out.length>=n)break;if(!out.includes(p))out.push(p)}
   if(out.length<n){const keys=new Set(out.map(T.key));cand.forEach((p,k)=>{if(out.length<n&&!keys.has(k)){keys.add(k);out.push(p)}})}
   out.sort(()=>Math.random()-.5);
-  const lv=lvOver??lvl(id);return out.map(p=>({p,q:T.make(p,lv)}));
+  const lv=lvOver??lvl(id);return out.map(p=>{const q=T.make(p,lv);if(q.sg===undefined)q.sg=!!T.sg;return{p,q}});
 }
 function updateFacts(id,probs,items){
   const T=TYPES[id],F=tst(id).facts,ms=items.map(x=>x.ms).slice().sort((a,b)=>a-b),med=ms[Math.floor(ms.length/2)]||0;
@@ -1176,7 +1475,7 @@ function vPlay(){
        :`<div class="qline ${q.cls||""}">${boxesHTML(q.html,RUN.vals,q.kind==="num"?RUN.act:-1,RUN.boxState)}</div>`}
      <div class="say blue" aria-live="polite">${RUN.say}</div></div>
    <div class="under">${PREVIEW?`<span class="ans-pv">정답 ${esc((q.a||q.need).join(" , "))}</span><button class="nb pri" data-act="pvnext">다음 ▶</button>`:`<button class="nb" data-act="pause">잠깐 멈춤</button>${!it.skip&&RUN.pos<RUN.order.length-1?`<button class="nb" data-act="later">나중에 풀기</button>`:""}`}</div>
-   ${padHTML(q.fr?"frac":q.kind,!!RUN.user)}`;
+   ${padHTML(padKind(q),!!RUN.user)}`;
 }
 function typeKey(k){
   const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx||(view==="play"&&RUN.lock))return;
@@ -1184,16 +1483,17 @@ function typeKey(k){
   if(k==="ok"){submit();return}
   if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}ctx.act++;softRender();return}
   const v=ctx.vals[ctx.act]||"";
+  if(k==="mn"){if(!q.sg||v)return;k="-"}
   if(k==="amp")k="&";if(k==="bs")k="\\";
-  if((k==="&"||k==="\\")&&(!q.fr||v.includes(k)||(k==="&"&&v.includes("\\"))||!v||/[&\\]$/.test(v)))return;
+  if((k==="&"||k==="\\")&&(!q.fr||v.includes(k)||(k==="&"&&v.includes("\\"))||!v||v==="-"||/[&\\]$/.test(v)))return;
   if(k==="del"){ctx.vals[ctx.act]=v.slice(0,-1)}
-  else{if(v.length>=(q.fr?9:4))return;if(v==="0"&&k!=="&"&&k!=="\\")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
+  else{if(v.length>=(q.fr?9:q.sg?5:4))return;if(v==="0"&&k!=="&"&&k!=="\\")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
   ctx.boxState=[];ctx.say=view==="play"&&!/^(정답|남은)/.test(ctx.say||"")?"":ctx.say;
   softRender();
   if(view==="play"&&k!=="del")autoGo(q);
 }
 /* 답 자리 수만큼 누르면 확인 없이 바로 넘어감 */
-function autoGo(q){const v=RUN.vals[RUN.act]||"";if(!v)return;const i=curIdx();
+function autoGo(q){const v=RUN.vals[RUN.act]||"";if(!v||v==="-")return;const i=curIdx();
   if(q.kind==="multi"){const it=RUN.items[i],left=q.need.filter(x=>!(it.found||[]).includes(x));
     const longer=left.some(x=>x!==v&&x.startsWith(v));const maxL=Math.max(...q.need.map(x=>x.length));
     if((left.includes(v)&&!longer)||v.length>=maxL)setTimeout(()=>{if(view==="play"&&curIdx()===i&&RUN.vals[0]===v)submit()},120);return}
@@ -1316,10 +1616,10 @@ function startConcept(id,probs,mode){
   CON={type:id,mode,demo,probs:probs.map(p=>({p,s:T.steps(p)})),pi:0,si:0,vals:[],act:0,miss:0,say:"",user:null,boxState:[],done:[]};
   view="concept";render();
 }
-const curStep=()=>{if(!CON)return null;const pr=CON.probs[CON.pi];const s=pr&&pr.s.list[CON.si];return s?{...s,html:s.h,kind:s.kind||"num"}:null};
+const curStep=()=>{if(!CON)return null;const pr=CON.probs[CON.pi];const s=pr&&pr.s.list[CON.si];return s?{...s,html:s.h,kind:s.kind||"num",sg:s.sg??!!TYPES[CON.type].sg}:null};
 function vConcept(){
   if(CON.demo){const dm=CON.demo,s=dm.s,all=dm.shown>=s.list.length;
-    const lines=s.list.slice(0,dm.shown).map((st,k)=>`<div class="st ${k===dm.shown-1?"cur":"done"}"><span class="n">${"①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b class="box ok">${esc(st.a[+i])}</b>`)}${st.kind==="ox"?` <b class="box ok">${st.a[0]}</b>`:""}${st.kind==="plot"?` → (${esc(st.a[0])})`:""}</div>`).join("");
+    const lines=s.list.slice(0,dm.shown).map((st,k)=>`<div class="st ${k===dm.shown-1?"cur":"done"}"><span class="n">${"①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b class="box ok">${fview(st.a[+i])}</b>`)}${st.kind==="ox"?` <b class="box ok">${st.a[0]}</b>`:""}${st.kind==="plot"?` → (${esc(st.a[0])})`:""}</div>`).join("");
     const fig=s.fig==="PLOT"?"":s.fig?`<div class="fig">${s.fig}</div>`:"";
     return `${bar("먼저 한 번 보기")}<div class="page">
       <p class="small muted">처음이니까 같이 보자냥.</p>
@@ -1327,7 +1627,7 @@ function vConcept(){
       <div class="steps">${lines}</div>
       ${all?`<div class="notice">${TYPES[CON.type].idea}</div><button class="bigbtn" data-act="demoend">이제 내가 해볼게!</button>`:`<button class="bigbtn" data-act="demonext">다음 줄 보기</button>`}</div>`}
   const T=TYPES[CON.type],fin=CON.pi>=CON.probs.length,PI=Math.min(CON.pi,CON.probs.length-1),pr=CON.probs[PI],s=pr.s,cur=fin?null:curStep(),SI=fin?s.list.length:CON.si;
-  const doneList=s.list.slice(0,SI).map((st,k)=>`<div class="st done"><span class="n">${"①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b>${esc(st.a[+i])}</b>`).replace(/^/,"")}${st.kind==="ox"?` <b>${st.a[0]}</b>`:""}</div>`).join("");
+  const doneList=s.list.slice(0,SI).map((st,k)=>`<div class="st done"><span class="n">${"①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"[k]}</span>${st.h.replace(/\[\[(\d)\]\]/g,(m,i)=>`<b>${fview(st.a[+i])}</b>`).replace(/^/,"")}${st.kind==="ox"?` <b>${st.a[0]}</b>`:""}</div>`).join("");
   const curHTML=cur?`<div class="st cur"><span class="n">${"①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳"[SI]}</span>${cur.kind==="num"?boxesHTML(cur.h,CON.vals,CON.act,CON.boxState):cur.h}</div>`:"";
   const hint=CON.miss>0&&cur?`<div class="hint">${cur.hints[Math.min(CON.miss-1,cur.hints.length-1)]}</div>`:"";
   const fig=s.fig==="PLOT"?`<div class="fig">${coordSVG(null,CON.user,true)}</div>`:s.fig?`<div class="fig">${s.fig}</div>`:"";
@@ -1337,7 +1637,7 @@ function vConcept(){
     ${CON.pi===0&&CON.si===0&&CON.mode!=="review"?`<p class="small muted">빈칸을 순서대로 채우자냥. 시계는 없다옹.</p>`:""}
     <div class="qline mid" style="justify-content:flex-start">${s.head}</div>${fig}
     <div class="steps">${doneList}${curHTML}</div>${hint}<div class="row">${stuck}</div></div>
-   ${cur?padHTML(cur.fr?"frac":cur.kind,!!CON.user):""}`;
+   ${cur?padHTML(padKind(cur),!!CON.user):""}`;
 }
 function conceptSubmit(){
   const cur=curStep();if(!cur)return;
@@ -1435,7 +1735,7 @@ function ansTxt(q){return q.need?q.need.join(", "):(q.a||[]).map(fview).join(" ,
 function vBank(){
   const ids=S.cfg.order.filter(id=>TYPES[id]);
   const typeHTML=id=>{const T=TYPES[id],st=tst(id),nL=STEPT(T)?stepMax(T)+1:1;
-    return `<details class="card"><summary><b>${T.name}</b> <span class="small muted">${CUR[id]?esc(CUR[id][1])+" · ":""}${STEPT(T)?`단계 ${nL}개 · 지금 ${(st.step||0)+1}단계`:T.ex}</span>${STEPT(T)?`<div class="lvmap">${Array.from({length:nL},(_,L)=>`<span class="${(st.step||0)===L?"now":""}">${L+1}. ${esc(stepLabel(T,L))}</span>`).join("")}</div>`:""}</summary>
+    return `<details class="card"><summary><b>${T.name}</b> ${isLocked(id)?`<span class="pill">${lockTxt(id)}</span> `:""}<span class="small muted">${CUR[id]?esc(CUR[id][1])+" · ":""}${STEPT(T)?`단계 ${nL}개 · 지금 ${(st.step||0)+1}단계`:T.ex}</span>${STEPT(T)?`<div class="lvmap">${Array.from({length:nL},(_,L)=>`<span class="${(st.step||0)===L?"now":""}">${L+1}. ${esc(stepLabel(T,L))}</span>`).join("")}</div>`:""}</summary>
       <p class="small">올라가는 법: ${STEPT(T)?`한 세트를 <b>${fmt(finalPQ(id)*(T.seq?T.seq(0).list.length:tc(id).n))}</b> 안에 끝내면 다음 단계 → 마지막 단계에서 서로 다른 날 2번 기준 안이면 졸업.`:`처음 3판 평균에서 출발해 통과할 때마다 목표를 10%씩 줄여요. 최종 기준 <b>${fmt(finalPQ(id)*tc(id).n)}</b> 안에 서로 다른 날 2번이면 졸업.`} 빠르게 두 번 맞힌 문제는 7일 쉬고, 틀리거나 느린 문제는 더 자주 나와요.</p>
       ${Array.from({length:nL},(_,L)=>`<div class="bk"><h4>${STEPT(T)?(L+1)+"단계 · "+esc(stepLabel(T,L)):"문제"}${STEPT(T)&&(st.step||0)===L?' <span class="pill new">지금</span>':""}</h4>
         <ol>${bankSet(id,L).map(q=>`<li><span>${esc(q.text)}</span><b>${ansTxt(q)}</b></li>`).join("")}</ol></div>`).join("")}
@@ -1445,13 +1745,13 @@ function vBank(){
     ${DAYS[k].sets.map((x,j)=>`<div class="bk"><h4>${j+1}. ${esc((TYPES[x.type]||{}).name||x.type)} · ${fmt(x.t)} · 오답 ${x.w}</h4><ol>${(x.items||[]).slice().sort((a,b)=>a.o-b.o).map(it=>`<li class="${it.ok1?"":"bad"}"><span>${esc(it.q)}</span><b>${(it.a||"").split("|").map(fview).join(", ")}</b><span class="small muted">${it.ok1?"✓":"✗ "+(it.g||[]).map(v=>String(v).split("|").map(fview).join(",")).join(" → ")} · ${(it.ms/1000).toFixed(1)}초</span></li>`).join("")}</ol></div>`).join("")}</details>`).join("")||`<p class="muted small">아직 푼 세트가 없어요.</p>`;
   return `${bar("문제 전체 보기")}<div class="page">
     <div class="row"><button class="nb ${BANK.tab==="all"?"pri":""}" data-act="banktab" data-arg="all">유형·단계별 문제</button><button class="nb ${BANK.tab==="done"?"pri":""}" data-act="banktab" data-arg="done">푼 세트 (7일)</button></div>
-    ${BANK.tab==="all"?`<p class="small muted">교과 학년·학기 순서예요(2022 개정). 단계마다 한 세트씩 만들어 보여줘요. 정답은 굵은 글씨.</p>${SEMS.map(sem=>{const g=ids.filter(id=>!HIDE_BANK.includes(id)&&(CUR[id]||["보충"])[0]===sem);if(!g.length)return "";return `<h3 class="semh">${sem==="보충"?"보충 (교과 밖)":sem.replace("-","학년 ")+"학기"}${sem===NOW_SEM?' <span class="pill new">지금 학기</span>':""}</h3>${g.map(typeHTML).join("")}`}).join("")}`:doneHTML}
+    ${BANK.tab==="all"?`<p class="small muted">교과 학년·학기 순서예요(2022 개정). 단계마다 한 세트씩 만들어 보여줘요. 정답은 굵은 글씨.</p>${SEMS.map(sem=>{const g=ids.filter(id=>!HIDE_BANK.includes(id)&&(CUR[id]||["보충"])[0]===sem);if(!g.length)return "";return `<h3 class="semh">${semName(sem)}${sem===NOW_SEM?' <span class="pill new">지금 학기</span>':""}</h3>${g.map(typeHTML).join("")}`}).join("")}`:doneHTML}
     <button class="nb" data-act="go" data-arg="parent">부모 화면으로</button></div>`}
 function vParent(){
   const d=D(),carryN=Object.values(d.carry).reduce((a,b)=>a+b,0),total=Object.values(planNow()).reduce((a,b)=>a+b,0);
   const rows=S.cfg.order.map((id,ix)=>{const T=TYPES[id],c=tc(id),st=tst(id),n=S.cfg.plan[id]||0,n20=c.n,open=parentOpen[id];
     const stat=st.grad?'<span class="pill ok">졸업</span>':st.target?`<span class="pill new">목표 ${fmt(st.target*n20)}</span>`:st.runs.length?`<span class="pill">기록 ${st.runs.length}번</span>`:"";
-    return `<div class="prow"><div class="top"><span class="nm">${T.name} <span class="code">${T.code}</span></span>${c.home?'<span class="pill warm">집에서 따로 함</span>':""}${stat}
+    return `<div class="prow"><div class="top"><span class="nm">${T.name} <span class="code">${T.code}</span></span>${c.home?'<span class="pill warm">집에서 따로 함</span>':""}${isLocked(id)?'<span class="pill">🔒</span>':""}${stat}
       <div class="stepper"><button data-act="pl" data-arg="${id}|-1" aria-label="세트 줄이기">−</button><b>${n}</b><button data-act="pl" data-arg="${id}|1" aria-label="세트 늘리기">+</button></div></div>
       <div class="row small"><button class="nb" data-act="mv" data-arg="${id}|-1" ${ix===0?"disabled":""}>위로</button><button class="nb" data-act="mv" data-arg="${id}|1" ${ix===S.cfg.order.length-1?"disabled":""}>아래로</button><button class="nb" data-act="popen" data-arg="${id}">${open?"닫기":"기준 바꾸기"}</button><button class="nb" data-act="preview" data-arg="${id}">미리 보기</button></div>
       ${STEPT(T)?`<label class="small lvsel">단계 (${stepMax(T)+1}개 중)<select id="stp0-${id}" data-ch="step" data-arg="${id}">${Array.from({length:stepMax(T)+1},(_,k)=>k).map(k=>`<option value="${k}" ${(st.step||0)===k?"selected":""}>${k+1}. ${stepLabel(T,k)}</option>`).join("")}</select></label>`:""}
