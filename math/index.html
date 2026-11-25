@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795590193";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795598281";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -190,6 +190,7 @@ details.card summary{cursor:pointer;padding:4px 0}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .homeplan{margin:6px 0}.homeplan>summary{cursor:pointer;padding:12px 4px;color:var(--muted,#777);font-size:15px;list-style:none}.homeplan>summary::-webkit-details-marker{display:none}.homeplan>summary::before{content:"▸ "}.homeplan[open]>summary::before{content:"▾ "}
 .lvmap{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;font-weight:400}.lvmap span{font-size:12px;padding:2px 7px;border-radius:10px;background:#f1efe6;color:#555}.lvmap span.now{background:#2c5ea8;color:#fff}.lvsel{display:flex;gap:8px;align-items:center;margin-top:6px}.lvsel select{flex:1;font-size:14px;padding:6px}
+.semh{margin:18px 0 6px;font-size:18px}
 </style>
 
 <div id="app"></div>
@@ -283,8 +284,8 @@ const divs=N=>{const r=[];for(let i=1;i<=N;i++)if(N%i===0)r.push(i);return r};
 const TYPES={
  A1:{hard:p=>(gg(p.N).length>=3?1:0)+(p.N>=30?1:0),name:"몫찾기",code:"A1",ex:"27 → 3, 9",sec:3,why:"나눗셈, 약수·배수, 약분에 그대로 쓰인다냥.",
   idea:"구구단에서 이 수가 나오는 곳을 모두 찾는다냥.",
-  lv:["2단에 나오는 수","3단에 나오는 수","4단에 나오는 수","5단에 나오는 수","2~5단 섞어서","6단에 나오는 수","7단에 나오는 수","8단에 나오는 수","9단에 나오는 수","6~9단 섞어서","40 아래 전부","전체"],
-  rand:L=>{const K=[2,3,4,5,ri(2,5),6,7,8,9,ri(6,9)][L];if(K)return{N:K*ri(2,9)};let N;do{N=pick(GGN)}while(L===10&&N>=40);return{N}},key:p=>""+p.N,
+  lv:["2·3단에 나오는 수","4·5단에 나오는 수","2~5단 섞어서","6·7단에 나오는 수","8·9단에 나오는 수","6~9단 섞어서","40 아래 전부","전체"],
+  rand:L=>{const K=[ri(2,3),ri(4,5),ri(2,5),ri(6,7),ri(8,9),ri(6,9)][L];if(K)return{N:K*ri(2,9)};let N;do{N=pick(GGN)}while(L===6&&N>=40);return{N}},key:p=>""+p.N,
   make:({N})=>({kind:"multi",big:String(N),need:(gg(N)).map(String),text:`${N} 몫찾기`}),
   steps:({N})=>({head:`${N}${eun(N)} 구구단 어디에?`,list:gg(N).map((a,k)=>({h:`${k?"또 있다냥":"찾았다냥"}: ${a} × [[0]] = ${N}`,a:[String(N/a)],hints:[`${a}단을 떠올려 보자냥.`]})).concat([{h:`그래서 답: ${gg(N).join(", ")} · 모두 [[0]]개`,a:[String(gg(N).length)],hints:["위에 나온 단을 세어 보자냥."]}])}),
   pat:(p,g)=>`${p.N} 몫찾기`},
@@ -292,13 +293,13 @@ const TYPES={
  A3:{hard:p=>(p.k>=6&&p.k<10?1:0),name:"배수",code:"A3",ex:"7 → 7, 14, 21, 28, 35",sec:5,why:"공배수 → 통분으로 가는 길이다냥.",
   idea:"같은 수를 계속 더하면 다음 배수다냥.",
   lv:["2·5·10의 배수","3·4의 배수","6·7의 배수","8·9의 배수","11·12의 배수","13~19의 배수","15·20·25·50의 배수","전체 (마구잡이)"],
-  rand:L=>({k:pick([[2,5,10],[3,4],[6,7],[8,9],[11,12],[13,14,16,17,18,19],[15,20,25,50],[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50]][Math.min(L,7)])}),key:p=>""+p.k,
-  make:({k})=>({kind:"multi",big:String(k),need:[1,2,3,4,5].map(i=>String(k*i)),text:`${k}의 배수 5개`}),
-  steps:({k})=>({head:`${k}의 배수 5개`,list:[
-    {h:`${k} × 1 = [[0]]`,a:[String(k)],hints:["1번 곱하면 그대로다냥."]},
-    {h:`${k} + ${k} = [[0]]`,a:[String(2*k)],hints:[`${k} × 2랑 같다냥.`]},
-    {h:`${2*k} + ${k} = [[0]]`,a:[String(3*k)],hints:[`${k} × 3이다냥.`]},
-    {h:`그다음 둘: [[0]] [[1]]`,a:[String(4*k),String(5*k)],hints:[`계속 ${k}씩 더하자냥.`]}]}),
+  rand:L=>{const k=pick([[2,5,10],[3,4],[6,7],[8,9],[11,12],[13,14,16,17,18,19],[15,20,25,50],[2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,25,50]][Math.min(L,7)]);return{k,s:k>=15?ri(1,3):ri(1,6)}},key:p=>p.k+"@"+(p.s||1),
+  make:({k,s=1})=>({kind:"multi",big:s>1?`${k}의 배수 ${k*s}부터`:`${k}의 배수`,need:[0,1,2,3,4].map(i=>String(k*(s+i))),text:`${k}의 배수 ${k*s}부터 5개`}),
+  steps:({k,s=1})=>({head:`${k}의 배수 ${k*s}부터 5개`,list:[
+    {h:`${k} × ${s} = [[0]]`,a:[String(k*s)],hints:["곱해 봐."]},
+    {h:`${k*s} + ${k} = [[0]]`,a:[String(k*(s+1))],hints:[`${k}씩 더하면 다음 배수다냥.`]},
+    {h:`${k*(s+1)} + ${k} = [[0]]`,a:[String(k*(s+2))],hints:[`또 ${k} 더하기.`]},
+    {h:`그다음 둘: [[0]] [[1]]`,a:[String(k*(s+3)),String(k*(s+4))],hints:[`계속 ${k}씩 더하자냥.`]}]}),
   pat:(p,g)=>`${p.k}의 배수`},
 
  A6:{hard:p=>(divs(p.N).length>=6?1:0)+(p.N>=30?.5:0),name:"약수",code:"A6",ex:"8 → 1, 2, 4, 8",sec:5,why:"공약수 → 약분 → 분수 곱셈으로 가는 길이다냥.",
@@ -412,7 +413,7 @@ const TYPES={
  A7:{name:"약수 개수",code:"A7",ex:"18의 약수는 몇 개?",sec:6,why:"소수 찾기, 최대공약수, 약분으로 이어져요.",
   idea:"두 수의 곱으로 짝을 지어 빠짐없이 찾아요.",
   lv:["20까지","21~50","51~100","전체"],
-  rand:L=>({N:pick([[6,8,9,10,12,14,15,16,18,20],[21,24,27,28,30,32,36,40,42,44,45,48,50],[54,56,60,63,64,70,72,75,80,81,84,90,96,100]][L<3?L:ri(0,2)])}),key:p=>""+p.N,
+  rand:L=>({N:[ri(4,20),ri(21,50),ri(51,100)][L<3?L:ri(0,2)]}),key:p=>""+p.N,
   make:({N})=>{let c=0;for(let i=1;i<=N;i++)if(N%i===0)c++;return{html:`${N}의 약수는<br>모두 [[0]]개`,a:[String(c)],kind:"num",cls:"txt",text:`${N}의 약수 개수`}},
   steps:({N})=>{const list=[];let c=0;for(let i=1;i*i<=N;i++){if(N%i===0){list.push({h:`${i} × [[0]] = ${N}`,a:[String(N/i)],hints:[`${N} ÷ ${i}${eun(i)}?`]});c+=(i*i===N)?1:2}else list.push({h:`${N}${eun(N)} ${i}${ro(i)} 나누어떨어져?`,a:["X"],kind:"ox",hints:[`${N} ÷ ${i}의 나머지를 생각해 볼까?`]})}
     list.push({h:`짝을 다 모으면 약수는 [[0]]개`,a:[String(c)],hints:["위에서 찾은 곱셈 식마다 수가 두 개씩 있어. 같은 수가 두 번이면 한 번만 세."]});return{head:`${N}의 약수는 몇 개?`,list}},
@@ -706,7 +707,7 @@ const TYPES={
  /* ───── 분수 길 (수피온 G01~G07 순서, 11/25) ───── */
  FA:{optional:true,name:"분수와 나누기",code:"G01",ex:"똑같이 나눈 것 중 몇",sec:4,why:"분수가 '똑같이 나눈 것 중 몇'이라는 뜻을 몸에 익혀요.",idea:"전체를 똑같이 몇으로 나눴는지가 분모, 그중 몇 개가 분자다냥.",
   lv:["등분 1 (나눈 것 중 1)","등분 2 (나눈 것 중 몇)","등분하여 빼기 (남은 것)","진분수 (1/n이 몇 개)","가분수 (1/n이 몇 개)","대분수 (그림 보고)","혼합"],
-  rand:L=>{if(L>=6)L=ri(0,5);const n=ri(2,L<2?8:9);if(L===0)return{L,n,k:1};if(L<=3)return{L,n:Math.max(n,3),k:ri(1,Math.max(n,3)-1)};if(L===4)return{L,n,k:ri(n+1,n*3)};return{L,n:ri(2,6),k:ri(1,5),w:ri(1,3)}},
+  rand:L=>{if(L>=6)L=ri(0,5);const n=ri(2,L<2?8:9);if(L===0)return{L,n:ri(2,12),k:1};if(L<=3)return{L,n:Math.max(n,3),k:ri(1,Math.max(n,3)-1)};if(L===4)return{L,n,k:ri(n+1,n*3)};return{L,n:ri(2,6),k:ri(1,5),w:ri(1,3)}},
   key:p=>[p.L,p.n,p.k,p.w||0].join("."),
   make:p=>{const{L,n,k,w}=p;
     if(L<=2)return{html:`<span class="sub">${L===2?"색칠 안 한":"색칠한"} 부분은</span><span class="sub">전체의 [[0]]</span>`,fig:barSVG(n,k),a:[L===2?`${n-k}\\${n}`:`${k}\\${n}`],kind:"num",fr:true,cls:"mid stack",text:`${n}등분 중 ${L===2?n-k:k}`};
@@ -729,7 +730,7 @@ const TYPES={
 
  FN:{optional:true,name:"자연수와 분수",code:"G02",ex:"3 = □/4,  12/4 = □",sec:4,why:"자연수도 분수로 쓸 수 있다는 걸 알면 대분수 ↔ 가분수가 쉬워져요.",idea:"1 = 4/4, 2 = 8/4. 자연수 × 분모가 분자다냥.",
   lv:["묶음 (몇 분의 몇)","1 = □/분모","2 = □/분모","3 = □/분모","4·5 = □/분모","6~10 = □/분모","거꾸로 (□/분모 → 자연수)","혼합"],
-  rand:L=>{const d=ri(2,9);if(L===0){const m=ri(2,5),g=ri(3,6);return{L,m,g,k:ri(1,g-1)}}if(L<=5){const w=[0,1,2,3,ri(4,5),ri(6,10)][L];return{L,w,d}}if(L===6)return{L,w:ri(1,9),d};return{L:7,w:ri(1,10),d,v:ri(0,2)}},
+  rand:L=>{const d=ri(2,9);if(L===0){const m=ri(2,5),g=ri(3,6);return{L,m,g,k:ri(1,g-1)}}if(L<=5){const w=[0,1,2,3,ri(4,5),ri(6,10)][L];return{L,w,d:L<=3?ri(2,13):d}}if(L===6)return{L,w:ri(1,9),d};return{L:7,w:ri(1,10),d,v:ri(0,2)}},
   key:p=>[p.L,p.w,p.d,p.m,p.g,p.k,p.v].join("."),
   make:p=>{const{L,w,d}=p;
     if(L===0){const N=p.m*p.g;return{html:`<span class="sub">${N}${eul(N)} ${p.m}씩 묶으면</span><span class="sub">${p.k*p.m}${eun(p.k*p.m)} ${N}의 [[0]]</span>`,a:[`${p.k}\\${p.g}`],kind:"num",fr:true,cls:"mid stack",text:`${N}을 ${p.m}씩, ${p.k*p.m}`}}
@@ -769,7 +770,7 @@ const TYPES={
 
  FV1:{optional:true,name:"가분수 → 대분수",code:"G04",ex:"17/5 = 3과 2/5",sec:5,why:"분수 계산의 마지막 정리. 몫과 나머지를 그대로 쓴다냥.",idea:"분자 ÷ 분모의 몫이 자연수, 나머지가 분자다냥. 입력: 자연수 & 분자 \\ 분모",
   lv:["분모 2","분모 3","분모 4","분모 5","분모 6·7","분모 8·9","몫이 큰 것","나누어떨어지는 것도","전체"],
-  rand:L=>{if(L>=8)L=ri(0,7);const d=[2,3,4,5,ri(6,7),ri(8,9),ri(3,9),ri(2,9)][L];const w=L===6?ri(5,11):ri(1,5),n=L===7&&Math.random()<.35?0:ri(1,d-1);return{d,w,n}},
+  rand:L=>{if(L>=8)L=ri(0,7);const d=[2,3,4,5,ri(6,7),ri(8,9),ri(3,9),ri(2,9)][L];const w=L===6?ri(5,11):d<=3?ri(1,10):ri(1,5),n=L===7&&Math.random()<.35?0:ri(1,d-1);return{d,w,n}},
   key:p=>p.d+"/"+p.w+"/"+p.n,
   make:({d,w,n})=>({html:`${fr(w*d+n,d)} = [[0]]`,a:[n?`${w}&${n}\\${d}`:String(w)],kind:"num",fr:true,cls:"mid",text:`${w*d+n}/${d}→대분수`}),
   steps:({d,w,n})=>{const N=w*d+n;return{head:`${fr(N,d)}를 대분수로`,list:[
@@ -779,7 +780,7 @@ const TYPES={
 
  FV2:{optional:true,name:"대분수 → 가분수",code:"G05",ex:"3과 2/5 = 17/5",sec:5,why:"대분수 곱셈·나눗셈 전에 꼭 쓰는 바꾸기예요.",idea:"자연수 × 분모 + 분자가 새 분자다냥. 입력: 분자 \\ 분모",
   lv:["분모 2","분모 3","분모 4","분모 5","분모 6·7","분모 8·9","자연수가 큰 것","혼합","대분수 정리 (2와 7/5 → 3과 2/5)"],
-  rand:L=>{const LL=L===7?ri(0,6):L;if(LL===8){const d=ri(2,9);return{d,w:ri(1,6),n:ri(d+1,2*d-1),fix:1}}const d=[2,3,4,5,ri(6,7),ri(8,9),ri(3,9)][LL];return{d,w:LL===6?ri(5,12):ri(1,5),n:ri(1,d-1)}},
+  rand:L=>{const LL=L===7?ri(0,6):L;if(LL===8){const d=ri(2,9);return{d,w:ri(1,6),n:ri(d+1,2*d-1),fix:1}}const d=[2,3,4,5,ri(6,7),ri(8,9),ri(3,9)][LL];return{d,w:LL===6?ri(5,12):d<=3?ri(1,10):ri(1,5),n:ri(1,d-1)}},
   key:p=>p.d+"/"+p.w+"/"+p.n+(p.fix?"f":""),
   make:({d,w,n,fix})=>fix?{html:`${w} ${fr(n,d)} = [[0]]`,a:[n%d?`${w+Math.floor(n/d)}&${n%d}\\${d}`:String(w+n/d)],kind:"num",fr:true,cls:"mid",text:`${w}과 ${n}/${d} 정리`}
     :{html:`${w} ${fr(n,d)} = [[0]]`,a:[`${w*d+n}\\${d}`],kind:"num",fr:true,cls:"mid",text:`${w}과 ${n}/${d}→가분수`},
@@ -909,19 +910,19 @@ const NEWT=["MJ","DJ","MN","PR","CD","GC","CM","LC","B4","B9","B7","B12","B11","
 const REF=(id,list)=>{const T=TYPES[id];if(!T)return;const r=T.rand;T.lv=list.map(x=>x[0]);T.rand=L=>{const it=list[Math.min(L,list.length-1)];let p,g=0;do{p=r(it[1])}while(it[2]&&!it[2](p)&&g++<600);return p}};
 const ML=(a,b)=>a%b===0||b%a===0,CMN=(a,b)=>divs(a).filter(x=>b%x===0).length;
 REF("B11",[["÷ 11·12",0,p=>p.d<=12&&p.q<=9],["÷ 13~15",0,p=>p.d>=13&&p.q<=9],["÷ 11~15, 몫 10~12",0,p=>p.q>=10],["÷ 16~19",1,p=>p.d<=19&&p.q<=9],["÷ 20~25",1,p=>p.d>=20&&p.q<=9],["÷ 16~25, 몫 10~12",1,p=>p.q>=10]]);
-const CMLV=[["한 수가 다른 수의 배수 (3, 6)",0,p=>p.b%p.a===0],["서로 다른 작은 수 (2, 5)",0,p=>GCD(p.a,p.b)===1],["공약수가 있는 수 (4, 6)",0,p=>GCD(p.a,p.b)>1&&p.b%p.a!==0],["큰 수, 배수 관계 (5, 15)",1,p=>p.b%p.a===0],["큰 수, 서로 다름 (7, 9)",1,p=>GCD(p.a,p.b)===1],["큰 수, 공약수 있음 (8, 12)",1,p=>GCD(p.a,p.b)>1&&p.b%p.a!==0]];
+const CMLV=[["작은 수끼리 (2~9)",0],["큰 수, 서로 다름 (7, 9)",1,p=>GCD(p.a,p.b)===1],["큰 수, 공약수 있음 (8, 12)",1,p=>GCD(p.a,p.b)>1]];
 REF("CM",CMLV);TYPES.LC.lv=TYPES.CM.lv;TYPES.LC.rand=L=>TYPES.CM.rand(L);
 REF("DC",[["□.□ × 2~5",0,p=>p.n<=5],["□.□ × 6~9",0,p=>p.n>=6],["곱이 50 넘음 (8.7 × 9)",0,p=>p.a*p.n>=500],["□.□□ × 2~5",1,p=>p.n<=5],["□.□□ × 6~9",1,p=>p.n>=6]]);
 REF("E4",[["□ × 2~5 + c",0,p=>p.k<=5],["□ × 6~9 + c",0,p=>p.k>=6],["□ × 2~5 − c",1,p=>p.k<=5],["□ × 6~9 − c",1,p=>p.k>=6],["□가 10 넘음",2,p=>p.x>=10]]);
 REF("MN",[["3~5의 배수",0,p=>p.k<=5],["6~9의 배수",0,p=>p.k>=6],["앞 배수가 더 가까움",0,p=>(p.N%p.k)*2<p.k],["뒤 배수가 더 가까움",0,p=>(p.N%p.k)*2>p.k],["11~15의 배수",1,p=>p.k<=15],["16~25의 배수",1,p=>p.k>=16]]);
 REF("PR",[["11~30",0,p=>p.N<=30],["31~50",0,p=>p.N>30],["51~70",1,p=>p.N<=70],["71~99",1,p=>p.N>70]]);
 REF("U2",[["더해도 60분 안 넘음",0,p=>p.m+p.p<60&&p.h>=1],["60분 넘으면 1시간으로",0,p=>p.m+p.p>=60&&p.h===0],["시간 + 분, 올림",0,p=>p.m+p.p>=60&&p.h>=1],["걸린 시간 1시간 안",1,p=>p.dur<60],["걸린 시간 1~2시간",1,p=>p.dur>=60&&p.dur<120],["걸린 시간 2시간 넘게",1,p=>p.dur>=120]]);
-REF("A7",[["12까지",0,p=>p.N<=12],["13~20",0,p=>p.N>12],["21~36",1,p=>p.N<=36],["37~50",1,p=>p.N>36],["51~72",2,p=>p.N<=72],["73~100",2,p=>p.N>72]]);
+REF("A7",[["20까지",0],["21~35",1,p=>p.N<=35],["36~50",1,p=>p.N>35],["51~75",2,p=>p.N<=75],["76~100",2,p=>p.N>75]]);
 REF("B12",[["a + b × c",0,p=>p.f==="a+b*c"],["a × b + c",0,p=>p.f==="a*b+c"],["a × b − c",0,p=>p.f==="a*b-c"],["(a + b) × c",1,p=>p.f==="(a+b)*c"],["(a − b) × c",1,p=>p.f==="(a-b)*c"],["a × (b + c)",1,p=>p.f==="a*(b+c)"],["나눗셈까지 섞어서",2]]);
 REF("B4",[["덧셈, 받아올림 1번",0,p=>p.a%100+p.b%100<100],["덧셈, 받아올림 2번",0,p=>p.a%100+p.b%100>=100],["뺄셈, 받아내림 1번",1,p=>p.a%100>=p.b%100],["뺄셈, 받아내림 2번",1,p=>p.a%100<p.b%100],["0이 낀 뺄셈 (503 − 278)",2]]);
 REF("B7",[["11~15 × 11~15",0,p=>p.x<=15&&p.y<=15],["1□ × 1□",0],["2□~4□ × 1□",1,p=>p.x<50],["5□~9□ × 1□",1,p=>p.x>=50],["두 자리 × 2□~4□",2,p=>p.y<50],["두 자리 × 5□~9□",2,p=>p.y>=50]]);
-REF("B9",[["÷ 2",0,p=>p.d===2],["÷ 3·4",0,p=>p.d>=3],["받아내림 ÷ 3~5",1,p=>p.d<=5],["받아내림 ÷ 6~8",1,p=>p.d>=6],["세 자리 ÷ 2~5",2,p=>p.d<=5],["세 자리 ÷ 6~9",2,p=>p.d>=6],["몫에 0이 있음 (612 ÷ 6)",2,p=>String(p.N/p.d).includes("0")]]);
-REF("C1",[["분모 3·4",0,p=>p.d<=4],["분모 5",0,p=>p.d===5],["분모 6·7",1,p=>p.d<=7],["분모 8·9",1,p=>p.d>=8],["분모 10~12",2,p=>p.d<=12],["분모 13~15",2,p=>p.d>=13]]);
+REF("B9",[["÷ 2",0,p=>p.d===2],["÷ 3·4",0,p=>p.d>=3],["받아내림 ÷ 3·4",1,p=>p.d<=4],["받아내림 ÷ 5~8",1,p=>p.d>=5],["세 자리 ÷ 2~5",2,p=>p.d<=5],["세 자리 ÷ 6~9",2,p=>p.d>=6],["몫에 0이 있음 (612 ÷ 6)",2,p=>String(p.N/p.d).includes("0")]]);
+REF("C1",[["분모 3~5",0],["분모 6·7",1,p=>p.d<=7],["분모 8·9",1,p=>p.d>=8],["분모 10~12",2,p=>p.d<=12],["분모 13~15",2,p=>p.d>=13]]);
 REF("C2",[["분자 빈칸 × 2",0,p=>p.k===2],["분자 빈칸 × 3",0,p=>p.k===3],["분모 빈칸 × 2·3",1,p=>p.k<=3],["분모 빈칸 × 4·5",1,p=>p.k>=4],["작게 ÷ 2·3",2,p=>p.k<=3],["작게 ÷ 4·5",2,p=>p.k>=4]]);
 REF("C3",[["2로 약분",0,p=>p.g===2],["3으로 약분",0,p=>p.g===3],["4로 약분",0,p=>p.g===4],["5~8로 약분",1,p=>p.g>=5],["9~12로 약분",2,p=>p.g<=12],["13~16으로 약분",2,p=>p.g>=13]]);
 REF("C4",[["한 분모가 다른 분모의 배수",0,p=>ML(p.b,p.d)],["분모가 서로 다름 (곱하기)",0,p=>GCD(p.b,p.d)===1],["최소공배수로",0,p=>GCD(p.b,p.d)>1&&!ML(p.b,p.d)]]);
@@ -930,11 +931,22 @@ REF("CA",[["덧셈 (분모 3~5)",0,p=>p.d<=5],["덧셈 (분모 6~9)",0,p=>p.d>=6
 const CDLV=[["공약수가 1과 하나뿐",0,p=>CMN(p.a,p.b)===2],["30까지",0],["한 수가 다른 수의 약수 (6, 18)",1,p=>p.b%p.a===0],["31~60",1,p=>p.b>30],["61~100",2,p=>p.b>60],["공약수가 4개 이상",2,p=>CMN(p.a,p.b)>=4]];
 REF("CD",CDLV);TYPES.GC.lv=TYPES.CD.lv;TYPES.GC.rand=L=>TYPES.CD.rand(L);
 REF("DJ",[["2·3인지",0,p=>p.k<=3],["4·5인지",0,p=>p.k>=4],["6·7인지",1,p=>p.k<=7],["8·9인지",1,p=>p.k>=8],["10~15인지",2,p=>p.k<=15],["16~20인지",2,p=>p.k>15]]);
-REF("E3",[["2~5씩 더하기",0,p=>p.k<=5],["6~12씩 더하기",0,p=>p.k>=6],["2배씩",1,p=>p.k===2],["3·4배씩",1,p=>p.k>=3],["차가 1씩 늘어남",2,p=>p.k===1],["차가 2, 3부터 늘어남",2,p=>p.k>=2]]);
+REF("E3",[["2~5씩 더하기",0,p=>p.k<=5],["6~12씩 더하기",0,p=>p.k>=6],["몇 배씩",1],["차가 늘어남",2]]);
 REF("U1",[["m → cm",0],["cm가 한 자리 (3m 5cm)",0,p=>p.b<10],["L → mL",1,p=>p.u==="L"],["kg → g",1,p=>p.u==="kg"],["km → m",1,p=>p.u==="km"],["거꾸로 cm → m cm",2,p=>p.u==="m"],["거꾸로 mL·g·m → 큰 단위",2,p=>p.u!=="m"]]);
 Object.values(TYPES).forEach(T=>{if(!T.lv||T.seq||T.lv.length<2||/혼합|전체/.test(T.lv[T.lv.length-1]))return;const n=T.lv.length,r=T.rand;T.lv=[...T.lv,"전체 (앞 단계 섞어서)"];T.rand=L=>r(L>=n?ri(0,n-1):L)});
+/* 2022 개정 교과 단원 (학년-학기 · 단원). 교과서마다 단원 이름이 조금 다를 수 있음 */
+const RETIRED=["T19"],HIDE_BANK=["FR"];
+const CUR={A1:["3-1","나눗셈"],B4:["3-1","덧셈과 뺄셈"],B5:["3-1","곱셈"],U2:["3-1","길이와 시간"],FA:["3-1","분수와 소수"],D1:["3-1","분수와 소수"],
+ A2:["3-2","나눗셈"],B9:["3-2","나눗셈"],B6:["3-2","곱셈"],B7:["3-2","곱셈"],FN:["3-2","분수"],FV1:["3-2","분수"],FV2:["3-2","분수"],FC:["3-2","분수"],OF:["3-2","분수"],U1:["3-2","들이와 무게 (길이 포함)"],
+ B11:["4-1","곱셈과 나눗셈"],E3:["4-1","규칙 찾기"],
+ FU:["4-2","분수의 덧셈과 뺄셈"],C1:["4-2","분수의 덧셈과 뺄셈"],FS:["4-2","분수의 덧셈과 뺄셈"],CA:["4-2","분수의 덧셈과 뺄셈"],DA:["4-2","소수의 덧셈과 뺄셈"],
+ B12:["5-1","자연수의 혼합 계산"],A3:["5-1","약수와 배수"],A6:["5-1","약수와 배수"],A7:["5-1","약수와 배수"],MJ:["5-1","약수와 배수"],DJ:["5-1","약수와 배수"],MN:["5-1","약수와 배수"],CD:["5-1","약수와 배수"],GC:["5-1","약수와 배수"],CM:["5-1","약수와 배수"],LC:["5-1","약수와 배수"],
+ CO:["5-1","규칙과 대응"],C2:["5-1","약분과 통분"],C3:["5-1","약분과 통분"],FT:["5-1","약분과 통분"],C4:["5-1","약분과 통분"],C5:["5-1","분수의 덧셈과 뺄셈"],
+ FM:["5-2","분수의 곱셈"],DC:["5-2","소수의 곱셈"],FD:["6-1","분수의 나눗셈 (÷ 분수는 6-2)"],
+ T12:["보충","12~19단"],NL:["보충","수직선 위 분수"],E1:["보충","등식 (중1 방정식 준비)"],E4:["보충","거꾸로 풀기 (중1 방정식 준비)"],PR:["보충","소수 판별 (중1 소인수분해 준비)"]};
+const SEMS=["3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","보충"],NOW_SEM="3-2";
 const FRP=["FA","FN","FU","FV1","FV2","FC","NL","C1","FS","C2","C3","FT","C4","C5","CA","FM","FD"];
-const ORDER0=["T12","A1","A3","B5","A6","T19","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5"].filter((x,i,a)=>a.indexOf(x)===i);
+const ORDER0=["T12","A1","A3","B5","A6","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5"].filter((x,i,a)=>a.indexOf(x)===i);
 /* 하루 10판: 12~19단1 몫찾기3 배수1 두자리×한자리2 약수1 분수길1 + 돌아가며1 */
 const PLAN0={A1:3,A3:1,B5:2,A6:1,T12:1,FR:1};
 const ROT=["OF","CO","E1","D1","MJ","DJ","MN","PR","CD","GC","CM","LC","B4","B9","B7","B12","B11","DA","DC","E3","E4","U1","U2"];
@@ -954,11 +966,11 @@ function loadLocal(){S=freshCore();DAYS={};
   try{const c=JSON.parse(localStorage.getItem(kCore())||"null");if(c&&c.cfg)S=c}catch(e){}
   try{DAYS=JSON.parse(localStorage.getItem(kDays())||"{}")||{}}catch(e){DAYS={}}
   ORDER0.forEach(id=>{if(!S.cfg.order.includes(id))S.cfg.order.push(id)});
-  S.cfg.order=S.cfg.order.filter(id=>TYPES[id]);
+  S.cfg.order=S.cfg.order.filter(id=>TYPES[id]&&!RETIRED.includes(id));
   if(!S.cfg.t12first){S.cfg.t12first=true;const o=S.cfg.order;o.splice(o.indexOf("T12"),1);o.unshift("T12")}
   if(!S.cfg.coAdded){S.cfg.coAdded=true;if(!S.cfg.plan.CO)S.cfg.plan.CO=1}
   if(!S.cfg.all3){S.cfg.all3=true;["E1","C2","D1"].forEach(id=>{if(!S.cfg.plan[id])S.cfg.plan[id]=1});if(DAYS[today()])DAYS[today()].plan=planNow()}
-  if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
+  if(!S.cfg.t12){S.cfg.t12=true;if(S.cfg.plan.T19&&!S.cfg.plan.T12){S.cfg.plan.T12=S.cfg.plan.T19;S.cfg.plan.T19=0}const o=S.cfg.order;if(o.includes("T19")&&o.indexOf("T12")>o.indexOf("T19")){o.splice(o.indexOf("T12"),1);o.splice(o.indexOf("T19"),0,"T12")}}}
 loadLocal();
 
 const tc=id=>{const T=TYPES[id],c=S.cfg.tc[id]||{};return{sec:c.sec??T.sec,allow:c.allow??99,n:c.n??(T.n||10),skipConcept:!!c.skipConcept,home:!!c.home}};
@@ -969,6 +981,7 @@ const D=()=>DAYS[today()];
 
 function ensureToday(){
   if(!S.cfg.ten){S.cfg.ten=true;S.cfg.plan=clone(PLAN0);S.lastDay=null}
+  Object.keys(S.ts).forEach(id=>{const T=TYPES[id];if(T&&STEPT(T)&&(S.ts[id].step||0)>stepMax(T))S.ts[id].step=stepMax(T)});
   const t=today();if(S.lastDay===t&&DAYS[t])return;
   let carry={};
   if(S.cfg.carryOn&&S.lastDay&&DAYS[S.lastDay]){const L=DAYS[S.lastDay];
@@ -1128,7 +1141,6 @@ function buildSet(id,lvOver){
   for(const [w,p] of scored){if(out.length>=n)break;const g=gk(p);if((grp[g]||0)>=3&&scored.length>n*3)continue;grp[g]=(grp[g]||0)+1;out.push(p)}
   for(const [w,p] of scored){if(out.length>=n)break;if(!out.includes(p))out.push(p)}
   if(out.length<n){const keys=new Set(out.map(T.key));cand.forEach((p,k)=>{if(out.length<n&&!keys.has(k)){keys.add(k);out.push(p)}})}
-  while(out.length<n&&out.length)out.push(out[out.length%Math.max(1,out.length)]);
   out.sort(()=>Math.random()-.5);
   const lv=lvOver??lvl(id);return out.map(p=>({p,q:T.make(p,lv)}));
 }
@@ -1423,7 +1435,7 @@ function ansTxt(q){return q.need?q.need.join(", "):(q.a||[]).map(fview).join(" ,
 function vBank(){
   const ids=S.cfg.order.filter(id=>TYPES[id]);
   const typeHTML=id=>{const T=TYPES[id],st=tst(id),nL=STEPT(T)?stepMax(T)+1:1;
-    return `<details class="card"><summary><b>${T.name}</b> <span class="small muted">${STEPT(T)?`단계 ${nL}개 · 지금 ${(st.step||0)+1}단계`:T.ex}</span>${STEPT(T)?`<div class="lvmap">${Array.from({length:nL},(_,L)=>`<span class="${(st.step||0)===L?"now":""}">${L+1}. ${esc(stepLabel(T,L))}</span>`).join("")}</div>`:""}</summary>
+    return `<details class="card"><summary><b>${T.name}</b> <span class="small muted">${CUR[id]?esc(CUR[id][1])+" · ":""}${STEPT(T)?`단계 ${nL}개 · 지금 ${(st.step||0)+1}단계`:T.ex}</span>${STEPT(T)?`<div class="lvmap">${Array.from({length:nL},(_,L)=>`<span class="${(st.step||0)===L?"now":""}">${L+1}. ${esc(stepLabel(T,L))}</span>`).join("")}</div>`:""}</summary>
       <p class="small">올라가는 법: ${STEPT(T)?`한 세트를 <b>${fmt(finalPQ(id)*(T.seq?T.seq(0).list.length:tc(id).n))}</b> 안에 끝내면 다음 단계 → 마지막 단계에서 서로 다른 날 2번 기준 안이면 졸업.`:`처음 3판 평균에서 출발해 통과할 때마다 목표를 10%씩 줄여요. 최종 기준 <b>${fmt(finalPQ(id)*tc(id).n)}</b> 안에 서로 다른 날 2번이면 졸업.`} 빠르게 두 번 맞힌 문제는 7일 쉬고, 틀리거나 느린 문제는 더 자주 나와요.</p>
       ${Array.from({length:nL},(_,L)=>`<div class="bk"><h4>${STEPT(T)?(L+1)+"단계 · "+esc(stepLabel(T,L)):"문제"}${STEPT(T)&&(st.step||0)===L?' <span class="pill new">지금</span>':""}</h4>
         <ol>${bankSet(id,L).map(q=>`<li><span>${esc(q.text)}</span><b>${ansTxt(q)}</b></li>`).join("")}</ol></div>`).join("")}
@@ -1433,7 +1445,7 @@ function vBank(){
     ${DAYS[k].sets.map((x,j)=>`<div class="bk"><h4>${j+1}. ${esc((TYPES[x.type]||{}).name||x.type)} · ${fmt(x.t)} · 오답 ${x.w}</h4><ol>${(x.items||[]).slice().sort((a,b)=>a.o-b.o).map(it=>`<li class="${it.ok1?"":"bad"}"><span>${esc(it.q)}</span><b>${(it.a||"").split("|").map(fview).join(", ")}</b><span class="small muted">${it.ok1?"✓":"✗ "+(it.g||[]).map(v=>String(v).split("|").map(fview).join(",")).join(" → ")} · ${(it.ms/1000).toFixed(1)}초</span></li>`).join("")}</ol></div>`).join("")}</details>`).join("")||`<p class="muted small">아직 푼 세트가 없어요.</p>`;
   return `${bar("문제 전체 보기")}<div class="page">
     <div class="row"><button class="nb ${BANK.tab==="all"?"pri":""}" data-act="banktab" data-arg="all">유형·단계별 문제</button><button class="nb ${BANK.tab==="done"?"pri":""}" data-act="banktab" data-arg="done">푼 세트 (7일)</button></div>
-    ${BANK.tab==="all"?`<p class="small muted">단계마다 한 세트씩 만들어 보여줘요. 정답은 굵은 글씨.</p>${ids.map(typeHTML).join("")}`:doneHTML}
+    ${BANK.tab==="all"?`<p class="small muted">교과 학년·학기 순서예요(2022 개정). 단계마다 한 세트씩 만들어 보여줘요. 정답은 굵은 글씨.</p>${SEMS.map(sem=>{const g=ids.filter(id=>!HIDE_BANK.includes(id)&&(CUR[id]||["보충"])[0]===sem);if(!g.length)return "";return `<h3 class="semh">${sem==="보충"?"보충 (교과 밖)":sem.replace("-","학년 ")+"학기"}${sem===NOW_SEM?' <span class="pill new">지금 학기</span>':""}</h3>${g.map(typeHTML).join("")}`}).join("")}`:doneHTML}
     <button class="nb" data-act="go" data-arg="parent">부모 화면으로</button></div>`}
 function vParent(){
   const d=D(),carryN=Object.values(d.carry).reduce((a,b)=>a+b,0),total=Object.values(planNow()).reduce((a,b)=>a+b,0);
