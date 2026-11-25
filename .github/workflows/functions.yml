@@ -1,0 +1,42 @@
+name: 서버 함수 올리기
+
+# Actions 탭에서 "Run workflow" 버튼으로 올려요(손으로만 실행).
+# 키는 저장소에 없어요. 새 주소 올리기(hosting.yml)와 같은 Google 허락(Workload Identity)을 써요.
+# 처음 한 번은 Cloud Shell에서 hosting-deploy 계정에 함수 올리기 권한을 더해 줘야 해요.
+
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "올릴 함수 (쉼표로 구분, 비우면 영어 쓰기·손글씨 함수)"
+        required: false
+        default: "functions:enWrite,functions:enHand,functions:aiUse_enwrite,functions:aiUse_enhand"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 함수 준비물 설치
+        run: npm ci --prefix functions
+      - name: Google 허락 받기
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/36140585172/locations/global/workloadIdentityPools/github/providers/family-dashboard
+          service_account: hosting-deploy@kmsysh-fa740.iam.gserviceaccount.com
+          create_credentials_file: true
+      - name: 올리기
+        env:
+          ONLY: ${{ inputs.only || 'functions:enWrite,functions:enHand,functions:aiUse_enwrite,functions:aiUse_enhand' }}
+        run: npx -y firebase-tools@latest deploy --only "$ONLY" --project kmsysh-fa740 --non-interactive --force
