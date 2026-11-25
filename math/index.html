@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795566483";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795566684";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -107,6 +107,9 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .qline.txt{font-size:28px}
 .fbox{border:3px solid var(--blue);border-radius:12px;padding:0 12px;background:var(--card);color:var(--blue)}
 .arr{color:var(--ink-2);font-size:.8em}
+.ph{display:inline-block;width:.6em;height:.9em}
+.box .fr{font-size:.7em}
+.box:has(.fr){width:auto;min-width:72px;height:auto;min-height:64px;padding:2px 10px;display:inline-flex;align-items:center;gap:4px}
 .ftab{border-collapse:collapse;font-size:24px}.ftab th{font-size:15px;font-family:var(--f-body,inherit);padding:4px 6px;text-align:left;color:var(--ink-2)}.ftab td{border:2px solid var(--line);min-width:48px;height:52px;text-align:center;padding:2px;background:var(--card)}
 .ftab .box{width:46px;height:46px;font-size:24px}
 .qline.stack{flex-direction:column;gap:10px}
@@ -319,8 +322,8 @@ const TYPES={
   idea:"가분수 → 대분수는 나눗셈의 몫과 나머지, 대분수 → 가분수는 곱하고 더하기예요.",
   rand:()=>{const d=ri(2,9);return{d,w:ri(1,6),n:ri(1,d-1),dir:Math.random()<.55?"toMixed":"toImp"}},key:p=>p.dir+p.d+"/"+p.w+"/"+p.n,
   make:({d,w,n,dir})=>{const N=w*d+n;if(dir==="of")return{html:`${w*d}의 ${fr(n,d)} = [[0]]`,a:[String(w*n)],kind:"num",text:`${w*d}의 ${n}/${d}`};return dir==="toMixed"
-    ?{html:`${fr(N,d)} = [[0]] ${fr("[[1]]",d)}`,a:[String(w),String(n)],kind:"num",text:`${N}/${d}→대분수`}
-    :{html:`[[x]]${w} ${fr(n,d)} = ${fr("[[0]]",d)}`.replace("[[x]]",""),a:[String(N)],kind:"num",text:`${w}과 ${n}/${d}→가분수`}},
+    ?{html:`${fr(N,d)} = [[0]]`,a:[`${w}&${n}\\${d}`],kind:"num",fr:true,text:`${N}/${d}→대분수`}
+    :{html:`${w} ${fr(n,d)} = [[0]]`,a:[`${N}\\${d}`],kind:"num",fr:true,text:`${w}과 ${n}/${d}→가분수`}},
   steps:({d,w,n,dir})=>{const N=w*d+n;if(dir==="of")return{head:`${w*d}의 ${fr(n,d)}`,list:[
       {h:`${w*d}${eul(w*d)} 똑같이 ${d}묶음으로 나누면 한 묶음은 [[0]]`,a:[String(w)],hints:[`${d} × □ = ${w*d}${iga(w*d)} 되는 □는?`]},
       {h:`${fr(n,d)}는 그런 묶음 ${n}개니까 [[0]]`,a:[String(w*n)],hints:[`한 묶음이 ${w}개야. ${n}묶음이면?`]}]};return dir==="toMixed"
@@ -330,8 +333,8 @@ const TYPES={
     :{head:`${w} ${fr(n,d)} 를 가분수로`,list:[
       {h:`${w} = ${fr("[[0]]",d)}`,a:[String(w*d)],hints:[`1 = ${fr(d,d)}이야. 그럼 ${w}${eun(w)} ${fr(d,d)}가 몇 개일까?`]},
       {h:`${fr(w*d,d)} + ${fr(n,d)} = ${fr("[[0]]",d)}`,a:[String(N)],hints:["분모가 같으면 분자끼리 더해요."]}]}},
-  pat:(p,g)=>{const N=p.w*p.d+p.n;if(p.dir==="of"){const v=+g[0];if(v===p.w)return "한 묶음만 구함";if(v===p.w*p.d)return "전체를 답함";return "나누기·곱하기 틀림 · "+p.d+"단"}if(p.dir==="toMixed"){if(+g[1]>=p.d)return "분자가 분모보다 큼";if(+g[0]!==p.w)return "몫(자연수) 틀림 · "+p.d+"단";return "나머지(분자) 틀림"}
-    const v=+g[0];if(v===p.w+p.n)return "곱하지 않고 더함";if(v===p.w*p.d)return "분자 더하기 빠뜨림";return "곱셈 틀림 · "+p.d+"단"}},
+  pat:(p,g)=>{const N=p.w*p.d+p.n;if(p.dir==="of"){const v=+g[0];if(v===p.w)return "한 묶음만 구함";if(v===p.w*p.d)return "전체를 답함";return "나누기·곱하기 틀림 · "+p.d+"단"}const F=fparse(g[0])||{};if(p.dir==="toMixed"){g=[F.w,F.n];if(+F.d!==p.d)return "분모 바뀜";if(+g[1]>=p.d)return "분자가 분모보다 큼";if(+g[0]!==p.w)return "몫(자연수) 틀림 · "+p.d+"단";return "나머지(분자) 틀림"}
+    if(F.d&&+F.d!==p.d)return "분모 바뀜";const v=+F.n;if(v===p.w+p.n)return "곱하지 않고 더함";if(v===p.w*p.d)return "분자 더하기 빠뜨림";return "곱셈 틀림 · "+p.d+"단"}},
 
  OF:{hard:p=>(p.d>=6?1:0)+(p.m>=6?.8:0)+(p.n>1?.4:0),name:"○의 몇 분의 몇",code:"C·3-2",ex:"48의 3/8 = 18",sec:4,why:"'남은 것의 몇 분의 몇' 문장제, 분수의 곱셈, 비율(20의 15%)이 이 계산이에요. 몫찾기를 그대로 써요.",
   idea:"말로 하던 '똑같이 ○묶음 → 그중 □묶음'을 식으로 쓰면 ÷ 다음 × 예요.",
@@ -456,12 +459,12 @@ const TYPES={
   pat:(p,g)=>p.m==="cmp"?"자리 수 길면 크다고 봄":"0.1 개수 틀림"},
  C1:{name:"분모 같은 분수 덧셈",code:"C1",ex:"2/7 + 3/7",sec:3,why:"대분수 덧셈, 분모가 다른 분수 계산으로 이어져요.",idea:"1/7이 몇 개인지 세요.",
   rand:()=>{const d=ri(3,9),a=ri(1,d-2);return{d,a,b:ri(1,d-1-a)}},key:p=>p.d+"/"+p.a+"/"+p.b,
-  make:({d,a,b})=>({html:`${fr(a,d)} + ${fr(b,d)} = ${fr("[[0]]",d)}`,a:[String(a+b)],kind:"num",text:`${a}/${d}+${b}/${d}`}),
+  make:({d,a,b})=>({html:`${fr(a,d)} + ${fr(b,d)} = [[0]]`,a:[`${a+b}\\${d}`],kind:"num",fr:true,text:`${a}/${d}+${b}/${d}`}),
   steps:({d,a,b})=>({head:`${fr(a,d)} + ${fr(b,d)} = ?`,list:[
     {h:`${fr(a,d)}는 ${fr(1,d)}이 [[0]]개`,a:[String(a)],hints:["분자가 몇 조각인지 알려 줘."]},
     {h:`${fr(b,d)}는 ${fr(1,d)}이 [[0]]개`,a:[String(b)],hints:["분자를 봐."]},
     {h:`모두 ${fr(1,d)}이 [[0]]개 → ${fr("?",d)}`,a:[String(a+b)],hints:["두 개수를 더하면?"]}]}),
-  pat:(p,g)=>+g[0]===p.a*p.b?"분자를 곱함":"분자 계산 틀림"}
+  pat:(p,g)=>{const F=fparse(g[0])||{};if(F.d&&+F.d===p.d*2)return "분모끼리 더함";return +F.n===p.a*p.b?"분자를 곱함":"분자 계산 틀림"}}
 };
 const ORDER0=["A1","A3","B5","A6","T12","T19","FR","OF","CO","E1","C2","D1","A2","A7","B6","C1"];
 const PLAN0={A1:3,A3:2,B5:2,A6:1,T12:1,FR:1,OF:1,CO:1,E1:1,C2:1,D1:1};
@@ -618,12 +621,17 @@ function vIntro(){
 }
 
 /* 문제 풀이 엔진 (세트와 방법 찾기가 같이 씀) */
-function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d)\]\]/g,(m,i)=>{i=+i;return `<button class="box ${i===act?"act":""} ${state&&state[i]||""}" data-act="box" data-arg="${i}">${esc(vals[i]||"")}</button>`})}
+function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d)\]\]/g,(m,i)=>{i=+i;return `<button class="box ${i===act?"act":""} ${state&&state[i]||""}" data-act="box" data-arg="${i}">${fview(vals[i]||"")}</button>`})}
+/* 분수 한 줄 입력: 자연수 & 분자 \ 분모 (수피온과 같은 순서) */
+function fparse(v){const m=String(v).match(/^(\d*)(&?)(\d*)(\\?)(\d*)$/);if(!m)return null;if(!m[2]&&!m[4])return{w:m[1]};return m[2]?{w:m[1],n:m[3],d:m[5],bar:!!m[4]}:{w:"",n:m[1],d:m[5],bar:true}}
+function fview(v){if(!/[&\\]/.test(v))return esc(v);const f=fparse(v);if(!f)return esc(v);const sp='<span class="ph"></span>';
+  return `${f.w?`<span>${esc(f.w)}</span>`:""}<span class="fr"><span>${f.n?esc(f.n):sp}</span><span>${f.d?esc(f.d):sp}</span></span>`}
 function padHTML(kind,canSubmit){
   if(kind==="ox")return `<div class="ox"><button data-act="ox" data-arg="O" aria-label="맞아요">O</button><button data-act="ox" data-arg="X" aria-label="아니에요">X</button></div>`;
   if(kind==="plot")return `<div class="pad" style="grid-template-columns:1fr 1fr"><button class="key fn" data-act="plotclear">다시 찍기</button><button class="key go" data-act="submit" ${canSubmit?"":"disabled"}>확인</button></div>`;
   const K=n=>`<button class="key" data-key="${n}">${n}</button>`;
   const okk=S&&S.cfg&&S.cfg.okKey;
+  if(kind==="frac")return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key nk" data-key="amp" aria-label="자연수 다음">&amp;</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="bs" aria-label="분수 막대">\\</button>${K(7)}${K(8)}${K(9)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button><button class="key" data-key="0" style="grid-column:span 2">0</button>${okk?'<button class="key go" data-key="ok">확인</button>':""}<button class="key nk" data-key="n" ${okk?"":'style="grid-column:span 2"'}>n</button></div>`;
   return `<div class="pad">${K(1)}${K(2)}${K(3)}<button class="key fn" data-key="del" aria-label="한 글자 지우기">⌫</button>${K(4)}${K(5)}${K(6)}<button class="key nk" data-key="n" aria-label="다음" ${okk?"":'style="grid-row:span 3;height:auto"'}>n</button>${K(7)}${K(8)}${K(9)}${okk?'<button class="key go" data-key="ok" style="grid-row:span 2;height:auto">확인</button>':""}<button class="key" data-key="0" style="grid-column:span 3">0</button></div>`;
 }
 function figHTML(q,user){if(!q.fig)return "";const f=q.fig==="PLOT"?coordSVG(null,user,true):q.fig;return `<div class="fig">${f}</div>`}
@@ -684,7 +692,7 @@ function vPlay(){
        :`<div class="qline ${q.cls||""}">${boxesHTML(q.html,RUN.vals,q.kind==="num"?RUN.act:-1,RUN.boxState)}</div>`}
      <div class="say blue" aria-live="polite">${RUN.say}</div></div>
    <div class="under">${PREVIEW?`<span class="ans-pv">정답 ${esc((q.a||q.need).join(" , "))}</span><button class="nb pri" data-act="pvnext">다음 ▶</button>`:`<button class="nb" data-act="pause">잠깐 멈춤</button>${!it.skip&&RUN.pos<RUN.order.length-1?`<button class="nb" data-act="later">나중에 풀기</button>`:""}`}</div>
-   ${padHTML(q.kind,!!RUN.user)}`;
+   ${padHTML(q.fr?"frac":q.kind,!!RUN.user)}`;
 }
 function typeKey(k){
   const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx||(view==="play"&&RUN.lock))return;
@@ -692,8 +700,10 @@ function typeKey(k){
   if(k==="ok"){submit();return}
   if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}ctx.act++;softRender();return}
   const v=ctx.vals[ctx.act]||"";
+  if(k==="amp")k="&";if(k==="bs")k="\\";
+  if((k==="&"||k==="\\")&&(!q.fr||v.includes(k)||(k==="&"&&v.includes("\\"))||!v||/[&\\]$/.test(v)))return;
   if(k==="del"){ctx.vals[ctx.act]=v.slice(0,-1)}
-  else{if(v.length>=4)return;if(v==="0")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
+  else{if(v.length>=(q.fr?9:4))return;if(v==="0"&&k!=="&"&&k!=="\\")ctx.vals[ctx.act]=k;else ctx.vals[ctx.act]=v+k}
   ctx.boxState=[];ctx.say=view==="play"?"":ctx.say;
   softRender();
   if(view==="play"&&k!=="del")autoGo(q);
@@ -721,7 +731,7 @@ function submit(){if(view==="play"&&RUN.lock)return;
   else if(q.kind==="ox")given=RUN.vals.slice(0,1);
   else{given=q.a.map((_,k)=>RUN.vals[k]||"");const empty=given.findIndex(v=>!v);if(empty>=0){RUN.act=empty;softRender();return}
     // 잘못 누른 게 분명할 때: 자리 수가 다르면 한 번 묻고, 시간은 멈춤
-    if(!it.misAsked&&given.some((v,k)=>v.length!==q.a[k].length)){it.misAsked=true;it.mis++;stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>이렇게 낼 거냥?</h3><p class="qline mid">${esc(given.join(" , "))}</p><p class="muted small">손이 미끄러졌을 수도 있다옹. 이 시간은 안 센다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="misfix">고칠래</button><button class="bigbtn" style="flex:1" data-act="miskeep">이대로 낼래</button></div></div></div>`;render();return}}
+    if(!it.misAsked&&given.some((v,k)=>v.length!==q.a[k].length)){it.misAsked=true;it.mis++;stopClock();modal=()=>`<div class="veil"><div class="sheet"><h3>이렇게 낼 거냥?</h3><p class="qline mid">${given.map(fview).join(" , ")}</p><p class="muted small">손이 미끄러졌을 수도 있다옹. 이 시간은 안 센다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="misfix">고칠래</button><button class="bigbtn" style="flex:1" data-act="miskeep">이대로 낼래</button></div></div></div>`;render();return}}
   judge(given);
 }
 function judgeMulti(g){
@@ -1040,7 +1050,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
   else if(k==="step"){tst(id).step=+el.value}
   save(today());render();
 });
-document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok");else if(e.key==="n")typeKey("n")});
+document.addEventListener("keydown",e=>{if(view!=="play"&&view!=="concept")return;if(/^[0-9]$/.test(e.key))typeKey(e.key);else if(e.key==="Backspace")typeKey("del");else if(e.key==="Enter")typeKey("ok");else if(e.key==="&")typeKey("amp");else if(e.key==="\\"||e.key==="/")typeKey("bs");else if(e.key==="n")typeKey("n")});
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&view==="play"&&RUN&&!modal){ACT.pause()}});
 
 ensureToday();render();connectDB();
