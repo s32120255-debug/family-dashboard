@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="2";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,7 +65,7 @@ td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertic
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js"></script>
+<script src="drills.js?v=2"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -104,14 +104,13 @@ else{
 <script>
 /* ⚡ 5분 말하기 (엄마 11/25): 「오늘의 공부」는 새로 배우기, 이 앱은 아는 걸 빨리 꺼내기만.
    하루 10문장 · 한국어 보고 영어로 말하기 → 정답 듣고 따라 말하기. 쓰기 없음.
-   10문장 중 9문장 이상을 「막힘 없이」(처음에 맞게 + 5초 안에 말 시작) 말하면 다음 날 다음 단계. 아니면 같은 단계 한 번 더.
-   막힌 문장은 다음 날 앞에 다시 나와요. 빨간 X 없음, 힌트 없음. 기록은 「오늘 걸린 시간」을 어제와 비교만.
-   🎤 녹음(엄마 「녹음 발음인식 매우 중요」): 띵 소리 나는 브라우저 인식 대신, 시훈 공부방처럼 녹음 → 서버(stt, Google 받아쓰기)로 글자.
-   정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교.
-   말이 끝나기 전에 끊지 않음: 1초 조용하면 「지금까지」를 받아 적어 보고, 맞으면 바로 다음. 아직 아니면 계속 들어요.
-   말을 시작한 뒤 5초 조용하거나 「다 말했어 ⏹」를 누르면 끝. 아무 말이 없으면 60초까지 기다려요. */
+   엄마 11/26: 한 단계를 이틀에 나눠요. 첫날은 회색 기준 문장을 보고 한 군데만 바꿔 말하기 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계.
+   통과 = 10문장 중 9문장 「막힘 없이」(처음에 맞게 + 한글이 나오고 5초 안에 🎤). 막힌 문장은 다음 날 앞에 다시 나와요. 빨간 X 없음.
+   🎤 녹음(엄마 11/26): 생각하고 🎤 누르기 → 다 말하면 ⏹ 누르기. 자동으로 끊지 않고, 멈춘 뒤 한 번만 서버(stt, Google 받아쓰기)로 받아 적어요.
+   틀리면 한 번 더(두 번째도 틀리면 정답 듣기). 안 들리면 다시 녹음(틀림 아님). 인식이 계속 안 되면 「넘어가기」.
+   정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교. */
 const SP=window.SPEED,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
-const PASS_N=9,FAST_MS=5000,SNAP_HUSH=1000,FINAL_HUSH=5000,WAIT_MAX=60000,REC_MAX=55000;
+const PASS_N=9,FAST_MS=5000,REC_MAX=55000;
 let DB=null,ST=null,V={view:'home'},RUN=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -122,7 +121,7 @@ const sec1=ms=>(ms/1000).toFixed(1)+'초';
 
 // ---------- 저장 ----------
 const LS={get(k,d){try{const v=localStorage.getItem('speed:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('speed:'+k,JSON.stringify(v))}catch(e){}}};
-function blank(){return {stage:1,days:{},again:[],cur:null}}
+function blank(){return {stage:1,mode:'base',days:{},again:[],cur:null}}
 async function load(){let a=LS.get('st',null),b=null;if(DB){try{b=await DB.get('speed/main')}catch(e){}}
   const pick=(b&&a)?((b.updated||'')>=(a.updated||'')?b:a):(b||a);return Object.assign(blank(),pick||{})}
 let saveT=null;
@@ -203,42 +202,18 @@ async function stt(blob,sec,target){
   return await new Promise(res=>{let un=null,fin=false;const end=t=>{if(fin)return;fin=true;try{un&&un()}catch(e){}DB.del('stt/'+id);res(t)};
     un=DB.watch('stt/'+id,d=>{if(d&&d.res)end(d.res.text||'')});setTimeout(()=>end(''),25000)})}
 
-// 한 번 듣기: 맞는 말이 들리면 바로 끝. 아니면 말이 끝날 때까지 기다림.
-// 돌려줌: {v:'exact'|'fuzzy'|'wrong'|'unclear', heard, onset(말 시작까지 ms, 모르면 null), blob}
-function listen(target,ui){return new Promise(async resolve=>{
-  const t0=Date.now();let chunks=[],rec=null,recAt=0,ended=false,speaking=false,heardAny=false,onset=null,lastVoice=0,voiceFrames=0,newSpeech=false;
-  let inflight=false,lastHeard='',lastV='unclear',lastCovered=0,timer=null;
-  if(MOCK&&!MIC){ // 시험용: 마이크 없이 1초 뒤 말한 걸로
-    setTimeout(async()=>{const h=await stt(null,1,target);resolve({v:judge(target,h),heard:h,onset:window.__mockOnset!=null?window.__mockOnset:1200,blob:null})},600);ui.stop=()=>{};return}
-  // 서버 받아쓰기는 한 번에 60초까지 → 아무 말 없이 10초가 지나면 그동안 녹음을 받아 적어 보고(소리가 작아 못 알아챘을 때 대비) 새로 녹음
-  function newRec(){const c=[];let r;try{r=new MediaRecorder(MIC.stream,{mimeType:MIME,audioBitsPerSecond:32000})}catch(e){try{r=new MediaRecorder(MIC.stream)}catch(e2){return false}}
-    r.ondataavailable=e=>{if(e.data&&e.data.size)c.push(e.data)};r.start(200);rec=r;chunks=c;recAt=Date.now();return true}
-  if(!newRec()){resolve({v:'unclear',heard:'',onset:null,blob:null,err:'rec'});return}
-  const snap=()=>new Blob(chunks,{type:MIME||'audio/webm'});
-  const flush=()=>new Promise(r=>{try{if(rec&&rec.state==='recording')rec.requestData()}catch(e){}setTimeout(r,90)});
-  async function send(final,blind){inflight=true;const cover=Date.now();await flush();const blob=snap();if(!blind)ui.state('think');
-    if(blind){const old=rec;try{old.stop()}catch(e){}newRec()}
-    let h='';try{h=await stt(blob,Math.round((Date.now()-t0)/1000),target)}catch(e){}
-    inflight=false;if(ended&&!final)return;
-    if(h){const v=judge(target,h);if(!blind||v==='exact'||v==='fuzzy'){lastHeard=h;lastV=v}}if(!blind)lastCovered=cover;
-    if(lastV==='exact'||lastV==='fuzzy'){finish(true);return}
-    if(!final)ui.state(speaking?'talk':'listen')}
-  function finish(accepted){if(ended)return;ended=true;clearInterval(timer);
-    const stopRec=new Promise(r=>{if(rec&&rec.state!=='inactive'){rec.onstop=()=>r();try{rec.stop()}catch(e){r()}}else r()});
-    stopRec.then(async()=>{const blob=snap();
-      if(!accepted&&heardAny&&lastVoice>lastCovered){ui.state('think');let h='';try{h=await stt(blob,Math.round((Date.now()-t0)/1000),target)}catch(e){}if(h){lastHeard=h;lastV=judge(target,h)}}
-      resolve({v:lastHeard?lastV:'unclear',heard:lastHeard,onset,blob})})}
-  ui.stop=()=>{if(inflight){const w=setInterval(()=>{if(!inflight){clearInterval(w);finish(false)}},100)}else finish(false)};
-  timer=setInterval(()=>{if(ended)return;const n=Date.now(),r=rms(),thr=Math.max(0.012,MIC.floor*3.5);
-    if(r>thr){voiceFrames++;if(voiceFrames>=3){if(!speaking){speaking=true;ui.state('talk')}if(onset==null)onset=Math.max(0,n-t0-100);heardAny=true;lastVoice=n;newSpeech=true}}
-    else{voiceFrames=0;if(r<thr*0.8)MIC.floor=MIC.floor*0.97+r*0.03;if(speaking&&n-lastVoice>300){speaking=false;ui.state('listen')}}
-    ui.level(Math.min(1,r/(thr*4)),speaking);
-    if(inflight)return;
-    if(heardAny&&!speaking&&newSpeech&&n-lastVoice>=SNAP_HUSH){newSpeech=false;send(false);return}
-    if(heardAny&&!speaking&&n-lastVoice>=FINAL_HUSH){finish(false);return}
-    if(!heardAny&&n-recAt>=10000){send(false,true);return}
-    if((!heardAny&&n-t0>WAIT_MAX)||(heardAny&&n-recAt>REC_MAX))finish(false)},50);
-})}
+// 녹음 한 번(엄마 11/26): 시훈이가 생각하고 🎤 를 눌러 시작 → 다 말하면 ⏹ 를 눌러 끝. 자동으로 끊지 않아요.
+// (서버 받아쓰기가 한 번에 60초까지라 55초가 되면 그때만 저절로 멈춰요.) 멈춘 뒤 한 번만 받아 적어 정답과 비교해요.
+let REC=null;
+function recStart(ui){if(REC)return;const R={chunks:[],t0:Date.now(),timer:null,mr:null};REC=R;
+  if(MIC){let mr;try{mr=new MediaRecorder(MIC.stream,{mimeType:MIME,audioBitsPerSecond:32000})}catch(e){try{mr=new MediaRecorder(MIC.stream)}catch(e2){mr=null}}
+    if(mr){mr.ondataavailable=e=>{if(e.data&&e.data.size)R.chunks.push(e.data)};mr.start(200);R.mr=mr}}
+  R.timer=setInterval(()=>{const r=rms(),thr=Math.max(0.012,(MIC?MIC.floor:0.004)*3.5);if(MIC&&r<thr*0.8)MIC.floor=MIC.floor*0.97+r*0.03;
+    ui.level(Math.min(1,r/(thr*4)),r>thr);const s=Math.floor((Date.now()-R.t0)/1000);ui.clock(s);if(Date.now()-R.t0>REC_MAX)ACT.stop()},60)}
+function recStop(){const R=REC;REC=null;if(!R)return Promise.resolve(null);clearInterval(R.timer);
+  return new Promise(res=>{const done=()=>res({blob:R.chunks.length?new Blob(R.chunks,{type:MIME||'audio/webm'}):null,sec:Math.round((Date.now()-R.t0)/1000)});
+    if(R.mr&&R.mr.state!=='inactive'){R.mr.onstop=done;try{R.mr.stop()}catch(e){done()}}else done()})}
+function recCancel(){const R=REC;REC=null;if(!R)return;clearInterval(R.timer);try{R.mr&&R.mr.state!=='inactive'&&R.mr.stop()}catch(e){}}
 
 // ---------- 화면 ----------
 function render(){const a=$('#app');
@@ -248,12 +223,14 @@ function render(){const a=$('#app');
   else if(V.view==='log')a.innerHTML=logHTML();
   bind()}
 function stageOf(){return TRY&&V.tryStage?V.tryStage:ST.stage}
+function modeOf(){return TRY?(V.tryMode||'base'):(ST.mode||'base')}
 function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
   let h=`<h1>⚡ 5분 말하기</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 10문장</div>`;
-  if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select></div>`;
+  if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select> <select id="tryMode"><option value="base"${modeOf()==='base'?' selected':''}>첫날: 회색 문장 보고</option><option value="ko"${modeOf()==='ko'?' selected':''}>둘째 날: 한글만</option></select></div>`;
   if(d&&d.end&&!TRY){h+=resultCard(d,today());h+=`<button class="link" data-act="log">지난 기록 보기</button>`;return h}
-  h+=`<div class="card"><span class="stage">${stageOf()}단계</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2><div class="ex">${esc(st.ex)}</div>
-    <p style="margin:12px 0 0">회색 문장을 보고, 한국어 뜻대로 <b>한 군데만 바꿔서 영어로 말해요.</b> 맞으면 정답을 듣고 한 번 따라 말해요.</p>
+  h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2><div class="ex">${esc(st.ex)}</div>
+    <p style="margin:12px 0 0">${modeOf()==='base'?'회색 문장을 보고, 한국어 뜻대로 <b>한 군데만 바꿔서 영어로 말해요.</b>':'오늘은 회색 문장이 없어요. <b>한글만 보고 영어로 말해요.</b>'}</p>
+    <p style="margin:6px 0 0">생각이 되면 <b>🎤 녹음</b>을 누르고 말해요. 다 말하면 <b>⏹</b>을 눌러요. 맞으면 정답을 듣고 한 번 따라 말해요.</p>
     ${prev?`<p class="sub" style="margin:8px 0 0">지난번(${prev.date.slice(5).replace('-','/')}) <b>${fmt(prev.ms)}</b> 걸렸어요.</p>`:''}
     ${ST.cur&&ST.cur.date===today()&&!TRY?`<p class="sub">하던 데서 이어서 해요 (${ST.cur.i+1} / 10)</p>`:''}
     <button class="big" data-act="start">🎤 시작</button>
@@ -265,56 +242,73 @@ function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=x.ite
   const a1=avg(d),a0=prev?avg(prev):null;const diff=prev?prev.ms-d.ms:0;
   let h=`<div class="card" style="text-align:center"><div style="font-size:54px">${d.passed?'🎉':'✅'}</div><h2 style="font:400 28px 'Jua';margin:4px 0">오늘 10문장 끝!</h2>
    <div class="cmp"><div><small>오늘 걸린 시간</small><b>${fmt(d.ms)}</b>${prev?`<small>지난번 ${fmt(prev.ms)}</small>`:''}</div>
-   <div><small>말 시작까지 (평균)</small><b>${a1!=null?sec1(a1):'-'}</b>${a0!=null?`<small>지난번 ${sec1(a0)}</small>`:''}</div></div>`;
+   <div><small>생각 시간 (평균)</small><b>${a1!=null?sec1(a1):'-'}</b>${a0!=null?`<small>지난번 ${sec1(a0)}</small>`:''}</div></div>`;
   if(prev&&diff>=1000)h+=`<p class="good" style="font-weight:800;font-size:19px">지난번보다 ${fmt(diff)} 빨라졌어요! ⚡</p>`;
-  h+=`<p style="font-size:18px">막힘 없이 말한 문장 <b>${d.clean} / 10</b></p>`;
-  h+=d.passed?`<p style="font-size:18px">내일은 <b>${Math.min(d.stage+1,SP.STAGES.length)}단계</b>로 가요!</p>`:`<p style="font-size:18px">내일 ${d.stage}단계를 한 번 더 해요. 더 빨라질 거예요.</p>`;
+  h+=`<p style="font-size:18px">막힘 없이 말한 문장 <b>${d.clean} / ${d.n||10}</b>${d.n&&d.n<10?` <span class="sub">(안 들려서 넘어간 ${10-d.n}개 빼고)</span>`:''}</p>`;
+  const mo=d.mode||'base';
+  h+=!d.passed?`<p style="font-size:18px">내일 ${d.stage}단계${mo==='ko'?'(한글만)':''}를 한 번 더 해요. 더 빨라질 거예요.</p>`
+    :mo==='base'?`<p style="font-size:18px">내일은 ${d.stage}단계를 <b>한글만 보고</b> 해요!</p>`
+    :`<p style="font-size:18px">내일은 <b>${Math.min(d.stage+1,SP.STAGES.length)}단계</b>로 가요!</p>`;
   return h+'</div>'}
 function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date);
   h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.ids.map((id,i)=>{const it=SP.byId(id),r=d.items[i]||{};return `<tr><td>${esc(it.en)}<div class="sub" style="font-size:13px">${esc(it.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`}).join('')}</table></div>
   <button class="fin" data-act="home">끝 ✓</button>`;return h}
 function logHTML(){const ks=Object.keys(ST.days).filter(k=>ST.days[k].end).sort().reverse();
-  let h=`<h1>지난 기록</h1><div class="sub">지금 ${ST.stage}단계 · 9/10 막힘 없이 → 다음 단계</div><div class="card"><table><tr><th>날짜</th><th>단계</th><th>시간</th><th>막힘 없이</th><th>말 시작(평균)</th></tr>`;
-  ks.forEach(k=>{const d=ST.days[k],o=d.items.map(i=>i.onset).filter(v=>v!=null);h+=`<tr><td>${k.slice(5).replace('-','/')}</td><td>${d.stage}</td><td>${fmt(d.ms)}</td><td>${d.clean}/10${d.passed?' 🎉':''}</td><td>${o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'}</td></tr>`});
+  let h=`<h1>지난 기록</h1><div class="sub">지금 ${ST.stage}단계 ${(ST.mode||'base')==='base'?'첫날(회색 문장 보고)':'둘째 날(한글만)'} · 9/10 막힘 없이 → 통과</div><div class="card"><table><tr><th>날짜</th><th>단계</th><th>시간</th><th>막힘 없이</th><th>생각 시간(평균)</th></tr>`;
+  ks.forEach(k=>{const d=ST.days[k],o=d.items.map(i=>i.onset).filter(v=>v!=null);h+=`<tr><td>${k.slice(5).replace('-','/')}</td><td>${d.stage}${(d.mode||'base')==='ko'?' 한글만':' 회색'}</td><td>${fmt(d.ms)}</td><td>${d.clean}/${d.n||10}${d.passed?' 🎉':''}</td><td>${o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'}</td></tr>`});
   h+=`</table>${ks.length?'':'<p class="sub">아직 기록이 없어요.</p>'}</div>`;
   const last=ks[0]&&ST.days[ks[0]];
-  if(last)h+=`<div class="card"><b>${ks[0].slice(5).replace('-','/')} 문장별</b><table><tr><th>문장</th><th>처음에</th><th>말 시작</th><th>들린 말</th></tr>${last.items.map(r=>{const it=SP.byId(r.id)||{};return `<tr><td>${esc(it.en)}</td><td>${r.ok1?'맞음':'다시'}</td><td>${r.onset!=null?sec1(r.onset):'-'}</td><td>${esc(r.heard||'')}</td></tr>`}).join('')}</table></div>`;
+  if(last)h+=`<div class="card"><b>${ks[0].slice(5).replace('-','/')} 문장별</b><table><tr><th>문장</th><th>처음에</th><th>생각 시간</th><th>들린 말</th></tr>${last.items.map(r=>{const it=SP.byId(r.id)||{};return `<tr><td>${esc(it.en)}</td><td>${r.skip==='quiet'?'안 들림':r.ok1?'맞음':'다시'}</td><td>${r.onset!=null?sec1(r.onset):'-'}</td><td>${esc(r.heard||'')}</td></tr>`}).join('')}</table></div>`;
   return h+`<button class="fin" data-act="home">← 처음으로</button>`}
 
 // 드릴 화면(상태는 RUN.ph)
-function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]);
+// ready: 🎤 누르기 전(생각하는 중) · rec: 녹음 중 · think: 받아 적는 중 · retry: 틀림(한 번 더) · quiet: 안 들림
+// model: 정답 소리 · fready/frec: 따라 말하기 · good: 따라 말하기 맞음
+function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
   let h=`<div class="top"><div class="dots">${R.ids.map((_,k)=>`<i class="${k<R.i?'done':k===R.i?'now':''}"></i>`).join('')}</div><button class="x" data-act="quit">그만</button></div>`;
-  h+=`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div><div class="ko">${esc(it.ko)}</div>`;
-  const ph=R.ph;
-  if(ph==='say'||ph==='follow'){
-    if(ph==='follow')h+=`<div class="answer">${esc(it.en)}</div>`;
-    h+=`<div class="state" id="st"></div><div class="meter" id="mt"><b></b></div>`;
-    if(R.msg)h+=`<div class="heard">${R.msg}</div>`;
-    h+=`<button class="fin" data-act="stop" id="stopBtn">다 말했어 ⏹</button>`;
-    if(ph==='follow')h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div>`}
-  else if(ph==='model'){h+=`<div class="answer">${esc(it.en)}</div>${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`}
-  else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b></div><div class="row"><button class="light" data-act="resay">🎤 다시 말하기</button><button class="light" data-act="show">정답 듣기</button></div>`}
-  else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요.</div><div class="row"><button class="light" data-act="resay">🎤 다시 말하기</button><button class="light" data-act="show">정답 듣기</button></div>`}
-  else if(ph==='good'){h+=`<div class="answer">${esc(it.en)}</div><div class="okbox">👍</div>`}
+  h+=R.mode==='base'?`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div>`:`<div class="base"><small>한글만 보고 말해요</small>&nbsp;</div>`;
+  h+=`<div class="ko">${esc(it.ko)}</div>`;
+  if(fol||ph==='model'||ph==='good')h+=`<div class="answer">${esc(it.en)}</div>`;
+  if(R.msg&&(ph==='ready'||ph==='fready'))h+=`<div class="heard">${R.msg}</div>`;
+  const skip=R.fails?`<button class="link" data-act="skip">${fol?'다음 문장으로 →':'넘어가기 →'}</button>`:'';
+  if(ph==='ready'||ph==='fready'){
+    h+=`<div class="state">${ph==='ready'?'생각이 되면 누르고 말해요':'정답처럼 따라 말해요'}</div><button class="big" data-act="rec" style="max-width:340px;margin:12px auto 0">🎤 ${ph==='ready'?'녹음':'따라 말하기'}</button>`;
+    if(fol)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div>`;
+    h+=`<div class="row">${skip}</div>`}
+  else if(ph==='rec'||ph==='frec'){
+    h+=`<div class="state">🔴 녹음 중 <span id="clk">0:00</span></div><div class="meter" id="mt"><b></b></div><button class="fin" data-act="stop">다 말했어 ⏹</button>`}
+  else if(ph==='think'||ph==='fthink'){h+=`<div class="state"><span class="spin">⏳</span> 듣고 있어요…</div>`}
+  else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`}
+  else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b><br>한 번 더 해 볼까요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
+  else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
+  else if(ph==='good'){h+=`<div class="okbox">👍</div>`}
   return h}
-const UI={state(s){const e=$('#st');if(!e)return;e.innerHTML=s==='talk'?'🗣 말하는 중…':s==='think'?'<span class="spin">⏳</span> 듣고 있어요…':RUN&&RUN.ph==='follow'?'🎤 따라 말해 봐요':'🎤 영어로 말해 봐요'},
-  level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',!!talk);m.firstChild.style.width=Math.round(x*100)+'%'},stop:null};
+const UI={level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',!!talk);m.firstChild.style.width=Math.round(x*100)+'%'},
+  clock(s){const e=$('#clk');if(e)e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}};
 
-function bind(){document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>ACT[b.dataset.act](b));const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()}}
+function bind(){document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>ACT[b.dataset.act](b));
+  const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()};const m=$('#tryMode');if(m)m.onchange=()=>{V.tryMode=m.value;render()}}
 const ACT={
   async start(){if(!MIME&&!MOCK)return;
     try{if(!MOCK||window.__mockMic)await micOpen()}catch(e){alert('마이크를 쓸 수 없어요. 주소창 옆 🔒 → 마이크 → 허용으로 바꿔 주세요.');return}
     warm();try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch(e){}
-    const stage=stageOf();let ids,i=0,res=[],ms=0;
-    if(!TRY&&ST.cur&&ST.cur.date===today()&&ST.cur.stage===stage){({ids,i,res,ms}=ST.cur)}else{ids=buildSet(stage)}
-    RUN={date:today(),stage,ids,i,res,ms,t:Date.now(),blobs:[],day:null};if(!TRY){ST.cur={date:RUN.date,stage,ids,i,res,ms};save()}
-    V={view:'drill',tryStage:V.tryStage};runItem()},
-  stop(){if(UI.stop)UI.stop()},
-  again(){RUN.replay=true;if(UI.stop){RUN.skipJudge=true;UI.stop()}},
-  resay(){RUN.ph='say';RUN.msg='';render();doListen()},
+    const stage=stageOf(),mode=modeOf();let ids,i=0,res=[],ms=0;
+    if(!TRY&&ST.cur&&ST.cur.date===today()&&ST.cur.stage===stage&&ST.cur.mode===mode){({ids,i,res,ms}=ST.cur)}else{ids=buildSet(stage)}
+    RUN={date:today(),stage,mode,ids,i,res,ms,t:Date.now(),blobs:[],day:null};if(!TRY){ST.cur={date:RUN.date,stage,mode,ids,i,res,ms};save()}
+    V={view:'drill',tryStage:V.tryStage,tryMode:V.tryMode};runItem()},
+  rec(){const R=RUN;if(R.ph!=='ready'&&R.ph!=='fready')return;try{speechSynthesis.cancel()}catch(e){}
+    if(R.ph==='ready'&&R.think==null)R.think=Date.now()-R.shown; // 생각 시간 = 한글이 나온 뒤 🎤 누를 때까지(첫 번째만)
+    R.ph=R.ph==='ready'?'rec':'frec';render();recStart(UI)},
+  async stop(){const R=RUN;if(R.ph!=='rec'&&R.ph!=='frec')return;const fol=R.ph==='frec';R.ph=fol?'fthink':'think';render();
+    const r=await recStop();if(R!==RUN||R.quit)return;const it=SP.byId(R.ids[R.i]);
+    let h='';if(r&&(r.blob||MOCK)){try{h=await stt(r.blob,r.sec,it.en)}catch(e){}}if(R!==RUN||R.quit)return;
+    const v=judge(it.en,h);if(!fol&&r&&r.blob)R.blobs[R.i]=r.blob;judged(v,h,fol)},
+  again(){const it=SP.byId(RUN.ids[RUN.i]);speak(it.en)},
+  resay(){RUN.ph='ready';RUN.msg='';render()},
   show(){RUN.ok=false;toModel()},
-  quit(){RUN.quit=true;if(UI.stop)UI.stop();try{speechSynthesis.cancel()}catch(e){}pauseClock();micClose();V={view:'home',tryStage:V.tryStage};render()},
-  home(){V={view:'home',tryStage:V.tryStage};render()},
+  skip(){const R=RUN;if(R.ph[0]!=='f')R.skipped=R.tries===0?'quiet':'wrong';next()},
+  quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();micClose();V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
+  home(){V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
   log(){V={view:'log'};render()},
   try(){location.hash='try';location.reload()},
   mine(b){const bl=RUN.blobs[+b.dataset.i];if(bl){try{const a=new Audio(URL.createObjectURL(bl));a.play()}catch(e){}}},
@@ -324,34 +318,37 @@ function pauseClock(){if(RUN&&RUN.t){RUN.ms+=Date.now()-RUN.t;RUN.t=0}}
 function resumeClock(){if(RUN&&!RUN.t)RUN.t=Date.now()}
 document.addEventListener('visibilitychange',()=>{if(V.view!=='drill')return;if(document.visibilityState==='hidden')pauseClock();else resumeClock()});
 
-function runItem(){const R=RUN;R.ph='say';R.tries=0;R.quiet=0;R.ftries=0;R.ok=false;R.msg='';R.onset=null;R.heard='';R.first=null;render();doListen()}
-async function doListen(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph;R.skipJudge=false;R.replay=false;UI.state('listen');
-  const r=await listen(it.en,UI);if(R!==RUN||R.quit||V.view!=='drill')return;
-  if(R.replay){R.replay=false;await speak(it.en);if(R===RUN&&!R.quit){render();doListen()}return}
-  if(ph==='say'){
-    if(r.blob)R.blobs[R.i]=r.blob;
-    if(r.v==='exact'||r.v==='fuzzy'){if(R.first==null){R.first=true;R.onset=r.onset}R.heard=r.heard;R.ok=true;toModel();return}
-    if(r.v==='unclear'){R.quiet++;if(R.quiet<2){R.msg='🙉 잘 안 들렸어요. 한 번 더 말해 줄래요?';render();doListen();return}R.ph='quiet';render();return}
-    if(R.first==null){R.first=false;R.onset=r.onset}R.tries++;R.heard=r.heard;
+function runItem(){const R=RUN;Object.assign(R,{ph:'ready',tries:0,quiet:0,fails:0,ftries:0,ok:false,msg:'',think:null,heard:'',first:null,follow:false,skipped:null,shown:Date.now()});render()}
+// 받아 적은 말 판정: 맞음 → 정답 듣고 따라 말하기 / 틀림 → 한 번 더(두 번째도 틀리면 정답 듣기) / 안 들림 → 다시 녹음(틀림 아님)
+async function judged(v,h,fol){const R=RUN,it=SP.byId(R.ids[R.i]);const ok=v==='exact'||v==='fuzzy';
+  if(!fol){
+    if(ok){if(R.first==null)R.first=true;R.heard=h;R.ok=true;toModel();return}
+    R.fails++;
+    if(v==='unclear'){R.quiet++;R.ph='quiet';render();return}
+    if(R.first==null)R.first=false;R.tries++;R.heard=h;
     if(R.tries<2){R.ph='retry';render();return}
     R.ok=false;toModel();return}
-  if(ph==='follow'){
-    if(r.v==='exact'||r.v==='fuzzy'){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
-    R.ftries++;if(R.ftries<2){R.msg=r.v==='unclear'?'🙉 잘 안 들렸어요. 한 번 더 들어 봐요.':'한 번 더 들어 봐요.';await speak(it.en);if(R===RUN&&!R.quit){render();doListen()}return}
-    R.follow=false;next()}}
-async function toModel(){const R=RUN,it=SP.byId(R.ids[R.i]);R.ph='model';render();await speak(it.en);if(R!==RUN||R.quit)return;R.ph='follow';R.msg='';render();doListen()}
+  if(ok){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
+  R.ftries++;R.fails++;
+  if(R.ftries<2){R.msg=v==='unclear'?'🙉 잘 안 들렸어요. 한 번 더 들어 보고 따라 말해요.':'한 번 더 들어 보고 따라 말해요.';R.ph='model';render();await speak(it.en);if(R===RUN&&!R.quit){R.ph='fready';render()}return}
+  next()}
+async function toModel(){const R=RUN,it=SP.byId(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;render();await speak(it.en);if(R!==RUN||R.quit)return;R.ph='fready';render()}
 function next(){const R=RUN;const ok1=R.first===true;
-  R.res[R.i]={id:R.ids[R.i],ok1,onset:R.onset,clean:ok1&&(R.onset==null||R.onset<=FAST_MS),heard:(R.heard||'').slice(0,80),follow:!!R.follow};
-  R.i++;if(!TRY){ST.cur={date:R.date,stage:R.stage,ids:R.ids,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
+  R.res[R.i]={id:R.ids[R.i],ok1,onset:R.think,clean:ok1&&R.think!=null&&R.think<=FAST_MS,heard:(R.heard||'').slice(0,80),follow:!!R.follow,skip:R.skipped||undefined};
+  R.i++;if(!TRY){ST.cur={date:R.date,stage:R.stage,mode:R.mode,ids:R.ids,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
   if(R.i<R.ids.length){runItem();return}
   finishDay()}
+// 통과: 막힘 없이 9/10(하나까지 봐줌). 소리가 안 들려서 넘어간 문장은 빼고 셈(안 들림은 틀림 아님). 단, 남은 문장이 7개는 넘어야 함.
+function passCheck(res){const n=res.filter(x=>x.skip!=='quiet').length,clean=res.filter(x=>x.clean).length;return {clean,n,passed:n>=7&&clean>=n-(10-PASS_N)}}
 function finishDay(){const R=RUN;pauseClock();micClose();
-  const clean=R.res.filter(x=>x.clean).length,passed=clean>=PASS_N;
-  const day={stage:R.stage,end:new Date().toISOString(),ms:R.ms,items:R.res,clean,passed};R.day=day;
+  const {clean,n,passed}=passCheck(R.res);
+  const day={stage:R.stage,mode:R.mode,end:new Date().toISOString(),ms:R.ms,items:R.res,clean,n,passed};R.day=day;
   if(!TRY){ST.days[R.date]=day;ST.cur=null;
     const miss=R.res.filter(x=>!x.clean).map(x=>x.id),hit=new Set(R.res.filter(x=>x.clean).map(x=>x.id));
     ST.again=miss.concat((ST.again||[]).filter(id=>!hit.has(id)&&!miss.includes(id))).slice(0,6);
-    if(passed&&ST.stage===R.stage&&ST.stage<SP.STAGES.length)ST.stage++;save()}
+    // 첫날은 회색 문장 보고 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계
+    if(passed&&ST.stage===R.stage&&(ST.mode||'base')===R.mode){if(R.mode==='base')ST.mode='ko';else if(ST.stage<SP.STAGES.length){ST.stage++;ST.mode='base'}}
+    save()}
   V={view:'end'};render()}
 
 (async function boot(){$('#app').innerHTML='<p class="sub" style="text-align:center;margin-top:40px">여는 중…</p>';
