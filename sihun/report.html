@@ -290,7 +290,7 @@ function teachHTML(x){ const p=x.prob||{}, h=x.have||{};
     <div class="kobox">${esc(p.q)}<br>정답: <b>${esc(p.ans)}</b>${p.strat?` · 🃏 ${esc(p.strat)}`:''}</div>
     <div class="muted">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · <span class="bad">설명한 답이 정답과 달랐어요</span>':''}</div>
     ${(x.skipped||[]).length?`<div><b>🔍 건너뛴 단계</b><ul>${x.skipped.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
-    <details><summary>대화 전체 (${(x.turns||[]).length})</summary>${(x.turns||[]).map(t=>`<div class="tut">${t.who==='ai'?'⚡ 카츄':'🙋 시훈'}: ${esc(t.text)}${t.work?`<br><span class="muted">카츄 틀린 풀이:</span> ${esc(t.work).replace(/\n/g,'<br>')}`:''}</div>`).join('')}</details>
+    <details><summary>대화 전체 (${(x.turns||[]).length})</summary>${(x.turns||[]).map(t=>`<div class="tut">${t.who==='ai'?'<img src="icons/cat-study.svg?v=1" alt="" style="width:24px;height:24px;border-radius:6px;vertical-align:middle"> ⚡ 카츄':'🙋 시훈'}: ${esc(t.text)}${t.work?`<br><span class="muted">카츄 틀린 풀이:</span> ${esc(t.work).replace(/\n/g,'<br>')}`:''}</div>`).join('')}</details>
     ${(x.order||[]).length?`<div><b>📝 시훈이가 가르친 순서</b><ol>${x.order.map(o=>`<li>${esc(o.text)}${o.asked?' <span class="muted">(🔍 카츄가 물어봐서 나옴)</span>':''}</li>`).join('')}</ol></div>`:''}
     ${(x.mom||[]).length?`<div class="ana"><b>👩 메모</b><ul>${x.mom.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:''}
     ${x.img?`<div class="pen"><div class="muted">✍️ 패드에 쓴 것</div><img src="${x.img}" alt="패드"></div>`:''}</div>`; }
