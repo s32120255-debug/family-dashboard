@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=100">
-<link rel="icon" href="icon-192.png?v=100">
-<link rel="apple-touch-icon" href="icon-192.png?v=100">
+<link rel="manifest" href="manifest.json?v=101">
+<link rel="icon" href="icon-192.png?v=101">
+<link rel="apple-touch-icon" href="icon-192.png?v=101">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -128,6 +128,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .tt-slot:hover{background:var(--admin-soft)}
 .tt-area{position:absolute;left:64px;right:0;top:0;bottom:0;pointer-events:none}
 .tt-area>*{pointer-events:auto}
+.tt-rest{position:absolute;left:0;right:4px;display:flex;align-items:center;justify-content:flex-end;pointer-events:none;z-index:3}.tt-rest span{font-size:.62rem;color:var(--muted);background:var(--card);padding:0 5px;border-radius:6px;line-height:1.2;white-space:nowrap}
 .tt-gap{position:absolute;left:2px;right:2px;border:2px dashed #7fd8b0;background:repeating-linear-gradient(-45deg,#effbf5 0 8px,#ddf5ea 8px 16px);border-radius:10px;display:grid;place-items:center;color:#2b6b34;font-family:var(--display);font-size:1rem;pointer-events:none;overflow:hidden}.tt-gap small{font-family:var(--body);font-size:.85rem;font-weight:700;color:#1f5a2a}.tt-gap span{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}.tt-gap.sm{border-width:1.5px;border-radius:5px;z-index:3;place-items:center start;padding-left:4px;overflow:visible}.tt-gap.sm span{font-family:var(--body);font-size:.66rem;line-height:1.15;gap:3px;background:#effbf5;border:1px solid #7fd8b0;border-radius:999px;padding:0 6px}.tt-gap.sm small{font-size:.66rem}.tt-gap.ask{border-color:#b49be0;background:repeating-linear-gradient(-45deg,#f6f0ff 0 8px,#ece2fb 8px 16px);color:#4b2f86}.tt-gap.ask small{color:#4b2f86}.tt-gap.ask.sm span{background:#f6f0ff;border-color:#b49be0}
 .tt-b{position:absolute;border-radius:10px;border:2px solid #3a2a00;padding:3px 8px;display:flex;gap:4px;align-items:center;overflow:hidden;color:#2b2414;font-size:1rem;line-height:1.2}
 .tt-b b{font-family:var(--display);font-weight:400;line-height:1.1}
@@ -250,7 +251,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 100</p></div></div>
+<p style="font-size:.75rem">버전 101</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -400,8 +401,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=100";
-import {SEED_SCHEDULE} from "./seed.js?v=100";
+import {firebaseConfig} from "./config.js?v=101";
+import {SEED_SCHEDULE} from "./seed.js?v=101";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -595,14 +596,14 @@ function timetable(list,nm){
  const untimed=list.filter(x=>!x.start);
  let lo=Math.min(7,...timed.map(x=>Math.floor(x.s/60)));const hi=Math.max(22,...timed.map(x=>Math.ceil(x.e/60)));
  // 지난 시간 접기(오늘 볼 때 기본): 지금 시각의 정시부터 보여 줌. 진행 중 일정은 정시부터 잘라 보여 줌(글자 시각은 그대로) — 시훈이 대시보드와 같은 규칙
- let fold="";if(nm!=null){const cut=Math.floor(nm/60)*60;
+ let fold="",foldCut=null;if(nm!=null){const cut=Math.floor(nm/60)*60;
   const past=timed.filter(x=>x.e<=cut&&!x.skipped).length;
   if(cut/60>lo){fold=`<button type="button" class="btn small" id="ttFold" style="margin-bottom:6px">${ttOpen?"지난 시간 접기":`지난 시간 펼치기${past?` (${past}개)`:""}`}</button>`;
-   if(!ttOpen){lo=cut/60;timed=timed.filter(x=>x.e>cut).map(x=>x.s<cut?{...x,s:cut}:x)}}}
+   if(!ttOpen){lo=cut/60;foldCut=cut;timed=timed.filter(x=>x.e>cut).map(x=>x.s<cut?{...x,s:cut}:x)}}}
  const lanes=[];for(const x of timed){let k=lanes.findIndex(end=>end<=x.s);if(k<0){k=lanes.length;lanes.push(0)}lanes[k]=x.e;x.lane=k}
  for(const x of timed){x.n=Math.max(...timed.filter(y=>y.s<x.e&&x.s<y.e).map(y=>y.lane))+1}
  // 세로 위치: 분 단위 비례 + 짧은 일정(≥36px)·짧은 휴식(≥26px)은 늘려서 잘 보이게(sy 11/25)
- const lt0=timed.filter(x=>!x.skipped),rests=[];{let pe=null;for(const x of lt0){if(pe!=null&&x.s-pe>=5)rests.push([pe,x.s]);pe=Math.max(pe??0,x.e)}}
+ const lt0=timed.filter(x=>!x.skipped),rests=[];{let pe=foldCut;for(const x of lt0){if(pe!=null&&x.s-pe>=5)rests.push([pe,x.s]);pe=Math.max(pe??0,x.e)}}
  const pts=[...new Set([lo*60,hi*60,...timed.flatMap(x=>[x.s,x.e]),...Array.from({length:(hi-lo)*2+1},(_,i)=>lo*60+i*30)])].filter(m=>m>=lo*60&&m<=hi*60).sort((a,b)=>a-b);
  const segH=pts.slice(1).map((b,i)=>(b-pts[i])/60*HPX);
  const grow=(a,b,min)=>{let t=0;const ix=[];for(let i=0;i<segH.length;i++)if(pts[i]>=a&&pts[i+1]<=b){t+=segH[i];ix.push(i)}if(t>0&&t<min)for(const i of ix)segH[i]*=min/t};
@@ -618,8 +619,8 @@ function timetable(list,nm){
  for(let h=lo;h<hi;h++)for(const half of [0,30]){const m=h*60+half,cov=lt.find(x=>x.s<m+30&&x.e>m),col=cov?schedColor(cov,TTC):"";
   const ty=y(m);
   rows+=`<div class="tt-row${half?" half":""}" style="top:${ty}px;height:${y(m+30)-ty}px">${half?"":`<span class="tt-h${cov?" on":""}">${h<12?"오전":"오후"} ${h%12||12}시</span>`}${admin?`<button class="tt-slot" data-slot="${pad(h)}:${half?"30":"00"}" aria-label="${h}시 ${half?"30분":""}에 일정 넣기"></button>`:""}</div>`}
- // 빈 시간: 10분 미만 = 😌 휴식(얇게), 10분 이상 = 🤔 상의 후 결정(엄마 11/26)
- let gaps="";if(SHOW_FREE)for(const [a,b] of rests){const gh=Math.max(3,y(b)-y(a)-2),d=b-a,ask=d>=10;gaps+=`<div class="tt-gap${ask?" ask":""}${gh<26?" sm":""}" style="top:${y(a)+1}px;height:${gh}px"><span>${ask?"🤔 상의 후 결정":"😌 휴식"}<small>${gh<26&&!ask?d+"분":hm(a)+"~"+hm(b)}</small></span></div>`}
+ // 빈 시간: 10분 미만 = 작은 회색 「휴식 5분」(엄마 11/26 「휴식이 너무 부각돼」), 10분 이상 = 🤔 상의 후 결정(엄마 11/26)
+ let gaps="";if(SHOW_FREE)for(const [a,b] of rests){const gh=Math.max(3,y(b)-y(a)-2),d=b-a;gaps+=d>=10?`<div class="tt-gap ask${gh<26?" sm":""}" style="top:${y(a)+1}px;height:${gh}px"><span>🤔 상의 후 결정<small>${hm(a)}~${hm(b)}</small></span></div>`:`<div class="tt-rest" style="top:${y(a)}px;height:${y(b)-y(a)}px"><span>휴식 ${d}분</span></div>`}
  const PAL=["#ffe066","#9fd8ff","#ffb0a0","#b8f0b0","#e0c4ff","#ffd0f0"];
  const blocks=timed.map((x,i)=>{const hgt=Math.max(22,y(x.e)-y(x.s)-2),w=100/x.n;const now=nm!=null&&!x.skipped&&nm>=x.rs&&nm<x.re,past=nm!=null&&!x.skipped&&nm>=x.re;
   const time=fmtT(x.start).replace(/^오[전후] /,"")+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):"");
@@ -1161,7 +1162,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=100;
+const VERSION=101;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
