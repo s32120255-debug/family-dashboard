@@ -325,7 +325,7 @@ const MKT={M1:'MARK 1-1 · 명사와 대명사',M2:'MARK 1-2 · 동사',M3:'MARK
 function mapRep(C,k){const M=C.routine&&C.routine.map;const d=M&&M.days&&M.days[k];if(!d)return '';const L=[];const li=x=>`<li style="margin:4px 0">${x}</li>`;const sec=(t,b)=>b?`<div style="margin-top:10px"><b>${t}</b>${b}</div>`:'';
   // 원리 카드
   const rx=d.rsx||{},rl=d.rsl||{},rn=Object.keys(rx).length,rok=Object.values(rx).filter(v=>v).length;
-  const rbad=Object.keys(rx).filter(i=>!rx[i]).map(i=>{const r=rl[i];return r?li(`${r.ex?`<span class="muted">예문</span> ${esc(r.ex)}<br>`:''}${esc(r.q)}<br>시훈 <span class="bad">${esc(r.pick)}</span> → 정답 <span class="ok">${esc(r.ans)}</span>`):li(`${+i+1}번 카드 <span class="muted">(자세한 기록은 11/26 오후부터)</span>`)});
+  const rbad=Object.keys(rx).filter(i=>!rx[i]).map(i=>{const r=rl[i];return r?li(`${r.bf?`${r.n}번 카드 · `:''}${r.ex?`<span class="muted">예문</span> ${esc(r.ex)}<br>`:''}${r.q?esc(r.q)+'<br>':r.bf?'<span class="muted">(오늘 오후에 문제를 바꾼 카드라 문제 글은 뺐어요)</span><br>':''}${r.pick!=null?`시훈 <span class="bad">${esc(r.pick)}</span> → `:r.bf?'<span class="muted">고른 답은 기록 전</span> · ':''}${r.ans?`정답 <span class="ok">${esc(r.ans)}</span>`:''}`):li(`${+i+1}번 카드 <span class="muted">(자세한 기록은 11/26 오후부터)</span>`)});
   L.push(sec(`📌 원리 카드 ${rn?rok+' / '+rn+' 맞힘':'–'}`,rbad.length?`<ul style="margin:4px 0;padding-left:20px">${rbad.join('')}</ul>`:''));
   // 블록
   const bk=Object.values(d.blk||{}),bw=bk.filter(x=>x.w>0);
@@ -341,8 +341,8 @@ function mapRep(C,k){const M=C.routine&&C.routine.map;const d=M&&M.days&&M.days[
   // 카츄 가르치기
   const T=(d.teach||[]).filter(Boolean);
   if(T.length)L.push(sec(`🧑‍🏫 카츄 가르치기 ${T.length}문장`,T.map(t=>{const turns=t.turns||[];const mom=(t.mom||[]).slice(-1)[0];
-    return `<div class="tut">${t.end?(t.end==='ok'?'<span class="ok">✅ 원리를 다 설명함</span>':'<span class="bad">⏸ 원리를 아직 다 설명 못 하고 끝냄</span>'):turns.length?'<span class="muted">중간에 멈춤</span>':''}${(t.pickW||0)?` <span class="muted">· 자리 고르기 ${t.pickW}번 틀림</span>`:''}
-      ${turns.length?turns.map(x=>`<div>${x.who==='ai'?'⚡ 카츄':'🙋 시훈'}: ${esc(x.text)}</div>`).join(''):t.why!=null?`<div>🙋 시훈: ${esc(t.why||'(잘 모르겠어)')}</div>${(t.miss||[]).length?`<div class="muted">빠진 원리 ${t.miss.length}개 → 보기 고르기 ${t.probeW||0}번 틀림 (예전 방식)</div>`:''}`:''}
+    return `<div class="tut">${t.s?`<div><b>${esc(t.s)}</b>${t.t?` <span class="muted">→ ${esc(t.t)}</span>`:''}</div>`:''}${t.end?(t.end==='ok'?'<span class="ok">✅ 원리를 다 설명함</span>':'<span class="bad">⏸ 원리를 아직 다 설명 못 하고 끝냄</span>'):turns.length?'<span class="muted">중간에 멈춤</span>':''}${(t.pickW||0)?` <span class="muted">· 자리 고르기 ${t.pickW}번 틀림</span>`:''}
+      ${turns.length?turns.map(x=>`<div>${x.who==='ai'?'⚡ 카츄':'🙋 시훈'}: ${esc(x.text)}</div>`).join(''):t.why!=null?`<div>🙋 시훈: ${esc(t.why||'(잘 모르겠어)')}</div>${(t.miss||[]).length?`<div class="muted">빠진 원리 ${t.miss.length}개${(t.missQ||[]).length?' ('+esc(t.missQ.join(' / '))+')':''} → 보기 고르기 ${t.probeW||0}번 틀림 (예전 방식: 보기를 보고 고름)</div>`:''}`:''}
       ${(t.wrong||[]).length?`<div class="bad" style="font-weight:400">틀린 설명: ${esc(t.wrong.filter(Boolean).join(' / '))}</div>`:''}${mom?`<div><b>카츄 메모:</b> ${esc(mom)}</div>`:''}</div>`}).join('')));
   // 내 이야기
   const W=d.write;if(W&&W.at)L.push(sec('📖 내 이야기',`<div class="tut">${W.ko?esc(W.ko)+'<br>':''}<b>${esc(W.en||'')}</b>${W.wrong?` <span class="muted">(블록 ${W.wrong}번 잘못 누름)</span>`:''}</div>`));

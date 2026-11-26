@@ -1293,7 +1293,16 @@ function mapWordsFill(){Object.values(MAPSET).forEach(S=>(S.words||[]).forEach((
 
 const MAPWHY=[['📘','이해'],['🌊','컨디션'],['🎯','주의'],['🗣️','꺼내기'],['🔋','후반 집중']];
 let MZ=null;
-function mapS(){return RLOG.map||(RLOG.map={cells:{},days:{},done:{}})}
+function mapS(){const M=RLOG.map||(RLOG.map={cells:{},days:{},done:{}});if(!M.bf1126&&!window.HUBTRY&&MAPORDER.length&&Object.keys(M.days||{}).length){M.bf1126=1;try{mapBackfill(M)}catch(e){}setTimeout(()=>{try{save()}catch(e){}},0)}return M}
+// 엄마 11/26 "오늘 지나간 것도?": 자세한 리포트 기록(문제 글·한국어·정답)을 넣기 전에 한 기록에도 아는 만큼 채워 넣음(한 번만).
+// 원리 카드는 고른 답이 저장돼 있지 않아 정답만, 오늘 오후에 문제를 바꾼 카드는 문제 글도 비움(시훈이가 본 것과 달라서).
+function mapBackfill(M){const A=MAPALL(),CH={M1:[0,1,2,6,7],M2:[4,6],M3:[0],M4:[4],M6:[3,6],M7:[4,5],M9:[1,2,4],M10:[0,4]};const fill=(o,k)=>{const c=A[k];if(o&&c&&!o.ko){o.ko=c.ko;o.en=c.en[0]}};
+  Object.values(M.cells||{}).forEach((o,i)=>fill(o,Object.keys(M.cells)[i]));
+  Object.entries(M.days||{}).forEach(([key,d])=>{if(!d||/^try/.test(key))return;const S=MAPSET[d.set];if(!S)return;
+    if(d.rsx&&S.steps){d.rsl=d.rsl||{};Object.keys(d.rsx).forEach(i=>{if(d.rsl[i])return;const st=S.steps[+i];if(!st)return;const ch=(CH[d.set]||[]).includes(+i);d.rsl[i]={q:ch?'':st.q,ex:st.ex?st.ex[0]:'',pick:null,ans:ch?'':st.o[st.a],ok:!!d.rsx[i],bf:1,n:+i+1}})}
+    (d.quiz||[]).forEach((r,i)=>{const q=(S.quiz||[])[i];if(r&&q&&!r.q)Object.assign(r,{q:q.q,ko:q.ko||'',o:q.o,a:q.a,why:q.why||''})});
+    Object.entries(d.blk||{}).forEach(([k,o])=>fill(o,k));Object.entries(d.rev||{}).forEach(([k,o])=>fill(o,k));(d.pk||[]).forEach(o=>fill(o,o&&o.k));
+    (d.teach||[]).forEach((t,i)=>{const it=(S.teach||[])[i];if(t&&it&&!t.s){t.s=it.s;t.t=it.t;if((t.miss||[]).length)t.missQ=t.miss.map(j=>it.k[j]&&it.k[j].q).filter(Boolean)}})})}
 // 👀 직접 해 보기(엄마 미리보기): 날짜와 상관없이 아직 안 한 다음 지도를 보여 줌. 저장은 막혀 있어 시훈이 기록엔 안 남음
 // 👀 미리보기: 오늘 지도를 이미 끝냈으면 내일 지도를 따로(try:날짜) 보여 줌. 저장은 막혀 있어 기록 안 남음
 function mapDKey(){if(window.HUBTRY){if(window.TRYDAY==='today')return 'tryT:'+today();if(window.TRYDAY==='tomorrow')return 'try:'+today();const d=mapS().days[today()];if(d&&d.end)return 'try:'+today()}return today()}
@@ -1361,7 +1370,7 @@ function mapTeachHTML(d){const L=mapTeach(),it=L[MZ.ti];if(!it)return '';const c
   else if(MZ.tp==='new'){const n=it.nw,nc=mapCellEn(n.s);h+=mapKat(`그럼 이것도 풀어 줘! <b>${esc(n.s)}</b> 에서 ${TASK[n.r]}`)+(nc?`<div class="tip" style="text-align:center">${esc(nc.ko)}</div>`:'');if(MZ.tmsg)h+=`<div class="notice" style="text-align:center">${MZ.tmsg}</div>`;h+=mapTeachPick(n.s,n.t,MZ.tw>=2)}
   else if(MZ.tp==='done'){h+=mapKat('형아가 가르쳐 줘서 나도 알게 됐어! 고마워 ⚡')+`<div class="row" style="justify-content:center"><button class="btn big" data-act="mapTNext">${MZ.ti+1<L.length?'다음 문장 ▶':'내 이야기 쓰러 가기 ▶'}</button></div>`}
   return h}
-function mapTRec(){const d=mapDay();d.teach=d.teach||[];return (x=>{if(!x.turns)x.turns=[];return x})(d.teach[MZ.ti]||(d.teach[MZ.ti]={pickW:0,why:'',newW:0,turns:[],n:0,t0:Date.now()}))}
+function mapTRec(){const d=mapDay();d.teach=d.teach||[];return (x=>{if(!x.turns)x.turns=[];return x})(d.teach[MZ.ti]||(d.teach[MZ.ti]={pickW:0,why:'',newW:0,turns:[],n:0,t0:Date.now(),s:(mapTeach()[MZ.ti]||{}).s||'',t:(mapTeach()[MZ.ti]||{}).t||''}))}
 // 🧑‍🏫 카츄 가르치기(엄마 11/26 "엉망으로 설명하는데 카츄가 힌트 주고 끝내 버림"): 서버 enTeach가 시훈이 설명의 틀리거나 빠진 곳만
 // 반례 예문으로 되물어요(답·힌트·보기 없음). 카츄는 혼자 안 끝내고, 시훈이가 「✅ 다 가르쳤어」. AI 화면은 자동 넘김 없이 「다음」 버튼.
 function mapTResume(T){T=T||[];const i=T.findIndex(x=>!x||!(x.end||x.sec));return i<0?T.length:i}
