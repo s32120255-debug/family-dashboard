@@ -104,6 +104,8 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tt-nowl{position:absolute;left:-6px;right:0;height:0;border-top:2.5px solid #ff4d5e;pointer-events:none;z-index:3}
 .tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:#ff4d5e}
 #taskChip{border:2px solid var(--line)}
+.mv{display:inline-flex;flex-direction:column;flex:none}.mv .icon{padding:1px 9px;font-size:.95rem;line-height:1.1}
+.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcat span:first-child{flex:1}
 .gcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
 .gcal .dow{font-size:.8rem;color:var(--muted);padding:2px 0}
 .gcal div.d{background:var(--bg);border-radius:8px;min-height:46px;display:grid;align-content:start;justify-items:center;gap:2px;padding:4px 0;font-variant-numeric:tabular-nums}
@@ -487,15 +489,32 @@ function bonusSum(tasks,from){return Object.entries(dayBonus(tasks)).reduce((a,[
 function lastOfDay(x){return x.date===today()&&!x.done&&S.tasks.filter(y=>y.date===x.date&&y.id!==x.id).every(y=>y.done&&y.doneDate===x.date)}
 function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"";const b=dayBonus(S.tasks)[t];
  return b?`<li class="x2 on">⚡ 오늘 과제 다 했어요! 과제 포인트 2배 (+${b})</li>`:`<li class="x2">⚡ 오늘 과제를 오늘 다 하면 과제 포인트 2배!</li>`}
+// 과제 대분류·순서(엄마 11/26, 우리집 기지·시훈이 대시보드 같은 규칙): cat=대분류(국어·영어·수학…), 과제 이름=소분류.
+// 순서: 과제 order → 반복 과제 틀 order → 만든 순서. 대분류 순서는 그 안 맨 앞 과제 순서를 따름
+function tplOf(x){return x.tplId&&S.taskTpls.find(y=>y.id===x.tplId)}
+function taskCat(x){const tp=tplOf(x);return String((x.cat!=null?x.cat:tp&&tp.cat)||"").trim()}
+function taskOrd(x){if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
+function taskGroups(l){const g=[];for(const x of l.slice().sort((a,b)=>taskOrd(a)-taskOrd(b))){const c=taskCat(x);let o=g.find(y=>y.cat===c);if(!o)g.push(o={cat:c,items:[]});o.items.push(x)}return g}
+function taskMoved(l,id,dir,cat){const g=taskGroups(l);
+ if(cat!=null){const i=g.findIndex(y=>y.cat===cat),j=i+dir;if(i<0||j<0||j>=g.length)return null;[g[i],g[j]]=[g[j],g[i]]}
+ else{const o=g.find(y=>y.items.some(x=>x.id===id));if(!o)return null;const i=o.items.findIndex(x=>x.id===id),j=i+dir;if(j<0||j>=o.items.length)return null;[o.items[i],o.items[j]]=[o.items[j],o.items[i]]}
+ return g.flatMap(y=>y.items)}
+async function saveTaskOrder(l){const b=F.writeBatch(fs),tp=new Set();
+ l.forEach((x,k)=>{b.update(F.doc(fs,"tasks",x.id),{order:k*10});if(x.tplId&&S.taskTpls.some(y=>y.id===x.tplId)&&!tp.has(x.tplId)){tp.add(x.tplId);b.update(F.doc(fs,"taskTpls",x.tplId),{order:k*10})}});
+ try{await b.commit()}catch(e){toast("옮기지 못했어요: "+(e.code||e.message||""))}}
+const mvBtns=(a,v)=>`<span class="mv"><button class="icon" ${a}="${esc(v)}" data-dir="-1" aria-label="위로">▲</button><button class="icon" ${a}="${esc(v)}" data-dir="1" aria-label="아래로">▼</button></span>`;
+function taskGroupHTML(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
+ return g.map(y=>`<li class="tcat"><span>${esc(y.cat||"기타")}</span>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+y.items.map(row).join("")).join("")}
+function todayTasks(t){return S.tasks.filter(x=>x.date===t)}
 function renderTasks(){
  const t=today();const sum=l=>l.reduce((a,x)=>a+(Number(x.points)||0),0);
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards.filter(x=>x.kind!=="help")),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=weekStart()))+bonusSum(S.tasks,weekStart());
  $("ptText").textContent=`쓸 수 있는 과제 포인트 ⭐${earned-used}`;
  renderGrow(earned,used,week);
- const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span></li>`;
- const tl=S.tasks.filter(x=>x.date===t).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="btn small primary" href="${esc(taskLink(x))}" target="_blank" rel="noopener">바로 가기</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${mom&&!late?mvBtns("data-mv",x.id):""}</li>`;
+ const tl=todayTasks(t);
  const dn=tl.filter(x=>x.done).length;
- $("taskList").innerHTML=bonusLine(t)+(tl.length?`<li class="meta" style="list-style:none;padding:0 4px">${tl.length}개 중 ${dn}개 했어요</li>`:"")+(tl.map(x=>row(x,false)).join("")||`<li class="empty">오늘 과제가 없어요.</li>`);
+ $("taskList").innerHTML=bonusLine(t)+(tl.length?`<li class="meta" style="list-style:none;padding:0 4px">${tl.length}개 중 ${dn}개 했어요</li>`:"")+(taskGroupHTML(tl,x=>row(x,false),mom)||`<li class="empty">오늘 과제가 없어요.</li>`);
  const late=S.tasks.filter(x=>!x.done&&x.date<t).sort((a,b)=>a.date.localeCompare(b.date));
  $("lateBox").innerHTML=late.length?`<p class="meta" style="margin:6px 4px">밀린 과제 ${late.length}개</p><ul class="list">${late.map(x=>row(x,true)).join("")}</ul>`:"";
 }
@@ -940,6 +959,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   for(const x of S.ask){b.delete(F.doc(sub("ask"),x.id));n++}for(const x of S.log.filter(y=>y.col==="ask")){b.delete(F.doc(sub("log"),x.id));n++}
   if(n)await b.commit();toast(`${n}개 지웠어요`)}catch(e){toast("지우지 못했어요: "+(e.code||""))}});return}
  if(d.hb){if(d.hb==="start"||d.hb==="next")hbNext();else hbAnswer(d.hb);return}
+ if(d.mv!==undefined||d.mvcat!==undefined){if(!mom||!fs)return;const l=taskMoved(todayTasks(today()),d.mv,Number(d.dir),d.mvcat);if(l)saveTaskOrder(l);return}
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x||!fs)return;const wasLast=lastOfDay(x);
   F.updateDoc(F.doc(fs,"tasks",x.id),x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}).then(()=>{if(!x.done)toast(wasLast?`오늘 과제 다 했어! 포인트 2배 ⚡`:`잘했어! ⭐${Number(x.points)||0}`)}).catch(err=>toast("저장하지 못했어요: "+(err.code||"")));return}
  if(d.money){openMoney(d.money);return}
@@ -976,7 +996,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=73;
+const VERSION=75;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1021,7 +1041,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=73").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=75").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
