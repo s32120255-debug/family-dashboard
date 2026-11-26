@@ -4,23 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#fbfaf4">
-<title>시훈 연산</title>
+<title>스피드 연산</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="시훈 연산">
+<meta name="apple-mobile-web-app-title" content="스피드 연산">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795668595";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795669942";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
 </head>
-<body><title>시훈 연산</title>
+<body><title>스피드 연산</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap">
@@ -57,7 +57,7 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .pv{flex:none;background:var(--hl);color:var(--ink);font-size:14px;text-align:center;padding:6px 8px;border-radius:0 0 10px 10px}
 .pv button{text-decoration:underline;font-size:14px}
 .ans-pv{font-size:15px;color:var(--ink-2)}
-.bar .where{font-family:var(--f-disp);font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.bar .where:has(.apn){display:flex;flex-direction:column;line-height:1.15}.apn{font-size:20px}.apd{font-size:12px;color:var(--ink-2);font-family:var(--f-body,inherit)}.bar .where{font-family:var(--f-disp);font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .nb{min-height:44px;padding:0 14px;border-radius:12px;background:var(--paper-2);border:1px solid var(--line);font-size:16px;white-space:nowrap}
 .nb:active,.chip:active,.key:active,.bigbtn:active{transform:translateY(1px)}
 .nb[disabled]{opacity:.35}
@@ -3382,7 +3382,7 @@ const bar=(title,right="",nh)=>`${PREVIEW?'<div class="pv">미리 보기 · 기�
 
 /* 누가 하나 */
 function vWho(){const pick=act=>PROFILES.map(p=>`<button class="next" style="align-items:center" data-act="${act}" data-arg="${p.id}"><span class="v">${p.icon} ${p.name}</span></button>`).join(""),
-    wrap=h=>`<div class="page" style="justify-content:center;gap:14px">${h}</div>`,c=t=>`<p class="small muted" style="text-align:center">${t}</p>`,H=t=>`<h1 style="text-align:center">${t}</h1>`;
+    wrap=h=>`<div class="page" style="justify-content:center;gap:14px">${h}</div>`,c=t=>`<p class="small muted" style="text-align:center">${t}</p>`,H=t=>`<p style="text-align:center;font-family:var(--f-disp);font-size:30px;margin:0;color:var(--blue)">스피드 연산</p><h1 style="text-align:center">${t}</h1>`;
   if(!fbCan()||FBOFF)return wrap(H("누가 할 거냥?")+pick("who")+c("기록은 사람마다 따로 남아요."+(FBOFF?" 인터넷이 안 돼서 지금은 이 기기에만 저장돼요.":"")));
   if(FBWAIT)return wrap(H("잠깐만 기다린다냥…"));
   if(!FBU)return wrap(H("로그인하고 시작한다냥")+`<button class="bigbtn" data-act="fbin" ${FBBUSY?"disabled":""}>${FBBUSY?"로그인 창을 여는 중…":"구글로 로그인"}</button>`+c(FBMSG?esc(FBMSG):"시훈, 엄마, 아빠가 각자 자기 구글 계정으로 들어온다냥. 기록은 사람마다 따로 남는다옹."));
@@ -3414,7 +3414,7 @@ function vHome(){
   const items=dayOrder().filter(id=>owed(id)>0).map(id=>{const T=TYPES[id],o=owed(id),dn=d.done[id]||0,plan=d.plan[id]||0,st=tst(id);
     const dots=Array.from({length:o},(_,i)=>`<i class="${i<dn?"f":""} ${i>=plan?"c":""}"></i>`).join("");
     return `<button class="pitem ${dn>=o?"done":""}" data-act="open" data-arg="${id}"><span class="nm">${T.name}</span><span class="dots" aria-label="${dn}/${o}세트">${dots}</span><span class="ex">${STEPT(T)?stepLabel(T,st.step||0):T.ex}${st.grad?' · <span class="pill ok">졸업</span>':""}${dn>o?` · 더 한 세트 ${dn-o}`:""}</span>${pathTxt(id)}</button>`}).join("");
-  return `${bar(dayLabel(today()),`<button class="nb" data-act="pin">관리자</button><button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`,1)}<div class="page">
+  return `${bar(`<span class="apn">스피드 연산</span><span class="apd">${dayLabel(today())}</span>`,`<button class="nb" data-act="pin">관리자</button><button class="nb" data-act="go" data-arg="who">${PROFILES.find(p=>p.id===PID).icon} ${pname()}</button>`,1)}<div class="page">
    ${(()=>{const n=Object.values(DAYS).reduce((a,d)=>a+(d.sets||[]).reduce((x,y)=>x+(y.n||0),0),0);if(!n)return "";const b=n/BOOKN;return `<p class="small muted" style="text-align:center;margin:-6px 0">지금까지 <b>${n.toLocaleString()}문제</b> · 시중 연산 문제집 <b>${b<10?b.toFixed(1):Math.round(b)}권</b>쯤 풀었다냥</p>`})()}
    ${nx?`<button class="next" data-act="open" data-arg="${nx}"><span class="k">다음 할 것 · 오늘 ${totalDone}/${totalOwed}세트</span><span class="v">${TYPES[nx].name}</span><span class="k">${STEPT(TYPES[nx])?stepLabel(TYPES[nx],tst(nx).step||0):TYPES[nx].ex}</span>${pathTxt(nx)}</button>`
      :`<div class="notice good"><b>오늘 ${totalOwed}판 끝! 수고했다냥.</b></div>`}
