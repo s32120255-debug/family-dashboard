@@ -61,6 +61,10 @@ const STN={'be+':'be 지금 · 긍정','be-':'be 지금 · 부정','beQ':'be 지
 const CLS={ok:'바로 완성',access:'힌트 보고 고쳐서 완성',unknown:'두 번 틀려 정답 보고 익힘',speak:'말하기 막힘'};
 const KOT={daily:'복습 카드',test:'누적 테스트',wrong:'오답',hw:'숙제',write:'독서 워크지',lit:'문학 개념',fill:'핵심 빈칸',note:'개념 정리'};
 let day=new Date(); let CACHE=null;
+// 📋 과목별 리포트(엄마 11/26): report.html#en · #ko(국어+글쓰기) · #math — 주소 끝이 없으면 전체
+const RSUB=(/^#(en|ko|math)$/.exec(location.hash)||[])[1]||'';
+const RCARD={'🇺🇸':'en','📖':'ko','✍️':'ko','🔢':'math','🧑‍🏫':'math'};
+const RTITLE={en:'🇺🇸 계단영어',ko:'📖 계단국어 · 계단글쓰기',math:'🔢 계단수학'};
 
 function gate(){
   let ok=false;try{ok=sessionStorage.getItem('hub:mom')==='1'}catch(e){}
@@ -318,7 +322,7 @@ const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
 async function render(){
   const k=dkey(day);const C=CACHE;
   const D=await getD('daily/'+k).catch(()=>null)||{subjects:{}};const S=D.subjects||{};
-  let h=`<h1>📋 시훈 하루 리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
+  let h=`<h1>📋 시훈 ${RSUB?RTITLE[RSUB]+' ':'하루 '}리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
   // 영어
   const en=(S.en&&S.en.actual)||{};const R=(C.routine&&C.routine.days&&C.routine.days[k])||{};const V=(C.vcheck&&C.vcheck.days&&C.vcheck.days[k])||{};
   const vn=(en.vocab&&en.vocab.n)||V.n||0, vk=(en.vocab&&en.vocab.known)||V.known||0;
@@ -353,6 +357,7 @@ async function render(){
   h+=`<div class="card"><h2>📦 기록 내보내기</h2><p class="muted" style="font-size:14px">파일로 받아서 Claude에게 올리면 손풀이·대화까지 보고 가르치는 방법을 다듬어요.</p><div><button class="abtn" data-exp="1">이날</button><button class="abtn" data-exp="7">최근 7일</button><button class="abtn" data-exp="30">최근 30일</button></div><div id="expout" class="muted" style="font-size:14px"></div></div>`;
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
+  if(RSUB)M.querySelectorAll('.card').forEach(c=>{const t=(c.querySelector('h2')||{}).textContent||'';const k=Object.keys(RCARD).find(e=>t.startsWith(e));if(k&&RCARD[k]!==RSUB)c.style.display='none'});
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&(d.img||(d.ph||[]).length)){el.innerHTML=d.img?`<img src="${d.img}" alt="손풀이">`:'';for(const q of (d.ph||[])){const pd=await getD('m32pen/'+q).catch(()=>null);if(pd&&pd.img)el.insertAdjacentHTML('beforeend',`<div class="muted">📷 종이 풀이 사진</div><img src="${pd.img}" alt="사진">`)}}else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   if(MI.length) mountAna(k,MI);
   if(KR.length) koFill(KR).then(()=>koExtra(k));
@@ -364,7 +369,7 @@ async function render(){
 }
 onAuthStateChanged(auth,u=>{
   if(!u){M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p><button class="btn" id="li">구글로 로그인</button></p></div>`;document.getElementById('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p)}catch(e){alert('로그인이 안 됐어요: '+(e.code||e.message))}};return}
-  start();
+  gate(); // 엄마 11/26: 리포트는 관리자만(엄마 비밀번호)
 });
 </script>
 </body>
