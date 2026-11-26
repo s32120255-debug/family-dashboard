@@ -211,6 +211,13 @@ onAuthStateChanged(auth, async user => {
     if(e && e.code === 'permission-denied'){ showDenied(user.email); return; }
   }
   window.__SIHUN.user = user.email;
+  // 🧮 스피드 연산(엄마가 만든 앱) 시훈이 오늘 기록 읽기 — 그 앱은 로그인 계정이 아니라 「누가 할 거냥? 시훈」으로 나눠 저장(mathApp/family/days/날짜). 읽기만 함
+  // ⚡ 스피드 영어는 로그인 계정별 저장(sihun/data/speed/u-메일). 시훈이 계정은 공개 코드에 적지 않고 해시 앞 16자리로만 찾음
+  window.__SIHUN.speedEnSihun = async () => { try{ const q=await getDocs(collection(fs,...P,'speed')); for(const d of q.docs){ if(!/^u-/.test(d.id)) continue;
+      const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(d.id)))).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+      if(h==='83afd7e83abd2cf0') return unpack(d.data()); } return null; }catch(e){ return null; } };
+  window.__SIHUN.speedMathDay = async t => { try{ const R=['mathApp','family','days']; const s=await getDoc(doc(fs,...R,t)); if(!s.exists()) return null; const d=s.data(); let j=d.j||'';
+    for(let i=1;i<(d.parts||1);i++){ const x=await getDoc(doc(fs,...R,t+'~'+i)); j+=x.exists()?x.data().j:''; } return JSON.parse(j); }catch(e){ return null; } };
   window.__SIHUN.signOut = async () => { await signOut(auth); location.reload(); };
   window.__SIHUN.resolveDb(DB);
 });
@@ -8394,6 +8401,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function subj(){if(ROOM){home();return}const s=SUBJ[F];
     $h('#hub').innerHTML=`<div class="hh"><h1>${CATIMG}${s.name}</h1><div class="d">${dateLabel()}</div></div><div class="nav"><button data-h="home">◀ 첫 화면</button><span></span></div>${subjBody(s)}`}
   function home(){if(ROOM){F=Math.max(0,SUBJ.findIndex(x=>x.k===ROOM));const s=SUBJ[F];roomWrap(s,subjBody(s));return}
+    spmLoad();
     // 메인 화면(엄마 11/26 OK): 맨 위 📋 오늘 할 것 요약 → 아래로 6칸(계단 4과목 + 스피드영어 · 시훈연산)
     const R=todayRows(),left=R.filter(r=>!r.done&&r.min),tot=left.reduce((a,r)=>a+r.min,0);
     const hm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`:m+'분';
@@ -8404,25 +8412,33 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       .hrow{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;background:var(--card,#fffdf8);border:2px solid var(--line,#e8e1d4);border-radius:16px;padding:13px 16px;margin-top:10px;font:inherit;font-size:19px;color:inherit;text-decoration:none;text-align:left;cursor:pointer}
       .hrow .e{font-size:26px}.hrow b{flex:1}.hrow .r{font-size:14px;color:var(--sub)}</style>
       <div class="hh"><h1>${CATIMG}오늘의 공부</h1><div class="d">${dateLabel()}</div></div>
-      <div class="panel" style="text-align:left"><h2 style="font-size:20px;margin:0 0 8px">📋 오늘 할 것</h2>
-      ${R.map(r=>`<div class="hit ${r.done?'dn':''}"><div class="t">${r.ic} <b>${r.name}</b><span class="m">${r.done?'✅ 끝':r.min?'약 '+hm(r.min):''}</span></div><div class="w">${r.what.split(' · ').join('<br>')}</div></div>`).join('')}
-      ${tot?`<div class="htot"><span>남은 것 모두</span><span>약 ${hm(tot)}</span></div>`:''}</div>
+      <div class="panel" style="text-align:left"><button data-h="sumtog" style="display:flex;width:100%;align-items:center;gap:8px;background:none;border:0;padding:0;margin:0 0 ${SUMOPEN?8:0}px;text-align:left"><h2 style="font-size:20px;margin:0;flex:1">📋 오늘 할 것</h2><span style="font-size:15px;color:var(--sub)">${SUMOPEN?'접기 ▲':(tot?'남은 것 약 '+hm(tot)+' · ':'')+'펼치기 ▼'}</span></button>${SUMOPEN?`
+      ${R.map(r=>`<div class="hit ${r.done?'dn':''}"><div class="t">${r.ic} <b>${r.name}</b><span class="m">${r.done?'✅ 완료':r.min?'약 '+hm(r.min):''}</span></div><div class="w">${r.what.map(([t,d])=>d?`<span style="text-decoration:line-through">${t}</span> ✅ 완료`:t).join('<br>')}</div></div>`).join('')}
+      ${tot?`<div class="htot"><span>남은 것 모두</span><span>약 ${hm(tot)}</span></div>`:''}`:''}</div>
       ${SUBJ.map((x,i)=>row(x.ic,x.name,x.off?'준비 중':(doneMark(x.k)==='—'?'아직':doneMark(x.k)),`data-h="subj" data-i="${i}"`)).join('')}
-      ${HUBOUT.map(o=>row(o.ic,o.name,'바로 가기',`href="${o.href}"`)).join('')}
+      ${HUBOUT.map(o=>row(o.ic,o.name,o.href==='../math/'?SPM.txt:SPM.en,`href="${o.href}"`)).join('')}
       <p class="note">🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
       <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
   // 📋 오늘 할 것: 과목마다 한 줄 + 예상 분(시훈이 기록이 있을 때만, 없으면 앱에 이미 쓰는 기본값)
+  // 🧮 스피드 연산 칸: 시훈이 오늘 판 수(엄마 11/26: 태블릿이 엄마 계정이어도 시훈이 것으로)
+  let SPM={txt:'바로 가기',en:'바로 가기',day:null,busy:false};
+  async function spmLoad(){if(SPM.busy)return;SPM.busy=true;try{await HUB.db;const f=window.__SIHUN&&window.__SIHUN.speedMathDay;if(!f)return;const t=HUB.today(),d=await f(t);
+      let txt='아직';if(d){const ids=Object.keys({...(d.plan||{}),...(d.carry||{})});const ow=ids.reduce((a,i)=>a+(d.plan[i]||0)+((d.carry||{})[i]||0),0),dn=ids.reduce((a,i)=>a+Math.min((d.done||{})[i]||0,(d.plan[i]||0)+((d.carry||{})[i]||0)),0);
+        txt=ow&&dn>=ow?'✅ 완료':dn?`${dn} / ${ow}판`:'아직'}
+      let en='아직';try{const g=window.__SIHUN.speedEnSihun;const st=g?await g():null;if(st&&st.days&&st.days[t])en='✅ 완료'}catch(e){}
+      if(txt!==SPM.txt||en!==SPM.en){SPM.txt=txt;SPM.en=en;if(VIEW==='home'&&!ROOM&&!document.getElementById('hub').hidden)render()}}catch(e){}finally{SPM.busy=false}}
+  let SUMOPEN=true;try{SUMOPEN=localStorage.getItem('hub:sumOpen')!=='0'}catch(e){} // 📋 오늘 할 것 접기(엄마 11/26) — 이 기기에서 기억
   function todayRows(){const out=[];const ent=(k,what,min,done)=>{const x=SUBJ.find(y=>y.k===k);out.push({ic:x.ic,name:x.name,what,min,done})};
     try{const st=stats('en');let m=null;try{m=APP_EN.est()}catch(e){}
-      ent('en',st.mode==='map'?`오늘 칸 ${st.daily||0}개${st.main?` (${st.main}개 했어요)`:''}`:`단어 · 📌 오늘의 문법 · ${st.daily||5}문장${st.main?` (${st.main}문장 했어요)`:''}`,m,!!st.done)}catch(e){}
+      ent('en',[[st.mode==='map'?`오늘 칸 ${st.daily||0}개${st.main&&!st.done?` (${st.main}개 했어요)`:''}`:`단어 · 📌 오늘의 문법 · ${st.daily||5}문장${st.main&&!st.done?` (${st.main}문장 했어요)`:''}`,!!st.done]],m,!!st.done)}catch(e){}
     try{let E={};try{E=APP_KO.est()}catch(x){}const P=APP_KO.plan();const L=P.filter(p=>!p.done);
       const est=p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5;
-      ent('ko',(L.length?L:P).map(p=>p.label).join(' · '),L.filter(p=>p.k!=='rest').reduce((a,p)=>a+est(p),0)||null,!L.length)}catch(e){}
+      ent('ko',P.map(p=>[p.label,!!p.done&&p.k!=='rest']),L.filter(p=>p.k!=='rest').reduce((a,p)=>a+est(p),0)||null,!L.length)}catch(e){}
     try{const st=stats('math');if(M32()){let P={};try{P=APP_M32.plan()}catch(x){}const N=P.per||MATH_N,left=Math.max(0,N-st.n),pm=P.probMin||15;
         let min=(P.kind==='lesson'?(P.lessonMin||10):0)+((P.kind==='lesson'||P.kind==='check')?(P.checkMin||3):0)+(left?Math.max(1,Math.round(pm*left/N)):0);
-        ent('math',`${P.title||'3-2'}${P.kind==='solve'&&P.lv?' · '+P.lv:''}${left?` · ${left}문제`:' · 오늘 문제 끝'}${st.teach?'':' · 🧑‍🏫 가르치기 1문제'}`,min||null,!left&&!!st.teach)}
-      else{const e=mathEst(),left=Math.max(0,MATH_N-st.n);ent('math',`4-1 큰 수 · ${left}문제`,left?(e.min!=null?Math.max(1,Math.round(e.min*left/MATH_N)):15):null,!left)}}catch(e){}
-    try{const st=stats('write');ent('write',st.n?`오늘 글 ${st.n}개 저장`:'쓸 글이 있을 때만',null,false)}catch(e){}
+        ent('math',[[`${P.title||'3-2'}${P.kind==='solve'&&P.lv?' · '+P.lv:''} · ${left?left+'문제':'오늘 문제'}`,!left],['🧑‍🏫 가르치기 1문제',!!st.teach]],min||null,!left&&!!st.teach)}
+      else{const e=mathEst(),left=Math.max(0,MATH_N-st.n);ent('math',[[`4-1 큰 수 · ${left||MATH_N}문제`,!left]],left?(e.min!=null?Math.max(1,Math.round(e.min*left/MATH_N)):15):null,!left)}}catch(e){}
+    try{const st=stats('write');ent('write',[[st.n?`오늘 글 ${st.n}개 저장`:'쓸 글이 있을 때만',!!st.n]],null,false)}catch(e){}
     return out}
   // 🚪 과목 방(엄마 11/26): 과목 주소로 열면 그 과목 + 같이 하는 앱 + 그 과목 리포트(엄마 비밀번호)만
   const OUTAPP={en:[],math:[],ko:[],write:[]}; // 엄마 11/26: 과목 방엔 그 과목만(스피드영어·시훈연산은 별개 앱, 메인 허브 바로가기로만)
@@ -8575,6 +8591,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   document.addEventListener('click',e=>{const t=e.target.closest('[data-h]');if(!t||t.disabled||!document.getElementById('hub').contains(t))return;const a=t.dataset.h;
     if(a==='f'){const i=+t.dataset.i;if(i>=0&&i<SUBJ.length){F=i;VIEW='home';render()}}
     else if(a==='home'){VIEW='home';render()}
+    else if(a==='sumtog'){SUMOPEN=!SUMOPEN;try{localStorage.setItem('hub:sumOpen',SUMOPEN?'1':'0')}catch(e){}render()}
     else if(a==='subj'){F=+t.dataset.i;VIEW='subj';render()}
     else if(a==='plan'){VIEW='plan';render()}
     else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
