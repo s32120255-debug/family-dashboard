@@ -1062,7 +1062,7 @@ table.lmap th small{font-weight:500;color:var(--muted)}
   <button data-v="hw">📒 숙제</button>
   <button data-v="read">📚 독서 워크지</button>
   <button data-v="know">배경지식</button>
-  <button data-v="map">🗺️ 지도</button>
+  <button data-v="map">🌳 나무</button>
   <button data-v="note">✍️ 손 정리</button>
   <button data-v="log">기록</button>
   <button data-v="prev">👩 엄마 보기</button>
@@ -6440,7 +6440,7 @@ function structDone(){
 
 function qnavHTML(i,rs){return `<div class="qnav"><button data-q="home">← 처음으로</button>${rs?'<button data-q="restart">🔄 처음부터 다시</button>':''}<span style="flex:1"></span><button data-q="prev" ${i===0?'disabled':''}>◀ 이전</button><button data-q="skip">건너뛰기 ▶</button></div>`}
 function bindQnav(home,prev,skip,restart){document.querySelectorAll('.qnav button').forEach(b=>b.onclick=()=>{if(b.dataset.q==='home')discardPend();const f=({home,prev,skip,restart})[b.dataset.q];if(f)f();window.scrollTo(0,0)})}
-function resetAll(){try{clearTimeout(KDW&&KDW.tm);clearTimeout(KM&&KM.tm)}catch(e){}discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
+function resetAll(){try{clearTimeout(KDW&&KDW.tm);clearTimeout(KM&&KM.tm);clearTimeout(KT&&KT.tm)}catch(e){}discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
 /* ================= 오늘 복습 (요일별 블록 빈칸) ================= */
 const DAYS=[['mon','월','비문학'],['tue','화','문학'],['wed','수','문법'],['thu','목','스키마'],['fri','금','독서']];
 // {{정답|오답|오답}} = 빈칸. g = 어려운 말 풀이
@@ -8330,7 +8330,9 @@ const KO_PLAN={steps:[],custom:{},add:{},
 /* 보충(엄마 지정): 그 날짜 요일 순서 맨 뒤에 붙음. 11/24 엄마 "비문학 숙제 오늘 보충으로" */
 KO_PLAN.add['2026-11-24']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'문단 쪼개 읽기 → 근거 문장 찾기'}];
 KO_PLAN.add['2026-11-25']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'읽으면서 주어·서술어 → 왜? 찾기 (하는 데까지만)'}];
-function dayBase(d){return (KO_PLAN.pre[d]||[]).map(x=>Object.assign({},x)).concat(dayBase0(d)).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
+/* 🌳 국어 나무 잎(엄마 11/26): 월 비문학 · 화 문학 · 목 스키마 날 맨 끝. 문법 잎은 오늘 할 것에 안 넣음 */
+function leafStep(d){const a={1:['bi','비문학'],2:['lit','문학'],4:['sk','스키마']}[new Date(d+'T12:00:00').getDay()];return a?[{k:'leaf',area:a[0],label:`🍃 오늘의 잎 · ${a[1]}`,sub:'국어 나무 한 잎 · 방법 카드 → 블록 → 빈 나무 · 약 10분'}]:[]}
+function dayBase(d){return (KO_PLAN.pre[d]||[]).map(x=>Object.assign({},x)).concat(dayBase0(d)).concat(leafStep(d)).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
 function dayBase0(d){if(KO_PLAN.custom[d])return KO_PLAN.custom[d].slice();const wd=new Date(d+'T12:00:00').getDay();const W=MAXW;const R=Array.from({length:W},(_,i)=>i+1);
   if(wd===0)return [];
   if(wd<=4){const [day,,A]=DAYS[wd-1];const H=HW.find(h=>h.w===W&&h.day===day);
@@ -8349,7 +8351,7 @@ HUB.db.then(()=>loadExtras()).catch(()=>{});
 let PLAN=true,PS=0;
 const PDK=()=>'sihun_ko_plan_'+HUB.today();
 function stepDone(i){const s=KO_PLAN.steps[i];const loc=store(PDK())||[];if(loc.includes(i))return true;
-  return KS.today.some(r=>s.k==='daily'?r.type==='daily'&&!r.partial&&r.week===s.w&&r.day===s.day:s.k==='note'?r.type==='note'&&r.week===s.w&&r.area===s.area:s.k==='fill'?r.type==='note'&&r.mode==='fill'&&r.week===s.w&&r.area===s.area:s.k==='read'?r.type==='write'&&r.w===s.w&&r.done!==false:s.k==='hw'?r.type==='hw'&&r.set===s.set&&r.done:s.k==='test'?r.type==='test'&&String(r.range)===String(s.r)&&(r.area||null)===(s.area||null):s.k==='gram'?r.type==='gram'&&r.mode===s.mode:s.k==='cls'?r.type==='cls'&&r.part===s.part&&r.partDone:false)}
+  return KS.today.some(r=>s.k==='daily'?r.type==='daily'&&!r.partial&&r.week===s.w&&r.day===s.day:s.k==='note'?r.type==='note'&&r.week===s.w&&r.area===s.area:s.k==='fill'?r.type==='note'&&r.mode==='fill'&&r.week===s.w&&r.area===s.area:s.k==='read'?r.type==='write'&&r.w===s.w&&r.done!==false:s.k==='hw'?r.type==='hw'&&r.set===s.set&&r.done:s.k==='test'?r.type==='test'&&String(r.range)===String(s.r)&&(r.area||null)===(s.area||null):s.k==='gram'?r.type==='gram'&&r.mode===s.mode:s.k==='leaf'?r.type==='leaf'&&r.area===s.area&&r.done:s.k==='cls'?r.type==='cls'&&r.part===s.part&&r.partDone:false)}
 function markStep(i){const loc=store(PDK())||[];if(!loc.includes(i)){loc.push(i);store(PDK(),loc)}}
 function restView(){$('#main').innerHTML=`<div class="card" style="text-align:center;padding:40px 18px"><div style="font-size:56px">🛌</div><h2 style="font-size:24px">오늘은 국어 쉬는 날!</h2><div class="muted">일요일은 날개 수업 듣는 날이에요. 내일 다시 만나요.</div></div>`}
 function firstOpen(){const i=KO_PLAN.steps.findIndex((_,k)=>!stepDone(k));return i<0?KO_PLAN.steps.length-1:i}
@@ -8363,6 +8365,7 @@ async function openStep(i){PS=i;const s=KO_PLAN.steps[i];planBar();window.scroll
   if(s.k==='read'){KH='wk';WR=null;viewWrite(s.w);return}
   if(s.k==='hw'){KH='hw';HWS=null;viewHW(s.set);return}
   if(s.k==='cls'){KH='cls';viewCls(s.part,s.cid||'w5');return}
+  if(s.k==='leaf'){KH='map';ktOpenStep(s);return}
   if(s.k==='daily'){KH='daily';DW=s.w;R=null;await loadProg();const wd=weekDates();const di=DAYS.findIndex(d=>d[0]===s.day);startDaily(s.day,s.area,wd[di]||HUB.today())}
   else if(s.k==='note'){KH='note';NT={w:s.w,i:0,only:s.area,hide:false};viewNote()}
   else if(s.k==='gram'){KH='gram';GR=null;startGram(s.mode)}
@@ -9266,7 +9269,7 @@ const MAP_CSS=`<style>.dw .mtabs{display:flex;gap:6px;margin:8px 0}.dw .mtabs bu
 .dw .mgrp{margin-left:8px;border-left:3px solid #b9c6dc;padding-left:10px}.dw .msub{font-size:16px;color:#4f4c45;margin:8px 0 2px}
 .dw .mc{display:inline-block;border-radius:10px;padding:7px 11px;margin:4px 3px;font-size:17px;line-height:1.3}
 .dw .mc.f{background:#e8eef7;border:2px solid #2f5fa3;color:#1d2b4f}.dw .mc.e{background:#fff;border:2px dashed #2f5fa3;color:#2f5fa3}.dw .mc.k{background:#f3f1e7;border:2px dashed #c9c3b3;color:#6b665b}</style>`;
-function viewMap(area){clearTimeout(KM&&KM.tm);area=area||(KM&&KM.area)||'gram';KM={area};
+function viewMapCells(area){clearTimeout(KM&&KM.tm);area=area||(KM&&KM.area)||'gram';KM={area};
   const all=mapAll(area);const left=all.filter(x=>!mapFilled(x.id));
   const cell=x=>{if(x.lock)return `<span class="mc k">🔒 ${x.n}</span>`;const N=mapNode(x);const f=mapFilled(N.id);return `<button class="mc ${f?'f':'e'}" data-mn="${N.id}">${N.n}${f?'':' ?'}</button>`};
   $('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><h2>🗺️ 시훈이 지도</h2></div>
@@ -9274,8 +9277,9 @@ function viewMap(area){clearTimeout(KM&&KM.tm);area=area||(KM&&KM.area)||'gram';
    <div class="dwsm">파란 칸 = 내가 채운 칸(누르면 설명) · 점선 = 채울 칸 · 🔒 = 아직 안 배움</div>
    <div class="dwcard">${KMAP[area].secs.map(s=>`<div class="msec">${s.h}</div>${s.gs.map(g=>`<div class="mgrp">${g.h?`<div class="msub">${g.h}</div>`:''}${g.ns.map(cell).join('')}</div>`).join('')}`).join('')}<div id="dwpop"></div></div>
    ${left.length?`<button class="dwgo" id="mfill">빈칸 ${left.length}개 채우기</button>`:'<div class="dwhint">✓ 이 지도의 칸을 다 채웠어!</div>'}
-   <button class="dwgo lt" id="mblank">🧠 백지로 처음부터 다시 채우기</button></div>`;
-  document.querySelectorAll('[data-ma]').forEach(b=>b.onclick=()=>viewMap(b.dataset.ma));
+   <button class="dwgo lt" id="mblank">🧠 백지로 처음부터 다시 채우기</button><button class="dwgo lt" id="mtree">🌳 나무로 보기</button></div>`;
+  $('#mtree').onclick=()=>viewMap(area);
+  document.querySelectorAll('[data-ma]').forEach(b=>b.onclick=()=>viewMapCells(b.dataset.ma));
   document.querySelectorAll('[data-mn]').forEach(b=>b.onclick=()=>{const N=all.find(x=>x.id===b.dataset.mn);if(!N)return;
     if(mapFilled(N.id)){$('#dwpop').innerHTML=`<div class="dwpop"><b>${N.n}</b><br>${N.t}<b>${N.a}</b>${N.b}${N.sum?`<br><span class="dwsm">${N.sum}</span>`:''}</div>`;$('#dwpop').scrollIntoView({block:'nearest'})}
     else mapRun(area,[N],false)});
@@ -9283,26 +9287,102 @@ function viewMap(area){clearTimeout(KM&&KM.tm);area=area||(KM&&KM.area)||'gram';
   $('#mblank').onclick=()=>mapRun(area,all,true)}
 function mapPath(area,id){for(const s of KMAP[area].secs)for(const g of s.gs)if(g.ns.some(x=>(x.id||x.dw)===id))return `${KMAP[area].t} › ${s.h}${g.h?' › '+g.h:''}`;return KMAP[area].t}
 /* 칸 채우기: 한 칸씩 블록 고르기. 맞히면 「다음」 없이 넘어가고, 2번 틀리면 정답+설명 → 「알겠어」 */
-function mapRun(area,list,blank){KM={area,list,i:0,blank,miss:{},t0:Date.now()};mapOne()}
+function mapRun(area,list,blank,o){KM=Object.assign({area,list,i:0,blank,miss:{},t0:Date.now()},o||{});mapOne()}
 function mapOne(){const R=KM;if(R.i>=R.list.length)return mapEnd();const N=R.list[R.i];let miss=0;const o=dwSh(N.o);const x=[];
-  const draw=(fb)=>{$('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="mbk">⏮</button><h2>🗺️ ${R.blank?'백지 채우기':'칸 채우기'} · ${R.i+1}/${R.list.length}</h2><button class="dwnb" id="mnx">▶</button></div>
+  const draw=(fb,lock)=>{$('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="mbk">⏮</button><h2>${R.ttl||(R.blank?'🗺️ 백지 채우기':'🗺️ 칸 채우기')} · ${R.i+1}/${R.list.length}</h2><button class="dwnb" id="mnx">▶</button></div>
      <div class="dwsm">${mapPath(R.area,N.id)}</div>
      <div class="dwcard" style="text-align:center"><div class="dwh">${N.n}</div><div class="dwp" style="margin-top:6px">${N.t}<span class="dwblank" style="min-width:90px">&nbsp;</span>${N.b}</div></div>
-     <div class="dwcard"><div class="dwq">빈칸에 들어갈 것</div>${o.map((v,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-mo="${i}" ${x.includes(i)||fb?'disabled':''}>${v}</button>`).join('')}</div><div id="mfb">${fb||''}</div></div>`;
-    $('#mbk').onclick=()=>{clearTimeout(R.tm);if(R.i)mapEnd();else viewMap(R.area)};
+     <div class="dwcard"><div class="dwq">빈칸에 들어갈 것</div>${o.map((v,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-mo="${i}" ${x.includes(i)||lock?'disabled':''}>${v}</button>`).join('')}</div><div id="mfb">${fb||''}</div></div>`;
+    $('#mbk').onclick=()=>{clearTimeout(R.tm);if(R.onEnd){viewMap(R.area);return}if(R.i)mapEnd();else viewMapCells(R.area)};
     $('#mnx').onclick=()=>{clearTimeout(R.tm);R.miss[N.id]=R.miss[N.id]||'skip';R.i++;mapOne()};
     document.querySelectorAll('[data-mo]').forEach(b=>b.onclick=()=>{const v=o[+b.dataset.mo];
-      if(v===N.a){mapMark(N.id);R.miss[N.id]=R.miss[N.id]||miss;draw(`<div class="dwhint">✓ ${N.t}<b>${N.a}</b>${N.b}${N.sum?`<br><span class="dwsm">${N.sum}</span>`:''}</div>`);R.tm=setTimeout(()=>{R.i++;mapOne()},miss?2600:1900);return}
+      if(v===N.a){mapMark(N.id);R.miss[N.id]=R.miss[N.id]||miss;draw(`<div class="dwhint">✓ ${N.t}<b>${N.a}</b>${N.b}${N.sum?`<br><span class="dwsm">${N.sum}</span>`:''}</div>`,true);R.tm=setTimeout(()=>{R.i++;mapOne()},miss?2600:1900);return}
       miss++;x.push(+b.dataset.mo);
-      if(miss>=2){R.miss[N.id]=2;mapMark(N.id);draw(`<div class="dwhint">정답: <b>${N.a}</b><br>${N.t}${N.a}${N.b}${N.sum?`<br>${N.sum}`:''}</div><button class="dwgo" id="mok">알겠어</button>`);$('#mok').onclick=()=>{R.i++;mapOne()};return}
+      if(miss>=2){R.miss[N.id]=2;mapMark(N.id);draw(`<div class="dwhint">정답: <b>${N.a}</b><br>${N.t}${N.a}${N.b}${N.sum?`<br>${N.sum}`:''}</div><button class="dwgo" id="mok">알겠어</button>`,true);$('#mok').onclick=()=>{R.i++;mapOne()};return}
       draw(`<div class="dwhint">다시 생각해 봐. 칸 이름: <b>${N.n}</b></div>`)})};
   draw()}
 function mapMark(id){const M=mapStore();M.f[id]=1;store(MAPK,M)}
-function mapEnd(){const R=KM;const done=R.list.slice(0,R.i);const first=done.filter(N=>R.miss[N.id]===0).length;
+function mapEnd(){const R=KM;const done=R.list.slice(0,R.i);const first=done.filter(N=>R.miss[N.id]===0).length;if(R.onEnd){R.onEnd(R,done,first);return}
   if(done.length)push({type:'map',area:R.area,blank:!!R.blank,n:done.length,first,miss:Object.fromEntries(done.map(N=>[N.n,R.miss[N.id]]).filter(([k,v])=>v)),sec:Math.round((Date.now()-R.t0)/1000),done:true});
   $('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><h2>🗺️ ${KMAP[R.area].t} 지도</h2></div><div class="dwcard" style="text-align:center"><div style="font-size:24px">${done.length}칸 중 <b>${first}칸</b>을 한 번에 채웠어.</div>
    <div class="dwsm" style="margin-top:6px">${first===done.length&&done.length?'네 머릿속에 지도가 제자리에 있어.':'헷갈린 칸은 지도에서 눌러서 설명을 다시 봐.'}</div></div><button class="dwgo" id="mback">지도로 돌아가기</button></div>`;
-  $('#mback').onclick=()=>viewMap(R.area)}
+  $('#mback').onclick=()=>viewMapCells(R.area)}
+/* ===== 🌳 시훈이 국어 나무 (엄마 11/26: 영어처럼 나무로. 잎 하나 = 하루 공부 약 10분) =====
+   줄기 = 국어, 가지 = 문학·비문학·스키마·문법. 잎 = 지도 칸 2~4개 묶음.
+   잎 하나: 방법 카드(칸마다 1장) → 블록으로 오늘 잎 칸 채우기 → 빈 나무(오늘 잎 + 지난 잎 2개 백지) → 잎이 파랗게.
+   오늘 할 것: 월 비문학 · 화 문학 · 목 스키마 날 맨 끝에 그 영역 잎 하나(엄마 11/26 카드 선택). 문법 잎 = 문법 탭 1~5주차 수업(오늘 할 것엔 안 넣음).
+   저장 localStorage sihun_ko_tree {done:{잎id:'YYYY-MM-DD'},ord:[잎id…]}, 기록 results type 'leaf' */
+const KLEAF={
+ lit:[{id:'L1',sec:0,t:'시는 언제·정서·추리',c:['l1','l2','l3']},{id:'L2',sec:0,t:'상황의 갈래·아픔',c:['l4','l5','l6']},{id:'L3',sec:0,t:'시어의 뜻·주제',c:['l7','l8']},
+  {id:'L4',sec:1,t:'상황 vs 태도',c:['l9','l10']},{id:'L5',sec:1,t:'대결·순응·소망·의지',c:['l11','l12','l13']},
+  {id:'L6',sec:2,t:'형상화·심상·상징',c:['l14','l15','l16']},{id:'L7',sec:2,t:'화자·어조·직유은유',c:['l17','l18','l19']},{id:'L8',sec:2,t:'반어·역설·운율',c:['l20','l21','l22']},
+  {id:'L9',sec:3,t:'이항 대립·극복↔지향',c:['l23','l24']},{id:'L10',sec:3,t:'수능 세계관',c:['l25','l26']}],
+ bi:[{id:'B1',sec:0,t:'주어·서술어·핵심 자리',c:['b1','b2','b3']},{id:'B2',sec:1,t:'이항대립·한계→극복·원인→결과',c:['b4','b5','b6']},{id:'B3',sec:1,t:'핵심은 뒤에·통시',c:['b7','b8']},{id:'B4',sec:2,t:'짝으로·~지만·반대',c:['b9','b10','b11']}],
+ sk:[{id:'S1',sec:0,t:'시대 순서',c:['s1','s2']},{id:'S2',sec:1,t:'춘추전국·공자·맹자',c:['s3','s4','s5']},{id:'S3',sec:1,t:'한비자·노자',c:['s6','s7']},{id:'S4',sec:1,t:'성리학·양명학·실학·불교',c:['s8','s9','s10','s11']},
+  {id:'S5',sec:2,t:'그리스 철학자',c:['s12','s13','s14','s15']},{id:'S6',sec:3,t:'왜란·호란',c:['s16']}]};
+const KTREE_GRAM=[['w1',1,'1주 음운·음절'],['w2',1,'2주 모음'],['w3',1,'3주 자음'],['w4',1,'4주 받침'],['w5',1,'5주 닮아요 1부'],['w5',2,'5주 닮아요 2부']];
+const KTK='sihun_ko_tree';
+let KT=null; // 잎 공부 상태
+function ktStore(){const S=store(KTK)||{};S.done=S.done||{};S.ord=S.ord||[];return S}
+function ktCell(id){for(const a in KMAP)for(const s of KMAP[a].secs)for(const g of s.gs)for(const x of g.ns)if(x.id===id)return mapNode(x);return null}
+function ktLocks(area,sec){const L=[];KMAP[area].secs[sec].gs.forEach(g=>g.ns.forEach(x=>{if(x.lock)L.push(x.n)}));return L}
+function ktNext(area){const S=ktStore();return (KLEAF[area]||[]).find(l=>!S.done[l.id])||null}
+function ktGramDone(cid,part){try{const C=DW_C[cid];const S=store(C.K)||{};if(C.PART[2])return !!(S.part&&S.part[part]);return !!(S.part&&S.part[1])}catch(e){return false}}
+const KT_CSS=`<style>.dw .ktbr{background:#fff;border:2px solid #dfdacb;border-radius:16px;padding:10px 12px;margin:10px 0}
+.dw .kttw{border-left:4px solid #8a6a3c;margin:6px 0 4px 4px;padding-left:10px}.dw .ktth{font-size:16px;color:#6b5634;margin:6px 0 2px}
+.dw .ktl{display:inline-block;border-radius:16px 3px 16px 3px;padding:7px 11px;margin:4px 3px;font-size:17px;line-height:1.3}
+.dw .ktl.d{background:#2f5fa3;color:#fff;border:2px solid #2f5fa3}.dw .ktl.t{background:#fff;border:3px solid #2f5fa3;color:#1d2b4f;font-weight:bold}
+.dw .ktl.e{background:#e8eef7;border:2px solid #2f5fa3;color:#1d2b4f}.dw .ktl.k{background:#f3f1e7;border:2px dashed #c9c3b3;color:#6b665b}
+.dw .ktlg{font-size:14px;color:#4f4c45;text-align:center}.dw .ktlg .ktl{font-size:14px;padding:3px 8px}</style>`;
+function viewMap(area){clearTimeout(KM&&KM.tm);clearTimeout(KT&&KT.tm);area=area||(KM&&KM.area)||'lit';KM={area};KT=null;
+  const S=ktStore();const tabs=[['lit','문학'],['bi','비문학'],['sk','스키마'],['gram','문법']];
+  let body='';
+  if(area==='gram'){body=`<div class="kttw">${KTREE_GRAM.map(([c,p,t])=>`<button class="ktl ${ktGramDone(c,p)?'d':'e'}" data-kg="${c}" data-kp="${p}">${t}</button>`).join('')}${['된소리되기','품사','문장'].map(t=>`<span class="ktl k">🔒 ${t}</span>`).join('')}</div>
+     <div class="dwsm" style="margin-top:6px">문법 잎은 문법 탭의 기초 수업이에요. 누르면 그 수업이 열려요.</div>`}
+  else{const nx=ktNext(area);
+    body=KMAP[area].secs.map((s,si)=>{const lv=KLEAF[area].filter(l=>l.sec===si);const lk=ktLocks(area,si);if(!lv.length&&!lk.length)return '';
+      return `<div class="kttw"><div class="ktth">${s.h.replace(/^[ⅠⅡⅢⅣⅤ]+\s*/,'')}</div>${lv.map(l=>`<button class="ktl ${S.done[l.id]?'d':nx&&nx.id===l.id?'t':'e'}" data-kl="${l.id}">${l.t}</button>`).join('')}${lk.map(t=>`<span class="ktl k">🔒 ${t}</span>`).join('')}</div>`}).join('')}
+  const dn=area==='gram'?KTREE_GRAM.filter(([c,p])=>ktGramDone(c,p)).length:KLEAF[area].filter(l=>S.done[l.id]).length;const all=area==='gram'?KTREE_GRAM.length:KLEAF[area].length;
+  $('#main').innerHTML=DW_CSS+MAP_CSS+KT_CSS+`<div class="dw"><div class="dwtop"><h2>🌳 시훈이 국어 나무</h2></div>
+   <div class="mtabs">${tabs.map(([k,t])=>`<button class="${k===area?'on':''}" data-ma="${k}">${t}</button>`).join('')}</div>
+   <div class="ktlg"><span class="ktl d">채운 잎</span><span class="ktl t">오늘 잎</span><span class="ktl e">다음 잎</span><span class="ktl k">🔒 나중에</span></div>
+   <div class="ktbr"><div class="dwh" style="display:flex;justify-content:space-between"><span>${KMAP[area].t}</span><small class="dwsm">잎 ${dn} / ${all}</small></div>${body}<div id="dwpop"></div></div>
+   ${area!=='gram'&&ktNext(area)?`<button class="dwgo" id="ktgo">🍃 오늘 잎: ${ktNext(area).t}</button>`:''}
+   ${area!=='gram'&&dn?`<button class="dwgo lt" id="ktbl">🧠 이 가지 빈 나무 처음부터 채우기</button>`:''}
+   <button class="dwgo lt" id="ktcells">🗺️ 칸 지도로 보기</button></div>`;
+  document.querySelectorAll('[data-ma]').forEach(b=>b.onclick=()=>viewMap(b.dataset.ma));
+  document.querySelectorAll('[data-kg]').forEach(b=>b.onclick=()=>{KH='cls';viewCls(+b.dataset.kp,b.dataset.kg)});
+  document.querySelectorAll('[data-kl]').forEach(b=>b.onclick=()=>{const l=KLEAF[area].find(x=>x.id===b.dataset.kl);if(!l)return;
+    if(S.done[l.id]){$('#dwpop').innerHTML=`<div class="dwpop"><b>🍃 ${l.t}</b>${l.c.map(ktCell).filter(Boolean).map(N=>`<div style="margin-top:6px"><b>${N.n}</b>: ${N.t}<b>${N.a}</b>${N.b}<br><span class="dwsm">${N.sum||''}</span></div>`).join('')}<button class="dwgo lt" id="ktagain">이 잎 다시 하기</button></div>`;
+      $('#ktagain').onclick=()=>ktStart(area,l.id);$('#dwpop').scrollIntoView({block:'nearest'})}
+    else ktStart(area,l.id)});
+  const g=$('#ktgo');if(g)g.onclick=()=>ktStart(area,ktNext(area).id);
+  const bl=$('#ktbl');if(bl)bl.onclick=()=>{const L=KLEAF[area].filter(l=>S.done[l.id]).flatMap(l=>l.c).map(ktCell).filter(Boolean);mapRun(area,L,true)};
+  $('#ktcells').onclick=()=>viewMapCells(area==='gram'?'gram':area)}
+/* 잎 하나 공부 */
+function ktStart(area,lid){clearTimeout(KT&&KT.tm);const l=KLEAF[area].find(x=>x.id===lid);if(!l)return viewMap(area);
+  KT={area,l,ci:0,cells:l.c.map(ktCell).filter(Boolean),t0:Date.now()};ktCard()}
+function ktCard(){const R=KT;const N=R.cells[R.ci];const last=R.ci>=R.cells.length-1;
+  $('#main').innerHTML=DW_CSS+MAP_CSS+KT_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="ktbk">⏮</button><h2>🍃 ${R.l.t}</h2></div>
+   <div class="dwsm" style="text-align:center">① 방법 카드 ${R.ci+1} / ${R.cells.length} → ② 블록으로 채우기 → ③ 빈 나무</div>
+   <div class="dwcard"><div class="dwh">📘 ${N.n}</div><div class="dwp">${N.t}<b>${N.a}</b>${N.b}</div>${N.sum?`<div class="dwhint" style="margin-top:10px">${N.sum}</div>`:''}</div>
+   ${R.ci?'<button class="dwgo lt" id="ktpv">← 앞 카드</button>':''}<button class="dwgo" id="ktnx">${last?'알겠어, 해 볼게':'다음 →'}</button></div>`;window.scrollTo(0,0);
+  $('#ktbk').onclick=()=>viewMap(R.area);const pv=$('#ktpv');if(pv)pv.onclick=()=>{R.ci--;ktCard()};
+  $('#ktnx').onclick=()=>{if(!last){R.ci++;ktCard();return}
+    mapRun(R.area,R.cells,false,{ttl:'🍃 블록으로 채우기',onEnd:(M,done,first)=>{R.fill={n:done.length,first,miss:M.miss};ktReview()}})}}
+function ktReview(){const R=KT;const S=ktStore();const prev=S.ord.filter(id=>id!==R.l.id&&KLEAF[R.area].some(l=>l.id===id)).slice(-2);
+  const L=R.cells.concat(prev.flatMap(id=>KLEAF[R.area].find(l=>l.id===id).c).map(ktCell).filter(Boolean));R.prev=prev;
+  mapRun(R.area,dwSh(L),true,{ttl:'🌳 빈 나무',onEnd:(M,done,first)=>{R.rv={n:done.length,first,miss:M.miss};ktEnd(done.length>=L.length)}})}
+function ktEnd(full){const R=KT;const S=ktStore();
+  if(full){S.done[R.l.id]=HUB.today();S.ord=S.ord.filter(x=>x!==R.l.id).concat(R.l.id);store(KTK,S)}
+  const nm=o=>Object.fromEntries(Object.entries(o||{}).filter(([k,v])=>v).map(([k,v])=>[(R.cells.concat(R.prev.flatMap(id=>KLEAF[R.area].find(l=>l.id===id).c).map(ktCell)).find(N=>N&&N.id===k)||{n:k}).n,v]));
+  push({type:'leaf',area:R.area,leaf:R.l.id,title:R.l.t,n:R.fill.n,first:R.fill.first,miss:nm(R.fill.miss),rn:R.rv.n,rfirst:R.rv.first,rmiss:nm(R.rv.miss),prev:R.prev,sec:Math.round((Date.now()-R.t0)/1000),done:full});
+  viewMap(R.area);
+  const top=$('#main .dwtop');if(top)top.insertAdjacentHTML('afterend',full?`<div class="dwhint">🍃 <b>${R.l.t}</b> 잎이 파랗게 됐어! 블록 ${R.fill.first}/${R.fill.n}, 빈 나무 ${R.rv.first}/${R.rv.n} 한 번에.</div>`:'<div class="dwhint">빈 나무를 끝까지 채우면 잎이 파랗게 돼요.</div>');
+  if(full&&PLAN){const s=KO_PLAN.steps[PS];if(s&&s.k==='leaf'&&s.area===R.area)planAfter(PS)}}
+/* 오늘 할 것의 잎 칸 열기 */
+function ktOpenStep(s){const nx=ktNext(s.area);if(nx){ktStart(s.area,nx.id);return}viewMap(s.area);
+  const top=$('#main .dwtop');if(top)top.insertAdjacentHTML('afterend','<div class="dwhint">이 가지 잎을 다 채웠어! 「빈 나무 처음부터 채우기」로 복습해요.</div>')}
 const VIEWS={map:()=>viewMap(),cls:()=>viewCls(),hw:()=>viewHW(),wk:()=>viewWrite(),fill:viewFill,prev:viewPrev,note:viewNote,daily:viewDaily,test:viewTest,weak:viewWeak,struct:viewStruct,gram:viewGram,lit:viewLit,read:viewRead,know:viewKnow,log:viewLog};
 function go(v){if(!VIEWS[v])v='daily';TAREA=null;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='weak'?'test':v)));clearInterval(window._tm);VIEWS[v]();window.scrollTo(0,0)}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{clearInterval(window._tm);resetAll();if(location.hash.slice(1)===b.dataset.v)go(b.dataset.v);else location.hash=b.dataset.v});
