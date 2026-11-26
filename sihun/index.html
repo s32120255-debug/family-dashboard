@@ -215,7 +215,7 @@ onAuthStateChanged(auth, async user => {
 </head><body>
 <title>시훈 공부방</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;600;800&family=IBM+Plex+Sans+KR:wght@400;600;700&family=Do+Hyeon&family=Gowun+Dodum&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#f7f3ea;--card:#fffdf8;--ink:#1f2a44;--sub:#6b7280;--line:#e6e0d2;--acc:#e4572e;--ok:#2a9d5c;--en:#3b6cf6;--ma:#d9822b;--off:#b9b2a2;--chip:#f1ede3}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151a26;--card:#1f2636;--ink:#eef1f7;--sub:#a3abbd;--line:#323b50;--chip:#2a3245;--off:#5d6578}}
@@ -1104,9 +1104,18 @@ function autoWatch(root){let tok=0,last=0,back=false;
     setTimeout(()=>{if(my===tok&&b.isConnected&&!b.disabled)b.click()},ms)};
   root.addEventListener('pointerdown',e=>{tok++;last=Date.now();const t=e.target&&e.target.closest&&e.target.closest('button');back=!!t&&/◀|⏮|이전|처음/.test(t.textContent||'');root.querySelectorAll('.autobar').forEach(i=>i.remove());root.querySelectorAll('.catpop').forEach(i=>setTimeout(()=>i.remove(),900))},true);
   new MutationObserver(()=>{root.querySelectorAll('[data-auto]').forEach(arm)}).observe(root,{childList:true,subtree:true})}
+// 🎨 스피드 연산 느낌(엄마 11/26): 모눈 종이 바탕 · 파란 버튼 · 제목 Do Hyeon · 본문 Gowun Dodum. 앱마다 맨 끝에 덧씌워요(내용·동작은 그대로)
+const THEME_VARS='--paper:#fbfaf4;--bg:#fbfaf4;--card:#ffffff;--ink:#262a31;--sub:#5d5a52;--soft:#5d5a52;--muted:#5d5a52;--line:#dfdacb;--acc:#2f5fa3;--accent:#2f5fa3;--blue:#2f5fa3;--en:#2f5fa3;--navy:#2f5fa3;--navy2:#24497f;--chip:#f3f1e7;--grid:rgba(64,112,168,.16)';
+const THEME_GRID='background-color:#fbfaf4!important;background-image:linear-gradient(rgba(64,112,168,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(64,112,168,.16) 1px,transparent 1px)!important;background-size:24px 24px!important;color:#262a31';
+const THEME_FONT=s=>`${s},${s} *{font-family:'Gowun Dodum','Noto Sans KR',sans-serif!important}
+ ${['h1','h2','h3','.go','.btn','.big','.prompt','.ans','.hrow b','.hit .t b'].map(x=>s+' '+x).join(',')}{font-family:'Do Hyeon','Gowun Dodum',sans-serif!important;font-weight:400!important;letter-spacing:.01em}
+ ${s} button.go:not(.light),${s} button.btn:not(.light):not(.sm){background:#2f5fa3!important;color:#fff!important;border-radius:18px}`;
+const THEME_SHADOW=`:host{${THEME_VARS}} .body{${THEME_GRID}} ${THEME_FONT('.body')} .body .top{flex-wrap:wrap} .body .top .tt{order:-1;flex:1 1 100%} .body button.big:not(.tbig),.body button.homebtn{background:#2f5fa3!important;color:#fff!important;box-shadow:none!important}`;
+(function(){const st=document.createElement('style');st.id='themeSpeed';st.textContent=`:root{${THEME_VARS}} body{${THEME_GRID}} ${THEME_FONT('#hub')} #tryBar{font-family:'Gowun Dodum',sans-serif!important}`;
+  const add=()=>document.body.appendChild(st);if(document.body)add();else document.addEventListener('DOMContentLoaded',add)})();
 function mountApp(hostId,tplId){
   const host=document.getElementById(hostId);const sr=host.attachShadow({mode:'open'});autoWatch(sr);
-  sr.appendChild(document.getElementById(tplId).content.cloneNode(true));
+  sr.appendChild(document.getElementById(tplId).content.cloneNode(true));{const t=document.createElement('style');t.textContent=THEME_SHADOW;sr.appendChild(t)}
   const body=sr.querySelector('.body');
   return {querySelector:s=>sr.querySelector(s),querySelectorAll:s=>sr.querySelectorAll(s),getElementById:i=>sr.getElementById(i),
     addEventListener:(...a)=>sr.addEventListener(...a),createElement:t=>document.createElement(t),body};
@@ -8382,13 +8391,15 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     const R=todayRows(),left=R.filter(r=>!r.done&&r.min),tot=left.reduce((a,r)=>a+r.min,0);
     const hm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`:m+'분';
     const row=(ic,name,right,attr)=>`<${attr.startsWith('href')?'a':'button'} class="hrow" ${attr}><span class="e">${ic}</span><b>${name}</b><span class="r">${right}</span></${attr.startsWith('href')?'a':'button'}>`;
-    $h('#hub').innerHTML=`<style>.hsum{width:100%;border-collapse:collapse;font-size:16px;text-align:left}.hsum td{padding:8px 4px;border-bottom:1px solid #eee;vertical-align:top}.hsum td.m{text-align:right;white-space:nowrap;color:var(--sub)}.hsum tr.dn td{color:var(--sub)}.hsum tr.sum td{border:0;font-weight:700}
+    $h('#hub').innerHTML=`<style>.hit{padding:10px 2px;border-bottom:1px solid #eee;text-align:left}.hit .t{display:flex;align-items:baseline;gap:8px;font-size:18px}.hit .t b{flex:1}.hit .t .m{font-size:15px;color:var(--sub);white-space:nowrap}
+      .hit .w{font-size:15px;line-height:1.5;color:var(--sub);margin-top:3px;word-break:keep-all}.hit.dn .t b{color:var(--sub)}.htot{display:flex;justify-content:space-between;padding:10px 2px 0;font-weight:700;font-size:17px}
+      #hub .hh{flex-wrap:wrap}#hub .hh .d{white-space:nowrap}#hub .hh h1{font-size:26px;white-space:nowrap}#hub .hh h1 img{width:48px!important;height:48px!important}
       .hrow{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;background:var(--card,#fffdf8);border:2px solid var(--line,#e8e1d4);border-radius:16px;padding:13px 16px;margin-top:10px;font:inherit;font-size:19px;color:inherit;text-decoration:none;text-align:left;cursor:pointer}
       .hrow .e{font-size:26px}.hrow b{flex:1}.hrow .r{font-size:14px;color:var(--sub)}</style>
       <div class="hh"><h1>${CATIMG}오늘의 공부</h1><div class="d">${dateLabel()}</div></div>
       <div class="panel" style="text-align:left"><h2 style="font-size:20px;margin:0 0 8px">📋 오늘 할 것</h2>
-      <table class="hsum">${R.map(r=>`<tr class="${r.done?'dn':''}"><td style="white-space:nowrap">${r.ic} <b>${r.name}</b></td><td>${r.done?'✅ ':''}${r.what}</td><td class="m">${r.done?'끝':r.min?'약 '+hm(r.min):'–'}</td></tr>`).join('')}
-      ${tot?`<tr class="sum"><td colspan="2">남은 것 모두</td><td class="m">약 ${hm(tot)}</td></tr>`:''}</table></div>
+      ${R.map(r=>`<div class="hit ${r.done?'dn':''}"><div class="t">${r.ic} <b>${r.name}</b><span class="m">${r.done?'✅ 끝':r.min?'약 '+hm(r.min):''}</span></div><div class="w">${r.what.split(' · ').join('<br>')}</div></div>`).join('')}
+      ${tot?`<div class="htot"><span>남은 것 모두</span><span>약 ${hm(tot)}</span></div>`:''}</div>
       ${SUBJ.map((x,i)=>row(x.ic,x.name,x.off?'준비 중':(doneMark(x.k)==='—'?'아직':doneMark(x.k)),`data-h="subj" data-i="${i}"`)).join('')}
       ${HUBOUT.map(o=>row(o.ic,o.name,'바로 가기',`href="${o.href}"`)).join('')}
       <p class="note">🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
