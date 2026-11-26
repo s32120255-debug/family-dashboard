@@ -193,10 +193,11 @@ async function koFill(KR){
         // 숙제 기록은 맞혀야 남아요 → 결국 맞힌 문제(오답 아님). 헤맨 곳만 따로 보여 줌 (엄마 11/24)
         const ev=x.ev||{}, cm=x.cmp||{}; const how=[ev.miss?`근거 문장 잘못 누름 ${ev.miss}`:'',cm.miss?`같아/달라 헤맴 ${cm.miss}`:'',(x.miss||0)-(ev.miss||0)-(cm.miss||0)>0?(x.ev?`O·X 헤맴 ${(x.miss||0)-(ev.miss||0)-(cm.miss||0)}`:x.k==='ox'?`헤맴 ${x.miss}번 (근거 찾기 + O·X 합친 수)`:`헤맴 ${x.miss}번`):'',x.hint?'💡 힌트 봄':''].filter(Boolean).join(' · ');
         strug.push({src:`숙제 ${x.i+1}번${q&&q.no?` (교재 ${q.pg||''}쪽 ${q.no}번)`:''}`,area:r.area,q:q?(q.q||(q.st?q.st.join(' / '):'')):'',how,ans,chk:q&&q.chk,sec:x.sec}); }); }
-    else if(r.type==='cls'){ // 🧱 소리가 닮아요(5주차 문법 기초 수업)
-      if(r.blank){const mm=Object.entries(r.miss||{}).filter(([k,v])=>v).length;h+=`<li><b>🧱 ${r.part}부 계통도 백지 채우기</b> — 한 번에 ${r.first}/${r.n}칸${mm?` · 헤맨 칸 ${mm}`:''}${time}</li>`}
+    else if(r.type==='cls'){ // 🧱 문법 기초 수업 (1~5주차)
+      const CN={'w1-um':'1주 음운·음절','w2-mo':'2주 모음','w3-ja':'3주 자음','w4-bat':'4주 받침','w5-dong':'5주 소리가 닮아요'}[r.cls]||'';
+      if(r.blank){const mm=Object.entries(r.miss||{}).filter(([k,v])=>v).length;h+=`<li><b>🧱 ${CN} ${r.cls==='w5-dong'?r.part+'부 ':''}계통도 백지 채우기</b> — 한 번에 ${r.first}/${r.n}칸${mm?` · 헤맨 칸 ${mm}`:''}${time}</li>`}
       else{const it=r.items||[];const bad=it.filter(x=>!x.ok);const step={g:'① 자리',o2:'② 받침',o3:'③ 규칙',o4:'④ 소리',o5:'⑤ 또',p:'고르기',m:'○표'};
-        h+=`<li><b>🧱 ${r.lid}. ${esc(r.title)}</b> — 한 번에 ${r.first}/${r.n}${r.pred!=null?` · 예측 ${r.pred}${r.pred===r.first?' (딱 맞음)':''}`:''}${r.cx?` · 반례 본 횟수 ${r.cx}`:''}${r.fold?' · 칸 줄임(3연속)':''}${time}
+        h+=`<li><b>🧱 ${CN} · ${r.lid}. ${esc(r.title)}</b> — 한 번에 ${r.first}/${r.n}${r.pred!=null?` · 예측 ${r.pred}${r.pred===r.first?' (딱 맞음)':''}`:''}${r.cx?` · 반례 본 횟수 ${r.cx}`:''}${r.fold?' · 칸 줄임(3연속)':''}${time}
         ${bad.length?`<br><span class="muted">헤맨 것:</span> ${bad.map(x=>`${esc(x.w)}${x.twin?'(다시)':''} [${Object.entries(x.miss||{}).filter(([k,v])=>v).map(([k,v])=>(step[k]||k)+' '+v).join(', ')}]`).join(' · ')}`:''}</li>`}}
     else if(r.type==='map'){ // 🗺️ 시훈이 지도 칸 채우기
       const AN={gram:'문법',lit:'문학',bi:'비문학',sk:'스키마'};const mm=Object.entries(r.miss||{});
