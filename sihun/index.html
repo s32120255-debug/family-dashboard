@@ -1062,6 +1062,7 @@ table.lmap th small{font-weight:500;color:var(--muted)}
   <button data-v="hw">📒 숙제</button>
   <button data-v="read">📚 독서 워크지</button>
   <button data-v="know">배경지식</button>
+  <button data-v="map">🗺️ 지도</button>
   <button data-v="note">✍️ 손 정리</button>
   <button data-v="log">기록</button>
   <button data-v="prev">👩 엄마 보기</button>
@@ -6423,7 +6424,7 @@ function structDone(){
 
 function qnavHTML(i,rs){return `<div class="qnav"><button data-q="home">← 처음으로</button>${rs?'<button data-q="restart">🔄 처음부터 다시</button>':''}<span style="flex:1"></span><button data-q="prev" ${i===0?'disabled':''}>◀ 이전</button><button data-q="skip">건너뛰기 ▶</button></div>`}
 function bindQnav(home,prev,skip,restart){document.querySelectorAll('.qnav button').forEach(b=>b.onclick=()=>{if(b.dataset.q==='home')discardPend();const f=({home,prev,skip,restart})[b.dataset.q];if(f)f();window.scrollTo(0,0)})}
-function resetAll(){try{clearTimeout(KDW&&KDW.tm)}catch(e){}discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
+function resetAll(){try{clearTimeout(KDW&&KDW.tm);clearTimeout(KM&&KM.tm)}catch(e){}discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
 /* ================= 오늘 복습 (요일별 블록 빈칸) ================= */
 const DAYS=[['mon','월','비문학'],['tue','화','문학'],['wed','수','문법'],['thu','목','스키마'],['fri','금','독서']];
 // {{정답|오답|오답}} = 빈칸. g = 어려운 말 풀이
@@ -8306,9 +8307,8 @@ function pvHW(){const nchk=HW.reduce((a,h)=>a+h.items.filter(i=>i.chk).length,0)
    금 독서 워크지 · 토 이번 주 대비 누테. 주차는 복습 카드가 있는 가장 최근 주차(MAXW).
    특정 날만 바꾸려면 KO_PLAN.custom['YYYY-MM-DD']=[...] */
 const KO_PLAN={steps:[],custom:{},add:{},
-  /* pre = 그날 순서 맨 앞에 붙이기 (엄마 11/26: 5주차 문법 기초 수업 금 1부 · 토 시험 전 2부) */
-  pre:{'2026-11-27':[{k:'cls',part:1,label:'🧱 소리가 닮아요 1부',sub:'5주차 문법 기초 · 자음표 → 비음화 → 유음화 · 약 30분'}],
-       '2026-11-28':[{k:'cls',part:2,label:'🧱 소리가 닮아요 2부',sub:'5주차 문법 기초 · 구개음화 → 섞기 → 실전 · 시험 전에'}]}};
+  /* pre = 그날 순서 맨 앞에 붙이기 (예: {'YYYY-MM-DD':[{k:'cls',part:1,label,sub}]}). 엄마 11/26: 문법 수업은 엄마가 따로 시킴 → 넣지 않음, 문법 탭에서만 */
+  pre:{}};
 /* 보충(엄마 지정): 그 날짜 요일 순서 맨 뒤에 붙음. 11/24 엄마 "비문학 숙제 오늘 보충으로" */
 KO_PLAN.add['2026-11-24']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'문단 쪼개 읽기 → 근거 문장 찾기'}];
 KO_PLAN.add['2026-11-25']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'읽으면서 주어·서술어 → 왜? 찾기 (하는 데까지만)'}];
@@ -8868,7 +8868,164 @@ function dwBlankEnd(part,ids){const first=ids.filter(id=>!KDW.bm[id]).length;con
   if(PLAN){const s=KO_PLAN.steps[PS];if(s&&s.k==='cls'&&s.part===part)planAfter(PS)}}
 function viewCls(part){dwHome(part||1)}
 
-const VIEWS={cls:()=>viewCls(),hw:()=>viewHW(),wk:()=>viewWrite(),fill:viewFill,prev:viewPrev,note:viewNote,daily:viewDaily,test:viewTest,weak:viewWeak,struct:viewStruct,gram:viewGram,lit:viewLit,read:viewRead,know:viewKnow,log:viewLog};
+/* ===== 🗺️ 시훈이 지도 (엄마 11/26: "서울대 보낸다 마음먹고 기초부터") =====
+   문법·문학·비문학·스키마 개념 지도. 칸마다 핵심 한 줄의 빈칸을 블록으로 골라 채움(엄마: 블록).
+   파란 칸 = 채움(누르면 설명) · 점선 = 채울 칸 · 회색 🔒 = 아직 안 배움(전체 모양만 보여 줌).
+   문법 큰 가지는 엄마가 올린 「한눈에 보는 문법 개념 지도」 순서. 나머지는 앱 1~5주차 내용 + 수능 국어 뼈대(잠긴 칸).
+   칸 내용은 모두 강의·교재에서 나온 것(앱 복습 카드·개념 카드와 같은 말). 새 주차를 배우면 그 칸의 lock을 풀거나 칸을 더해요.
+   {id, n:칸 이름, t:앞, a:빈칸 답, o:고르기(첫째=정답), b:뒤, sum:누르면 나오는 설명} / {dw:'n2'} = 5주차 수업 계통도 칸 / {n, lock:1} */
+const MAPK='sihun_ko_map';
+const MK=(id,n,t,a,o,b,sum)=>({id,n,t,a,o:[a].concat(o),b,sum});
+const LK=n=>({n,lock:1});
+const KMAP={
+gram:{t:'문법',secs:[
+ {h:'Ⅰ 음운',gs:[
+  {h:'음운 체계',ns:[
+   MK('g1','음운','음운 = 말의 뜻을 ','구별하는',['꾸며 주는','길게 하는'],' 가장 작은 소리 단위','말 vs 발, 강 vs 공: 소리 하나만 바뀌어도 뜻이 달라져요. 자음과 모음이 음운이에요.'),
+   MK('g2','음운 개수','첫소리 ㅇ은 ','소리값이 없어서',['모음이라서','너무 작아서'],' 음운 개수에 세지 않아요','아이 = ㅏ, ㅣ → 2개. 받침 ㅇ은 소리가 나서 세요(강 = ㄱ ㅏ ㅇ → 3개).'),
+   MK('g3','음절','음절 = 한 번에 내는 소리 ','마디',['조각','뜻'],'','강물은 [강]·[물] 두 번 소리 나요 → 2음절.'),
+   MK('g4','음절 구조','음절에는 모음이 꼭 있어요. 자음 ','혼자서는',['둘이서는','모음과 함께는'],' 음절이 못 돼요','음절 구조 4가지: 모음(아) · 자음+모음(가) · 모음+자음(앙) · 자음+모음+자음(약).'),
+   MK('g5','모음','모음 = 공기가 ','방해 없이 나가는',['막혔다 터지는','코로 나가는'],' 소리','아기 옹알이(아, 와)는 모음. 숨을 그냥 내쉬면 나는 쉬운 소리예요. 단모음은 10개.'),
+   MK('g6','모음 체계표','이~ 코끝 찡 = 전설, 으~ 목구멍 = 후설, 입술 동그랗게 = ','원순',['평순','고모음'],'','혀 앞뒤(전설·후설) · 입술 모양(평순·원순) · 혀 높이(고·중·저). 입이 커질수록 혀가 내려가요.'),
+   MK('g7','자음','자음 = 공기를 ','방해하는',['그냥 내보내는','길게 하는'],' 소리. 혼자서는 소리를 못 내요','자음은 "아들 소리": 모음(어머니 소리)이 도와줘야 소리가 나요.'),
+   MK('g8','소리 나는 자리','입술 → 잇몸 → 센입천장 → 여린입천장 → ','목청',['코','이'],'','아기가 내는 순서: 엄마·아빠(입술 ㅂ ㅁ) → 따당면(잇몸 ㄷ ㄴ ㄹ ㅅ) → 딱딱한 입천장(ㅈ ㅊ) → 연두부처럼 말랑(ㄱ ㅇ) → 할아버지 소리(목청 ㅎ).'),
+   MK('g9','소리 내는 방법','붙였다 찢기 = 파열음, 좁은 틈으로 긁기 = 마찰음, 코를 막으면 안 나는 소리 = ','비음',['유음','파찰음'],'','파열음 ㄱ ㄷ ㅂ · 마찰음 ㅅ ㅆ ㅎ · 파찰음 ㅈ ㅉ ㅊ(둘 다) · 비음 ㄴ ㅁ ㅇ · 유음 ㄹ.'),
+   MK('g10','울림소리','피아노 페달처럼 울리는 울림소리 = ','ㄴ ㄹ ㅁ ㅇ',['ㄱ ㄷ ㅂ','ㅅ ㅆ ㅎ'],'','나머지는 안울림소리: 예사소리(ㄱ) · 된소리(ㄲ) · 거센소리(ㅋ).'),
+   LK('소리의 길이')]},
+  {h:'음운 변동 › 교체 (바뀜)',ns:[
+   MK('g11','받침 7개 소리','받침은 ','ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ',['ㄱ ㄲ ㅋ ㅅ ㅈ ㅊ ㅎ','ㄴ ㄹ ㅁ ㅇ'],' 7개로만 소리 나요','음절의 끝소리 규칙. 노란 마음(ㄴ ㄹ ㅁ ㅇ)은 그대로. 밖[박], 빛[빋], 앞[압]. 발음하기 귀찮아서 비슷한 소리로 바꿔요.'),
+   MK('g12','연음','뒤 첫소리가 비어 있고(ㅇ) 가벼운 말(조사)이면 받침이 ','뒤로 넘어가요',['없어져요','두 번 나요'],'','옷이[오시], 닦아[다까]. 단, 위처럼 뜻 있는 말이면 막혀서 대표음으로 넘어가요: 옷 위[오뒤].'),
+   {dw:'n2',n:'비음화'},{dw:'n4',n:'유음화'},{dw:'n5',n:'ㄹ이 ㄴ으로'},{dw:'n7',n:'구개음화'},LK('된소리되기'),LK('반모음화')]},
+  {h:'음운 변동 › 탈락 · 첨가 · 축약',ns:[LK('자음군 단순화'),LK('ㄹ·ㅎ·ㅡ 탈락'),LK('ㄴ 첨가'),{dw:'n8',n:'ㄷ+ㅎ → ㅌ (축약)'}]}]},
+ {h:'Ⅱ 단어',gs:[
+  {h:'형태소',ns:[{dw:'n6',n:'실질·형식 형태소'},LK('자립·의존 형태소')]},
+  {h:'단어 만들기 · 품사 · 의미',ns:[LK('어근과 접사'),LK('단일어·복합어'),LK('품사 9개'),LK('의미 관계'),LK('어휘의 체계')]}]},
+ {h:'Ⅲ 문장과 담화',gs:[{h:'',ns:[LK('문장 성분'),LK('문장의 짜임'),LK('문법 요소'),LK('담화')]}]},
+ {h:'Ⅳ 어문 규정 · Ⅴ 국어의 역사',gs:[{h:'',ns:[LK('한글 맞춤법'),LK('표준 발음법'),LK('중세 국어')]}]}]},
+lit:{t:'문학',secs:[
+ {h:'Ⅰ 시를 읽는 눈',gs:[{h:'정서 · 상황 · 주제',ns:[
+   MK('l1','시는 언제 쓸까','시는 ','크고 강렬한 감정',['평범한 기분','재미있는 일'],'이 생길 때 써요','라면 먹은 날엔 시를 안 써요. 시인은 그 감정을 표현하고, 우리는 그 감정을 찾아내요.'),
+   MK('l2','정서','정서는 내가 고르는 게 아니라 ','상황 때문에 저절로 생겨요',['내가 골라요','시인이 정해 줘요'],'','정서 = 감정 = 기분. 시에서 제일 중요한 것.'),
+   MK('l3','추리','감정이 안 쓰여 있으면 ','보편성으로 추리',['없는 것','시인 마음대로'],'해요','말한 것은 읽고, 말하지 않은 것은 추리! 보편성 = 누구나 그렇게 느끼는 것.'),
+   MK('l4','상황의 갈래','나쁜 상황 = 개인의 일 · 사회의 일 / 좋은 상황 = 아름다운 것 · ','훌륭한 것',['재미있는 것','슬픈 것'],'','훌륭한 것 = 마음이 고개 숙여지는 것(추운 겨울에도 푸른 소나무).'),
+   MK('l5','사회의 아픔','일제강점기 → 6·25 전쟁 → 독재 정권 → ','산업화',['르네상스','임진왜란'],'','시에 나오는 사회의 아픔, 시간 순서. 시대마다 신호 단어가 있어요.'),
+   MK('l6','개인의 아픔','부재 · 성찰 · ','고향 상실',['산업화','극복'],'','부재 = 소중한 사람이 없음 · 성찰 = 나를 돌아보며 부끄러워함 · 고향 상실 = 타향에서 고향을 그리워함.'),
+   MK('l7','시어의 뜻','시어의 뜻은 ','화자의 기분',['사전 뜻','글자 수'],'이 정해요','웃는 사람에겐 꽃도 웃고, 우는 사람에겐 꽃도 울어요.'),
+   MK('l8','주제','주제는 눈에 보이지 않는 ','추상적인 것',['물건','장소'],'이에요','그리움, 슬픔, 독립하고 싶은 마음처럼 머릿속에 있는 것.')]}]},
+ {h:'Ⅱ 태도',gs:[{h:'',ns:[
+   MK('l9','상황 vs 태도','처한 것 = 상황, 택한 것 = ','태도',['정서','주제'],'','상황은 내가 못 고르고, 태도는 그 일에 대해 내가 고른 마음.'),
+   MK('l10','태도 찾는 곳','태도는 ','서술어',['주어','제목'],'에서 결정돼요','"잘할 거야 / 잘하고 싶어 / 못할 것 같아" → 맨 끝 서술어가 태도를 정해요.'),
+   MK('l11','대결 · 순응','대결 = 상황 제거, 순응 = ','상황 수용',['상황 제거','상황 도피'],'','긍정 태도 상자: 추구 ⊃ 소망 ⊃ 극복·순응, 극복 ⊃ 대결. 극복(초극) = 나쁜 상황을 계기로 더 높이.'),
+   MK('l12','소망 vs 의지','소망 = 바라기만, 의지 = ','바라면서 행동',['포기','남 탓'],'','"살 빼고 싶다"(소망) vs "살 빼려고 오늘도 달린다"(의지).'),
+   MK('l13','부정적 태도','체념 = ','포기',['극복','소망'],'','체념(포기) · 아부(힘센 쪽에 붙음) · 원망(남 탓) · 도피(도망) · 회의("해서 뭐 해?").')]}]},
+ {h:'Ⅲ 형상화 · 표현',gs:[{h:'형상화',ns:[
+   MK('l14','형상화','형상화 = 눈에 안 보이는 마음을 ','눈에 보이는 이미지로',['어려운 말로','숫자로'],' 보여 주기','그래야 독자가 더 크게 감동해요. 사실적 형상화(있을 법한 장면) · 비유적 형상화(다른 것에 빗댐).'),
+   MK('l15','심상','심상 다섯 가지: 시 · 청 · 미 · 후 · ','촉',['색','음'],'','이미지 = 감각 = 심상. 눈·귀·맛·냄새·감촉. "시청미후촉"!'),
+   MK('l16','상징','상징은 ','짝으로',['한 글자씩','거꾸로'],' 읽어요','임금 곁 충신 ↔ 간신배 ⇒ 겨울에 핀 매화 ↔ 겨울.')]},
+  {h:'표현 개념어',ns:[
+   MK('l17','화자','시 속에서 말하는 사람 = ','화자',['시인','독자'],' (시인과 다를 수 있어요)','시인이 다른 사람인 척 연기해요. 화자가 바라보거나 말 거는 것 = 시적 대상.'),
+   MK('l18','어조','화자의 목소리 느낌(말투) = ','어조',['심상','운율'],'','간절한 · 단호한 · 차분한 · 애상적(슬픈).'),
+   MK('l19','직유 · 은유','"~처럼"으로 빗대면 직유, "A는 B다"로 빗대면 ','은유',['직유','의인'],'','직유: 얼굴이 사과처럼 빨개. 은유: 엄마는 우리 집 해님이다. 의인: 사람이 아닌 것을 사람처럼.'),
+   MK('l20','반어','속마음과 반대로 말하기 = ','반어',['역설','대조'],'','엉엉 울면서 "하나도 안 슬퍼!"'),
+   MK('l21','역설','겉으로는 말이 안 되는데 깊은 뜻이 있음 = ','역설',['반어','반복'],'',''),
+   MK('l22','반복과 운율','같은 말을 되풀이하면 생기는 노래 같은 리듬 = ','운율',['어조','심상'],'','반복하면 마음도 강조돼요. 대조 = 반대되는 것을 나란히 놓기.'),
+   LK('시상 전개')]}]},
+ {h:'Ⅳ 이항 대립 · 세계관',gs:[{h:'',ns:[
+   MK('l23','이항 대립','이항 대립은 ','누가 봐도 반대인 것',['비슷한 것','애매한 것'],'만','"나는 밤을 무서워한다" → 짝은 낮. 새벽은 애매해서 짝이 못 돼요.'),
+   MK('l24','극복 ↔ 지향','화자는 극복 대상을 벗어나 ','지향 대상',['극복 대상','시적 대상'],'으로 가고 싶어 해요','현대인의 메마른 삶 ↔ 정다운 인간관계.'),
+   MK('l25','수능 세계관','산업화 ↔ ','인간성',['농업화','자연'],'','산업화(돈·기계)가 사람에게서 빼앗아 간 것이 짝. 인간성 ↔ 물신주의.'),
+   MK('l26','변함 ↔ 영원','변하는 것(사람 사는 일) ↔ 변하지 않는 것(','자연',['도시','돈'],')','사람 사는 일은 무상하고, 자연은 영원해요.')]}]},
+ {h:'Ⅴ 고전 시가 · 소설 · 수필 · 극',gs:[{h:'',ns:[LK('고전 시가'),LK('인물·사건·배경'),LK('시점과 서술자'),LK('갈등과 구성'),LK('수필·극')]}]}]},
+bi:{t:'비문학',secs:[
+ {h:'Ⅰ 문장 읽기',gs:[{h:'',ns:[
+   MK('b1','주어 · 서술어','모든 문장은 주어와 ','서술어',['목적어','접속어'],'로 이루어져요','"철수가 사과를 먹었다": 철수가(주어) · 사과를(목적어) · 먹었다(서술어).'),
+   MK('b2','핵심 자리','글쓴이는 가장 중요한 말을 문장의 ','뒷부분(서술어 자리)',['앞부분','가운데'],'에 둬요','강조하고 싶은 말은 서술어 자리로: "철수가 장애물을 건너 보석을 향해 갔다."'),
+   MK('b3','보충 설명','주어 앞에 아무리 길게 붙어 있어도 그것은 ','보충 설명',['핵심','주제'],'이에요','수능 문장은 정보량이 많아서 중요한 정보부터 먼저 파악해요.')]}]},
+ {h:'Ⅱ 글의 구조',gs:[{h:'',ns:[
+   MK('b4','이항대립','세상을 두 짝으로 나누어 비교하는 글 = ','이항대립',['통시','원인→결과'],'','두 짝을 비교할 때는 먼저 차이점. 신호: 반면, 하지만, ~지만.'),
+   MK('b5','한계→극복','문제가 나오고 ','해결책',['원인','시대'],'을 내는 글 = 한계→극복',''),
+   MK('b6','원인→결과','까닭 신호(때문이다, 결국…)가 나오면 ','원인→결과',['이항대립','통시'],' 구조','이유가 가장 중요하면 "~한 이유는 / ~때문이다"처럼 이유를 서술어 자리에.'),
+   MK('b7','핵심은 뒤에','"A는 B하지 않고 C한다"에서 글쓴이가 말하고 싶은 것 = ','C',['A','B'],'','S V, S V가 이어지면 뒤의 S V가 더 중요. 질문과 답이 함께 있으면 답이 핵심.'),
+   MK('b8','통시','통시 = 시대를 ','통과하며',['거꾸로','건너뛰며'],' 쓴 글','전기와 후기의 차이점이 바로 이항 대립점(조선 지와 행).'),
+   LK('전개 방식(정의·예시·분류…)')]}]},
+ {h:'Ⅲ 낱말 · 추론',gs:[{h:'',ns:[
+   MK('b9','짝으로 추리','모르는 단어도 ','짝',['글자 수','그림'],'을 보면 뜻을 추리할 수 있어요','유대감의 반대말은 이기심. 외형 ↔ 내면.'),
+   MK('b10','~지만',"'~지만'의 앞과 뒤는 ",'반대',['같은','순서대로'],' 내용','\'그러나\' 앞에서 단점을 말했다면 뒤에서는 장점.'),
+   MK('b11','반대 추론','"A이면 B"를 반대로 추론하면 "A가 아니면 ','B가 아니다',['B이다','A이다'],'"','')]}]},
+ {h:'Ⅳ 선지 판단 · 분야별 글',gs:[{h:'',ns:[LK('선지 판단 (준비 중)'),LK('인문'),LK('사회'),LK('과학·기술'),LK('예술')]}]}]},
+sk:{t:'스키마',secs:[
+ {h:'Ⅰ 시대 흐름',gs:[{h:'',ns:[
+   MK('s1','시대 순서','고대 → 중세 → ','르네상스',['춘추전국','고대'],' → 근대 → 현대','르네상스(14~16세기 유럽) 다음에 프랑스 혁명.'),
+   MK('s2','중세 vs 르네상스','중세 서양은 ','신(교회)',['인간','과학'],' 중심, 르네상스는 다시 인간 중심','레오나르도 다빈치의 모나리자 = 르네상스.')]}]},
+ {h:'Ⅱ 동양 사상',gs:[{h:'제자백가',ns:[
+   MK('s3','춘추전국','춘추전국시대 = ','전쟁',['평화','과학'],'의 시대 → 해결책으로 여러 철학(제자백가)','하·은·주 → 춘추전국 → 진.'),
+   MK('s4','공자','공자는 ','인(너그러움)과 예',['법과 상벌','무위자연'],'를 강조했어요','극기복례: 자기 욕심을 이기고 예를 회복.'),
+   MK('s5','맹자 · 순자','맹자 = ','성선설',['성악설','성무선악설'],', 순자 = 성악설','순자는 한비자의 스승.'),
+   MK('s6','한비자','한비자는 엄격한 ','법과 상벌',['인과 예','자연'],'로 다스리자고 했어요','잘하면 상, 못하면 벌. 부국강병.'),
+   MK('s7','노자','노자는 경쟁하지 말고 자연으로 돌아가자(','무위자연',['지행합일','성선설'],')','')]},
+  {h:'성리학 · 양명학 · 실학 · 불교',ns:[
+   MK('s8','성리학','이(理)는 눈에 ','안 보이는',['보이는','만질 수 있는'],' 원리, 기(氣)는 눈에 보이는 물질','성리학을 정리한 주희는 송나라 사람. 격물치지 = 사물을 살펴 이치를 알아냄.'),
+   MK('s9','양명학','아는 것과 행동은 하나여야 한다(왕양명) = ','지행합일',['격물치지','분서갱유'],'',''),
+   MK('s10','실학','실학 = 백성의 생활에 ','실제로 도움이 되는',['시험에 나오는','옛날'],' 공부','홍대용은 지전설(지구가 스스로 돈다).'),
+   MK('s11','불교','전생 → 현생 → 내생이 계속 반복된다 = ','윤회',['인과응보','지행합일'],'','인과응보 = 모든 일에는 원인과 결과. 혼자 깨달음 = 소승 불교.')]}]},
+ {h:'Ⅲ 서양 사상',gs:[{h:'그리스 철학자',ns:[
+   MK('s12','탈레스','최초의 철학자 탈레스: 만물의 근원은 ','물',['불','흙'],'','엠페도클레스는 흙·공기·물·불 네 가지.'),
+   MK('s13','소크라테스','"너 자신을 알라" = 내가 ','무지하다는',['똑똑하다는','부자라는'],' 것을 알라','산파술: 질문으로 사람 안의 진리를 꺼내도록 도움. "악법도 법이다."'),
+   MK('s14','플라톤','완전하고 영원한 세계 = ','이데아',['미메시스','현실'],'','현실의 사물은 이데아의 불완전한 복사본(미메시스).'),
+   MK('s15','아리스토텔레스','사물의 본질은 이상 세계가 아니라 ','현실 속',['이데아','하늘'],'에 있어요','「아테네 학당」: 플라톤은 손가락으로 하늘, 아리스토텔레스는 손바닥으로 땅.'),
+   LK('근대 철학')]}]},
+ {h:'Ⅳ 우리 역사',gs:[{h:'',ns:[
+   MK('s16','왜란 · 호란',"임진왜란의 '왜' = ",'일본',['청나라','명나라'],", 병자호란의 '호' = 청나라",'조선은 임진왜란과 병자호란을 기준으로 전기·후기로 나눠요.'),
+   LK('경제·법·과학 배경')]}]}]}
+};
+let KM=null; // 지도 화면 상태
+function mapStore(){return store(MAPK)||{f:{}}}
+function mapNode(x){if(x.dw){const N=DW_NODE[x.dw];return {id:x.dw,n:x.n,t:N.t,a:N.a,o:N.o.slice(),b:N.b,sum:N.sum}}return x}
+function mapFilled(id){const M=mapStore();if(M.f[id])return true;if(/^n\d$/.test(id)){try{return !!dwStore().tree[id]}catch(e){}}return false}
+function mapAll(area){const L=[];KMAP[area].secs.forEach(s=>s.gs.forEach(g=>g.ns.forEach(x=>{if(!x.lock)L.push(mapNode(x))})));return L}
+const MAP_CSS=`<style>.dw .mtabs{display:flex;gap:6px;margin:8px 0}.dw .mtabs button{flex:1;border:0;border-radius:12px;padding:10px 0;background:#e3e8f1;color:#2f5fa3;font-size:19px;font-family:'Do Hyeon',sans-serif!important}.dw .mtabs .on{background:#2f5fa3;color:#fff}
+.dw .msec{font-family:'Do Hyeon',sans-serif!important;font-size:22px;margin:14px 0 4px;color:#1d2b4f}
+.dw .mgrp{margin-left:8px;border-left:3px solid #b9c6dc;padding-left:10px}.dw .msub{font-size:16px;color:#4f4c45;margin:8px 0 2px}
+.dw .mc{display:inline-block;border-radius:10px;padding:7px 11px;margin:4px 3px;font-size:17px;line-height:1.3}
+.dw .mc.f{background:#e8eef7;border:2px solid #2f5fa3;color:#1d2b4f}.dw .mc.e{background:#fff;border:2px dashed #2f5fa3;color:#2f5fa3}.dw .mc.k{background:#f3f1e7;border:2px dashed #c9c3b3;color:#6b665b}</style>`;
+function viewMap(area){clearTimeout(KM&&KM.tm);area=area||(KM&&KM.area)||'gram';KM={area};
+  const all=mapAll(area);const left=all.filter(x=>!mapFilled(x.id));
+  const cell=x=>{if(x.lock)return `<span class="mc k">🔒 ${x.n}</span>`;const N=mapNode(x);const f=mapFilled(N.id);return `<button class="mc ${f?'f':'e'}" data-mn="${N.id}">${N.n}${f?'':' ?'}</button>`};
+  $('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><h2>🗺️ 시훈이 지도</h2></div>
+   <div class="mtabs">${Object.entries(KMAP).map(([k,v])=>`<button class="${k===area?'on':''}" data-ma="${k}">${v.t}</button>`).join('')}</div>
+   <div class="dwsm">파란 칸 = 내가 채운 칸(누르면 설명) · 점선 = 채울 칸 · 🔒 = 아직 안 배움</div>
+   <div class="dwcard">${KMAP[area].secs.map(s=>`<div class="msec">${s.h}</div>${s.gs.map(g=>`<div class="mgrp">${g.h?`<div class="msub">${g.h}</div>`:''}${g.ns.map(cell).join('')}</div>`).join('')}`).join('')}<div id="dwpop"></div></div>
+   ${left.length?`<button class="dwgo" id="mfill">빈칸 ${left.length}개 채우기</button>`:'<div class="dwhint">✓ 이 지도의 칸을 다 채웠어!</div>'}
+   <button class="dwgo lt" id="mblank">🧠 백지로 처음부터 다시 채우기</button></div>`;
+  document.querySelectorAll('[data-ma]').forEach(b=>b.onclick=()=>viewMap(b.dataset.ma));
+  document.querySelectorAll('[data-mn]').forEach(b=>b.onclick=()=>{const N=all.find(x=>x.id===b.dataset.mn);if(!N)return;
+    if(mapFilled(N.id)){$('#dwpop').innerHTML=`<div class="dwpop"><b>${N.n}</b><br>${N.t}<b>${N.a}</b>${N.b}${N.sum?`<br><span class="dwsm">${N.sum}</span>`:''}</div>`;$('#dwpop').scrollIntoView({block:'nearest'})}
+    else mapRun(area,[N],false)});
+  const mf=$('#mfill');if(mf)mf.onclick=()=>mapRun(area,left,false);
+  $('#mblank').onclick=()=>mapRun(area,all,true)}
+function mapPath(area,id){for(const s of KMAP[area].secs)for(const g of s.gs)if(g.ns.some(x=>(x.id||x.dw)===id))return `${KMAP[area].t} › ${s.h}${g.h?' › '+g.h:''}`;return KMAP[area].t}
+/* 칸 채우기: 한 칸씩 블록 고르기. 맞히면 「다음」 없이 넘어가고, 2번 틀리면 정답+설명 → 「알겠어」 */
+function mapRun(area,list,blank){KM={area,list,i:0,blank,miss:{},t0:Date.now()};mapOne()}
+function mapOne(){const R=KM;if(R.i>=R.list.length)return mapEnd();const N=R.list[R.i];let miss=0;const o=dwSh(N.o);const x=[];
+  const draw=(fb)=>{$('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="mbk">⏮</button><h2>🗺️ ${R.blank?'백지 채우기':'칸 채우기'} · ${R.i+1}/${R.list.length}</h2><button class="dwnb" id="mnx">▶</button></div>
+     <div class="dwsm">${mapPath(R.area,N.id)}</div>
+     <div class="dwcard" style="text-align:center"><div class="dwh">${N.n}</div><div class="dwp" style="margin-top:6px">${N.t}<span class="dwblank" style="min-width:90px">&nbsp;</span>${N.b}</div></div>
+     <div class="dwcard"><div class="dwq">빈칸에 들어갈 것</div>${o.map((v,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-mo="${i}" ${x.includes(i)||fb?'disabled':''}>${v}</button>`).join('')}</div><div id="mfb">${fb||''}</div></div>`;
+    $('#mbk').onclick=()=>{clearTimeout(R.tm);if(R.i)mapEnd();else viewMap(R.area)};
+    $('#mnx').onclick=()=>{clearTimeout(R.tm);R.miss[N.id]=R.miss[N.id]||'skip';R.i++;mapOne()};
+    document.querySelectorAll('[data-mo]').forEach(b=>b.onclick=()=>{const v=o[+b.dataset.mo];
+      if(v===N.a){mapMark(N.id);R.miss[N.id]=R.miss[N.id]||miss;draw(`<div class="dwhint">✓ ${N.t}<b>${N.a}</b>${N.b}${N.sum?`<br><span class="dwsm">${N.sum}</span>`:''}</div>`);R.tm=setTimeout(()=>{R.i++;mapOne()},miss?2600:1900);return}
+      miss++;x.push(+b.dataset.mo);
+      if(miss>=2){R.miss[N.id]=2;mapMark(N.id);draw(`<div class="dwhint">정답: <b>${N.a}</b><br>${N.t}${N.a}${N.b}${N.sum?`<br>${N.sum}`:''}</div><button class="dwgo" id="mok">알겠어</button>`);$('#mok').onclick=()=>{R.i++;mapOne()};return}
+      draw(`<div class="dwhint">다시 생각해 봐. 칸 이름: <b>${N.n}</b></div>`)})};
+  draw()}
+function mapMark(id){const M=mapStore();M.f[id]=1;store(MAPK,M)}
+function mapEnd(){const R=KM;const done=R.list.slice(0,R.i);const first=done.filter(N=>R.miss[N.id]===0).length;
+  if(done.length)push({type:'map',area:R.area,blank:!!R.blank,n:done.length,first,miss:Object.fromEntries(done.map(N=>[N.n,R.miss[N.id]]).filter(([k,v])=>v)),sec:Math.round((Date.now()-R.t0)/1000),done:true});
+  $('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><h2>🗺️ ${KMAP[R.area].t} 지도</h2></div><div class="dwcard" style="text-align:center"><div style="font-size:24px">${done.length}칸 중 <b>${first}칸</b>을 한 번에 채웠어.</div>
+   <div class="dwsm" style="margin-top:6px">${first===done.length&&done.length?'네 머릿속에 지도가 제자리에 있어.':'헷갈린 칸은 지도에서 눌러서 설명을 다시 봐.'}</div></div><button class="dwgo" id="mback">지도로 돌아가기</button></div>`;
+  $('#mback').onclick=()=>viewMap(R.area)}
+const VIEWS={map:()=>viewMap(),cls:()=>viewCls(),hw:()=>viewHW(),wk:()=>viewWrite(),fill:viewFill,prev:viewPrev,note:viewNote,daily:viewDaily,test:viewTest,weak:viewWeak,struct:viewStruct,gram:viewGram,lit:viewLit,read:viewRead,know:viewKnow,log:viewLog};
 function go(v){if(!VIEWS[v])v='daily';TAREA=null;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='weak'?'test':v)));clearInterval(window._tm);VIEWS[v]();window.scrollTo(0,0)}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{clearInterval(window._tm);resetAll();if(location.hash.slice(1)===b.dataset.v)go(b.dataset.v);else location.hash=b.dataset.v});
 
