@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=102">
-<link rel="icon" href="icon-192.png?v=102">
-<link rel="apple-touch-icon" href="icon-192.png?v=102">
+<link rel="manifest" href="manifest.json?v=103">
+<link rel="icon" href="icon-192.png?v=103">
+<link rel="apple-touch-icon" href="icon-192.png?v=103">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -251,7 +251,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 102</p></div></div>
+<p style="font-size:.75rem">버전 103</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -401,8 +401,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=102";
-import {SEED_SCHEDULE} from "./seed.js?v=102";
+import {firebaseConfig} from "./config.js?v=103";
+import {SEED_SCHEDULE} from "./seed.js?v=103";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -705,7 +705,7 @@ function ensureTasks(){
 const ALLDAYS=["mon","tue","wed","thu","fri","sat","sun"];
 const tplKind=tp=>tp.kind||((tp.days||[]).length===7?"daily":"weekly");
 function taskLink(x){const tp=x.tplId&&S.taskTpls.find(y=>y.id===x.tplId);const u=fixSite((tp&&tp.link)||x.link||"");return /^(https?:|intent:|market:)/i.test(u)?u:""}
-function taskKindLabel(x){if(!x.tplId)return"하루만";const tp=S.taskTpls.find(y=>y.id===x.tplId);return tp&&tplKind(tp)==="weekly"?(tp.days||[]).map(d=>DAYNAME[d]).join(""):tp?"매일":"반복"}
+function taskKindLabel(x){if(!x.tplId)return"하루만";const tp=S.taskTpls.find(y=>y.id===x.tplId);if(tp&&tp.kind==="pick")return"엄마가 정한 날";return tp&&tplKind(tp)==="weekly"?(tp.days||[]).map(d=>DAYNAME[d]).join(""):tp?"매일":"반복"}
 // 과제 대분류·순서(엄마 11/26, 우리집 기지·시훈이 대시보드 같은 규칙): cat=대분류(국어·영어·수학…), 과제 이름=소분류.
 // 순서: 과제 order → 반복 과제 틀 order → 만든 순서. 대분류 순서는 그 안 맨 앞 과제 순서를 따름
 function tplOf(x){return x.tplId&&S.taskTpls.find(y=>y.id===x.tplId)}
@@ -743,20 +743,22 @@ function taskReset(){
   try{for(let i=0;i<ops.length;i+=400){const b=writeBatch(fs);ops.slice(i,i+400).forEach(f=>f(b));await b.commit()}toast(`과제 ${real.length}개·반복 과제 ${tpls.length}개를 지웠어요. 포인트는 그대로예요`)}
   catch(e){toast("다 지우지 못했어요: "+(e.code||e.message||""))}}}
 function openTaskForm(tp){
- const kinds=tp?[["repeat","요일마다 반복"]]:[["repeat","요일마다 반복"],["once","하루만"]];
+ const PICK=["pick","엄마가 정하는 날 (일단 넣어 두고 필요한 날 넣기)"];const kinds=tp?[["repeat","요일마다 반복"],PICK]:[["repeat","요일마다 반복"],["once","하루만"],PICK];
  const def={title:tp?"반복 과제":"과제",f:[["cat","대분류 (국어·영어·수학… 비워도 돼요)","catlist"],["title","과제 (소분류)","text"],["points","포인트","number"],["link","바로가기 주소 (앱·사이트, 선택)","url"],["kind","언제 하나요","select",kinds],["date","할 날짜","date"],["days","할 요일 (모두 고르면 매일)","days"]]};
- const pre=tp?{...tp,kind:"repeat",days:tp.days&&tp.days.length?tp.days:ALLDAYS}:{points:1,kind:"repeat",date:today(),days:ALLDAYS};
+ const pre=tp?{...tp,kind:tp.kind==="pick"?"pick":"repeat",days:tp.days&&tp.days.length?tp.days:ALLDAYS}:{points:1,kind:"repeat",date:today(),days:ALLDAYS};
  openForm("tasks",tp?{...pre,id:tp.id}:null,tp?null:pre,def,data=>{
   if(!data.title){toast("과제를 적어 주세요");return false}const pts=data.points||1;
   if(data.kind==="repeat"&&!data.days.length){toast("요일을 하나 이상 골라 주세요");return false}
   if(data.kind==="repeat")data.kind=data.days.length===7?"daily":"weekly";
+  if(data.kind==="pick"){const body={title:data.title,cat:data.cat||null,points:pts,link:data.link||null,kind:"pick",days:[]};
+   if(tp)run(db.collection("taskTpls").doc(tp.id).update(body),"저장했어요");else run(db.collection("taskTpls").add({...body,from:today(),createdAt:Date.now()}),"넣어 뒀어요. 필요한 날 「📌 넣기」를 눌러 주세요");return}
   if(data.kind==="once"){run(db.collection("tasks").add({title:data.title,cat:data.cat||null,points:pts,link:data.link||null,date:data.date||today(),done:false,createdAt:Date.now()}),"하루만 과제를 넣었어요");return}
   const body={title:data.title,cat:data.cat||null,points:pts,link:data.link||null,kind:data.kind,days:data.kind==="daily"?ALLDAYS:data.days};
   if(tp){run(db.collection("taskTpls").doc(tp.id).update(body),"저장했어요");const inst=S.tasks.find(x=>x.id===`${tp.id}_${today()}`);if(inst&&!inst.done)run(db.collection("tasks").doc(inst.id).update({title:body.title,points:pts,link:body.link}))}
   else run(db.collection("taskTpls").add({...body,from:today(),createdAt:Date.now()}),data.kind==="daily"?"매일 과제를 만들었어요":"매주 과제를 만들었어요");
   setTimeout(ensureTasks,800)});
  const sel=$("f-tasks-kind"),dateL=$("f-tasks-date").closest("label"),daysB=$("mform").querySelector('input[name="days"]').closest(".daysbox").parentElement;
- const sync=()=>{dateL.hidden=sel.value!=="once";daysB.hidden=sel.value==="once"};sel.onchange=sync;sync();
+ const sync=()=>{dateL.hidden=sel.value!=="once";daysB.hidden=sel.value!=="repeat"};sel.onchange=sync;sync();
 }
 // 그날 과제를 그날 다 끝내면 그날 과제 포인트 2배 (보너스 = 그날 과제 포인트 합). 우리집 기지·시훈이 대시보드 같은 계산
 function dayBonus(tasks){const by={};for(const x of tasks){if(!x.date)continue;(by[x.date]||(by[x.date]=[])).push(x)}
@@ -788,9 +790,9 @@ function renderTasks(){
  $("lateBox").style.display=isT?"":"none";
  $("lateBox").innerHTML=(lw.length?`<p class="sub2">이번 주 밀린 과제</p><ul class="list">${lw.map(x=>row(x,true)).join("")}</ul>`:"")+(lo.length?`<p class="sub2">지난주 전에 밀린 과제</p><ul class="list">${lo.map(x=>row(x,true)).join("")}</ul>`:"");
  const rw=S.rewards.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,3);
- const tplRow=tp=>`<li class="item"><span class="t">${tp.cat?`<b>${esc(tp.cat)}</b> · `:""}${esc(tp.title)} <span class="meta">${tplKind(tp)==="daily"?"":(tp.days||[]).map(d=>DAYNAME[d]).join("")+" · "}⭐${tp.points||1}</span></span>${admBtns("taskTpls",tp.id,tp.title)}</li>`;
- const dl=S.taskTpls.filter(tp=>tplKind(tp)==="daily"),wl=S.taskTpls.filter(tp=>tplKind(tp)==="weekly");
- $("tplBox").innerHTML=`<p class="sub2">매일 과제 (날마다 자동으로 생겨요)</p><ul class="list">${dl.length?dl.map(tplRow).join(""):`<li class="empty">없어요</li>`}</ul><p class="sub2">요일 과제 (고른 요일에만 생겨요)</p><ul class="list">${wl.length?wl.map(tplRow).join(""):`<li class="empty">없어요</li>`}</ul>`+(rw.length?`<p class="sub2">최근 쓴 포인트</p><ul class="list">${rw.map(r=>`<li class="item"><span class="t">${esc(r.title)}</span><span class="meta">-${r.points}</span>${admBtns("rewards",r.id,r.title)}</li>`).join("")}</ul>`:"")+`<p class="sub2" style="margin-top:14px">과제 리셋</p><button class="btn small" id="taskReset">🧹 과제 전부 지우기 (포인트는 그대로)</button>`;
+ const tplRow=tp=>`<li class="item"><span class="t">${tp.cat?`<b>${esc(tp.cat)}</b> · `:""}${esc(tp.title)} <span class="meta">${tplKind(tp)!=="weekly"?"":(tp.days||[]).map(d=>DAYNAME[d]).join("")+" · "}⭐${tp.points||1}</span></span>${admBtns("taskTpls",tp.id,tp.title)}</li>`;
+ const dl=S.taskTpls.filter(tp=>tplKind(tp)==="daily"),wl=S.taskTpls.filter(tp=>tplKind(tp)==="weekly"),pl=S.taskTpls.filter(tp=>tplKind(tp)==="pick");
+ $("tplBox").innerHTML=`<p class="sub2">매일 과제 (날마다 자동으로 생겨요)</p><ul class="list">${dl.length?dl.map(tplRow).join(""):`<li class="empty">없어요</li>`}</ul><p class="sub2">요일 과제 (고른 요일에만 생겨요)</p><ul class="list">${wl.length?wl.map(tplRow).join(""):`<li class="empty">없어요</li>`}</ul><p class="sub2">엄마가 정하는 날 (「📌 넣기」를 누르면 위 날짜 과제로 들어가요)</p><ul class="list">${pl.length?pl.map(tp=>tplRow(tp).replace('<span class="adm"',`<button class="btn small" data-pick="${tp.id}">📌 넣기</button><span class="adm"`)).join(""):`<li class="empty">없어요</li>`}</ul>`+(rw.length?`<p class="sub2">최근 쓴 포인트</p><ul class="list">${rw.map(r=>`<li class="item"><span class="t">${esc(r.title)}</span><span class="meta">-${r.points}</span>${admBtns("rewards",r.id,r.title)}</li>`).join("")}</ul>`:"")+`<p class="sub2" style="margin-top:14px">과제 리셋</p><button class="btn small" id="taskReset">🧹 과제 전부 지우기 (포인트는 그대로)</button>`;
 }
 
 /* ---------- notes & food ---------- */
@@ -1060,6 +1062,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x)return;run(db.collection("tasks").doc(x.id).update(x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}),x.done?null:lastOfDay(x)?`오늘 과제 다 했어! 포인트 2배 ⚡`:`잘했어! ⭐${Number(x.points)||0}`);return}
  if(d.tfold!==undefined){taskFoldToggle(d.tfold);renderTasks();return}
  if(d.mv!==undefined||d.mvcat!==undefined){if(!admin||!fs)return;const l=taskMoved(S.tasks.filter(x=>x.date===taskDate),d.mv,Number(d.dir),d.mvcat);if(l)saveTaskOrder(l);return}
+ if(d.pick){if(!admin)return;const tp=S.taskTpls.find(x=>x.id===d.pick);if(!tp)return;const id=`${tp.id}_${taskDate}`;if(S.tasks.some(x=>x.id===id)){toast("그날 이미 들어가 있어요");return}
+  run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,link:tp.link||null,date:taskDate,tplId:tp.id,done:false,createdAt:Date.now()}),`${parse(taskDate).getMonth()+1}/${parse(taskDate).getDate()} 과제로 넣었어요`);return}
  if(b.id==="taskReset"){if(admin)taskReset();return}
  if(d.add==="taskTpls"||d.add==="tasks"){openTaskForm(null);return}
  if(d.edit==="taskTpls"){const tp=S.taskTpls.find(x=>x.id===d.id);if(tp)openTaskForm(tp);return}
@@ -1177,7 +1181,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=102;
+const VERSION=103;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
