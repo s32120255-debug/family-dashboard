@@ -3381,7 +3381,7 @@ function nextProblem(twin){
   if(C.review){ if(!twin){ if(!DB.review.length){ toast('다시 풀기를 모두 끝냈어요!'); return home(); } C.sk=DB.review[0].sk; C.lv=DB.review[0].lv; } }
   if(C.count>0 && C.count%12===0 && !twin && !C.restAsked){ C.restAsked=true; return restCard(); }
   C.restAsked=false;
-  const p=makeProblem(C.sk,C.lv); C.p=p; C.sp=null; C.K=null; { const ks=kstGet(C.sk,C.lv); C.kst=(p.steps&&p.steps.length&&ks.mode==='s')?(ks.ok>=KST_HALF?1:0):null; } C.phase='fm'; C.tries=0; C.hints=0; C.fmMiss=0; C.input=p.type==='order'?[]:''; C.t0=Date.now(); C.toolUsed=false; C.twin=twin===true; C.wrongInputs=[];
+  const rp=(!twin&&!C.review)?kstRedo(C.sk,C.lv):null; const p=rp||makeProblem(C.sk,C.lv); C.redo=!!rp; C.p0=rp?null:kJS(p); C.p=p; C.sp=null; C.K=null; { const ks=kstGet(C.sk,C.lv); C.kst=(p.steps&&p.steps.length&&ks.mode==='s')?(ks.ok>=KST_HALF?1:0):null; } C.phase='fm'; C.tries=0; C.hints=0; C.fmMiss=0; C.input=p.type==='order'?[]:''; C.t0=Date.now(); C.toolUsed=false; C.twin=twin===true; C.wrongInputs=[];
   PAD.strokes=[]; PAD.hist=[]; PAD.redraw(); renderLeft(); }
 function restCard(){ $('#left').innerHTML=`<div class="pcard lvup"><div class="em">🌿</div><h2>벌써 12문제!</h2><p>잠깐 물 마시고 올까? 오늘 여기서 끝내도 좋아요.</p>
   <div class="acts"><button class="hint" style="flex:1" id="stop">오늘 끝</button><button class="ok" id="more">조금 더</button></div></div>`;
@@ -3389,7 +3389,7 @@ function restCard(){ $('#left').innerHTML=`<div class="pcard lvup"><div class="e
 function starsHTML(){ const n=DB.sk[SKILLS[C.sk].id].st[C.lv]||0; return `<b>${'★'.repeat(n)}</b>${'☆'.repeat(Math.max(0,5-n))}`; }
 function renderLeft(){
   const s=SKILLS[C.sk], p=C.p;
-  $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="bk">🏠 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span>${C.review?' <span class="lvchip" style="background:#b7791f">다시</span>':''}${C.twin?' <span class="lvchip" style="background:#2a9d5c">한 번 더</span>':''}${C.kst!==null&&C.kst!==undefined?' <span class="lvchip" style="background:#6b7a99">🪜 계단</span>':''}</div><div class="stars">${starsHTML()}</div></div>
+  $('#left').innerHTML=`<div class="sbar"><button class="homebtn" id="bk">🏠 처음으로</button><div class="stitle">${s.title}<span class="lvchip l${C.lv}">${LV[C.lv]}</span>${C.review?' <span class="lvchip" style="background:#b7791f">다시</span>':''}${C.twin?' <span class="lvchip" style="background:#2a9d5c">한 번 더</span>':''}${C.kst!==null&&C.kst!==undefined?' <span class="lvchip" style="background:#6b7a99">🪜 계단</span>':''}${C.redo?' <span class="lvchip" style="background:#6b7a99">🔁 아까 막힌 문제</span>':''}</div><div class="stars">${starsHTML()}</div></div>
    <div class="pcard"><div class="ptext">${p.text}</div>${p.svg||''}</div>
    <div id="stage"></div>`;
   $('#bk').onclick=home; renderStage(); }
@@ -3469,7 +3469,7 @@ function finish(res, note){ const p=C.p, s=SKILLS[C.sk], rec=DB.sk[s.id]; C.phas
   const t=Math.round((Date.now()-C.t0)/1000);
   DB.att.push({sk:s.id,lv:C.lv,r:res,fm:C.fmMiss===0,bug:C.bug||null,t,d:Date.now(),h:C.hints,tool:C.toolUsed});
   { const nT=DB.att.filter(x=>x.lv>=0&&HUB.dkey(x.d)===HUB.today()).length; if(nT===12) setTimeout(()=>{toast('🎉 오늘 분량 12문제 끝! 더 풀어도 되고, 그만하려면 💾 저장 누르고 처음 화면에서 「← 오늘의 공부」'); clearTimeout(toast._t); toast._t=setTimeout(()=>$('#toast').classList.remove('show'),6000);},600); }
-  if(p.steps&&p.steps.length) kstAlone(C.sk,C.lv,res);
+  if(p.steps&&p.steps.length) kstAlone(C.sk,C.lv,res,C.p0,C.redo);
   if(rec.st[C.lv]===undefined) rec.st[C.lv]=0; const before=rec.st[C.lv]; if(res==='o') rec.st[C.lv]=Math.min(5,rec.st[C.lv]+1); else if(res==='x') rec.st[C.lv]=Math.max(0,rec.st[C.lv]-1);
   C.levelUp=false; if(rec.st[C.lv]>=5 && rec.lv<=C.lv){ rec.lv=C.lv+1; C.levelUp=true; }
   if(res==='x'){ DB.review.push({sk:C.sk,lv:C.lv}); DB.works.push({sk:s.id,lv:C.lv,q:p.text.replace(/<[^>]+>/g,' ').slice(0,140),a:answerText(p),w:C.wrongInputs.join(' / '),img:C.workShot||PAD.snapshot(),d:Date.now(),bug:C.bug||null}); }
@@ -3488,7 +3488,10 @@ function finishUI(){ const p=C.p, fb=$('#fb'); $('.stars').innerHTML=starsHTML()
 // --- 계단 문제 (엄마 11/26: 혼자 2번 연달아 틀리면 계단 4개 → 앞 2개는 칸 전부, 뒤 2개는 칸 줄여서 → 다시 혼자. ★는 혼자 풀 때만) ---
 const KST_MISS=2, KST_N=4, KST_HALF=2;
 function kstGet(si,lv){ DB.kstep=DB.kstep||{}; const k=SKILLS[si].id+':'+lv; return DB.kstep[k]||(DB.kstep[k]={mode:'a',miss:0,ok:0}); }
-function kstAlone(si,lv,res){ const s=kstGet(si,lv); if(res==='o'){ s.miss=0; return; } s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
+const kJS=o=>JSON.stringify(o,(k,v)=>typeof v==='bigint'?{__b:String(v)}:v), kJP=j=>JSON.parse(j,(k,v)=>v&&typeof v==='object'&&typeof v.__b==='string'&&Object.keys(v).length===1?BigInt(v.__b):v);
+function kstAlone(si,lv,res,p0,redo){ const s=kstGet(si,lv); if(res==='o'){ s.miss=0; s.wp=[]; return; } s.miss++; if(p0&&!redo){ s.wp=(s.wp||[]).concat([p0]).slice(-KST_MISS); } if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; s.redo=(s.wp||[]).slice(); s.wp=[]; } }
+// 엄마 11/26: 계단 4개 끝나고 혼자 풀기로 돌아오면, 아까 틀린 2문제를 숫자 그대로 먼저 다시 풀기
+function kstRedo(si,lv){ const s=kstGet(si,lv); if(s.mode!=='a'||!s.redo||!s.redo.length) return null; const j=s.redo.shift(); try{ const p=kJP(j); return p&&p.text?p:null; }catch(e){ return null; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
 function kstStep(si,lv,pass){ const s=kstGet(si,lv); if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
 const kstIdx=(p,stage)=>stage===0||p.steps.length<3?p.steps.map((_,k)=>k):p.steps.map((_,k)=>k).slice(1);
 const kNUM='①②③④⑤⑥⑦⑧⑨';
@@ -4907,7 +4910,9 @@ const PER=12;
 // 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 최상위 문제집은 그대로.
 const KST_MISS=2, KST_N=4, KST_HALF=2;
 function kstGet(si,lv){ PROG.kstep=PROG.kstep||{}; const k='st:'+SKILLS[si].id+':'+lv; return PROG.kstep[k]||(PROG.kstep[k]={mode:'a',miss:0,ok:0}); }
-function kstAlone(si,lv,rec){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='s') return; if(rec.res==='o'){ s.miss=0; return; } s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
+function kstAlone(si,lv,rec,p0,redo){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='s') return; if(rec.res==='o'){ s.miss=0; s.wp=[]; return; } s.miss++; if(p0&&!redo){ s.wp=(s.wp||[]).concat([p0]).slice(-KST_MISS); } if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; s.redo=(s.wp||[]).slice(); s.wp=[]; } }
+// 엄마 11/26: 계단 4개 끝나고 혼자 풀기로 돌아오면, 아까 틀린 2문제를 숫자 그대로 먼저 다시 풀기
+function kstRedo(si,lv){ const s=kstGet(si,lv); if(s.mode!=='a'||!s.redo||!s.redo.length) return null; const j=s.redo.shift(); DIRTY=true; try{ const p=JSON.parse(j); return p&&p.text?p:null; }catch(e){ return null; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
 function kstStep(si,lv,pass){ const s=kstGet(si,lv); DIRTY=true; if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
 const kstShort=p=>p.short||(p.steps.length>=3?p.steps.map((_,k)=>k).slice(1):p.steps.map((_,k)=>k));
 function mountSteps(box,p,stage,opts){
@@ -4956,9 +4961,9 @@ function bindNav(){ $('#pv').onclick=()=>{ if(C.idx>0){ C.idx--; renderCur(); } 
     if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
   $('#lvdn').onclick=()=>{ if(C.lv>0){ C.lv--; newProblem(true); } }; $('#lvup').onclick=()=>{ if(C.lv<(window.HUBTRY?4:Math.min(4,PROG.sk[SKILLS[C.si].id].lv))){ C.lv++; newProblem(true); } }; bindCommon(); }
 function newProblem(changed){ const answered=C.list.filter(x=>x.rec).length; /* 엄마 11/22: 정해진 분량 없이 되는 만큼 → 12문제 멈춤 없음 */
-  let p=makeProblem(C.si,C.lv), kst=null;
+  const rp=kstRedo(C.si,C.lv); let p=rp||makeProblem(C.si,C.lv), kst=null; const p0=rp?null:JSON.stringify(p);
   const ks=kstGet(C.si,C.lv); if(ks.mode==='s'){ if(p.skey&&p.steps){ const t=p.t, lv=C.lv; p=makeProblem(C.si,lv,()=>kindGen(lv,{t,small:true})); } if(p.steps&&p.steps.length) kst=ks.ok>=KST_HALF?1:0; } // 계단 문제
-  C.list.push({p,rec:null,kst}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
+  C.list.push({p,rec:null,kst,p0,redo:!!rp}); C.idx=C.list.length-1; PAD&&PAD.clear(); renderCur(); }
 function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   L.innerHTML=`${solveBar()}<div id="pbox"></div>${navRow()}`; bindNav();
   const box=$('#pbox');
@@ -4966,7 +4971,8 @@ function renderCur(){ const it=C.list[C.idx]; const L=$('#left');
   const onNext=()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); };
   if(it.kst!=null){ pfApply(it); it.st=mountSteps(box,it.p,it.kst,{onDone:rec=>{ it.rec=rec; recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext}); return; }
   if(!it.fr) pfNew(it); pfApply(it);
-  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; kstAlone(C.si,C.lv,rec); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }}); }
+  it.st=mountProblem(box,it.p,{mode:'solve',onDone:rec=>{ it.rec=rec; if(it.redo) rec.redo=1; kstAlone(C.si,C.lv,rec,it.p0,it.redo); pfAfter(it,rec); if(rec.res!=='o'&&it.p.lv===4) rec.pq=pfPQ(it.p); recordAtt(rec); applyStars(rec); L.querySelector('.sbar').outerHTML=solveBar(); bindCommon(); },onNext:()=>{ if(C.idx<C.list.length-1){ C.idx++; renderCur(); } else newProblem(); }});
+  if(it.redo) box.insertAdjacentHTML('afterbegin','<div class="kstb">🔁 아까 막혔던 문제예요. 계단에서 한 대로 혼자 풀어 봐요.</div>'); }
 function recordAtt(rec){ UNSAVED.push(rec); refreshTop(); }
 function applyStars(rec){ const r=PROG.sk[SKILLS[C.si].id]; const l=C.lv; DIRTY=true; if(rec.stepMode) return; // 엄마 11/25: 쪼갠 칸으로 맞힌 건 ★ 안 줌(혼자 풀어 맞혀야 ★)
   if(rec.res==='o') r.st[l]=Math.min(5,(r.st[l]||0)+1); else if(rec.res==='x') r.st[l]=Math.max(0,(r.st[l]||0)-1);
