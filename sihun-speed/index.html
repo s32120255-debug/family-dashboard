@@ -5,14 +5,14 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>5분 말하기</title>
-<link rel="manifest" href="manifest.json?v=2">
+<title>스피드 영어</title>
+<link rel="manifest" href="manifest.json?v=3">
 <link rel="icon" href="icon-192.png?v=2">
 <link rel="apple-touch-icon" href="icon-192.png?v=2">
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="8";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="9";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -102,7 +102,7 @@ else{
     };
     function gate(html){let el=document.getElementById('gate');if(!el){el=document.createElement('div');el.id='gate';el.style.cssText='position:fixed;inset:0;z-index:99;background:#f7f3ea;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center';document.body.appendChild(el)}el.innerHTML='<div style="max-width:340px">'+html+'</div>';return el}
     const B='font-size:18px;padding:14px 22px;border-radius:14px;border:0;background:#3b6cf6;color:#fff;font-weight:700';
-    function login(err){const el=gate('<div style="font-size:60px">⚡</div><h2 style="font-family:Jua;font-weight:400;font-size:30px;margin:6px 0">5분 말하기</h2><p style="color:#6b7280">가족 구글 계정으로 들어와요</p><button id="lg" style="'+B+'">구글로 로그인</button>'+(err?'<p style="color:#b23a1d">'+err+'</p>':'')+'<p style="color:#8a958e;font-size:13px;margin-top:16px">카카오톡 안 브라우저 말고 Chrome으로 열어 주세요.</p>');
+    function login(err){const el=gate('<div style="font-size:60px">⚡</div><h2 style="font-family:Jua;font-weight:400;font-size:30px;margin:6px 0">스피드 영어</h2><p style="color:#6b7280">가족 구글 계정으로 들어와요</p><button id="lg" style="'+B+'">구글로 로그인</button>'+(err?'<p style="color:#b23a1d">'+err+'</p>':'')+'<p style="color:#8a958e;font-size:13px;margin-top:16px">카카오톡 안 브라우저 말고 Chrome으로 열어 주세요.</p>');
       el.querySelector('#lg').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p);location.reload()}catch(e){login('로그인이 안 됐어요 ('+(e.code||e.message)+')')}}}
     onAuthStateChanged(auth,async user=>{if(started)return;
       if(!user){const go=()=>login();document.body?go():addEventListener('DOMContentLoaded',go);return}
@@ -116,7 +116,7 @@ else{
 <body>
 <div id="app"></div>
 <script>
-/* ⚡ 5분 말하기 (엄마 11/25): 「오늘의 공부」는 새로 배우기, 이 앱은 아는 걸 빨리 꺼내기만.
+/* ⚡ 스피드 영어 (엄마 11/25): 「오늘의 공부」는 새로 배우기, 이 앱은 아는 걸 빨리 꺼내기만.
    하루 10문장 · 한국어 보고 영어로 말하기(녹음은 한 번, 틀리면 한 번 더) → 정답 소리 듣기. 쓰기 없음.
    엄마 11/26: 한 단계를 이틀에 나눠요. 첫날은 회색 기준 문장을 보고 한 군데만 바꿔 말하기 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계.
    통과 = 10문장 중 9문장 「막힘 없이」(처음에 맞게 + 한글이 나오고 5초 안에 🎤). 막힌 문장은 다음 날 앞에 다시 나와요. 빨간 X 없음.
@@ -257,7 +257,7 @@ function installHTML(){if(STANDALONE)return '';
   return INSTALL?`<button class="light" style="display:block;margin:12px auto 0" data-act="install">📲 앱으로 설치하기</button>`
     :`<p class="sub" style="text-align:center;font-size:13px;margin-top:12px">📲 앱으로 설치: Chrome 오른쪽 위 ⋮ → 「홈 화면에 추가」 또는 「앱 설치」</p>`}
 function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
-  let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 5분 말하기</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 10문장</div>
+  let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 10문장</div>
    <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span><button class="link" style="margin:0" data-act="out">다른 아이디로</button></div>`;
   if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select> <select id="tryMode"><option value="base"${modeOf()==='base'?' selected':''}>첫날: 회색 문장 보고</option><option value="ko"${modeOf()==='ko'?' selected':''}>둘째 날: 한글만</option></select></div>`;
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
@@ -299,7 +299,7 @@ function csv(key){const who=key&&key!==WHO?(OTHERS.find(o=>o.id===key)||{}).st:S
   Object.keys(ST_.days).sort().forEach(k=>{const d=ST_.days[k];(d.items||[]).forEach(r=>{const it=SP.byId(r.id)||{};
     rows.push([k,d.stage,(d.mode||'base')==='ko'?'한글만':'회색 문장',Math.round(d.ms/1000),d.passed?'통과':'',it.en||r.id,it.ko||'',r.ok1?'O':'',r.onset!=null?(r.onset/1000).toFixed(1):'',r.heard||'',r.skip==='quiet'?'안 들림':r.skip?'넘어감':''])})});
   const t='\ufeff'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}).join(',')).join('\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=`5min-speaking_${(key||WHO).replace(/^u-/,'').replace(/_[a-z0-9]+_com$/,'').replace(/[^a-zA-Z0-9_-]/g,'')}_${today()}.csv` /* 한글 파일 이름은 일부 기기에서 'download'로 바뀌어서 영어로 */;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=`speed-english_${(key||WHO).replace(/^u-/,'').replace(/_[a-z0-9]+_com$/,'').replace(/[^a-zA-Z0-9_-]/g,'')}_${today()}.csv` /* 한글 파일 이름은 일부 기기에서 'download'로 바뀌어서 영어로 */;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date)+vsHTML();
   h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.ids.map((id,i)=>{const it=SP.byId(id),r=d.items[i]||{};return `<tr><td>${esc(it.en)}<div class="sub" style="font-size:13px">${esc(it.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`}).join('')}</table></div>
   <button class="fin" data-act="home">끝 ✓</button>`;return h}
