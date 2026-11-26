@@ -2057,7 +2057,7 @@ function vocab(){const s=VS(),w=vc.w,n=s.queue.length,r=s.res[w.w];
     h+=`<div class="res ${ok?'ok':'slow'}">${msg}<div class="ans" style="text-align:center">${esc(w.w)} = ${esc(w.ko)}${k?` <span class="tip">(${POS[k]})</span>`:''} <button class="btn light sm" data-act="vsay">🔊</button></div>${sylN(w.w)>1?sylHTML(w.w,{noTip:true}):''}${pm}</div>
      <div class="tip" style="text-align:center;margin-top:10px">🗣️ 들은 대로 소리 내어 따라 말해 봐요</div><div class="row" style="justify-content:center"><button class="btn light" data-act="vsay">🔊 한 번 더 듣기</button><button class="btn" data-act="vgo" data-i="${vc.i+1}">🗣️ 따라 말했어 · ${vc.i<n-1?'다음 ▶':'끝 ▶'}</button></div>`}
   $('#main').innerHTML=h+'</div>';const inp=$('#vin');if(inp)setTimeout(()=>{try{inp.focus()}catch(e){}},30)}
-function vVal(){const i=$('#vin');return i?i.value:''}
+function vVal(){const i=$('#vin');if(i&&window.HUBTRY&&i.value==='건너뛰기'&&vc&&vc.w)return vc.w.w;return i?i.value:''}
 function vMask(w){const d=VDATA[w.w];let m=d&&d[1];if(!m||m.length!==w.w.length||m.indexOf('_')<0){const k=[...w.w].findIndex((c,j)=>j>0&&/[aeiou]/.test(c));m=w.w.split('').map((c,j)=>j===(k>0?k:1)?'_':c).join('')}return m}
 function vNeed(w){return [...vMask(w)].filter(c=>c==='_').length}
 // 헷갈리는 글자만 비운 칸: 채운 글자(t)를 빈칸에 차례로
@@ -2352,7 +2352,7 @@ const ACT={
     rc.claim=true;save();rc.phase='result';render()},
   pickB:t=>{const c=rc.pool.splice(+t.dataset.k,1)[0];rc.built.push(c);rc.note='';render()},
   unpickB:t=>{const c=rc.built.splice(+t.dataset.k,1)[0];rc.pool.push(c);render()},
-  typeChk:()=>{if(rc.phase!=='type')return;const i=$('#tin');const t=i?i.value.trim():'';if(!tnorm(t))return;rc.typeN++;rc.typed.push(t);if(rc.typeLat==null)rc.typeLat=Math.round((Date.now()-rc.t0)/100)/10;
+  typeChk:()=>{if(rc.phase!=='type')return;const i=$('#tin');const t=i?(window.HUBTRY&&i.value==='건너뛰기'?rc.it.en[0]:i.value.trim()):'';if(!tnorm(t))return;rc.typeN++;rc.typed.push(t);if(rc.typeLat==null)rc.typeLat=Math.round((Date.now()-rc.t0)/100)/10;
     if(rc.it.en.some(e=>tnorm(e)===tnorm(t))){rc.typedOk=true;rc.traps=[];rc.tSub=rc.typeLat;finishBuild(true);return}
     const sp=spellOnly(t,rc.it.en);if(sp&&rc.typeN<2){rc.typeErr='spell';rc.note=`✏️ 거의 맞았어요! <b>${sp.got.map(esc).join(', ')}</b> 철자만 달라요. 고쳐서 다시 써 봐요.`;save();render();return}
     if(!rc.typeErr)rc.typeErr=sp?'spell':'grammar';rc.note=`🔁 내가 쓴 문장: <b>${esc(t)}</b><br>아직 달라요. 이제 <b>블록으로 고쳐</b> 봐요.`;rc.phase='build';rc.t0b=Date.now();save();render()},
@@ -2406,6 +2406,16 @@ const ACT={
   recStop:()=>{if(rc.phase2==='rec')DIC.stop().catch(()=>{})}
 };
 Object.assign(ACT,ACT_MAP);
+// 👀 직접 해 보기 「건너뛰기 ▶」: 하나씩 다 눌러야 하는 지도 화면은 한 번에 다음 순서로(엄마 11/26)
+window.__enTrySkip=function(stuck){if(!window.HUBTRY||!MZ||!V||V.view!=='map')return false;const d=mapDay();if(!d)return false;
+  if(MZ.step==='rule'&&MZ.tr){ACT_MAP.mapRuleOk();return true}
+  const nx=()=>{MZ.i=0;MZ.bo=null;MZ.step=mapStepNew(d);MZ.qi=(d.quiz||[]).length;if(MZ.step==='chat')V={view:'chat'};render();return true};
+  if(MZ.step==='blk'){d.blkAt=new Date().toISOString();return nx()}
+  // S펜으로 써야 넘어가는 화면: 한 번 눌러서 안 넘어가면 다음 순서로
+  if(stuck&&MZ.step==='pick'){d.pickDone=1;return nx()}
+  if(stuck&&MZ.step==='rev'){d.rev=d.rev||{};mapRevCells(d).forEach(c=>{if(!d.rev[c.k])d.rev[c.k]={d:today(),ko:c.ko,en:c.en[0],skip:1}});return nx()}
+  if(stuck&&MZ.step==='speak'){d.spoke=1;return nx()}
+  return false};
 document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(!t||t.disabled)return;if(BDRAG.eat&&t.dataset.act==='unpickB'){BDRAG.eat=false;return}const f=ACT[t.dataset.act];if(f)f(t)});
 // 엄마 11/25: 놓은 블록 순서를 끌어서 바꾸기 (손가락·S펜·마우스). 살짝 누르면 예전처럼 빼기
 const BDRAG={d:null,eat:false};
@@ -4986,8 +4996,8 @@ function ckNext(){ if(CK.k<4){ CK.k++; renderCheck(); } else checkDone(); }
 function checkDone(){ const s=SKILLS[CK.i], r=PROG.sk[s.id]; const pass=CK.right>=4; m32Resume('check',null); PROG.ctime.push({d:today(),kind:'check',sk:s.id,sec:Math.round((Date.now()-CK.t0)/1000)}); DIRTY=true;
   if(pass){ r.check=1; if(r.lesson<2) r.lesson=2; }
   app().innerHTML=`<div class="wrap lesson">${topBar(`✅ ${s.title} · 개념 확인`,'결과')}<div class="scene lvup"><div class="em">${pass?'🎉':'📘'}</div><h2>${CK.right} / 5 한 번에 맞혔어요</h2><p>${pass?'통과! 이제 「1단계」 문제를 풀 수 있어요.':'4개부터 통과예요. 개념 수업을 한 번 더 보거나 다시 확인해 봐요.'}</p>
-   <div class="acts">${pass?`<button class="ok" id="g1">✏️ 1단계 문제 풀기</button>`:`<button class="ok" id="g2">📘 개념 수업 다시</button><button class="hint" id="g3" style="flex:1">✅ 다시 확인</button>`}</div><div class="acts">${saveBtnHTML()}<button class="hint" data-act="home" style="flex:1">⏮ 처음으로</button></div></div></div>`;
-  bindCommon(); if(pass) $('#g1').onclick=()=>startSolve(CK.i,0); else { $('#g2').onclick=()=>startLesson(CK.i); $('#g3').onclick=()=>startCheck(CK.i); } }
+   <div class="acts">${pass?`<button class="ok" id="g1">✏️ 1단계 문제 풀기</button>`:`<button class="ok" id="g2">📘 개념 수업 다시</button><button class="hint" id="g3" style="flex:1">✅ 다시 확인</button>${window.HUBTRY?'<button class="hint" id="g1" style="flex:1">👀 1단계 보기 ▶</button>':''}`}</div><div class="acts">${saveBtnHTML()}<button class="hint" data-act="home" style="flex:1">⏮ 처음으로</button></div></div></div>`;
+  bindCommon(); if(pass||window.HUBTRY) $('#g1').onclick=()=>startSolve(CK.i,0); if(!pass){ $('#g2').onclick=()=>startLesson(CK.i); $('#g3').onclick=()=>startCheck(CK.i); } }
 
 // ===== 개념 수업 =====
 let LS=null;
@@ -9454,10 +9464,41 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${B('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
       ${B('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
       </div>`;adminAI()}
+  // ⏭ 직접 해 보기 「건너뛰기 ▶」(엄마 11/26): 답을 안 써도 다음 화면으로 — 엄마가 구성을 훑어보는 용도, 시훈이 화면엔 없음.
+  // 한 번 누를 때마다: 빈 칸은 아무 글자로 채우고 → 「다음·확인·알겠어」 같은 버튼을 누르고(꺼져 있으면 켜서) → 그런 버튼이 없으면 보기 하나를 골라요.
+  function trySkip(){const host=[...document.querySelectorAll('.apphost')].find(h=>!h.hidden&&h.shadowRoot);const root=host?host.shadowRoot:document;if(!host){alert('지금 화면은 과목 공부 화면이 아니에요. 끝까지 다 봤거나 공부 화면을 열어 주세요.');return}
+    const vis=e=>{const r=e.getBoundingClientRect();if(!r.width||!r.height)return false;for(let x=e;x;x=x.parentElement||(x.getRootNode&&x.getRootNode().host)){if(x.hidden||getComputedStyle(x).display==='none'||getComputedStyle(x).visibility==='hidden')return false}return true};
+    // 카츄(AI) 화면은 건너뛰지 않아요(엄마 11/26: 카츄 전까지) — 실제로 말을 보내면 AI 비용이 들어서
+    const bodyTxt=(root.textContent||'');if(/카츄/.test(bodyTxt)&&[...root.querySelectorAll('textarea,input[type=text],#chatHost')].some(vis)){alert('카츄 화면이라 여기서 멈춰요. 직접 해 보거나 「끝내기」를 눌러요.');return}
+    const all=[...root.querySelectorAll('button,[data-act],[role=button]')].filter(vis);const txt=e=>(e.textContent||'').replace(/\s+/g,' ').trim();
+    const NO=/🤖|카츄|같이 생각|새 시험|같은 범위|전체 메뉴|확인함|◀|이전|처음|🏠|오늘의 공부|저장|엄마|미리|🔊|듣기|힌트|💡|다시|그만|끝내기|⏹|🎙|녹음|지우|✏|📷|사진|틀 꺼내|느리|모르겠|🔍|단계 ▼|단계 ▲|크기/;
+    const NEXT=/다음|▶|넘어가|계속|알겠어|시작|제출|다 만들었|다 썼|다 가르쳤|보내기|확인|채점|완료|끝!|끝 ✓|좋아|맞았|OK/;
+    const fire=e=>{e.disabled=false;e.removeAttribute('disabled');e.click()};
+    root.querySelectorAll('input:not([type=hidden]):not([type=password]),textarea').forEach(i=>{if(vis(i)&&!i.value&&!i.readOnly&&!i.disabled){i.value=i.type==='number'?'1':'건너뛰기';i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}))}});
+    const sig=[...(root.body?root.body.children:root.children)].filter(x=>!/^(STYLE|SCRIPT|TEMPLATE)$/.test(x.tagName)&&x.id!=='tryBar').map(x=>x.innerText||'').join('|');const stuck=window.__skipSig===sig?(window.__skipN=(window.__skipN||0)+1):(window.__skipN=0);window.__skipSig=sig;
+    if(host.id==='host-en'&&window.__enTrySkip&&window.__enTrySkip(stuck)){window.__skipLast='en-jump';return}
+    const low=e=>e.getBoundingClientRect().top;const go=(e,k)=>{window.__skipLast=k+':'+txt(e);e.click()};
+    const sure=all.find(e=>!e.disabled&&/진짜|정말|^네\b/.test(txt(e)));if(sure)return go(sure,'sure');
+    // 계단수학: 한 단계에서 3문제 넘기면 다음 단계로(문제는 끝없이 나와서)
+    const up=all.find(e=>!e.disabled&&/단계 ▲/.test(txt(e)));if(up){const chip=root.querySelector('.lvchip');const k=chip?txt(chip):'';const L=window.__skipLv&&window.__skipLv.k===k?window.__skipLv:(window.__skipLv={k,n:0});if(++L.n>3){L.n=0;return go(up,'lvup')}}
+    const nx=all.filter(e=>NEXT.test(txt(e))&&!NO.test(txt(e))).sort((a,b)=>low(b)-low(a));const on=nx.find(e=>!e.disabled);
+    if(on&&!stuck)return go(on,'next');
+    // 고르는 문제: 안 눌러 본 보기를 차례로(틀리면 다음 보기)
+    const opt=all.filter(e=>!e.disabled&&!/^📖/.test(txt(e))&&!e.closest('.kpsteps,.kpnav,.nav,.qnav,.seg')&&!/^(\d+\.|✅)/.test(txt(e))&&!NO.test(txt(e))&&!NEXT.test(txt(e))&&txt(e)&&!/selected|sel|on|picked|used/.test(e.className));
+    const ok=opt.map(txt).sort().join('|');const T=window.__skipT&&window.__skipT.k===ok?window.__skipT:(window.__skipT={k:ok,s:[]});const o=opt.find(e=>!T.s.includes(txt(e)));
+    if(o){T.s.push(txt(o));go(o,'opt');setTimeout(()=>{const o2=[...root.querySelectorAll('button,[data-act]')].filter(vis).filter(e=>!e.disabled&&NEXT.test(txt(e))&&!NO.test(txt(e))).sort((a,b)=>low(b)-low(a))[0];if(o2)o2.click()},350);return}
+    // 같은 화면에서 막히면: 위쪽 「다음 ▶」(다음 할 일로) → 💾 저장으로 마치기 → 끝
+    if(stuck>=4){window.__skipLast='end';alert('더 넘길 화면이 없어요. 끝까지 다 봤어요.');return}
+    if(stuck){const top=all.filter(e=>!e.disabled&&/^(다음|끝) ?▶/.test(txt(e))).sort((a,b)=>low(a)-low(b))[0];if(top&&stuck%2)return go(top,'top');
+      const sv=all.find(e=>!e.disabled&&/💾/.test(txt(e))&&!/엄마/.test(txt(e)));if(sv&&stuck>=2)return go(sv,'save');}
+    if(on)return go(on,'next');
+    if(nx.length){window.__skipLast='force:'+txt(nx[0]);fire(nx[0]);return}
+    const r=root.querySelector('[data-auto]');if(r)fire(r)}
   function tryBar(){if(document.getElementById('tryBar'))return;const b=document.createElement('div');b.id='tryBar';
     b.style.cssText='position:fixed;left:0;right:0;top:0;z-index:2147483600;background:#ffe36e;color:#3a2e00;font:600 15px "Noto Sans KR",sans-serif;padding:6px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)';
-    b.innerHTML='<span style="flex:1">👀 직접 해 보기 · 시훈이 기록에 안 남아요</span><button style="font:600 15px sans-serif;padding:4px 12px;border-radius:8px;border:0;background:#3a2e00;color:#fff">끝내기</button>';
-    b.querySelector('button').onclick=()=>{try{sessionStorage.setItem('hub:goadmin','1')}catch(e){}location.reload()};document.body.appendChild(b);document.body.style.paddingTop='40px'}
+    b.innerHTML='<span style="flex:1">👀 직접 해 보기 · 시훈이 기록에 안 남아요</span><button id="trySkip" style="font:600 15px sans-serif;padding:4px 12px;border-radius:8px;border:0;background:#2f5fa3;color:#fff">건너뛰기 ▶</button><button id="tryEnd" style="font:600 15px sans-serif;padding:4px 12px;border-radius:8px;border:0;background:#3a2e00;color:#fff">끝내기</button>';
+    b.querySelector('#trySkip').onclick=trySkip;
+    b.querySelector('#tryEnd').onclick=()=>{try{sessionStorage.setItem('hub:goadmin','1')}catch(e){}location.reload()};document.body.appendChild(b);document.body.style.paddingTop='40px'}
   function penCal(){let k=window.penPxPerMm();const d=document.createElement('div');
     d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     d.innerHTML=`<div style="background:#fff;border-radius:16px;padding:18px;max-width:560px;width:100%;font-size:16px;line-height:1.5;color:#222">
