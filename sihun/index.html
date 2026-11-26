@@ -4307,7 +4307,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   let units=''; let lastU='';
   SKILLS.forEach((sk,i)=>{ if(sk.unit!==lastU){ if(lastU) units+='</div>'; units+=`<div class="day">${sk.unit}</div><div class="grid">`; lastU=sk.unit; } units+=skCard(sk,i); if(!SKILLS[i+1]||SKILLS[i+1].unit!==sk.unit) units+=bookCard(sk.unit); }); units+='</div>';
   // 엄마 11/26: 그림그래프 다음에 4학년 1학기 큰 수 단원을 잠긴 모습으로(3-2를 빨리 끝내고 싶은 마음 들게)
-  units+=`<div class="day">4학년 1학기</div><div class="grid"><button class="sk g4c" style="${allPassed()?'':'opacity:.55'}"><h3>${allPassed()?'':'🔒 '}큰 수</h3><div class="pips"><span class="pip ${allPassed()?'now':''}">${allPassed()?'열렸어요! 오늘의 공부 → 수학에서 시작해요':'3-2 문제를 1~5단계까지 다 하면 열려요'}</span></div></button></div>`;
+  units+=`<div class="day">4학년 1학기</div><div class="grid"><button class="sk g4c" style="${allPassed()?'':'opacity:.55'}"><h3>${allPassed()?'':'🔒 '}큰 수</h3><div class="pips"><span class="pip ${allPassed()?'now':''}">${allPassed()?'열렸어요! 계단수학 첫 화면에서 시작해요':'3-2 문제를 1~5단계까지 다 하면 열려요'}</span></div></button></div>`;
   app().innerHTML=`<div class="wrap">${topBar('시훈 수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
    ${pfReviewHome()}<button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
@@ -8374,15 +8374,17 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
-      <div class="list" style="grid-template-columns:repeat(2,1fr)">${OUTAPP.en.concat(OUTAPP.math).map(o=>`<a class="it" href="${o.href}" style="text-decoration:none;color:inherit"><span class="e">${o.ic}</span><b>${o.name}</b>바로 가기</a>`).join('')}</div>
+      <div class="list" style="grid-template-columns:repeat(2,1fr)">${HUBOUT.map(o=>`<a class="it" href="${o.href}" style="text-decoration:none;color:inherit"><span class="e">${o.ic}</span><b>${o.name}</b>바로 가기</a>`).join('')}</div>
       <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`;
     if(ROOM)roomWrap(s,body)}
   // 🚪 과목 방(엄마 11/26): 과목 주소로 열면 그 과목 + 같이 하는 앱 + 그 과목 리포트(엄마 비밀번호)만
-  const OUTAPP={en:[{ic:'⚡',name:'스피드 영어',href:'../sihun-speed/'}],math:[{ic:'🧮',name:'시훈 연산',href:'../math/'}],ko:[],write:[]};
+  const OUTAPP={en:[],math:[],ko:[],write:[]}; // 엄마 11/26: 과목 방엔 그 과목만(스피드영어·시훈연산은 별개 앱, 메인 허브 바로가기로만)
+  const HUBOUT=[{ic:'⚡',name:'스피드 영어',href:'../sihun-speed/'},{ic:'🧮',name:'시훈 연산',href:'../math/'}];
   const ROOMN={en:'🇺🇸 계단영어',ko:'📖 계단국어',math:'🔢 계단수학',write:'✍️ 계단글쓰기'};
   const ROOMREP={en:['en','계단영어 리포트'],ko:['ko','계단국어 · 계단글쓰기 리포트'],math:['math','계단수학 리포트'],write:['ko','계단국어 · 계단글쓰기 리포트']};
   function roomWrap(s,body){const o=OUTAPP[ROOM]||[],rp=ROOMREP[ROOM];
-    const more=(ROOM==='ko'?[`<button class="go light" data-h="open" data-app="write">✍️ 계단글쓰기 열기</button>`]:[]).concat(o.map(x=>`<a class="go light" href="${x.href}" style="text-decoration:none;text-align:center;box-sizing:border-box">${x.ic} ${x.name}</a>`));
+    const more=[].concat( // 엄마 11/26: 일단 방마다 그 과목 하나씩만
+      o.map(x=>`<a class="go light" href="${x.href}" style="text-decoration:none;text-align:center;box-sizing:border-box">${x.ic} ${x.name}</a>`));
     $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">${ROOMN[ROOM]}</h1><div class="d">${dateLabel()}</div></div>${body}
       ${more.length?`<div class="panel" style="margin-top:14px"><h2 style="font-size:19px;margin:0 0 4px">같이 하는 공부</h2>${more.join('')}</div>`:''}
       <a class="link" href="report.html#${rp[0]}" style="display:block;text-align:center;margin:18px auto 0">📋 ${rp[1]} (엄마용 · 비밀번호)</a>
