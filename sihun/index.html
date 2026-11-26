@@ -2329,6 +2329,7 @@ function wireDic(){
   loaded=true;render();
 })();
 return {
+  est(){const a=Object.keys((RLOG&&RLOG.days)||{}).sort().slice(-7).map(d=>RLOG.days[d].actualMin).filter(x=>x>0).sort((x,y)=>x-y);return a.length?a[a.length>>1]:null},
   open(v){V=!BANK||!RLOG?{view:'home'}:v==='preview'?{view:'browse',mode:'w',pg:0}:v==='report'?{view:'report'}:{view:'home'};render()},
   stats(){if(!RLOG)return {n:0,ok:0};if(mapSetToday()){const M=mapS(),d=M.days[today()],n=mapCells().filter(c=>M.cells[c.k]&&M.cells[c.k].d===today()).length;return {n,ok:mapGreen().length,done:!!(d&&d.end),main:n,daily:mapCells().length,mode:'map'}}const D=(RLOG.days||{})[today()];const s=SES();return {n:D?D.n:0,ok:D?((D.cls||{}).ok||0):0,done:!!(D&&D.end&&(!D.stage||(D.nook&&chatDone(D)))),main:s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0,predMin:D&&D.predMin,actualMin:D&&D.actualMin,skipped:D&&D.skipped||0,concept:D&&D.concept||null,subjHelp:D&&D.subjHelp||0,hintBy:D&&D.hintBy||null,mode:'block',trapHit:D&&D.trapHit||null,trapShown:D&&D.trapShown||null,buildLat:D&&D.buildLat?med(D.buildLat):null,listen:D&&D.listen||0,lenCap:lenCap(),vocab:(VC&&VC.days&&VC.days[today()])?{n:VC.days[today()].n,known:VC.days[today()].known,lv:VC.days[today()].lv||null}:null,daily:s?s.queue.filter(q=>q.kind!=='다시').length:DAILY,typeOk:D&&D.typeOk||0,topic:D&&D.topic||null,stage:(RLOG.g2&&RLOG.g2.days&&RLOG.g2.days[today()])||null}}
 };
@@ -8363,20 +8364,48 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function doneMark(k){const st=stats(k);if(k==='en')return st.done?'✅':st.main?st.main+'/'+(st.daily||5):'—';if(k==='ko'||k==='write')return st.n?'✅ '+st.n:'—';if(M32())return ((st.n?'✅ '+st.n:'')+(st.teach?' 🧑‍🏫':'')).trim()||'—';return st.n>=MATH_N?'✅':st.n?st.n+'/'+MATH_N:'—'}
   function dateLabel(){const d=new Date();return (d.getMonth()+1)+'월 '+d.getDate()+'일 '+'일월화수목금토'[d.getDay()]+'요일'}
 
-  function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why,admin})[VIEW]()}
+  function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,subj,plan,why,admin})[VIEW]()}
   function navHTML(){const n=SUBJ.length;return `<div class="nav"><button data-h="f" data-i="0" ${F?'':'disabled'}>⏮ 처음으로</button><button data-h="f" data-i="${F-1}" ${F?'':'disabled'}>◀ 이전</button><span>${F+1} / ${n}</span><button data-h="f" data-i="${F+1}" ${F<n-1?'':'disabled'}>다음 ▶</button></div>`}
-  function home(){if(ROOM)F=Math.max(0,SUBJ.findIndex(x=>x.k===ROOM));const s=SUBJ[F];let body;
+  function subjBody(s){let body;
     if(s.off)body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='ko'?'곧 열려요.':'오늘은 특별 학습이 없어요.'}</p><span class="st">준비 중</span></div>`;
     else{const st=stats(s.k);
       const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
         :(M32()?`<button class="go math" data-h="open" data-app="m32">▶ 3-2 이어서 하기</button><button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>`:`<button class="go math" data-h="plan">${st.n?'▶ 큰 수 이어서 하기':'▶ 시작'}</button><button class="go light" data-h="open" data-app="m32">3-2 복습 열기</button>`)+`<button class="go light" data-h="open" data-app="concept">개념 확인 열기</button>`;
       body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.k==='en'&&stats('en').mode==='map'?'단어 → 원리 → 🧱 블록 → 📝 문법 → ✍️ 자신 있는 문장 → 🔁 복습 → 말하기 → 카츄 → 🧑‍🏫 카츄 가르치기 → 내 이야기':s.sub}</p>${status(s.k)}${btn}</div>`}
-    $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
-      <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
-      <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
-      <div class="list" style="grid-template-columns:repeat(2,1fr)">${HUBOUT.map(o=>`<a class="it" href="${o.href}" style="text-decoration:none;color:inherit"><span class="e">${o.ic}</span><b>${o.name}</b>바로 가기</a>`).join('')}</div>
-      <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`;
-    if(ROOM)roomWrap(s,body)}
+    return body}
+  const CATIMG='<img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">';
+  // 과목 화면: 과목 방(주소로 연 창) 또는 메인에서 칸을 눌렀을 때
+  function subj(){if(ROOM){home();return}const s=SUBJ[F];
+    $h('#hub').innerHTML=`<div class="hh"><h1>${CATIMG}${s.name}</h1><div class="d">${dateLabel()}</div></div><div class="nav"><button data-h="home">◀ 첫 화면</button><span></span></div>${subjBody(s)}`}
+  function home(){if(ROOM){F=Math.max(0,SUBJ.findIndex(x=>x.k===ROOM));const s=SUBJ[F];roomWrap(s,subjBody(s));return}
+    // 메인 화면(엄마 11/26 OK): 맨 위 📋 오늘 할 것 요약 → 아래로 6칸(계단 4과목 + 스피드영어 · 시훈연산)
+    const R=todayRows(),left=R.filter(r=>!r.done&&r.min),tot=left.reduce((a,r)=>a+r.min,0);
+    const hm=m=>m>=60?`${Math.floor(m/60)}시간${m%60?' '+m%60+'분':''}`:m+'분';
+    const row=(ic,name,right,attr)=>`<${attr.startsWith('href')?'a':'button'} class="hrow" ${attr}><span class="e">${ic}</span><b>${name}</b><span class="r">${right}</span></${attr.startsWith('href')?'a':'button'}>`;
+    $h('#hub').innerHTML=`<style>.hsum{width:100%;border-collapse:collapse;font-size:16px;text-align:left}.hsum td{padding:8px 4px;border-bottom:1px solid #eee;vertical-align:top}.hsum td.m{text-align:right;white-space:nowrap;color:var(--sub)}.hsum tr.dn td{color:var(--sub)}.hsum tr.sum td{border:0;font-weight:700}
+      .hrow{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;background:var(--card,#fffdf8);border:2px solid var(--line,#e8e1d4);border-radius:16px;padding:13px 16px;margin-top:10px;font:inherit;font-size:19px;color:inherit;text-decoration:none;text-align:left;cursor:pointer}
+      .hrow .e{font-size:26px}.hrow b{flex:1}.hrow .r{font-size:14px;color:var(--sub)}</style>
+      <div class="hh"><h1>${CATIMG}오늘의 공부</h1><div class="d">${dateLabel()}</div></div>
+      <div class="panel" style="text-align:left"><h2 style="font-size:20px;margin:0 0 8px">📋 오늘 할 것</h2>
+      <table class="hsum">${R.map(r=>`<tr class="${r.done?'dn':''}"><td style="white-space:nowrap">${r.ic} <b>${r.name}</b></td><td>${r.done?'✅ ':''}${r.what}</td><td class="m">${r.done?'끝':r.min?'약 '+hm(r.min):'–'}</td></tr>`).join('')}
+      ${tot?`<tr class="sum"><td colspan="2">남은 것 모두</td><td class="m">약 ${hm(tot)}</td></tr>`:''}</table></div>
+      ${SUBJ.map((x,i)=>row(x.ic,x.name,x.off?'준비 중':(doneMark(x.k)==='—'?'아직':doneMark(x.k)),`data-h="subj" data-i="${i}"`)).join('')}
+      ${HUBOUT.map(o=>row(o.ic,o.name,'바로 가기',`href="${o.href}"`)).join('')}
+      <p class="note">🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
+      <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
+  // 📋 오늘 할 것: 과목마다 한 줄 + 예상 분(시훈이 기록이 있을 때만, 없으면 앱에 이미 쓰는 기본값)
+  function todayRows(){const out=[];const ent=(k,what,min,done)=>{const x=SUBJ.find(y=>y.k===k);out.push({ic:x.ic,name:x.name,what,min,done})};
+    try{const st=stats('en');let m=null;try{m=APP_EN.est()}catch(e){}
+      ent('en',st.mode==='map'?`오늘 칸 ${st.daily||0}개${st.main?` (${st.main}개 했어요)`:''}`:`단어 · 📌 오늘의 문법 · ${st.daily||5}문장${st.main?` (${st.main}문장 했어요)`:''}`,m,!!st.done)}catch(e){}
+    try{let E={};try{E=APP_KO.est()}catch(x){}const P=APP_KO.plan();const L=P.filter(p=>!p.done);
+      const est=p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5;
+      ent('ko',(L.length?L:P).map(p=>p.label).join(' · '),L.filter(p=>p.k!=='rest').reduce((a,p)=>a+est(p),0)||null,!L.length)}catch(e){}
+    try{const st=stats('math');if(M32()){let P={};try{P=APP_M32.plan()}catch(x){}const N=P.per||MATH_N,left=Math.max(0,N-st.n),pm=P.probMin||15;
+        let min=(P.kind==='lesson'?(P.lessonMin||10):0)+((P.kind==='lesson'||P.kind==='check')?(P.checkMin||3):0)+(left?Math.max(1,Math.round(pm*left/N)):0);
+        ent('math',`${P.title||'3-2'}${P.kind==='solve'&&P.lv?' · '+P.lv:''}${left?` · ${left}문제`:' · 오늘 문제 끝'}${st.teach?'':' · 🧑‍🏫 가르치기 1문제'}`,min||null,!left&&!!st.teach)}
+      else{const e=mathEst(),left=Math.max(0,MATH_N-st.n);ent('math',`4-1 큰 수 · ${left}문제`,left?(e.min!=null?Math.max(1,Math.round(e.min*left/MATH_N)):15):null,!left)}}catch(e){}
+    try{const st=stats('write');ent('write',st.n?`오늘 글 ${st.n}개 저장`:'쓸 글이 있을 때만',null,false)}catch(e){}
+    return out}
   // 🚪 과목 방(엄마 11/26): 과목 주소로 열면 그 과목 + 같이 하는 앱 + 그 과목 리포트(엄마 비밀번호)만
   const OUTAPP={en:[],math:[],ko:[],write:[]}; // 엄마 11/26: 과목 방엔 그 과목만(스피드영어·시훈연산은 별개 앱, 메인 허브 바로가기로만)
   const HUBOUT=[{ic:'⚡',name:'스피드 영어',href:'../sihun-speed/'},{ic:'🧮',name:'시훈 연산',href:'../math/'}];
@@ -8528,6 +8557,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   document.addEventListener('click',e=>{const t=e.target.closest('[data-h]');if(!t||t.disabled||!document.getElementById('hub').contains(t))return;const a=t.dataset.h;
     if(a==='f'){const i=+t.dataset.i;if(i>=0&&i<SUBJ.length){F=i;VIEW='home';render()}}
     else if(a==='home'){VIEW='home';render()}
+    else if(a==='subj'){F=+t.dataset.i;VIEW='subj';render()}
     else if(a==='plan'){VIEW='plan';render()}
     else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
     else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
