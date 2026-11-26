@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=95">
-<link rel="icon" href="icon-192.png?v=95">
-<link rel="apple-touch-icon" href="icon-192.png?v=95">
+<link rel="manifest" href="manifest.json?v=96">
+<link rel="icon" href="icon-192.png?v=96">
+<link rel="apple-touch-icon" href="icon-192.png?v=96">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -200,7 +200,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .pt.main{background:var(--accent-soft)}
 .pt.main b{color:var(--accent-ink)}
 .mv{display:inline-flex;flex-direction:column;flex:none}.mv .icon{padding:1px 9px;font-size:.95rem;line-height:1.1}
-.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcat span:first-child{flex:1}
+.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcatb{flex:1;display:flex;align-items:center;gap:6px;border:none;background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:4px 0;text-align:left}.tcatb .tf{width:1em}.tcatb small{font-weight:400;color:var(--muted);margin-left:4px}
 .sub2{font-weight:700;font-size:.9rem;color:var(--muted);margin:4px 0 0}
 .msg{display:grid;gap:2px;padding:8px 10px;border-radius:10px;background:var(--bg)}
 .msg .h{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.8rem}
@@ -248,7 +248,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 95</p></div></div>
+<p style="font-size:.75rem">버전 96</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -398,8 +398,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=95";
-import {SEED_SCHEDULE} from "./seed.js?v=95";
+import {firebaseConfig} from "./config.js?v=96";
+import {SEED_SCHEDULE} from "./seed.js?v=96";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -715,7 +715,11 @@ async function saveTaskOrder(l){const b=writeBatch(fs),tp=new Set();
  try{await b.commit()}catch(e){toast("옮기지 못했어요: "+(e.code||e.message||""))}}
 const mvBtns=(a,v)=>`<span class="mv"><button class="icon" ${a}="${esc(v)}" data-dir="-1" aria-label="위로">▲</button><button class="icon" ${a}="${esc(v)}" data-dir="1" aria-label="아래로">▼</button></span>`;
 function taskGroupHTML(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
- return g.map(y=>`<li class="tcat"><span>${esc(y.cat||"기타")}</span>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+y.items.map(row).join("")).join("")}
+ const f=taskFolds();return g.map(y=>{const shut=f.includes(y.cat),dn=y.items.filter(x=>x.done).length;
+  return`<li class="tcat"><button type="button" class="tcatb" data-tfold="${esc(y.cat)}" aria-expanded="${!shut}"><span class="tf">${shut?"▸":"▾"}</span>${esc(y.cat||"기타")}<small>${dn}/${y.items.length}${dn===y.items.length?" ✓":""}</small></button>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+(shut?"":y.items.map(row).join(""))}).join("")}
+// 대분류 접고 펴기(엄마 11/26): 이 기기에만 기억
+function taskFolds(){try{return JSON.parse(localStorage.getItem("taskFold")||"[]")}catch(e){return[]}}
+function taskFoldToggle(c){const f=taskFolds(),i=f.indexOf(c);if(i<0)f.push(c);else f.splice(i,1);try{localStorage.setItem("taskFold",JSON.stringify(f))}catch(e){}}
 const CAT_HINT=["국어","영어","수학"];
 function catOpts(){return[...new Set([...CAT_HINT,...[...S.tasks,...S.taskTpls].map(x=>String(x.cat||"").trim()).filter(Boolean)])]}
 function openTaskForm(tp){
@@ -1034,6 +1038,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.sdel){const it=schedItems(schedDate).find(x=>x.id===d.sdel&&x.src===d.src);if(it)delSched(it,d.src);return}
  if(d.sundo){const o=S.schedOverrides.find(o=>o.date===schedDate&&o.baseId===d.sundo);if(o)run(db.collection("schedOverrides").doc(o.id).delete(),"원래 일정으로 돌렸어요");return}
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x)return;run(db.collection("tasks").doc(x.id).update(x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}),x.done?null:lastOfDay(x)?`오늘 과제 다 했어! 포인트 2배 ⚡`:`잘했어! ⭐${Number(x.points)||0}`);return}
+ if(d.tfold!==undefined){taskFoldToggle(d.tfold);renderTasks();return}
  if(d.mv!==undefined||d.mvcat!==undefined){if(!admin||!fs)return;const l=taskMoved(S.tasks.filter(x=>x.date===taskDate),d.mv,Number(d.dir),d.mvcat);if(l)saveTaskOrder(l);return}
  if(d.add==="taskTpls"||d.add==="tasks"){openTaskForm(null);return}
  if(d.edit==="taskTpls"){const tp=S.taskTpls.find(x=>x.id===d.id);if(tp)openTaskForm(tp);return}
@@ -1151,7 +1156,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=95;
+const VERSION=96;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
