@@ -1128,8 +1128,8 @@ const THEME_FONT=s=>`${s},${s} *{font-family:'Gowun Dodum','Noto Sans KR',sans-s
 const THEME_FIX={'host-en':`.top{color:#262a31!important}.top h1{white-space:nowrap}.top button{background:#2f5fa3!important;color:#fff!important}.top .savebtn{background:#fff!important;color:#2f5fa3!important;border:2px solid #dfdacb!important}.top .savebtn.dirty{background:#ffd166!important;color:#1d2b4f!important}
   .nav button{background:#2f5fa3!important;color:#fff!important}.nav button:disabled{background:#dfdacb!important;color:#5d5a52!important}.nav span,.timer{color:#4f4c45!important}.bar{background:#dfdacb!important}`,
  'host-m32':`.pip{color:#4f4c45}`};
-const THEME_SHADOW=`:host{${THEME_VARS}} .body{${THEME_GRID}} ${THEME_FONT('.body')} .body .top{flex-wrap:wrap} .body .top .tt{order:-1;flex:1 1 100%} .body button.big:not(.tbig),.body button.homebtn{background:#2f5fa3!important;color:#fff!important;box-shadow:none!important} @media (min-width:700px){:host(#host-m32) .body,:host(#host-m32) .body *,:host(#host-math) .body,:host(#host-math) .body *,:host(#host-concept) .body,:host(#host-concept) .body *{font-size-adjust:.56}}`;
-(function(){const st=document.createElement('style');st.id='themeSpeed';st.textContent=`:root{${THEME_VARS}} body{${THEME_GRID}} ${THEME_FONT('#hub')} #hub,.apphost{zoom:var(--appzoom,1)} #host-m32,#host-math,#host-concept{zoom:1!important;--penmm:var(--penmm1,49px)} #tryBar{font-family:'Gowun Dodum',sans-serif!important}`;
+const THEME_SHADOW=`:host{${THEME_VARS}} .body{${THEME_GRID}} ${THEME_FONT('.body')} .body .top{flex-wrap:wrap} .body .top .tt{order:-1;flex:1 1 100%} .body button.big:not(.tbig),.body button.homebtn{background:#2f5fa3!important;color:#fff!important;box-shadow:none!important} @media (min-width:700px){:host(#host-m32) .body,:host(#host-m32) .body *,:host(#host-math) .body,:host(#host-math) .body *,:host(#host-concept) .body,:host(#host-concept) .body *,:host(#host-ko) .body,:host(#host-ko) .body *{font-size-adjust:.56}}`;
+(function(){const st=document.createElement('style');st.id='themeSpeed';st.textContent=`:root{${THEME_VARS}} body{${THEME_GRID}} ${THEME_FONT('#hub')} #hub,.apphost{zoom:var(--appzoom,1)} #host-m32,#host-math,#host-concept,#host-ko{zoom:1!important;--penmm:var(--penmm1,49px)} #tryBar{font-family:'Gowun Dodum',sans-serif!important}`;
   const add=()=>document.body.appendChild(st);if(document.body)add();else document.addEventListener('DOMContentLoaded',add)})();
 function mountApp(hostId,tplId){
   const host=document.getElementById(hostId);const sr=host.attachShadow({mode:'open'});autoWatch(sr);
@@ -7671,7 +7671,7 @@ function viewWrite(w){const L=READS.filter(r=>r.w===(w||MAXW));
         WR.txt[k]=v;WR.es=k===0?'s2':k===2?'s3':'ord';WR.ord=[];WR.sh=null;top()}}
     document.querySelectorAll('[data-od]').forEach(b=>b.onclick=()=>{const i=+b.dataset.od;if(i===WR.ord.length){WR.ord.push(i);redraw()}else{WR.bmiss++;bad(b,'💡 순서: 어떤 → 소녀는 → ~하여 → 결국 ~했다')}});
     const we=$('#wedit');if(we)we.onclick=()=>{WR.es='s0';WR.ord=[];top()}}
-  const gw=$('#gw');if(gw){const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const fit=()=>{const c=Math.min(Math.floor((gw.parentNode.clientWidth-4)/cols),penPx());gw.style.width=c*cols+'px';gw.style.height=c*rows+'px';gw.style.backgroundSize=c+'px '+c+'px'};fit();
+  const gw=$('#gw');if(gw){const cols=+gw.dataset.cols,rows=+gw.dataset.rows;const fit=()=>{const c=Math.min(Math.floor((gw.parentNode.clientWidth-4)/cols),Math.round(window.PEN_MM*window.penPxPerMm()));gw.style.width=c*cols+'px';gw.style.height=c*rows+'px';gw.style.backgroundSize=c+'px '+c+'px'};fit();
     const pad=new KPad($('#gcv'));pad.width=4;$('#gundo').onclick=()=>pad.undo();$('#gclr').onclick=()=>pad.clear();
     $('#gback').onclick=()=>{WR.st--;WR.es='ord';top()};
     $('#gpen').onclick=e=>{const v=!(store('sihun_penOnly')!==false);store('sihun_penOnly',v);e.currentTarget.textContent='✋ '+(v?'S펜만':'손가락도')};
