@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="2";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="3";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -62,6 +62,7 @@ h1{font:400 32px/1.15 'Jua',sans-serif;margin:4px 0 2px}
 table{border-collapse:collapse;width:100%;font-size:14px;margin-top:8px}
 td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
 .note{background:#eef3ff;border-radius:14px;padding:10px 12px;font-size:15px;margin-top:12px}
+.who.on{background:var(--en);color:#fff}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
@@ -122,11 +123,17 @@ const sec1=ms=>(ms/1000).toFixed(1)+'초';
 // ---------- 저장 ----------
 const LS={get(k,d){try{const v=localStorage.getItem('speed:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('speed:'+k,JSON.stringify(v))}catch(e){}}};
 function blank(){return {stage:1,mode:'base',days:{},again:[],cur:null}}
-async function load(){let a=LS.get('st',null),b=null;if(DB){try{b=await DB.get('speed/main')}catch(e){}}
+// 엄마 11/26 「엄마 시훈이 같이할게, 각각 아이디로」: 시작할 때 누가 하는지 고르고, 단계·기록을 사람마다 따로 저장(시훈 = speed/main, 엄마 = speed/mom)
+const WHO_NAME={sihun:'👦 시훈',mom:'👩 엄마'};
+let WHO=LS.get('who','sihun');if(!WHO_NAME[WHO])WHO='sihun';let OTHER=null;
+const docOf=w=>w==='mom'?'speed/mom':'speed/main',lsOf=w=>w==='mom'?'st-mom':'st';
+async function loadOf(w){let a=LS.get(lsOf(w),null),b=null;if(DB){try{b=await DB.get(docOf(w))}catch(e){}}
   const pick=(b&&a)?((b.updated||'')>=(a.updated||'')?b:a):(b||a);return Object.assign(blank(),pick||{})}
+async function loadOther(){try{OTHER=await loadOf(WHO==='mom'?'sihun':'mom')}catch(e){OTHER=null}}
+async function load(){return loadOf(WHO)}
 let saveT=null;
-function save(){if(TRY)return;ST.updated=new Date().toISOString();LS.set('st',ST);clearTimeout(saveT);saveT=setTimeout(()=>{if(DB)DB.set('speed/main',ST).catch(()=>{})},300)}
-addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set('speed/main',ST).catch(()=>{})}});
+function save(){if(TRY)return;const w=WHO,st=ST;st.updated=new Date().toISOString();LS.set(lsOf(w),st);clearTimeout(saveT);saveT=setTimeout(()=>{if(DB)DB.set(docOf(w),st).catch(()=>{})},300)}
+addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set(docOf(WHO),ST).catch(()=>{})}});
 
 // ---------- 오늘 10문장 ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
@@ -225,9 +232,10 @@ function render(){const a=$('#app');
 function stageOf(){return TRY&&V.tryStage?V.tryStage:ST.stage}
 function modeOf(){return TRY?(V.tryMode||'base'):(ST.mode||'base')}
 function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
-  let h=`<h1>⚡ 5분 말하기</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 10문장</div>`;
+  let h=`<h1>⚡ 5분 말하기</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 10문장</div>
+   <div class="row" style="justify-content:flex-start"><span class="sub" style="align-self:center">누가 해요?</span>${Object.keys(WHO_NAME).map(w=>`<button class="light who${w===WHO?' on':''}" data-act="who" data-w="${w}">${WHO_NAME[w]}</button>`).join('')}</div>`;
   if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select> <select id="tryMode"><option value="base"${modeOf()==='base'?' selected':''}>첫날: 회색 문장 보고</option><option value="ko"${modeOf()==='ko'?' selected':''}>둘째 날: 한글만</option></select></div>`;
-  if(d&&d.end&&!TRY){h+=resultCard(d,today());h+=`<button class="link" data-act="log">지난 기록 보기</button>`;return h}
+  if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=`<button class="link" data-act="log">지난 기록 보기</button>`;return h}
   h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2><div class="ex">${esc(st.ex)}</div>
     <p style="margin:12px 0 0">${modeOf()==='base'?'회색 문장을 보고, 한국어 뜻대로 <b>한 군데만 바꿔서 영어로 말해요.</b>':'오늘은 회색 문장이 없어요. <b>한글만 보고 영어로 말해요.</b>'}</p>
     <p style="margin:6px 0 0">생각이 되면 <b>🎤 녹음</b>을 누르고 말해요. 다 말하면 <b>⏹</b>을 눌러요. 맞으면 정답을 듣고 한 번 따라 말해요.</p>
@@ -250,11 +258,17 @@ function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=x.ite
     :mo==='base'?`<p style="font-size:18px">내일은 ${d.stage}단계를 <b>한글만 보고</b> 해요!</p>`
     :`<p style="font-size:18px">내일은 <b>${Math.min(d.stage+1,SP.STAGES.length)}단계</b>로 가요!</p>`;
   return h+'</div>'}
-function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date);
+// 오늘 두 사람 결과 나란히(엄마 11/26 같이 하기) — 기록 경쟁 화면이 아니라 오늘 한 번 보는 것만
+function vsHTML(){if(TRY)return '';const me=ST.days[today()],ot=OTHER&&OTHER.days[today()];if(!me||!me.end)return '';const on=WHO==='mom'?'sihun':'mom';
+  const avg=x=>{const o=x.items.map(i=>i.onset).filter(v=>v!=null);return o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'};
+  if(!ot||!ot.end)return `<div class="card" style="text-align:center"><b>${on==='mom'?'👩 엄마는':'👦 시훈이는'}</b> 오늘 아직 안 했어요.</div>`;
+  const col=(w,d)=>`<div><small>${WHO_NAME[w]} · ${d.stage}단계 ${(d.mode||'base')==='ko'?'한글만':'회색'}</small><b>${fmt(d.ms)}</b><small>생각 ${avg(d)} · 막힘 없이 ${d.clean}/${d.n||10}</small></div>`;
+  return `<div class="card"><b>오늘 같이 한 결과</b><div class="cmp">${col(WHO,me)}${col(on,ot)}</div></div>`}
+function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date)+vsHTML();
   h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.ids.map((id,i)=>{const it=SP.byId(id),r=d.items[i]||{};return `<tr><td>${esc(it.en)}<div class="sub" style="font-size:13px">${esc(it.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`}).join('')}</table></div>
   <button class="fin" data-act="home">끝 ✓</button>`;return h}
 function logHTML(){const ks=Object.keys(ST.days).filter(k=>ST.days[k].end).sort().reverse();
-  let h=`<h1>지난 기록</h1><div class="sub">지금 ${ST.stage}단계 ${(ST.mode||'base')==='base'?'첫날(회색 문장 보고)':'둘째 날(한글만)'} · 9/10 막힘 없이 → 통과</div><div class="card"><table><tr><th>날짜</th><th>단계</th><th>시간</th><th>막힘 없이</th><th>생각 시간(평균)</th></tr>`;
+  let h=`<h1>${WHO_NAME[WHO]} 지난 기록</h1><div class="sub">지금 ${ST.stage}단계 ${(ST.mode||'base')==='base'?'첫날(회색 문장 보고)':'둘째 날(한글만)'} · 9/10 막힘 없이 → 통과</div><div class="card"><table><tr><th>날짜</th><th>단계</th><th>시간</th><th>막힘 없이</th><th>생각 시간(평균)</th></tr>`;
   ks.forEach(k=>{const d=ST.days[k],o=d.items.map(i=>i.onset).filter(v=>v!=null);h+=`<tr><td>${k.slice(5).replace('-','/')}</td><td>${d.stage}${(d.mode||'base')==='ko'?' 한글만':' 회색'}</td><td>${fmt(d.ms)}</td><td>${d.clean}/${d.n||10}${d.passed?' 🎉':''}</td><td>${o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'}</td></tr>`});
   h+=`</table>${ks.length?'':'<p class="sub">아직 기록이 없어요.</p>'}</div>`;
   const last=ks[0]&&ST.days[ks[0]];
@@ -265,7 +279,7 @@ function logHTML(){const ks=Object.keys(ST.days).filter(k=>ST.days[k].end).sort(
 // ready: 🎤 누르기 전(생각하는 중) · rec: 녹음 중 · think: 받아 적는 중 · retry: 틀림(한 번 더) · quiet: 안 들림
 // model: 정답 소리 · fready/frec: 따라 말하기 · good: 따라 말하기 맞음
 function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
-  let h=`<div class="top"><div class="dots">${R.ids.map((_,k)=>`<i class="${k<R.i?'done':k===R.i?'now':''}"></i>`).join('')}</div><button class="x" data-act="quit">그만</button></div>`;
+  let h=`<div class="top"><div class="dots">${R.ids.map((_,k)=>`<i class="${k<R.i?'done':k===R.i?'now':''}"></i>`).join('')}</div><span class="sub" style="font-size:13px">${WHO_NAME[WHO]}</span><button class="x" data-act="quit">그만</button></div>`;
   h+=R.mode==='base'?`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div>`:`<div class="base"><small>한글만 보고 말해요</small>&nbsp;</div>`;
   h+=`<div class="ko">${esc(it.ko)}</div>`;
   if(fol||ph==='model'||ph==='good')h+=`<div class="answer">${esc(it.en)}</div>`;
@@ -310,6 +324,7 @@ const ACT={
   quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();micClose();V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
   home(){V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
   log(){V={view:'log'};render()},
+  async who(b){const w=b.dataset.w;if(w===WHO||!WHO_NAME[w])return;WHO=w;LS.set('who',w);ST=await load();await loadOther();if(TRY)V.tryStage=ST.stage;render()},
   try(){location.hash='try';location.reload()},
   mine(b){const bl=RUN.blobs[+b.dataset.i];if(bl){try{const a=new Audio(URL.createObjectURL(bl));a.play()}catch(e){}}},
   ans(b){speak(SP.byId(RUN.ids[+b.dataset.i]).en)}
@@ -349,11 +364,11 @@ function finishDay(){const R=RUN;pauseClock();micClose();
     // 첫날은 회색 문장 보고 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계
     if(passed&&ST.stage===R.stage&&(ST.mode||'base')===R.mode){if(R.mode==='base')ST.mode='ko';else if(ST.stage<SP.STAGES.length){ST.stage++;ST.mode='base'}}
     save()}
-  V={view:'end'};render()}
+  V={view:'end'};render();if(!TRY)loadOther().then(()=>{if(V.view==='end')render()})}
 
 (async function boot(){$('#app').innerHTML='<p class="sub" style="text-align:center;margin-top:40px">여는 중…</p>';
   if(document.readyState==='loading')await new Promise(r=>addEventListener('DOMContentLoaded',r));
-  DB=await window.__SP.ready;ST=await load();if(TRY)V.tryStage=ST.stage;render()})();
+  DB=await window.__SP.ready;ST=await load();await loadOther();if(TRY)V.tryStage=ST.stage;render()})();
 </script>
 </body>
 </html>
