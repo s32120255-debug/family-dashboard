@@ -8717,6 +8717,7 @@ function viewPrev(){
     $('#pvgo').onclick=tryPw;$('#pvpw').onkeydown=e=>{if(e.key==='Enter')tryPw()};$('#pvpw').focus();return}}
   const ws=[...new Set(CARDS.map(c=>c.w).concat(BANK.map(b=>b.w)))].sort();
   $('#main').innerHTML=`<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">👩 엄마 보기</h2><button class="btn ghost sm" id="pvlock">🔒 잠그기</button></div>
+   <button class="btn" id="pvkg" style="margin-top:10px;width:100%">🧭 계통도 시험판 · 문법 음운 체계 (엄마 먼저 해 보기)</button>
    <div class="muted" style="margin-top:6px">시훈이 기록에는 아무것도 안 남아요. 주차 버튼은 「복습 카드 + 답」「누테 문항 + 답」에 써요.</div>
    <div class="seg" style="margin-top:12px;${PV.tab==='cards'||PV.tab==='test'?'':'display:none'}">${ws.map(w=>`<button data-pw="${w}" class="${w===PV.w?'on':''}">${w}주차</button>`).join('')}</div>
    <div class="seg" style="margin-top:8px"><button data-pt="log" class="${PV.tab==='log'?'on':''}">📋 기록</button><button data-pt="extra" class="${PV.tab==='extra'?'on':''}">➕ 추가 복습</button><button data-pt="cards" class="${PV.tab==='cards'?'on':''}">📝 복습 카드 + 답</button><button data-pt="test" class="${PV.tab==='test'?'on':''}">📮 누테 문항 + 답</button><button data-pt="hw" class="${PV.tab==='hw'?'on':''}">📒 숙제 + 답</button></div></div>
@@ -8725,7 +8726,52 @@ function viewPrev(){
   document.querySelectorAll('[data-pw]').forEach(b=>b.onclick=()=>{PV.w=+b.dataset.pw;viewPrev()});
   document.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{PV.tab=b.dataset.pt;viewPrev()});
   $('#pvlock').onclick=()=>{PV=null;viewPrev()};
+  $('#pvkg').onclick=viewKG;
 }
+/* ===== 🧭 오늘의 계통도 · 시험판 (엄마 11/26: 7세 문법 지도처럼 위→아래로 쌓기, 처음엔 객관식. "내가 먼저 해 볼게 하나만")
+   문법 「음운 체계」 한 가지만. 엄마 보기 → 🧭 버튼에서만 열림, 기록 안 남김. 매일 복습 연결·다른 가지는 엄마 OK 후.
+   내용은 1~3주차 문법 수업 그대로(a1·b1·b6·c1·c2·c3·c5). 맞히면 「다음」 없이 넘어감, 2번 틀리면 정답+이유 → 「알겠어」 */
+const KG1={t:'음운 체계',nodes:{top:'음운 · 뜻을 구별하는 가장 작은 소리',crit:'기준: 공기를 막아? 안 막아?',L1:'모음 · 공기가 방해 없이',R1:'자음 · 공기를 막거나 방해',
+  J:'구별법: 혼자 소리 나면 모음, 못 내면 자음',L2:'예: ㅏ · ㅗ · ㅣ',R2:'예: ㄱ · ㅁ · ㅅ',L3:'또 나누기: 혀 앞뒤 · 혀 높이 · 입술 모양',R3:'또 나누기: 소리 나는 자리 · 방법 · 울림'},
+ steps:[
+  {n:'top',tag:'맨 위 개념',q:'말의 뜻을 구별해 주는 가장 작은 소리는?',a:'음운',o:['음절','낱말'],why:'말 vs 발, 강 vs 공: 소리 하나만 바뀌어도 뜻이 달라져요.'},
+  {n:'crit',tag:'어떻게 나눠?',q:'음운을 둘로 나누려면 무엇을 볼까?',a:'공기를 막아? 안 막아?',o:['소리가 커? 작아?','글자가 길어? 짧아?'],why:'모음은 공기가 방해 없이 나가고, 자음은 공기를 막거나 방해해요.'},
+  {n:'L1',tag:'상자 이름',q:'공기가 방해 없이 나가는 소리는?',a:'모음',o:['자음','음절'],why:'아기 옹알이(아~ 우~) 소리예요.'},
+  {n:'R1',tag:'상자 이름',q:'공기를 막거나 방해하는 소리는?',a:'자음',o:['모음','음절'],why:'자음 = 아들 소리. 모음(어머니 소리)이 도와줘야 소리가 나요.'},
+  {n:'J',tag:'어떻게 구별해?',q:'모음인지 자음인지 어떻게 구별할까?',a:'혼자 소리가 나면 모음, 못 내면 자음',o:['글자가 동그라면 모음','받침에 오면 모음'],why:'ㄱ은 [그]처럼 모음이 도와줘야 소리가 나요. 모음은 혼자서도 소리가 나요.'},
+  {n:'L2',tag:'예를 들면?',q:'모음의 예는?',a:'ㅏ · ㅗ · ㅣ',o:['ㄱ · ㅁ · ㅅ','강 · 물'],why:'단모음은 10개: ㅣ ㅔ ㅐ ㅟ ㅚ ㅡ ㅓ ㅏ ㅜ ㅗ.'},
+  {n:'R2',tag:'예를 들면?',q:'자음의 예는?',a:'ㄱ · ㅁ · ㅅ',o:['ㅏ · ㅗ · ㅣ','ㅐ · ㅔ · ㅚ'],why:'자음은 19개예요.'},
+  {n:'L3',tag:'한 줄 더',q:'모음을 또 나누는 기준 세 가지는?',a:'혀 앞뒤 · 혀 높이 · 입술 모양',o:['소리 나는 자리 · 방법 · 울림','받침 · 첫소리 · 끝소리'],why:'이~ 코끝 찡 = 앞혀, 으~ 목구멍 = 뒤혀. 입이 커질수록 혀가 내려가요. 입술 동그랗게 = 원순.'},
+  {n:'R3',tag:'한 줄 더',q:'자음을 또 나누는 기준 세 가지는?',a:'소리 나는 자리 · 방법 · 울림',o:['혀 앞뒤 · 혀 높이 · 입술 모양','길이 · 높이 · 크기'],why:'자리: 입술 → 잇몸 → 센입천장 → 여린입천장 → 목청. 방법: 파열·마찰·파찰·비음·유음. 울림소리: ㄴ ㄹ ㅁ ㅇ.'}]};
+const KG_CSS=`<style>.dw .kgt{background:#fff;border:2px solid #dfdacb;border-radius:18px;padding:14px 8px;display:flex;flex-direction:column;align-items:center}
+.dw .kgn{border:2px solid #2f5fa3;border-radius:12px;padding:6px 10px;background:#fff;color:#1d2b4f;text-align:center;font-size:17px;line-height:1.35;max-width:100%}
+.dw .kgn.top{background:#2f5fa3;color:#fff;font-family:'Do Hyeon',sans-serif!important;font-size:20px}
+.dw .kgn.lb{border:1px solid #e2cfa6;background:#fff7e6;color:#5a4526;font-size:16px}
+.dw .kgn.q{border:2px dashed #2f5fa3;color:#2f5fa3;min-width:70px;font-weight:bold}.dw .kgn.h{border:2px dashed #d6d2c4;color:#b9b3a3;min-width:70px}
+.dw .kgl{width:2px;height:14px;background:#8a6a3c}.dw .kgc{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.dw .kgc>div{display:flex;flex-direction:column;align-items:center}</style>`;
+let KG=null;
+function viewKG(){KG={i:0,first:0,back:KH};kgOne()}
+function kgTree(done,cur){const N=KG1.nodes;const b=(id,cls)=>done.has(id)?`<div class="kgn ${cls||''}">${N[id]}</div>`:id===cur?`<div class="kgn q">?</div>`:`<div class="kgn h">&nbsp;</div>`;
+  return `<div class="kgt">${b('top','top')}<div class="kgl"></div>${b('crit','lb')}<div class="kgl"></div>
+   <div class="kgc"><div>${b('L1')}</div><div>${b('R1')}</div></div><div class="kgl"></div>${b('J','lb')}<div class="kgl"></div>
+   <div class="kgc"><div>${b('L2')}<div class="kgl"></div>${b('L3','lb')}</div><div>${b('R2')}<div class="kgl"></div>${b('R3','lb')}</div></div></div>`}
+function kgOne(){const R=KG;const S=KG1.steps;const done=new Set(S.slice(0,R.i).map(s=>s.n));
+  if(R.i>=S.length){$('#main').innerHTML=DW_CSS+KG_CSS+`<div class="dw"><div class="dwtop"><h2>🧭 계통도 · ${KG1.t}</h2></div>${kgTree(done)}
+     <div class="dwhint" style="margin-top:10px">다 쌓았어! ${S.length}칸 중 <b>${R.first}칸</b>을 한 번에 골랐어.</div>
+     <div class="dwsm" style="text-align:center">시험판이라 기록은 안 남아요.</div><button class="dwgo" id="kgre">처음부터 다시</button><button class="dwgo lt" id="kgbk">엄마 보기로</button></div>`;
+    $('#kgre').onclick=viewKG;$('#kgbk').onclick=()=>viewPrev();window.scrollTo(0,0);return}
+  const s=S[R.i];const o=dwSh([s.a].concat(s.o));const x=[];let miss=0;
+  const draw=(fb,lock,full)=>{$('#main').innerHTML=DW_CSS+KG_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="kgbk">⏮</button><h2>🧭 계통도 · ${R.i+1}/${S.length}</h2></div>
+     ${kgTree(full?new Set([...done,s.n]):done,full?null:s.n)}
+     <div class="dwcard"><div class="dwsm">${s.tag}</div><div class="dwq">${s.q}</div>${o.map((v,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-ko="${i}" ${x.includes(i)||lock?'disabled':''}>${v}</button>`).join('')}</div><div id="kgfb">${fb||''}</div></div>`;
+    $('#kgbk').onclick=()=>{clearTimeout(R.tm);viewPrev()};
+    document.querySelectorAll('[data-ko]').forEach(b=>b.onclick=()=>{const v=o[+b.dataset.ko];
+      if(v===s.a){if(!miss)R.first++;draw(`<div class="dwhint">✓ <b>${s.a}</b><br>${s.why}</div>`,true,true);R.tm=setTimeout(()=>{R.i++;kgOne()},miss?2800:2200);return}
+      miss++;x.push(+b.dataset.ko);
+      if(miss>=2){draw(`<div class="dwhint">정답: <b>${s.a}</b><br>${s.why}</div><button class="dwgo" id="kgok">알겠어</button>`,true,true);$('#kgok').onclick=()=>{R.i++;kgOne()};return}
+      draw('<div class="dwhint">다시 생각해 봐.</div>')})};
+  draw();window.scrollTo(0,0)}
 /* ===== 🧱 소리가 닮아요 · 5주차 문법(동화) 기초 수업 (엄마 11/26) =====
    단계마다: 방법 먼저(카드) → "몇 개 맞힐 것 같아?" → 확인 문제(푸는 순서 ①~⑤, 맞히면 「다음」 없이 넘어감)
    → 내 계통도 한 칸 채우기 → 예측 vs 결과. 부 끝 = 빈 계통도 처음부터 채우기(백지 테스트).
