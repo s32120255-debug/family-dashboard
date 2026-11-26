@@ -3488,7 +3488,7 @@ function finishUI(){ const p=C.p, fb=$('#fb'); $('.stars').innerHTML=starsHTML()
 // --- 계단 문제 (엄마 11/26: 혼자 2번 연달아 틀리면 계단 4개 → 앞 2개는 칸 전부, 뒤 2개는 칸 줄여서 → 다시 혼자. ★는 혼자 풀 때만) ---
 const KST_MISS=2, KST_N=4, KST_HALF=2;
 function kstGet(si,lv){ DB.kstep=DB.kstep||{}; const k=SKILLS[si].id+':'+lv; return DB.kstep[k]||(DB.kstep[k]={mode:'a',miss:0,ok:0}); }
-function kstAlone(si,lv,res){ const s=kstGet(si,lv); if(res==='x'){ s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } else s.miss=0; }
+function kstAlone(si,lv,res){ const s=kstGet(si,lv); if(res==='o'){ s.miss=0; return; } s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
 function kstStep(si,lv,pass){ const s=kstGet(si,lv); if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
 const kstIdx=(p,stage)=>stage===0||p.steps.length<3?p.steps.map((_,k)=>k):p.steps.map((_,k)=>k).slice(1);
 const kNUM='①②③④⑤⑥⑦⑧⑨';
@@ -4907,7 +4907,7 @@ const PER=12;
 // 칸 하나 틀리면 "다시 한 번" 한 번 → 또 틀리면 그 칸 답 + 한 줄 이유 보여 주고 다음 칸. 힌트 버튼 없음. 최상위 문제집은 그대로.
 const KST_MISS=2, KST_N=4, KST_HALF=2;
 function kstGet(si,lv){ PROG.kstep=PROG.kstep||{}; const k='st:'+SKILLS[si].id+':'+lv; return PROG.kstep[k]||(PROG.kstep[k]={mode:'a',miss:0,ok:0}); }
-function kstAlone(si,lv,rec){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='x'){ s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } else s.miss=0; }
+function kstAlone(si,lv,rec){ const s=kstGet(si,lv); DIRTY=true; if(rec.res==='s') return; if(rec.res==='o'){ s.miss=0; return; } s.miss++; if(s.miss>=KST_MISS){ s.mode='s'; s.miss=0; s.ok=0; } } // 엄마 11/26: 한 번에 못 맞히면(고쳐서 맞혀도) 틀린 것으로 셈
 function kstStep(si,lv,pass){ const s=kstGet(si,lv); DIRTY=true; if(!pass) return 0; s.ok++; if(s.ok>=KST_N){ s.mode='a'; s.ok=0; s.miss=0; return 2; } return s.ok===KST_HALF?1:0; }
 const kstShort=p=>p.short||(p.steps.length>=3?p.steps.map((_,k)=>k).slice(1):p.steps.map((_,k)=>k));
 function mountSteps(box,p,stage,opts){
