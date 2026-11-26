@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795677799";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795678407";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -106,7 +106,7 @@ textarea{width:100%;box-sizing:border-box;min-height:110px;font-size:12px;font-f
 .calhd{display:flex;align-items:center;justify-content:space-between;gap:8px}.calhd b{font-size:20px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal .cw{text-align:center;font-size:13px;color:var(--ink-2)}.cal .cw.sun{color:var(--amber)}
 .cal .cd{aspect-ratio:1/1.15;border:1px solid var(--line);border-radius:10px;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;color:var(--ink);min-width:0}
-.cal .cd.off{border:0;background:transparent}.cal .cd i{font-style:normal;font-size:12px;color:var(--ink-2)}.cal .cd b{font-size:13px;min-height:16px;white-space:nowrap}
+.cal .cd.fc3{aspect-ratio:auto;padding:3px 0;gap:0}.cal .cd.fc3 em{font-style:normal;font-size:12px;line-height:1.25;min-width:1.6em;text-align:center;border-radius:5px;color:var(--ink-2)}.cal .cd.fc3 em.ok{background:#dcefe0;color:#1d6b35}.cal .cd.fc3 em.lo{background:#fbe6cf;color:#9a5a12}.cal .cd.off{border:0;background:transparent}.cal .cd i{font-style:normal;font-size:12px;color:var(--ink-2)}.cal .cd b{font-size:13px;min-height:16px;white-space:nowrap}
 .cal .cd:disabled{opacity:.45}.cal .cd.today{border:2px solid var(--blue)}.cal .cd.sel{outline:2px solid var(--amber);outline-offset:1px}
 .cal .cd.l1{background:color-mix(in srgb,var(--blue) 12%,var(--card))}.cal .cd.l2{background:color-mix(in srgb,var(--blue) 24%,var(--card))}.cal .cd.l3{background:color-mix(in srgb,var(--blue) 38%,var(--card))}.cal .cd.l4{background:color-mix(in srgb,var(--blue) 52%,var(--card))}.cal .cd.l4 i,.cal .cd.l4 b{color:#fff}
 .card.fc>h3{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0}.card.fc>h3::after{content:"▾";color:var(--ink-2);font-size:18px}.card.fc.fold>h3::after{content:"▸"}.card.fc.fold>*:not(h3){display:none}
@@ -3175,15 +3175,18 @@ function fracNow(){if(S.cfg.fracPath===false)return null;return FRP.find(id=>!(S
 /* 하루 계획: 부모가 정한 유형(통과하면 저절로 빠짐) + 남는 칸은 대기 줄에서 채움. 칸이 3개 이상이면 하나는 다음 학기 미리 보기 */
 /* 11/26 sy: 15세트쯤에서 힘들어함 → 평일은 핵심 계산만(하루 세트 수 − 5), 주말(토·일)은 단위·그래프·도형(가벼운 유형)만으로 하루 세트 수를 다 채워 진도를 뺀다 */
 const isWE=()=>{const g=new Date().getDay();return g===0||g===6},wkOn=()=>S.cfg.wkSplit!==false;
+/* 관리자에서 고칠 수 있는 값: 평일 세트 수(wdTotal), 주말 세트 수(weTotal), 주말 항목(weSet, 없으면 가벼운 유형 중 지금 차례인 다섯 개) */
+const wdT=()=>S.cfg.wdTotal??Math.max(5,(S.cfg.total||20)-5),weT=()=>S.cfg.weTotal??(S.cfg.total||20),isWeT=(id,cf)=>{cf=cf||S.cfg;return cf.weSet?cf.weSet.includes(id):LIGHT.has(id)};
+function weList(){const ok=id=>TYPES[id]&&!tc(id).home&&!passedT(id);if(S.cfg.weSet)return S.cfg.order.filter(id=>S.cfg.weSet.includes(id)&&ok(id));
+  const b=planBase(false);let L=S.cfg.order.filter(id=>LIGHT.has(id)&&b[id]);
+  if(L.length<5)L=L.concat(queueList().filter(id=>LIGHT.has(id)&&!L.includes(id)&&ok(id)&&!isLocked(id)).slice(0,5-L.length));return L}
 function planNow(){const wk=wkOn();
-  if(wk&&isWE()){const b=planBase(false),ok=id=>TYPES[id]&&!tc(id).home&&!passedT(id);let L=S.cfg.order.filter(id=>LIGHT.has(id)&&b[id]);
-    if(L.length<5)L=L.concat(queueList().filter(id=>LIGHT.has(id)&&!L.includes(id)&&ok(id)&&!isLocked(id)).slice(0,5-L.length));
-    if(L.length){const p={},T=S.cfg.total||20;for(let k=0;k<T;k++){const id=L[k%L.length];p[id]=(p[id]||0)+1}return p}}
+  if(wk&&isWE()){const L=weList();if(L.length){const p={},T=weT();for(let k=0;k<T;k++){const id=L[k%L.length];p[id]=(p[id]||0)+1}return p}}
   return planBase(wk)}
 function planBase(wk){const p={},fp=fracNow();let tot=0;
-  S.cfg.order.forEach(id=>{const n=S.cfg.plan[id]||0;if(n<=0)return;if(wk&&LIGHT.has(id))return;if(id==="FR"){if(fp&&!p[fp]){p[fp]=1;tot++}return}if(tc(id).home||p[id]||passedT(id))return;p[id]=n;tot+=n});
+  S.cfg.order.forEach(id=>{const n=S.cfg.plan[id]||0;if(n<=0)return;if(wk&&isWeT(id))return;if(id==="FR"){if(fp&&!p[fp]){p[fp]=1;tot++}return}if(tc(id).home||p[id]||passedT(id))return;p[id]=n;tot+=n});
   if(TYPES.MM&&S.cfg.plan.MM==null&&!p.MM&&!isLocked("MM")&&!passedT("MM")&&!tc("MM").home){p.MM=1;tot++}
-  if(S.cfg.newRot!==false){let need=wk?Math.max(0,(S.cfg.total||20)-5-tot):Math.max(1,(S.cfg.total||20)-tot);const Q=queueList().filter(id=>!p[id]&&!(wk&&LIGHT.has(id))),now=SEMS.indexOf(NOW_SEM);
+  if(S.cfg.newRot!==false){let need=wk?Math.max(0,wdT()-tot):Math.max(1,(S.cfg.total||20)-tot);const Q=queueList().filter(id=>!p[id]&&!(wk&&(LIGHT.has(id)||isWeT(id)))),now=SEMS.indexOf(NOW_SEM);
     if(need>=3){const ahead=Q.find(id=>semIx(id)>now&&semIx(id)<SEMS.length-1);if(ahead){p[ahead]=1;need--}}
     Q.filter(id=>!p[id]).slice(0,need).forEach(id=>{p[id]=1})}
   return p}
@@ -3307,10 +3310,41 @@ async function famLoad(){const t=today();
     try{const r=await DB.doc(K[2]).get(),c=r.exists?r.data():null;if(c&&c.ts&&(!f.core||(c.savedAt||0)>=(f.core.savedAt||0)))f.core=c}catch(e){}
     try{const r=await DB.doc(K[3]+"/"+t).get(),d=r.exists?r.data():null;if(d&&(!f.day||(d.sets||[]).length>=((f.day.sets||[]).length)))f.day=d}catch(e){}}
   if(view==="fam")render()}
+/* ───────── 관리자: 세 사람 기록 달력 + 밀림 정리(계획보다 덜 한 날). 밀림 없음 규칙은 그대로, 여기서는 보기만 ───────── */
+let FDAYS={},FCD=null,FCLOAD=false;
+const WKSTART="2026-11-26";/* 평일 15세트를 시작한 날. 그 전 날짜는 저장된 계획 그대로 센다 */
+const isWEk=k=>{const[y,m,d]=k.split("-").map(Number),g=new Date(y,m-1,d).getDay();return g===0||g===6};
+const dayPlanN=(d,cf,k)=>{if(!d)return 0;cf=cf||{};const wd=cf.wkSplit!==false&&k>=WKSTART&&!isWEk(k);return Object.entries(d.plan||{}).reduce((a,[id,b])=>a+(wd&&isWeT(id,cf)?0:b),0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0)};
+async function famDays(){FCLOAD=true;
+  for(const p of PROFILES){if(p.id===PID){FDAYS[p.id]=DAYS;continue}const K=famK(p.id);let o={};try{o=JSON.parse(localStorage.getItem(K[1])||"{}")||{}}catch(e){}FDAYS[p.id]=o}
+  if(view==="famcal")render();
+  if(DB){for(const p of PROFILES){if(p.id===PID)continue;const K=famK(p.id);try{const docs=(await DB.collection(K[3]).limit(1000).get()).docs,o=FDAYS[p.id];docs.forEach(x=>{const d=x.data();if(d&&(!o[x.id]||(d.sets||[]).length>=((o[x.id].sets||[]).length)))o[x.id]=d})}catch(e){}}}
+  FCLOAD=false;if(view==="famcal")render()}
+function vFamCal(){const t=today();if(!CALM)CALM=t.slice(0,7);const[y,m]=CALM.split("-").map(Number),first=new Date(y,m-1,1).getDay(),nd=new Date(y,m,0).getDate(),key=d=>CALM+"-"+String(d).padStart(2,"0");
+  FAM[PID]={core:S,day:D()};FDAYS[PID]=DAYS;
+  const cf=id=>((FAM[id]||{}).core||{}).cfg||(id===PID?S.cfg:{}),st=(id,k)=>{const d=(FDAYS[id]||{})[k],n=d?(d.sets||[]).length:0,pl=dayPlanN(d,cf(id),k),sec=d?(d.sets||[]).reduce((a,x)=>a+(x.t||0),0):0;return{n,pl,sec,miss:Math.max(0,pl-n)}};
+  const cells=[...Array(first).fill('<span class="cd off"></span>'),...Array.from({length:nd},(_,i)=>{const k=key(i+1);
+    return `<button class="cd fc3 ${k===t?"today":""} ${k===FCD?"sel":""}" data-act="fcd" data-arg="${k}" ${k>t?"disabled":""}><i>${i+1}</i>${PROFILES.map(p=>{const x=st(p.id,k);return `<em class="${!x.n&&!x.pl?"":x.n>=x.pl?"ok":"lo"}">${x.n||x.pl?x.n:"&nbsp;"}</em>`}).join("")}</button>`})].join("");
+  const sel=FCD&&FCD.slice(0,7)===CALM?FCD:null;
+  const info=sel?`<div class="card"><h3>${dayLabel(sel)}</h3>${PROFILES.map(p=>{const x=st(p.id,sel);return `<p>${p.icon} ${p.name} · ${x.n||x.pl?`${x.n}${x.pl?" / "+x.pl:""}세트 · ${fmt(x.sec)}${x.miss?` · <b>${x.miss}세트 덜 함</b>`:""}`:"기록 없음"}</p>`}).join("")}</div>`:"";
+  /* 밀림 정리: 이번 주(월~오늘)와 이 달 */
+  const now=new Date(),mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-((now.getDay()+6)%7)),kOf=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  const wkKeys=[];for(let d=new Date(mon);kOf(d)<=t;d.setDate(d.getDate()+1))wkKeys.push(kOf(d));
+  const moKeys=Array.from({length:nd},(_,i)=>key(i+1)).filter(k=>k<=t);
+  const sum=(id,keys)=>keys.reduce((o,k)=>{const x=st(id,k);o.n+=x.n;o.sec+=x.sec;if(k<t||x.n>=x.pl){o.miss+=x.miss;if(x.miss)o.days.push(k)}return o},{n:0,sec:0,miss:0,days:[]});
+  const tbl=(lab,keys)=>`<p class="small"><b>${lab}</b></p><table class="fam-t"><tr><th></th><th>한 세트</th><th>덜 한 세트</th><th>시간</th></tr>${PROFILES.map(p=>{const x=sum(p.id,keys);return `<tr><th>${p.icon} ${p.name}</th><td>${x.n}</td><td class="${x.miss?"":"ok"}">${x.miss||"없음"}</td><td>${calMin(x.sec)}분</td></tr>`}).join("")}</table>`;
+  const lows=PROFILES.map(p=>{const x=sum(p.id,moKeys);return x.days.length?`<p class="small">${p.icon} ${p.name} · ${x.days.map(k=>`${+k.slice(8)}일 (${st(p.id,k).n}/${st(p.id,k).pl})`).join(", ")}</p>`:""}).join("");
+  return `${bar("기록 달력",`<button class="nb" data-act="go" data-arg="parent">관리자</button>`)}<div class="page">
+   <div class="calhd"><button class="nb" data-act="calm" data-arg="-1" aria-label="지난달">◀</button><b>${y}년 ${m}월</b><button class="nb" data-act="calm" data-arg="1" aria-label="다음 달" ${CALM<t.slice(0,7)?"":"disabled"}>▶</button></div>
+   <p class="small muted" style="text-align:center">칸마다 위에서부터 ${PROFILES.map(p=>p.icon+" "+p.name).join(" · ")}의 한 세트 수예요. 초록은 계획을 다 한 날, 주황은 덜 한 날이에요.${FCLOAD?" 불러오는 중…":""}</p>
+   <div class="cal">${["일","월","화","수","목","금","토"].map((w,i)=>`<span class="cw ${i?"":"sun"}">${w}</span>`).join("")}${cells}</div>
+   ${info||'<p class="small muted" style="text-align:center">날짜를 누르면 그날 세트 수와 시간이 보여요.</p>'}
+   <div class="card"><h3>밀림 정리</h3><p class="small muted">못 한 세트는 다음 날로 넘어가지 않아요. 여기서는 계획보다 덜 한 날만 모아 보여 줘요. 오늘은 아직 하는 중이라 빼고 세요.</p>${tbl("이번 주 (월요일부터)",wkKeys)}${tbl(`${m}월`,moKeys)}${lows?`<p class="small"><b>${m}월에 덜 한 날 (한 세트/계획)</b></p>${lows}`:`<p class="small muted">${m}월에 덜 한 날이 없어요.</p>`}</div>
+   <button class="nb" style="align-self:center" data-act="famcal">새로 보기</button></div>`}
 const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||[]).length&&!st.grad))return null;const mx=stepMax(T)+1;return st.grad||(STEPT(T)&&(st.step||0)>=mx)?{ok:1,n:mx,mx}:{n:STEPT(T)?(st.step||0)+1:0,mx:STEPT(T)?mx:0}};
 function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
   /* 다른 사람의 오늘 계획은 그 사람이 새 버전을 열기 전까지 옛 계획(20)으로 저장돼 있다 → 평일이면 가벼운 유형을 빼고 센다 */
-  const tot=p=>{const d=FAM[p.id].day,cf=(FAM[p.id].core||{}).cfg||{},wd=cf.wkSplit!==false&&!isWE(),pl=d?Object.entries(d.plan||{}).reduce((a,[id,b])=>a+(wd&&LIGHT.has(id)?0:b),0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
+  const tot=p=>{const d=FAM[p.id].day,pl=dayPlanN(d,(FAM[p.id].core||{}).cfg,today());return{n:d?(d.sets||[]).length:0,pl}};
   const pass=p=>Object.keys(FAM[p.id].core.ts||{}).filter(id=>TYPES[id]&&(famSt(FAM[p.id].core,id)||{}).ok).length;
   const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="small muted">${CHAR[p.id][1]}</span><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>${t.pl&&t.n>t.pl?`오늘 ${t.n}세트 (${t.pl}세트 다 함)`:`오늘 ${t.n}${t.pl?" / "+t.pl:""}세트`}</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
   const ids=S.cfg.order.filter(id=>TYPES[id]&&P.some(p=>famSt(FAM[p.id].core,id)));
@@ -3364,7 +3398,7 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam}[view]||vHome;
+  const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam,famcal:vFamCal}[view]||vHome;
   app.innerHTML=f()+(TABV[view]&&!PREVIEW&&!(view==="home"&&f!==vHome)?tabs():"")+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="parent")foldParent();
@@ -3898,11 +3932,20 @@ function vParent(){
   return `${bar("관리자")}<div class="page">
    ${MSG?`<div class="notice good">${esc(MSG)}</div>`:""}
    <button class="bigbtn" data-act="go" data-arg="bank">문제 전체 보기 <span class="small" style="display:block;font-weight:400">${nT}유형 · ${nLv.toLocaleString()}단계</span></button>
+   <button class="bigbtn ghost" data-act="famcal">세 사람 기록 달력 · 밀림 정리</button>
    ${gwParentHTML()}
    <div class="card"><h3>${pname()} 하루 계획 · ${total}세트</h3><p class="small muted">+/− 세트 수 · 미리 보기는 기록 안 남음</p>${rows}</div>
+   ${(()=>{const on=wkOn(),L=on?weList():[],C=S.cfg.order.filter(id=>TYPES[id]&&(LIGHT.has(id)||(S.cfg.weSet||[]).includes(id))),stp=(lab,v,act)=>`<div class="row" style="align-items:center"><span style="flex:1">${lab}</span><button class="nb" data-act="${act}" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${v}</b><button class="nb" data-act="${act}" data-arg="1">+</button></div>`;
+     return `<div class="card"><h3>평일·주말 세트</h3>
+     <label class="row"><input id="wksplit" type="checkbox" ${on?"checked":""} data-ch="wksplit"> 평일과 주말을 나누기</label>
+     ${on?`${stp("평일 세트 수 (핵심 계산)",wdT(),"wdt")}${stp("주말 세트 수 (토·일)",weT(),"wet")}
+     <p class="small muted">주말에 할 항목 (체크한 것만 돌려 가며 나오고, 통과하면 바로 다음 단계). 여기서 체크한 것은 평일에 안 나와요.</p>
+     ${C.map(id=>`<label class="row"><input type="checkbox" ${L.includes(id)||(S.cfg.weSet||[]).includes(id)?"checked":""} data-ch="weitem" data-arg="${id}"> ${TYPES[id].name}${passedT(id)?' <span class="pill ok">통과</span>':""}</label>`).join("")}
+     <div class="row"><button class="nb" data-act="wereset">처음 값으로 (평일 15 · 주말 20 · 항목 자동)</button></div>`
+     :stp("하루 세트 수 (매일 같게)",S.cfg.total||20,"tot")}
+     <p class="small muted">정한 유형을 빼고 남는 칸은 교과 순서대로 저절로 채워져요. 통과한 유형은 빠져요.</p></div>`})()}
    <div class="card"><h3>누르기·순서 설정</h3><p class="small muted">밀린 세트는 없어요. 못 한 세트는 다음 날로 넘어가지 않고, 날마다 같은 수만 나와요. 단계는 유형마다 하던 곳에서 이어져요.</p>
      <label class="row"><input id="okkey" type="checkbox" ${S.cfg.okKey?"checked":""} data-ch="okkey"> 확인 키 보이기 (끄면 답 자리 수를 채우면 바로 넘어가고, n이 확인 역할)</label>
-     <label class="row"><input id="wksplit" type="checkbox" ${wkOn()?"checked":""} data-ch="wksplit"> 평일·주말 나누기: 평일은 핵심 계산만 ${(S.cfg.total||20)-5}세트, 주말(토·일)은 단위·그래프·도형만 ${S.cfg.total||20}세트를 돌려 가며 (통과하면 바로 다음 단계)</label>
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      </div>
    ${tiredHTML()}
@@ -3911,8 +3954,7 @@ function vParent(){
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
      ${bakList().length?`<p class="small muted" style="margin:10px 0 4px">기록 되살리기 · 날마다 저절로 저장돼요 (최근 4일)</p><div class="row">${bakList().map(x=>`<button class="nb" data-act="bakre" data-arg="${x.d}">${x.d.slice(5)} 저장본 (${x.n}유형)</button>`).join("")}</div>`:""}
      <textarea id="io" placeholder="복사한 기록을 여기에 붙여 넣고 불러오기를 누르세요" data-ch="io">${esc(IMPORT_TXT)}</textarea>
-     <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button>${PID!=="sihun"&&!PREVIEW?`<button class="nb" data-act="resetme">${pname()} 기록 처음부터</button>`:""}</div>
-     <div class="row" style="align-items:center"><span>하루 세트 수</span><button class="nb" data-act="tot" data-arg="-1">−</button><b>${S.cfg.total||20}</b><button class="nb" data-act="tot" data-arg="1">+</button><span class="small muted">정한 유형을 빼고 남는 칸은 교과 순서대로 저절로 채워져요. 통과한 유형은 빠져요.</span></div></div>
+     <div class="row"><button class="nb" data-act="import">불러오기</button><button class="nb" data-act="resetplan">하루 계획 처음 값으로</button>${PID!=="sihun"&&!PREVIEW?`<button class="nb" data-act="resetme">${pname()} 기록 처음부터</button>`:""}</div></div>
    <div class="card"><h3>기준</h3><p class="small">10문제 · 오답 1개까지 · 처음 3판 평균에서 10%씩 줄임 · 기준 안 2일이면 졸업 · <a href="${TREE}" target="_blank" rel="noopener">계통표</a></p></div>
   </div>`;
 }
@@ -4048,7 +4090,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){{const rs=S.rs;S=clone(B[d].core);if(rs)S.rs=Date.now()}loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},famcal:()=>{if(view!=="famcal"){CALM=null;FCD=today();go("famcal")}famLoad();famDays()},fcd:a=>{FCD=a;render()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
@@ -4098,6 +4140,9 @@ const ACT={
   adk:a=>{if(PID==='sihun')return;S.cfg.adultK=Math.round(Math.min(1,Math.max(.3,spdK()+ +a*.1))*10)/10;save();render()},
   calm:a=>{const[y,m]=CALM.split('-').map(Number),d=new Date(y,m-1+ +a,1);CALM=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');CALD=null;render()},
   cald:k=>{CALD=CALD===k?null:k;render()},
+  wdt:a=>{S.cfg.wdTotal=Math.max(5,Math.min(40,wdT()+ +a));D().plan=planNow();save(today());render()},
+  wet:a=>{S.cfg.weTotal=Math.max(5,Math.min(40,weT()+ +a));D().plan=planNow();save(today());render()},
+  wereset:()=>{delete S.cfg.wdTotal;delete S.cfg.weTotal;delete S.cfg.weSet;S.cfg.wkSplit=true;D().plan=planNow();save(today());render()},
   tot:a=>{S.cfg.total=Math.max(5,Math.min(40,(S.cfg.total||20)+ +a));D().plan=planNow();save(today());render()},
   resetme:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>${pname()} 기록을 처음 상태로 돌릴까요?</h3><p class="small muted">${pname()} 계정의 단계·푼 기록·그래프 진도가 모두 처음으로 돌아가요. 시훈이 기록은 건드리지 않아요. 지우기 전 기록은 따로 남겨 둬요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="resetme2">처음부터</button></div></div></div>`;render()},
   resetme2:()=>{if(PID==="sihun")return;modal=()=>`<div class="veil"><div class="sheet"><h3>정말 처음부터 할까요?</h3><p class="small muted">한 번 더 물어봐요. 누르면 ${pname()} 기록이 처음 상태가 돼요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">아니요</button><button class="bigbtn" style="flex:1" data-act="resetdo">네, 처음부터</button></div></div></div>`;render()},
@@ -4129,6 +4174,7 @@ app.addEventListener("pointerdown",e=>{
 app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)return;const k=el.dataset.ch,id=el.dataset.arg;
   if(k==="carry"){S.cfg.carryOn=el.checked;save();return}
   if(k==="gwon"){S.cfg.gwOn=el.checked;save();return}
+  if(k==="weitem"){const id=el.dataset.arg;let W=S.cfg.weSet?S.cfg.weSet.slice():weList();W=el.checked?[...new Set([...W,id])]:W.filter(x=>x!==id);if(W.length)S.cfg.weSet=W;D().plan=planNow();save(today());render();return}
   if(k==="wksplit"){S.cfg.wkSplit=el.checked;D().plan=planNow();save(today());render();return}
   if(k==="corefirst"){S.cfg.coreFirst=el.checked;save();return}
   if(k==="okkey"){S.cfg.okKey=el.checked;save();return}
