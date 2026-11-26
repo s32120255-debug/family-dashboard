@@ -6423,7 +6423,7 @@ function structDone(){
 
 function qnavHTML(i,rs){return `<div class="qnav"><button data-q="home">← 처음으로</button>${rs?'<button data-q="restart">🔄 처음부터 다시</button>':''}<span style="flex:1"></span><button data-q="prev" ${i===0?'disabled':''}>◀ 이전</button><button data-q="skip">건너뛰기 ▶</button></div>`}
 function bindQnav(home,prev,skip,restart){document.querySelectorAll('.qnav button').forEach(b=>b.onclick=()=>{if(b.dataset.q==='home')discardPend();const f=({home,prev,skip,restart})[b.dataset.q];if(f)f();window.scrollTo(0,0)})}
-function resetAll(){discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
+function resetAll(){try{clearTimeout(KDW&&KDW.tm)}catch(e){}discardPend();R=null;GR=null;S=null;T=null;LT=null;NT=null;FL=null;WR=null;HWS=null}
 /* ================= 오늘 복습 (요일별 블록 빈칸) ================= */
 const DAYS=[['mon','월','비문학'],['tue','화','문학'],['wed','수','문법'],['thu','목','스키마'],['fri','금','독서']];
 // {{정답|오답|오답}} = 빈칸. g = 어려운 말 풀이
@@ -6956,10 +6956,12 @@ function learnDone(){
 
 function viewGram(){
   if(GR){drawGram();return}
-  $('#main').innerHTML=`<div class="card"><h2>🔤 문법 훈련</h2><div class="muted">수업에서 배운 소리의 지도를 블록으로 연습해요. 한 번에 10문제.</div></div>
+  $('#main').innerHTML=`<button class="dtile" id="dwopen" style="width:100%;border:3px solid #2f5fa3"><span class="dcirc" style="font-size:16px">🧱</span><span class="dtx"><span class="dname" style="font-size:20px">소리가 닮아요 · 5주차 기초 수업</span><span class="dsub" style="font-weight:500;color:var(--muted)">자음표부터 다시 → 비음화 · 유음화 · 구개음화 → 숙제·누테 모양 실전</span></span></button>
+  <div class="card"><h2>🔤 문법 훈련</h2><div class="muted">수업에서 배운 소리의 지도를 블록으로 연습해요. 한 번에 10문제.</div></div>
   <div class="dtiles">${Object.entries(GMODE).map(([k,m])=>`<button class="dtile" data-k="${k}"><span class="dcirc" style="font-size:16px">${{vtab:'ㅏ',ctab:'ㄱ',end:'받',cnt:'#',assim:'동'}[k]}</span><span class="dtx"><span class="dname" style="font-size:19px">${m.t}</span><span class="dsub" style="font-weight:500;color:var(--muted)">${m.d}</span></span></button>`).join('')}</div>
   <div class="card" style="margin-top:14px"><h2>📍 표 보기 (정답)</h2><div class="twrap">${vtHTML(Object.fromEntries(VT.cells.flatMap((r,ri)=>r.map((a,ci)=>[ri+'-'+ci,1]))),null)}</div><div class="twrap" style="margin-top:14px">${ctHTML(Object.fromEntries(CT.cells.flatMap((r,ri)=>r.map((a,ci)=>[ri+'-'+ci,1]))),null)}</div></div>`;
   document.querySelectorAll('.dtile[data-k]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;(k==='vtab'||k==='ctab')?startLearn(k):startGram(k)});
+  $('#dwopen').onclick=()=>{KH='cls';viewCls(1)};
 }
 function vowTable(){const cell=(f,r,h)=>VOW.filter(v=>v[1]===f&&v[2]===r&&v[3]===h).map(v=>v[0]).join('')||'';
   return `<div class="muted" style="margin:6px 0">단모음 10개</div><table class="gtab"><tr><th></th><th colspan="2">전설 (이~ 코끝)</th><th colspan="2">후설 (으~ 목구멍)</th></tr><tr><th></th><th>평순</th><th>원순</th><th>평순</th><th>원순</th></tr>
@@ -8303,11 +8305,14 @@ function pvHW(){const nchk=HW.reduce((a,h)=>a+h.items.filter(i=>i.chk).length,0)
 /* 요일 순서 (엄마 11/22): 일 쉼 · 월 비문학 · 화 문학 · 수 문법 · 목 스키마 (복습 → 핵심 빈칸 쓰기 → 그 영역 누테; 목요일은 맨 위에 2주 전 주차 전체 누테 — 클리닉 날)
    금 독서 워크지 · 토 이번 주 대비 누테. 주차는 복습 카드가 있는 가장 최근 주차(MAXW).
    특정 날만 바꾸려면 KO_PLAN.custom['YYYY-MM-DD']=[...] */
-const KO_PLAN={steps:[],custom:{},add:{}};
+const KO_PLAN={steps:[],custom:{},add:{},
+  /* pre = 그날 순서 맨 앞에 붙이기 (엄마 11/26: 5주차 문법 기초 수업 금 1부 · 토 시험 전 2부) */
+  pre:{'2026-11-27':[{k:'cls',part:1,label:'🧱 소리가 닮아요 1부',sub:'5주차 문법 기초 · 자음표 → 비음화 → 유음화 · 약 30분'}],
+       '2026-11-28':[{k:'cls',part:2,label:'🧱 소리가 닮아요 2부',sub:'5주차 문법 기초 · 구개음화 → 섞기 → 실전 · 시험 전에'}]}};
 /* 보충(엄마 지정): 그 날짜 요일 순서 맨 뒤에 붙음. 11/24 엄마 "비문학 숙제 오늘 보충으로" */
 KO_PLAN.add['2026-11-24']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'문단 쪼개 읽기 → 근거 문장 찾기'}];
 KO_PLAN.add['2026-11-25']=[{k:'hw',set:'w5-bi',w:5,label:'📒 보충 · 5주차 비문학 숙제',sub:'읽으면서 주어·서술어 → 왜? 찾기 (하는 데까지만)'}];
-function dayBase(d){return dayBase0(d).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
+function dayBase(d){return (KO_PLAN.pre[d]||[]).map(x=>Object.assign({},x)).concat(dayBase0(d)).concat((KO_PLAN.add[d]||[]).map(x=>Object.assign({},x)))}
 function dayBase0(d){if(KO_PLAN.custom[d])return KO_PLAN.custom[d].slice();const wd=new Date(d+'T12:00:00').getDay();const W=MAXW;const R=Array.from({length:W},(_,i)=>i+1);
   if(wd===0)return [];
   if(wd<=4){const [day,,A]=DAYS[wd-1];const H=HW.find(h=>h.w===W&&h.day===day);
@@ -8326,7 +8331,7 @@ HUB.db.then(()=>loadExtras()).catch(()=>{});
 let PLAN=true,PS=0;
 const PDK=()=>'sihun_ko_plan_'+HUB.today();
 function stepDone(i){const s=KO_PLAN.steps[i];const loc=store(PDK())||[];if(loc.includes(i))return true;
-  return KS.today.some(r=>s.k==='daily'?r.type==='daily'&&!r.partial&&r.week===s.w&&r.day===s.day:s.k==='note'?r.type==='note'&&r.week===s.w&&r.area===s.area:s.k==='fill'?r.type==='note'&&r.mode==='fill'&&r.week===s.w&&r.area===s.area:s.k==='read'?r.type==='write'&&r.w===s.w&&r.done!==false:s.k==='hw'?r.type==='hw'&&r.set===s.set&&r.done:s.k==='test'?r.type==='test'&&String(r.range)===String(s.r)&&(r.area||null)===(s.area||null):s.k==='gram'?r.type==='gram'&&r.mode===s.mode:false)}
+  return KS.today.some(r=>s.k==='daily'?r.type==='daily'&&!r.partial&&r.week===s.w&&r.day===s.day:s.k==='note'?r.type==='note'&&r.week===s.w&&r.area===s.area:s.k==='fill'?r.type==='note'&&r.mode==='fill'&&r.week===s.w&&r.area===s.area:s.k==='read'?r.type==='write'&&r.w===s.w&&r.done!==false:s.k==='hw'?r.type==='hw'&&r.set===s.set&&r.done:s.k==='test'?r.type==='test'&&String(r.range)===String(s.r)&&(r.area||null)===(s.area||null):s.k==='gram'?r.type==='gram'&&r.mode===s.mode:s.k==='cls'?r.type==='cls'&&r.part===s.part&&r.partDone:false)}
 function markStep(i){const loc=store(PDK())||[];if(!loc.includes(i)){loc.push(i);store(PDK(),loc)}}
 function restView(){$('#main').innerHTML=`<div class="card" style="text-align:center;padding:40px 18px"><div style="font-size:56px">🛌</div><h2 style="font-size:24px">오늘은 국어 쉬는 날!</h2><div class="muted">일요일은 날개 수업 듣는 날이에요. 내일 다시 만나요.</div></div>`}
 function firstOpen(){const i=KO_PLAN.steps.findIndex((_,k)=>!stepDone(k));return i<0?KO_PLAN.steps.length-1:i}
@@ -8339,6 +8344,7 @@ async function openStep(i){PS=i;const s=KO_PLAN.steps[i];planBar();window.scroll
   if(s.k==='fill'){KH='fill';FL={w:s.w,area:s.area};viewFill();return}
   if(s.k==='read'){KH='wk';WR=null;viewWrite(s.w);return}
   if(s.k==='hw'){KH='hw';HWS=null;viewHW(s.set);return}
+  if(s.k==='cls'){KH='cls';viewCls(s.part);return}
   if(s.k==='daily'){KH='daily';DW=s.w;R=null;await loadProg();const wd=weekDates();const di=DAYS.findIndex(d=>d[0]===s.day);startDaily(s.day,s.area,wd[di]||HUB.today())}
   else if(s.k==='note'){KH='note';NT={w:s.w,i:0,only:s.area,hide:false};viewNote()}
   else if(s.k==='gram'){KH='gram';GR=null;startGram(s.mode)}
@@ -8458,7 +8464,411 @@ function viewPrev(){
   document.querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{PV.tab=b.dataset.pt;viewPrev()});
   $('#pvlock').onclick=()=>{PV=null;viewPrev()};
 }
-const VIEWS={hw:()=>viewHW(),wk:()=>viewWrite(),fill:viewFill,prev:viewPrev,note:viewNote,daily:viewDaily,test:viewTest,weak:viewWeak,struct:viewStruct,gram:viewGram,lit:viewLit,read:viewRead,know:viewKnow,log:viewLog};
+/* ===== 🧱 소리가 닮아요 · 5주차 문법(동화) 기초 수업 (엄마 11/26) =====
+   단계마다: 방법 먼저(카드) → "몇 개 맞힐 것 같아?" → 확인 문제(푸는 순서 ①~⑤, 맞히면 「다음」 없이 넘어감)
+   → 내 계통도 한 칸 채우기 → 예측 vs 결과. 부 끝 = 빈 계통도 처음부터 채우기(백지 테스트).
+   "왜"(③ 규칙)까지 맞아야 ★. 반쯤 맞는 생각을 고르면 정답 대신 반례 단어를 보여 줌. 두 번째도 틀리면 정답+이유 → 「알겠어」 → 같은 규칙 새 단어.
+   같은 단계에서 3개 연달아 한 번에 맞히면 ①②⑤ 칸은 접힘(③ 규칙 + ④ 소리만).
+   확인 단어 = 숙제·누테에 없는 새 단어(표준 발음 검산). 같이 보기 = 선생님 수업 예시.
+   기록: results type 'cls' (cls:'w5-dong'), 이어 하기 localStorage sihun_ko_dw5 */
+const DW_CHO='ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ'.split('');
+const DW_JONG=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const dwCho=ch=>{const c=ch.charCodeAt(0)-0xAC00;return c<0||c>11171?'':DW_CHO[Math.floor(c/588)]};
+const dwJong=ch=>{const c=ch.charCodeAt(0)-0xAC00;return c<0||c>11171?'':DW_JONG[c%28]};
+const DW_REP={ㄱ:'ㄱ',ㄲ:'ㄱ',ㅋ:'ㄱ',ㄳ:'ㄱ',ㄺ:'ㄱ',ㄴ:'ㄴ',ㄵ:'ㄴ',ㄶ:'ㄴ',ㄷ:'ㄷ',ㅅ:'ㄷ',ㅆ:'ㄷ',ㅈ:'ㄷ',ㅊ:'ㄷ',ㅌ:'ㄷ',ㅎ:'ㄷ',ㄹ:'ㄹ',ㄼ:'ㄹ',ㄽ:'ㄹ',ㄾ:'ㄹ',ㅀ:'ㄹ',ㅁ:'ㅁ',ㄻ:'ㅁ',ㅂ:'ㅂ',ㅍ:'ㅂ',ㅄ:'ㅂ',ㄿ:'ㅂ',ㅇ:'ㅇ'};
+const DW_ALT={ㄷ:'ㅅ',ㄱ:'ㅇ',ㅂ:'ㅁ'};
+/* 규칙 문장(③에서 고르는 말) */
+const DW_RULE={
+ bi:'받침 ㄱ ㄷ ㅂ이 뒤 ㄴ ㅁ을 만나 같은 자리 ㅇ ㄴ ㅁ이 돼 (비음화)',
+ yu:'ㄴ과 ㄹ이 만나면 앞이든 뒤든 ㄴ이 ㄹ이 돼 (유음화)',
+ rb:'받침 ㅁ ㅇ ㄱ ㅂ 뒤의 ㄹ이 ㄴ이 돼 (ㄹ이 ㄴ으로)',
+ gu:'ㄷ ㅌ 소리가 돕는 말의 ㅣ를 만나 ㅈ ㅊ이 돼 (구개음화)',
+ he:'받침 ㄷ과 뒤 ㅎ이 합쳐져 ㅌ이 돼'};
+const DW_RNAME={bi:'비음화',yu:'유음화',rb:'ㄹ이 ㄴ으로 (ㄹ의 비음화)',gu:'구개음화',he:'ㄷ + ㅎ → ㅌ'};
+const DW_STEPS=['① 만나는 자리','② 받침 7개로','③ 규칙 고르기','④ 바꿔 쓰기','⑤ 또 만나?'];
+/* 자음표 조각: cols 순서 = 입술·잇몸·센입천장·여린입천장 */
+function dwTable(rows,mark){const C=['입술','잇몸','센입천장','여린입천장'];const col={ㅂ:0,ㅁ:0,ㄷ:1,ㄴ:1,ㄹ:1,ㅌ:1,ㅈ:2,ㅊ:2,ㄱ:3,ㅇ:3};
+  const R={pa:['파열음 <small>막았다 펑</small>',['ㅂ','ㄷ','','ㄱ']],pa2:['파열음 <small>막았다 펑</small>',['ㅂ','ㄷ ㅌ','','ㄱ']],pc:['파찰음 <small>펑+긁기</small>',['','','ㅈ ㅊ','']],
+    bi:['비음 <small>코로 나는 소리</small>',['ㅁ','ㄴ','','ㅇ']],yu:['유음 <small>흐르는 소리</small>',['','ㄹ','','']]};
+  const used=[0,1,2,3].filter(i=>rows.some(r=>R[r][1][i]));
+  const col3=mark||{};
+  return `<table class="dwt"><tr><td></td>${used.map(i=>`<th>${C[i]}</th>`).join('')}</tr>${rows.map(r=>`<tr><th>${R[r][0]}</th>${used.map(i=>{const v=R[r][1][i];const c=col3[r+i];return `<td${c?` style="border:3px solid ${c}"`:''}>${v}</td>`}).join('')}</tr>`).join('')}</table>`}
+const DWB='#2f5fa3',DWO='#b5651d',DWG='#3f7d3a';
+const DW_PAIR={pa0:DWB,bi0:DWB,pa1:DWO,bi1:DWO,pa3:DWG,bi3:DWG};
+/* 같이 보기: [단어, [설명 줄...], 결과] */
+const dwEx=(w,lines,res)=>`<div class="dwcard"><div class="dwlab">같이 보기</div><div class="dwword">${w}</div><div class="dwlines">${lines.map(l=>`<div>${l}</div>`).join('')}</div>${res?`<div class="dwres">${res}</div>`:''}</div>`;
+const dwM=(h,b)=>`<div class="dwcard"><div class="dwh">📘 ${h}</div><div class="dwp">${b}</div></div>`;
+/* 단어 문제: segs = 바뀌는 차례. at = 몇 번째 글자 사이(1 = 첫 글자와 둘째 글자 사이), r = 규칙, s = [정답, 오답, 오답], from = 그 차례 전 소리 */
+const DWW=(w,segs,tw)=>({k:'w',w,segs,tw});
+const DWS=(at,r,s,o)=>Object.assign({at,r,s},o||{});
+const DWP=(q,o,why,o2)=>Object.assign({k:'pick',q,o,why},o2||{});
+const DW_L=[
+{id:0,part:1,t:'자음표 다시 보기',ex:'ㅂ ↔ ㅁ',node:'n0',
+ learn:[
+  dwM('소리가 나는 자리','자음은 입 안 어디에서 나느냐로 나눠요.')+`<div class="dwcard">${dwTable(['pa','bi','yu'])}<div class="dwlines" style="text-align:left;margin-top:8px"><div>👄 <b>입술</b>: '엄마·아빠' 하면 입술이 붙어요 → ㅂ ㅁ</div><div>🦷 <b>잇몸</b>: 혀끝이 윗잇몸에 닿아요 → ㄷ ㄴ ㄹ</div><div>👅 <b>여린입천장</b>: 혀 뒤가 입천장 안쪽 말랑한 곳(연두부처럼)에 닿아요 → ㄱ ㅇ</div></div></div>`,
+  dwM('소리를 내는 방법','같은 자리라도 내는 방법이 달라요.')+`<div class="dwcard"><div class="dwlines" style="text-align:left"><div>💥 <b>파열음</b> ㄱ ㄷ ㅂ: 꽉 막았다가 펑! 터뜨려요.</div><div>👃 <b>비음</b> ㄴ ㅁ ㅇ: 코로 나는 소리. 코를 막으면 소리가 안 나요.</div><div>🌊 <b>유음</b> ㄹ: 혀 옆으로 흘러가는 소리. ㄹ 하나뿐이에요.</div></div></div>`,
+  dwM('같은 자리 짝','파열음과 비음은 자리가 같은 짝이 있어요. 비음화는 이 짝대로 바뀌어요.')+`<div class="dwcard">${dwTable(['pa','bi'],DW_PAIR)}<div class="dwlines"><div>ㅂ ↔ ㅁ (입술) · ㄷ ↔ ㄴ (잇몸) · ㄱ ↔ ㅇ (여린입천장)</div><div class="dwsm">같은 색 칸끼리 짝이에요.</div></div></div>`,
+  dwM('받침은 7개 소리로만','받침은 <b>ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ</b> 7개 소리로만 나요. 나머지는 이 7개 중 하나로 바뀌어요.')+dwEx('앞 · 덧 · 부엌',['앞 → [압] (ㅍ → ㅂ)','덧 → [덛] (ㅅ → ㄷ)','부엌 → [부억] (ㅋ → ㄱ)'])],
+ qs:[
+  DWP('코를 막으면 소리가 안 나는 <b>비음</b>끼리 모은 것은?',['ㄴ ㅁ ㅇ','ㄱ ㄷ ㅂ','ㄹ ㅅ ㅎ'],'ㄴ ㅁ ㅇ은 코로 나는 소리(비음)예요.'),
+  DWP('꽉 막았다가 펑! 터뜨리는 <b>파열음</b>끼리 모은 것은?',['ㄱ ㄷ ㅂ','ㄴ ㅁ ㅇ','ㄹ ㅇ ㅎ'],'ㄱ ㄷ ㅂ = 막았다가 펑! 파열음.'),
+  DWP('<b>ㅂ</b>과 같은 자리(입술)에서 나는 비음은?',['ㅁ','ㄴ','ㅇ'],'ㅂ과 ㅁ은 둘 다 입술이 붙어요. 짝이에요.',{tb:1}),
+  DWP('<b>ㄷ</b>과 같은 자리(잇몸)에서 나는 비음은?',['ㄴ','ㅁ','ㅇ'],'ㄷ과 ㄴ은 둘 다 혀끝이 잇몸에 닿아요. 짝이에요.',{tb:1}),
+  DWP('<b>ㄱ</b>과 같은 자리(여린입천장)에서 나는 비음은?',['ㅇ','ㄴ','ㅁ'],'ㄱ과 ㅇ(받침 소리)은 둘 다 혀 뒤가 말랑한 입천장에 닿아요. 짝이에요.',{tb:1}),
+  DWP('<b>ㄹ</b>은 어떤 소리?',['유음','비음','파열음'],'ㄹ은 혀 옆으로 흐르는 유음이에요. 유음은 ㄹ 하나뿐.'),
+  DWP('<b>꽃</b>의 받침은 어떤 소리로 나?',['[ㄷ] → [꼳]','[ㅊ] → [꽃]','[ㅅ] → [꼿]'],'ㅊ은 7개 소리가 아니에요. [ㄷ]으로 나서 [꼳].'),
+  DWP('<b>잎</b>의 받침은 어떤 소리로 나?',['[ㅂ] → [입]','[ㅍ] → [잎]','[ㅁ] → [임]'],'ㅍ은 7개 소리가 아니에요. [ㅂ]으로 나서 [입].')]},
+{id:1,part:1,t:'동화란? 닮아가요',ex:'붉은 펜',node:'n1',
+ learn:[
+  dwM('동화 = 닮아가는 것','하얀 화장지에 붉은 펜을 꾹 누르면 붉은색이 옆으로 번지죠? 소리도 옆에 있는 소리를 <b>닮아서</b> 바뀌어요. 이걸 <b>동화</b>라고 해요.'),
+  dwM('어디서 일어나?','<b>앞 글자의 받침</b>과 <b>뒤 글자의 첫소리</b>가 만나는 자리예요. 두 자음이 딱 붙는 곳이에요.')+dwEx('국물',['국의 받침 <u>ㄱ</u> + 물의 첫소리 <u>ㅁ</u>','여기서 두 소리가 만나요.'])],
+ qs:[
+  DWP('<b>동화</b>는 무엇일까?',['소리가 옆 소리를 닮아 바뀌는 것','글자 모양이 바뀌는 것','단어 뜻이 바뀌는 것'],'동화 = 소리가 닮아가는 것. 글자는 그대로, 소리만 바뀌어요.'),
+  DWP('동화가 일어나는 자리는?',['앞 글자 받침 + 뒤 글자 첫소리','단어의 맨 앞 글자','모음과 모음 사이'],'받침과 뒤 첫소리, 두 자음이 만나는 곳이에요.'),
+  DWP('<b>밥물</b>에서 만나는 두 소리는?',['ㅂ + ㅁ','ㅏ + ㅜ','ㅂ + ㄹ'],'밥의 받침 ㅂ + 물의 첫소리 ㅁ.'),
+  DWP('<b>신라</b>에서 만나는 두 소리는?',['ㄴ + ㄹ','ㅅ + ㄹ','ㄴ + ㅏ'],'신의 받침 ㄴ + 라의 첫소리 ㄹ.')]},
+{id:2,part:1,t:'비음화',ex:'국물 [궁물]',node:'n2',rule:'bi',
+ learn:[
+  dwM('방법 먼저','받침 <b>ㄱ ㄷ ㅂ</b>이 뒤 글자 첫소리 <b>ㄴ ㅁ</b>을 만나면, 코로 나는 소리 <b>ㅇ ㄴ ㅁ</b>으로 바뀌어요.')+`<div class="dwcard"><div class="dwsm">자음표: 나는 자리는 그대로, 내는 방법만 비음으로 바뀌어요</div>${dwTable(['pa','bi'],DW_PAIR)}<div class="dwsm">같은 색 칸끼리 짝. 위 칸 → 아래 칸.</div></div>`,
+  dwEx('국물',['① 만나는 자리: 국의 받침 <u>ㄱ</u> + 물의 첫소리 <u>ㅁ</u>','② ㄱ의 짝은 → ㅇ','선생님: 자음표에서 두 소리가 가까워지려고 바뀐 거예요.'],'[궁물]')+`<div class="dwcard dwlines"><div>밥물 → [밤물] (ㅂ → ㅁ)</div><div>닫는 → [단는] (ㄷ → ㄴ)</div><div>먹는다 → [멍는다] (ㄱ → ㅇ)</div></div>`],
+ mis:[{t:'뒤 ㄴ ㅁ이 앞 받침을 닮아서 바뀌어',cx:'그럼 <b>국물</b>은 [국굴]이 돼야 해. 그런데 진짜 소리는 <b>[궁물]</b>이야. 바뀐 건 <b>앞 받침 ㄱ</b>이야.'},
+      {t:'받침이 아무 비음으로나 바뀌어',cx:'그럼 <b>국물</b>이 [굼물]이 될 수도 있어야 해. 그런데 늘 <b>[궁물]</b>이야. ㄱ은 같은 자리 짝 <b>ㅇ</b>으로만 가.'}],
+ qs:[DWW('국민',[DWS(1,'bi',['[궁민]','[국민]','[굼민]'])],DWW('국내',[DWS(1,'bi',['[궁내]','[국내]','[굼내]'])])),
+     DWW('걷는다',[DWS(1,'bi',['[건는다]','[걷는다]','[검는다]'])],DWW('듣는다',[DWS(1,'bi',['[든는다]','[듣는다]','[등는다]'])])),
+     DWW('입는',[DWS(1,'bi',['[임는]','[입는]','[인는]'])],DWW('집는',[DWS(1,'bi',['[짐는]','[집는]','[징는]'])])),
+     DWW('박물관',[DWS(1,'bi',['[방물관]','[박물관]','[밤물관]'])],DWW('학년',[DWS(1,'bi',['[항년]','[학년]','[한년]'])]))]},
+{id:3,part:1,t:'받침 먼저 바꾸기',ex:'앞날 [암날]',node:'n3',rule:'bi',
+ learn:[
+  dwM('방법 먼저','받침이 7개 소리가 아니면, <b>먼저 7개 소리로</b> 바꿔요. 그다음에 비음화를 봐요.'),
+  dwEx('앞날',['② 받침 ㅍ → 7개 소리로 [ㅂ] → [압날]','③ ㅂ + ㄴ → 비음화, ㅂ의 짝은 ㅁ'],'[압날] → [암날]')+`<div class="dwcard dwlines"><div>덧문 → [덛문] → [던문]</div><div>낱말 → [낟말] → [난말]</div></div>`],
+ mis:[{t:'ㅍ ㅅ ㅌ 같은 받침은 그대로 두고 비음화',cx:'비음화는 <b>ㄱ ㄷ ㅂ</b>만 바뀌어. <b>앞날</b>의 ㅍ은 먼저 [ㅂ]이 돼야 [암날]이 될 수 있어.'}],
+ qs:[DWW('겉모습',[DWS(1,'bi',['[건모습]','[걷모습]','[검모습]'])],DWW('꽃눈',[DWS(1,'bi',['[꼰눈]','[꼳눈]','[꼼눈]'])])),
+     DWW('앞마당',[DWS(1,'bi',['[암마당]','[압마당]','[안마당]'])],DWW('잎만',[DWS(1,'bi',['[임만]','[입만]','[인만]'])])),
+     DWW('부엌문',[DWS(2,'bi',['[부엉문]','[부억문]','[부언문]'])],DWW('앞니',[DWS(1,'bi',['[암니]','[압니]','[안니]'])])),
+     DWW('꽃망울',[DWS(1,'bi',['[꼰망울]','[꼳망울]','[꼼망울]'])],DWW('몇 명',[DWS(1,'bi',['[면명]','[멷명]','[멸명]'])]))]},
+{id:4,part:1,t:'유음화',ex:'신라 [실라]',node:'n4',rule:'yu',
+ learn:[
+  dwM('방법 먼저','<b>ㄴ</b>이 <b>ㄹ</b>을 만나면, 앞이든 뒤든 <b>ㄴ이 ㄹ</b>로 바뀌어요. ㄹ을 닮는 거예요.')+`<div class="dwcard">${dwTable(['bi','yu'],{bi1:DWO,yu1:DWO})}<div class="dwsm">ㄴ과 ㄹ은 같은 잇몸 자리. ㄴ이 ㄹ을 닮아요.</div></div>`,
+  dwEx('신라',['신의 받침 <u>ㄴ</u> + 라의 첫소리 <u>ㄹ</u>','ㄴ이 ㄹ을 닮아 ㄹ'],'[실라]')+`<div class="dwcard dwlines"><div>난로 → [날로] (ㄴ이 앞)</div><div>칼날 → [칼랄] (ㄴ이 뒤)</div><div>실내 → [실래] (ㄴ이 뒤)</div></div>`],
+ mis:[{t:'ㄴ이 뒤에 있을 때만 바뀌어',cx:'그럼 이건? <b>신라 → [실라]</b>. 여기선 ㄴ이 <b>앞</b>에 있는데도 바뀌었어.'},
+      {t:'ㄴ이 앞에 있을 때만 바뀌어',cx:'그럼 이건? <b>실내 → [실래]</b>. 여기선 ㄴ이 <b>뒤</b>에 있는데도 바뀌었어.'},
+      {t:'ㄹ이 ㄴ을 닮아 ㄴ이 돼',cx:'그럼 <b>신라</b>는 [신나]가 돼야 해. 진짜 소리는 <b>[실라]</b>. ㄴ 쪽이 ㄹ로 바뀌었어.'}],
+ qs:[DWW('연락',[DWS(1,'yu',['[열락]','[연낙]','[연락]'])],DWW('관리',[DWS(1,'yu',['[괄리]','[관니]','[관리]'])])),
+     DWW('별나라',[DWS(1,'yu',['[별라라]','[변나라]','[별나라]'])],DWW('달님',[DWS(1,'yu',['[달림]','[단님]','[달님]'])])),
+     DWW('진리',[DWS(1,'yu',['[질리]','[진니]','[진리]'])],DWW('원래',[DWS(1,'yu',['[월래]','[원내]','[원래]'])])),
+     DWW('물난리',[DWS(1,'yu',['[물란리]','[문난리]','[물난리]']),DWS(2,'yu',['[물랄리]','[물란니]','[물난리]'],{from:'[물란리]'})],DWW('겨울날',[DWS(2,'yu',['[겨울랄]','[겨운날]','[겨울날]'])]))]},
+{id:5,part:1,t:'ㄹ이 ㄴ으로',ex:'강릉 [강능]',node:'n5',rule:'rb',
+ learn:[
+  dwM('방법 먼저','받침 <b>ㅁ ㅇ</b> 뒤에 오는 <b>ㄹ</b>은 <b>ㄴ</b>으로 바뀌어요.')+dwEx('강릉',['강의 받침 <u>ㅇ</u> + 릉의 첫소리 <u>ㄹ</u>','ㄹ → ㄴ'],'[강능]')+`<div class="dwcard dwlines"><div>종로 → [종노]</div><div>향로 → [향노]</div></div>`,
+  dwM('두 번 바뀌는 것','받침 <b>ㄱ ㅂ</b> 뒤의 ㄹ도 ㄴ이 돼요. 그러면 새로 생긴 ㄴ 때문에 앞 받침도 비음화! <b>⑤ 또 만나?</b>를 꼭 봐요.')+dwEx('십리',['① ㅂ 뒤 ㄹ → ㄴ : [십니]','⑤ 또 만나? ㅂ + ㄴ → 비음화 : [심니]'],'[십니] → [심니]')+`<div class="dwcard dwlines"><div>독립 → [독닙] → [동닙]</div><div class="dwsm">선생님: 신라면은 '신 + 라면'으로 나뉘어서 [신나면]이에요.</div></div>`],
+ mis:[{t:'ㄹ 앞에 받침만 있으면 무조건 ㄴ이 돼',cx:'그럼 <b>신라</b>는 [신나]? 진짜는 <b>[실라]</b>야. ㄴ 뒤의 ㄹ은 유음화로 가.'},
+      {t:'유음화처럼 앞 받침이 ㄹ이 돼',cx:'그럼 <b>강릉</b>은 [갈릉]? 진짜 소리는 <b>[강능]</b>이야. 바뀌는 건 뒤의 ㄹ이야.'}],
+ qs:[DWW('침략',[DWS(1,'rb',['[침냑]','[침략]','[칠략]'])],DWW('심리',[DWS(1,'rb',['[심니]','[심리]','[실리]'])])),
+     DWW('음료수',[DWS(1,'rb',['[음뇨수]','[음료수]','[을료수]'])],DWW('정리',[DWS(1,'rb',['[정니]','[정리]','[절리]'])])),
+     DWW('협력',[DWS(1,'rb',['[협녁]','[혐력]','[혈력]']),DWS(1,'bi',['[혐녁]','[협녁]','[혈녁]'],{from:'[협녁]'})],DWW('압력',[DWS(1,'rb',['[압녁]','[암력]','[알력]']),DWS(1,'bi',['[암녁]','[압녁]','[알녁]'],{from:'[압녁]'})])),
+     DWW('국력',[DWS(1,'rb',['[국녁]','[궁력]','[굴력]']),DWS(1,'bi',['[궁녁]','[국녁]','[굴녁]'],{from:'[국녁]'})],DWW('식량',[DWS(1,'rb',['[식냥]','[싱량]','[실량]']),DWS(1,'bi',['[싱냥]','[식냥]','[실냥]'],{from:'[식냥]'})]))]},
+{id:6,part:2,t:'뜻 있는 말 / 돕는 말',ex:'밭 + 이랑',node:'n6',
+ learn:[
+  dwM('단어를 조각으로','단어를 쪼개 보면 두 가지 조각이 있어요.<br>• <b>혼자 뜻이 있는 말</b>: 밭, 이불, 이랑(밭고랑)<br>• <b>붙어서 돕는 말</b>: \'밭<b>이</b> 넓다\'의 이, 해돋<b>이</b>의 -이, 걷<b>히</b>다의 -히'),
+  dwEx('밭이 / 밭이랑',['밭 + <b>이</b> : 이는 붙어서 돕는 말','밭 + <b>이랑</b> : 이랑은 혼자 뜻이 있는 말 (밭고랑)','둘 다 \'이\'로 시작하지만 종류가 달라요!']),
+  dwM('어려운 이름','혼자 뜻이 있는 말 = <b>실질 형태소</b><br>붙어서 돕는 말 = <b>형식 형태소</b><br><span class="dwsm">숙제 32번에 이 이름이 나와요.</span>')],
+ qs:[
+  DWP('<b>홑이불</b> = 홑 + 이불. <b>이불</b>은?',['혼자 뜻이 있는 말','붙어서 돕는 말'],'이불은 혼자서도 뜻이 있어요.'),
+  DWP('<b>맏이</b> = 맏 + 이. 끝의 <b>이</b>는?',['붙어서 돕는 말','혼자 뜻이 있는 말'],'이 \'이\'는 혼자 쓰이지 않고 \'맏\'에 붙어서 도와요.'),
+  DWP('\'밭<b>이</b> 넓다\'의 <b>이</b>는?',['붙어서 돕는 말','혼자 뜻이 있는 말'],'밭 뒤에 붙은 조사 \'이\'. 붙어서 돕는 말이에요.'),
+  DWP('붙어서 돕는 말의 어려운 이름은?',['형식 형태소','실질 형태소'],'돕는 말 = 형식 형태소, 뜻 있는 말 = 실질 형태소.')]},
+{id:7,part:2,t:'구개음화',ex:'해돋이 [해도지]',node:'n7',rule:'gu',
+ learn:[
+  dwM('방법 먼저','받침 <b>ㄷ ㅌ</b>이 <b>붙어서 돕는 말</b>의 <b>ㅣ</b>를 만나면 <b>ㅈ ㅊ</b>으로 바뀌어요.<br><span class="dwsm">뒤 첫소리가 ㅇ이라 받침은 대표음으로 안 바꾸고 그대로 넘어가요(4주차 연음).</span>')+`<div class="dwcard">${dwTable(['pa2','pc'],{pa21:DWO,pc2:DWO})}<div class="dwsm">잇몸소리 ㄷ ㅌ → 센입천장소리 ㅈ ㅊ</div></div>`,
+  dwEx('해돋이',['돋의 받침 <u>ㄷ</u> + 돕는 말 <u>이</u>','ㄷ이 넘어가며 ㅈ으로'],'[해도지]')+`<div class="dwcard dwlines"><div>굳이 → [구지] · 맏이 → [마지]</div><div>같이 → [가치] · 밭이 → [바치]</div></div>`,
+  dwM('안 바뀌는 것','• 한 단어 안의 디·티: 잔디 [잔디], 마디 [마디]<br>• 뒤가 혼자 뜻 있는 말일 때: 밭이랑 [반니랑], 홑이불 [혼니불]')],
+ mis:[{t:'ㄷ ㅌ 뒤에 ㅣ만 오면 무조건 바뀌어',cx:'그럼 <b>홑이불</b>은 [호치불]? 진짜는 <b>[혼니불]</b>. \'이불\'은 혼자 뜻 있는 말이라 구개음화가 안 돼.'},
+      {t:'디 티 글자는 다 지 치로 바뀌어',cx:'그럼 <b>잔디</b>는 [잔지]? 진짜는 <b>[잔디]</b>. 받침이 아니라 한 글자 안의 디라서 안 바뀌어.'}],
+ qs:[DWW('곧이',[DWS(1,'gu',['[고지]','[고디]','[곧이]'])],DWW('가을걷이',[DWS(3,'gu',['[가을거지]','[가을거디]','[가을걷이]'])])),
+     DWW('겉이',[DWS(1,'gu',['[거치]','[거티]','[거시]'])],DWW('볕이',[DWS(1,'gu',['[벼치]','[벼티]','[벼시]'])])),
+     DWW('쇠붙이',[DWS(2,'gu',['[쇠부치]','[쇠부티]','[쇠부시]'])],DWW('물받이',[DWS(2,'gu',['[물바지]','[물바디]','[물받이]'])])),
+     DWP('<b>잔디</b>는 어떻게 소리 나?',['[잔디]','[잔지]'],'받침이 아니라 한 글자 안의 \'디\'라서 그대로 [잔디].'),
+     DWW('바깥이',[DWS(2,'gu',['[바까치]','[바까티]','[바깓이]'])],DWW('숱이',[DWS(1,'gu',['[수치]','[수티]','[수시]'])]))]},
+{id:8,part:2,t:'ㄷ + 히',ex:'걷히다 [거치다]',node:'n8',rule:'he',
+ learn:[
+  dwM('방법 먼저','받침 <b>ㄷ</b>과 뒤 <b>ㅎ</b>이 만나면 둘이 합쳐져 <b>ㅌ</b>이 돼요. 그다음 ㅌ이 돕는 말 <b>ㅣ</b>를 만나면 구개음화로 <b>ㅊ</b>!'),
+  dwEx('걷히다',['① ㄷ + ㅎ → 합쳐져 ㅌ : [거티다]','⑤ 또 만나? ㅌ + 돕는 말 ㅣ → 구개음화 : [거치다]'],'[거티다] → [거치다]')+`<div class="dwcard dwlines"><div>닫히다 → [다티다] → [다치다]</div></div>`],
+ mis:[{t:'ㅎ은 소리가 없어져',cx:'그럼 <b>걷히다</b>는 [거디다]? 진짜는 <b>[거티다] → [거치다]</b>. ㅎ은 없어지지 않고 ㄷ과 합쳐져 ㅌ이 돼.'}],
+ qs:[DWW('갇히다',[DWS(1,'he',['[가티다]','[가디다]','[갇히다]']),DWS(1,'gu',['[가치다]','[가티다]','[가지다]'],{from:'[가티다]',skip12:1,pt:'[가티다]의 ㅌ + 돕는 말 ㅣ'})]),
+     DWP('<b>ㄷ + ㅎ</b>이 만나면?',['합쳐져 ㅌ','ㅎ이 없어져 ㄷ','둘 다 그대로'],'ㄷ과 ㅎ이 합쳐져 거센 ㅌ이 돼요.'),
+     DWP('<b>닫히다</b> → [다티다] → [ ? ]',['[다치다]','[다지다]','[다티다]'],'ㅌ + 돕는 말 ㅣ → 구개음화로 ㅊ. [다치다].'),
+     DWP('<b>맏형</b>은 [마텽]까지만 바뀌어요. 왜 ㅊ까지 안 갈까?',['\'형\'은 혼자 뜻 있는 말이고, 돕는 말 ㅣ가 아니라서','ㄷ + ㅎ은 원래 안 합쳐져서','받침이 ㄷ이 아니라서'],'구개음화는 <b>돕는 말 ㅣ</b>를 만날 때만. 형은 뜻 있는 말이에요.')]},
+{id:9,part:2,t:'섞어서',ex:'낱낱이 [난나치]',node:null,mix:true,
+ learn:[
+  dwM('방법 먼저','이제 규칙이 섞여 나와요. <b>푸는 순서</b> 그대로: ① 만나는 자리 → ② 받침 7개로 → ③ 규칙 고르기 → ④ 바꿔 쓰기 → ⑤ 또 만나?'),
+  dwEx('낱낱이',['② 낱 → [낟] : [낟나티] (끝의 낱+이는 그대로 넘어가요)','③ ㄷ + ㄴ → 비음화 : [난나티]','⑤ 또 만나? ㅌ + 돕는 말 ㅣ → 구개음화 : [난나치]'],'[낟나티] → [난나티] → [난나치]')+`<div class="dwcard dwlines"><div>뚫는 → [뚤는] → [뚤른] (받침 ㅀ은 [ㄹ], 그다음 유음화)</div><div class="dwsm">덤: 줄넘기 → [줄럼끼] (유음화 + 기는 된소리)</div></div>`],
+ qs:[DWW('곁눈',[DWS(1,'bi',['[견눈]','[겯눈]','[결룬]'])],DWW('몇 년',[DWS(1,'bi',['[면년]','[멷년]','[멸련]'])])),
+     DWW('권력',[DWS(1,'yu',['[궐력]','[권녁]','[권력]'])],DWW('원래',[DWS(1,'yu',['[월래]','[원내]','[원래]'])])),
+     DWW('정류장',[DWS(1,'rb',['[정뉴장]','[정류장]','[절류장]'])],DWW('종류',[DWS(1,'rb',['[종뉴]','[종류]','[졸류]'])])),
+     DWW('끝내다',[DWS(1,'bi',['[끈내다]','[끋내다]','[끌래다]'])],DWW('붙는',[DWS(1,'bi',['[분는]','[붇는]','[불른]'])])),
+     DWW('가을걷이',[DWS(3,'gu',['[가을거지]','[가을거디]','[가을걷이]'])],DWW('곧이',[DWS(1,'gu',['[고지]','[고디]','[곧이]'])]))]},
+{id:10,part:2,t:'실전 (숙제·누테 모양)',ex:'○표 · [ ]→[ ]',node:null,test:true,learn:[
+  dwM('실전','이제 숙제·누테와 같은 모양으로 풀어요. 단어는 처음 보는 것도 있어요. 푸는 순서를 머릿속으로 따라가요.')],
+ qs:[
+  {k:'multi',q:'<보기>에서 <b>비음화</b>가 일어나는 단어를 모두 찾아 ○표',words:[{w:'국민',y:true,why:'ㄱ + ㅁ → [궁민]'},{w:'연락',y:false,why:'[열락] 유음화'},{w:'곧이',y:false,why:'[고지] 구개음화'},{w:'앞니',y:true,why:'[압니] → [암니]'},{w:'강물',y:false,why:'ㅇ + ㅁ, 바뀌는 규칙이 없어요 [강물]'},{w:'음료수',y:true,why:'ㅁ 뒤 ㄹ → ㄴ [음뇨수]'}]},
+  {k:'multi',q:'<보기>에서 <b>유음화</b>가 일어나는 단어를 모두 찾아 ○표',words:[{w:'진리',y:true,why:'ㄴ + ㄹ → [질리]'},{w:'침략',y:false,why:'[침냑] ㄹ이 ㄴ으로'},{w:'물난리',y:true,why:'[물랄리]'},{w:'겉모습',y:false,why:'[건모습] 비음화'},{w:'원래',y:true,why:'[월래]'},{w:'볕이',y:false,why:'[벼치] 구개음화'}]},
+  DWP('<b>협력</b>의 발음을 두 단계로: [ ㉠ ] → [ 혐녁 ]',['[협녁]','[혐력]','[협력]'],'ㅂ 뒤 ㄹ → ㄴ [협녁], 그다음 ㅂ + ㄴ → ㅁ [혐녁].'),
+  DWP('<b>갇히다</b>: [ 가티다 ] → [ ㉠ ]',['[가치다]','[가지다]','[가디다]'],'ㅌ + 돕는 말 ㅣ → ㅊ.'),
+  DWP('\'권력\'을 [궐력]으로 발음하는 현상은?',['유음화','비음화','구개음화'],'ㄴ이 ㄹ을 만나 ㄹ → 유음화.'),
+  DWP('\'곧이\'를 [고지]로 발음하는 현상은?',['구개음화','비음화','유음화'],'ㄷ + 돕는 말 ㅣ → ㅈ → 구개음화.'),
+  DWP('\'박물관\'을 [방물관]으로 발음하는 현상은?',['비음화','유음화','구개음화'],'ㄱ + ㅁ → ㅇ → 비음화.'),
+  DWP('<보기>의 ㉠~㉢에 들어갈 말로 알맞은 것은?<div class="dwbox">• 곧이 → [고지], 해돋이 → [해도지]<br>• 같이 → [가치], 밭이 → [바치]<br>→ 끝소리가 ( ㉠ )인 말이 ( ㉡ )로 시작하는 형식 형태소와 만나 ( ㉢ )으로 바뀌는 현상</div>',['ㄷ, ㅌ – ㅣ – ㅈ, ㅊ','ㄴ, ㄹ – ㅣ – ㄹ','ㄷ, ㅌ – ㅏ – ㅈ, ㅊ'],'ㄷ ㅌ이 돕는 말(형식 형태소) ㅣ를 만나 ㅈ ㅊ → 구개음화.'),
+  DWP('<b>구개음화</b>가 일어나지 <u>않는</u> 것은?',['잔디','곧이','쇠붙이','볕이'],'잔디는 한 단어 안의 \'디\'라서 [잔디] 그대로. 나머지는 [고지] [쇠부치] [벼치].'),
+  DWP('<b>비음화</b>가 일어나지 <u>않는</u> 것은?',['연락','걷는다','입는','박물관'],'연락은 ㄴ + ㄹ → [열락] 유음화. 나머지는 [건는다] [임는] [방물관] 비음화.')]}
+];
+/* 내 계통도 칸: t 앞, a 빈칸 답, o 고르기, b 뒤, sum 누르면 나오는 설명 */
+const DW_NODE={
+ n0:{L:0,col:'top',t:'자음표 짝: ㅂ→ㅁ, ㄷ→',a:'ㄴ',o:['ㄴ','ㄹ','ㅇ'],b:', ㄱ→ㅇ',sum:'파열음 ㅂ ㄷ ㄱ과 비음 ㅁ ㄴ ㅇ은 같은 자리 짝(입술·잇몸·여린입천장).'},
+ n1:{L:1,col:'root',t:'동화 = 옆 소리를 ',a:'닮아요',o:['닮아요','없애요','키워요'],b:'',sum:'받침과 뒤 첫소리가 만나는 자리에서 한 소리가 옆 소리를 닮아 바뀌어요. 붉은 펜이 화장지에 번지듯.'},
+ n2:{L:2,col:'bi',t:'ㄱ ㄷ ㅂ + ㄴ ㅁ → ',a:'ㅇ ㄴ ㅁ',o:['ㅇ ㄴ ㅁ','ㄹ ㄹ ㄹ','ㅈ ㅊ ㅋ'],b:'',sum:'비음화. 국물[궁물], 밥물[밤물], 닫는[단는]. 자리는 그대로, 방법만 비음으로.'},
+ n3:{L:3,col:'bi',t:'받침은 먼저 ',a:'7개 소리로',o:['7개 소리로','뒤 글자로','그대로'],b:'',sum:'앞날 → [압날] → [암날]. ㅍ ㅅ ㅌ ㅊ ㅋ은 먼저 7개 소리(ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ)로.'},
+ n4:{L:4,col:'yu',t:'ㄴ + ㄹ, ㄹ + ㄴ → ',a:'ㄹ ㄹ',o:['ㄹ ㄹ','ㄴ ㄴ','ㅁ ㄹ'],b:'',sum:'유음화. 신라[실라], 난로[날로], 칼날[칼랄], 실내[실래]. 앞이든 뒤든 ㄴ이 ㄹ로.'},
+ n5:{L:5,col:'bi',t:'ㅁ ㅇ (ㄱ ㅂ) 뒤 ㄹ → ',a:'ㄴ',o:['ㄴ','ㄹ','ㅁ'],b:'',sum:'ㄹ이 ㄴ으로(ㄹ의 비음화). 강릉[강능], 종로[종노]. 십리 → [십니] → [심니]는 두 번 바뀜. 신라면은 신+라면이라 [신나면].'},
+ n6:{L:6,col:'gu',t:'혼자 뜻 있는 말 = ',a:'실질 형태소',o:['실질 형태소','형식 형태소'],b:' / 돕는 말 = 형식 형태소',sum:'이불·이랑 = 뜻 있는 말(실질). 조사 이, -이, -히 = 돕는 말(형식).'},
+ n7:{L:7,col:'gu',t:'ㄷ ㅌ + 돕는 말 ㅣ → ',a:'ㅈ ㅊ',o:['ㅈ ㅊ','ㄴ ㅁ','ㄹ ㄹ'],b:'',sum:'구개음화. 해돋이[해도지], 같이[가치]. 잔디·밭이랑·홑이불은 안 바뀜.'},
+ n8:{L:8,col:'gu',t:'ㄷ + ㅎ → ',a:'ㅌ',o:['ㅌ','ㄷ','ㅎ'],b:' → ㅣ 만나면 ㅊ',sum:'걷히다 → [거티다] → [거치다]. 닫히다 → [다티다] → [다치다].'}};
+const DW_PART={1:{t:'1부 · 비음화 · 유음화',ls:[0,1,2,3,4,5],nodes:['n0','n1','n2','n3','n5','n4']},2:{t:'2부 · 구개음화 · 섞기 · 실전',ls:[6,7,8,9,10],nodes:['n1','n2','n3','n5','n4','n6','n7','n8']}};
+const DWK='sihun_ko_dw5';
+let KDW=null; // 화면 상태
+function dwStore(){return store(DWK)||{L:{},tree:{},cmp:{},cur:null,part:{}}}
+function dwPut(x){store(DWK,x)}
+const dwSh=a=>{const b=a.slice();for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
+const DW_CSS=`<style>
+.dw{font-size:20px;line-height:1.55;color:#262a31}
+.dw .dwtop{display:flex;gap:8px;align-items:center;margin:4px 0 10px}
+.dw .dwtop h2{flex:1;text-align:center;font-size:24px;margin:0}
+.dw .dwnb{background:#2f5fa3;color:#fff;border:0;border-radius:14px;min-width:52px;height:48px;font-size:18px;padding:0 10px}
+.dw .dwnb:disabled{background:#dfdacb;color:#5d5a52}
+.dw .dwcard{background:#fff;border:2px solid #dfdacb;border-radius:16px;padding:14px 16px;margin:10px 0;color:#262a31}
+.dw .dwh{font-family:'Do Hyeon',sans-serif!important;font-size:24px;margin-bottom:6px}
+.dw .dwp{font-size:21px}
+.dw .dwlab,.dw .dwsm{font-size:16px;color:#4f4c45}
+.dw .dwword{font-family:'Do Hyeon',sans-serif!important;font-size:46px;text-align:center;letter-spacing:4px;margin:4px 0}
+.dw .dwlines{text-align:center;font-size:20px}
+.dw .dwlines>div{margin:4px 0}
+.dw .dwres{font-family:'Do Hyeon',sans-serif!important;text-align:center;font-size:32px;margin-top:6px;color:#1d2b4f}
+.dw u{text-decoration-color:#2f5fa3;text-decoration-thickness:3px;text-underline-offset:6px}
+.dw .dwt{border-collapse:collapse;margin:8px auto;text-align:center}
+.dw .dwt th{font-size:15px;color:#4f4c45;font-weight:500;padding:4px 6px}
+.dw .dwt th small{display:block;font-size:12px}
+.dw .dwt td{font-size:26px;width:64px;height:50px;border:1.5px solid #dfdacb;background:#fff}
+.dw .dwgo{display:block;width:100%;background:#2f5fa3;color:#fff;border:0;border-radius:18px;padding:16px;font-size:23px;margin-top:12px;font-family:'Do Hyeon',sans-serif!important}
+.dw .dwgo.lt{background:#fff;color:#2f5fa3;border:2px solid #2f5fa3}
+.dw .dwo{display:block;width:100%;background:#fff;color:#262a31;border:2px solid #b9b3a3;border-radius:14px;padding:14px 12px;font-size:22px;margin:9px 0;text-align:center}
+.dw .dwo.x{background:#f3f1e7;color:#6b665b;border-color:#d6d0c0}
+.dw .dwo.ok{background:#e8eef7;border-color:#2f5fa3;color:#1d2b4f}
+.dw .dwrow{display:flex;gap:8px;flex-wrap:wrap}.dw .dwrow .dwo{flex:1;min-width:30%}
+.dw .dword{display:flex;gap:4px;margin:2px 0 8px}
+.dw .dword span{flex:1;text-align:center;border:1.5px solid #b9b3a3;border-radius:9px;padding:5px 2px;background:#fff;color:#4f4c45;font-size:14px;line-height:1.25}
+.dw .dword .now{border:3px solid #2f5fa3;color:#1d2b4f;font-weight:bold}
+.dw .dword .done{background:#e8eef7;color:#24497f}
+.dw .dword .fold{opacity:.45}
+.dw .dwq{font-family:'Do Hyeon',sans-serif!important;font-size:23px;margin-bottom:4px}
+.dw .dwhint{border-left:5px solid #2f5fa3;background:#fff;border-radius:10px;padding:10px 12px;margin:10px 0;font-size:19px}
+.dw .dwsyl{display:flex;justify-content:center;align-items:center;gap:2px;margin:6px 0}
+.dw .dwsyl b{font-family:'Do Hyeon',sans-serif!important;font-size:44px;font-weight:400}
+.dw .dwgap{border:2px dashed #2f5fa3;background:#fff;border-radius:10px;width:40px;height:56px;font-size:18px;color:#2f5fa3}
+.dw .dwgap.x{border-color:#d6d0c0;color:#b9b3a3}
+.dw .dwgap.ok{background:#2f5fa3;color:#fff;border-style:solid}
+.dw .dwnow{text-align:center;font-size:22px;color:#1d2b4f}
+.dw .dwli{display:block;width:100%;text-align:left;background:#fff;border:2px solid #dfdacb;border-radius:14px;padding:12px 14px;margin:7px 0;font-size:20px;color:#262a31}
+.dw .dwli.cur{border:3px solid #2f5fa3}.dw .dwli small{color:#4f4c45;font-size:15px}
+.dw .dwtree{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px}
+.dw .dwn{border:2px solid #2f5fa3;background:#e8eef7;border-radius:12px;padding:8px;font-size:15px;line-height:1.4;text-align:left;color:#1d2b4f;width:100%}
+.dw .dwn.e{border:2px dashed #8a8475;background:#fff;color:#4f4c45}
+.dw .dwn.f{border:2px dashed #d6d0c0;background:#f3f1e7;color:#6b665b}
+.dw .dwn.cur{border:3px solid #2f5fa3;background:#fff}
+.dw .dwcolh{font-family:'Do Hyeon',sans-serif!important;text-align:center;font-size:20px}
+.dw .dwblank{display:inline-block;min-width:44px;border-bottom:2.5px solid #262a31;text-align:center}
+.dw .dwbox{border:1.5px solid #8a8475;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:17px;background:#fbfaf4}
+.dw .dwpop{border:2px solid #2f5fa3;background:#fff;border-radius:14px;padding:12px;margin-top:10px;font-size:18px}
+</style>`;
+function dwWrap(h){$('#main').innerHTML=DW_CSS+`<div class="dw">${h}</div>`;window.scrollTo(0,0)}
+function dwTop(t,prev,next){return `<div class="dwtop"><button class="dwnb" data-dw="home">⏮</button><button class="dwnb" data-dw="prev" ${prev?'':'disabled'}>◀</button><h2>${t}</h2><button class="dwnb" data-dw="next" ${next?'':'disabled'}>▶</button></div>`}
+function dwBindTop(L){document.querySelectorAll('[data-dw]').forEach(b=>b.onclick=()=>{clearTimeout(KDW&&KDW.tm);const k=b.dataset.dw;
+  if(k==='home'){dwHome(L?L.part:(KDW&&KDW.part)||1);return}
+  const P=DW_PART[L.part].ls;const i=P.indexOf(L.id);
+  if(k==='prev'){if(KDW.ph==='learn'&&KDW.ci>0){KDW.ci--;dwLearn();return}if(KDW.ph==='q'){KDW.ci=L.learn.length-1;dwLearn();return}if(i>0)dwStart(P[i-1]);else dwHome(L.part);return}
+  if(k==='next'){if(KDW.ph==='learn'&&KDW.ci<L.learn.length-1){KDW.ci++;dwLearn();return}if(KDW.ph==='learn'){dwPred();return}if(i<P.length-1)dwStart(P[i+1]);else dwBlank(L.part)}})}
+/* 수업 첫 화면(부 고르기 + 단계 목록) */
+function dwHome(part){clearTimeout(KDW&&KDW.tm);const S=dwStore();part=part||1;KDW={part,ph:'home'};
+  const li=n=>{const L=DW_L[n];const r=S.L[L.id];return `<button class="dwli ${S.cur&&S.cur.lid===L.id?'cur':''}" data-l="${L.id}">${r&&r.done?'✅':'○'} <b>${L.id}. ${L.t}</b> <small>${L.ex}</small>${r&&r.done&&r.n?`<br><small>한 번에 ${r.first}/${r.n}${r.pred!=null?` · 예측 ${r.pred}`:''}</small>`:''}</button>`};
+  dwWrap(`<div class="dwtop"><h2>🧱 소리가 닮아요</h2></div><div class="dwsm" style="text-align:center">5주차 문법(동화) 기초 수업 · 단계를 누르면 어디든 바로 가요</div>
+   <div class="dwrow" style="margin:10px 0">${[1,2].map(p=>`<button class="dwo ${p===part?'ok':''}" data-p="${p}">${p}부${S.part[p]?' ✅':''}</button>`).join('')}</div>
+   <div class="dwcard"><div class="dwh">${DW_PART[part].t}</div>${DW_PART[part].ls.map(li).join('')}<button class="dwli" data-bl="${part}">🌳 <b>내 계통도 처음부터 채우기</b> <small>${part}부 끝 · 백지 테스트</small></button></div>
+   <button class="dwgo" id="dwgo">${S.cur&&DW_PART[part].ls.includes(S.cur.lid)?'이어서 하기':'시작하기'}</button>
+   <button class="dwgo lt" id="dwtree">🌳 내 계통도 보기</button>`);
+  document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>dwHome(+b.dataset.p));
+  document.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>dwStart(+b.dataset.l));
+  document.querySelectorAll('[data-bl]').forEach(b=>b.onclick=()=>dwBlank(+b.dataset.bl));
+  $('#dwtree').onclick=()=>dwTreeView(part);
+  $('#dwgo').onclick=()=>{const c=S.cur;if(c&&DW_PART[part].ls.includes(c.lid)){dwStart(c.lid,c);return}const nx=DW_PART[part].ls.find(l=>!(S.L[l]&&S.L[l].done));dwStart(nx==null?DW_PART[part].ls[0]:nx)}}
+function dwStart(lid,resume){clearTimeout(KDW&&KDW.tm);const L=DW_L[lid];
+  KDW={part:L.part,lid,ph:'learn',ci:0,qs:L.qs.map((q,i)=>Object.assign({oi:i},q)),qi:0,res:[],pred:null,t0:Date.now(),streak:0};
+  if(resume&&resume.lid===lid&&resume.ph==='q'&&resume.res){KDW.ph='q';KDW.qi=resume.qi||0;KDW.res=resume.res;KDW.pred=resume.pred;KDW.qs=resume.qs||KDW.qs;KDW.streak=resume.streak||0}
+  const S=dwStore();S.cur={lid,ph:KDW.ph};dwPut(S);
+  if(KDW.ph==='q')dwQ();else dwLearn()}
+function dwSaveCur(){const S=dwStore();S.cur={lid:KDW.lid,ph:'q',qi:KDW.qi,res:KDW.res,pred:KDW.pred,qs:KDW.qs,streak:KDW.streak};dwPut(S)}
+function dwLearn(){const L=DW_L[KDW.lid];KDW.ph='learn';const last=KDW.ci>=L.learn.length-1;
+  dwWrap(dwTop(`${L.id}. ${L.t}`,true,true)+`<div class="dwsm" style="text-align:center">방법 ${KDW.ci+1} / ${L.learn.length}</div>${L.learn[KDW.ci]}
+   <button class="dwgo" id="dwn">${last?'알겠어, 해 볼게':'다음 →'}</button>`);
+  dwBindTop(L);$('#dwn').onclick=()=>{if(last)dwPred();else{KDW.ci++;dwLearn()}}}
+function dwPred(){const L=DW_L[KDW.lid];const n=L.qs.length;
+  if(L.test){KDW.ph='q';KDW.pred=null;dwSaveCur();dwQ();return}
+  dwWrap(dwTop(`${L.id}. ${L.t}`,true,true)+`<div class="dwcard" style="text-align:center"><div class="dwq">문제 ${n}개.<br>한 번에 몇 개 맞힐 것 같아?</div>
+   <div class="dwrow" style="margin-top:10px">${Array.from({length:n+1},(_,i)=>`<button class="dwo" data-pr="${i}">${i}개</button>`).join('')}</div>
+   <div class="dwsm" style="margin-top:6px">네 예측이 정확하면, 그게 똑똑한 거야.</div></div>`);
+  dwBindTop(L);document.querySelectorAll('[data-pr]').forEach(b=>b.onclick=()=>{KDW.pred=+b.dataset.pr;KDW.ph='q';dwSaveCur();dwQ()})}
+/* ---------- 문제 ---------- */
+function dwQ(){const L=DW_L[KDW.lid];if(KDW.qi>=KDW.qs.length){dwLessonEnd();return}
+  const q=KDW.qs[KDW.qi];KDW.st={step:0,seg:0,miss:{},cx:0,reveal:0,t0:Date.now()};
+  if(q.k==='w'){KDW.st.cur=q.w;KDW.st.fold=!!dwStore().cmp[KDW.lid]||KDW.streak>=3;KDW.st.step=KDW.st.fold||q.segs[0].skip12?2:0}
+  dwDraw()}
+function dwHead(L){const n=KDW.qs.filter(q=>!q.twin).length;const k=KDW.qs.slice(0,KDW.qi+1).filter(q=>!q.twin).length;
+  return dwTop(`${L.id}. ${L.t} · ${Math.min(k,n)}/${n}${KDW.qs[KDW.qi]&&KDW.qs[KDW.qi].twin?' (다시)':''}`,true,true)}
+function dwOrder(){const s=KDW.st;return `<div class="dwsm">푸는 순서${s.fold?' (①②⑤는 접어 뒀어. 이제 ③④만!)':''}</div><div class="dword">${DW_STEPS.map((t,i)=>`<span class="${s.fold&&(i<2||i===4)?'fold':''} ${i<s.step?'done':''} ${i===s.step?'now':''}">${t}</span>`).join('')}</div>`}
+function dwDraw(){const L=DW_L[KDW.lid];const q=KDW.qs[KDW.qi];const s=KDW.st;
+  if(q.k==='pick')return dwPick(L,q);
+  if(q.k==='multi')return dwMulti(L,q);
+  const g=q.segs[s.seg];
+  // 글자 사이 위치(at): 띄어쓰기를 뺀 글자 번호. 두 번째 차례부터는 지금 소리(예: [협녁])에서 찾아요
+  const chars=[...(s.seg>0?s.cur.replace(/[\[\]]/g,''):q.w)].filter(c=>c!==' ');const pa=g.at-1;const A=chars[pa],B=chars[pa+1];
+  const jo=dwJong(A),ch=dwCho(B),rep=DW_REP[jo]||jo;
+  let body='',qhtml='';
+  const word=`<div class="dwcard" style="text-align:center"><div class="dwword">${q.w}</div>${s.cur!==q.w?`<div class="dwnow">지금 소리: <b>${s.cur}</b></div>`:''}</div>`;
+  if(s.step===0){ // ① 만나는 자리
+    qhtml=`<div class="dwq">받침과 뒤 첫소리가 만나서 <b>바뀌는 곳</b>을 눌러 봐.</div><div class="dwsyl">${chars.map((c,i)=>`<b>${c}</b>${i<chars.length-1?`<button class="dwgap ${(s.gx||[]).includes(i)?'x':''}" data-g="${i}">｜</button>`:''}`).join('')}</div>`}
+  else if(s.step===1){ // ② 받침 7개로
+    const head=`<div class="dwq">${A}의 받침 <b>${jo}</b> + ${B}의 첫소리 <b>${ch}</b></div>`;
+    if(ch==='ㅇ'){qhtml=head+`<div>뒤 첫소리가 ㅇ(소리 없음)이야. 받침은?</div><div class="dwrow">${dwOpts(['그대로 뒤로 넘어가','7개 소리로 바꿔'],'o2')}</div>`}
+    else if(rep===jo){qhtml=head+`<div class="dwhint">${jo}은 7개 소리 중 하나라 그대로 [${jo}] ✓</div>`;KDW.tm=setTimeout(()=>{s.step=2;dwDraw()},1100)}
+    else{const o=[...new Set([rep,jo,DW_ALT[rep]||'ㅇ'])];qhtml=head+`<div>받침 ${jo}는 7개 소리 중 어떤 소리로 나?</div><div class="dwrow">${dwOpts(o,'o2')}</div>`}}
+  else if(s.step===2){ // ③ 규칙
+    if(!s.o3)s.o3=dwRuleOpts(L,g);
+    qhtml=`<div class="dwq">${g.pt||`${A}의 받침 ${ch==='ㅇ'||rep===jo?jo:jo+'['+rep+']'} + ${B}의 첫소리 ${ch}`}. 무슨 규칙이야?</div>${s.o3.map((o,i)=>`<button class="dwo ${(s.x3||[]).includes(i)?'x':''}" data-o3="${i}" ${(s.x3||[]).includes(i)?'disabled':''}>${o.t}</button>`).join('')}`}
+  else if(s.step===3){ // ④ 바꿔 쓰기
+    if(!s.o4)s.o4=dwSh(g.s);qhtml=`<div class="dwq">${DW_RNAME[g.r]}! 그럼 소리는?</div><div class="dwrow">${s.o4.map((o,i)=>`<button class="dwo ${(s.x4||[]).includes(i)?'x':''}" data-o4="${i}" ${(s.x4||[]).includes(i)?'disabled':''}>${o}</button>`).join('')}</div>`}
+  else if(s.step===4){ // ⑤ 또 만나?
+    qhtml=`<div class="dwq">${s.cur}. 받침과 뒤 첫소리가 또 만나서 바뀌는 곳이 있어?</div><div class="dwrow">${dwOpts(['있어','없어'],'o5')}</div>`}
+  body=word+(s.done?'':`<div class="dwcard">${qhtml}</div>`)+`<div id="dwfb">${s.fb||''}</div>`;
+  dwWrap(dwHead(L)+dwOrder()+body);dwBindTop(L);dwBindW(L,q,g,{A,B,jo,ch,rep,chars})}
+function dwOpts(a,k){const s=KDW.st;const x=s['x'+k]||[];return a.map((o,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-${k}="${i}" ${x.includes(i)?'disabled':''}>${o}</button>`).join('')}
+function dwRuleOpts(L,g){const learned=DW_L.filter(l=>l.id<=L.id&&l.rule).map(l=>l.rule);const ks=[...new Set(learned.concat(g.r))];
+  const ok={t:DW_RULE[g.r],ok:true};let mis=[];
+  if(!L.mix&&L.rule===g.r&&L.mis)mis=L.mis.map(m=>({t:m.t,cx:m.cx}));
+  const oth=ks.filter(k=>k!==g.r).map(k=>({t:DW_RULE[k],other:k}));
+  const nos={t:'바뀌는 규칙이 없어 (그대로)',no:true};
+  let o=[ok].concat(mis);const need=4-o.length;o=o.concat(dwSh(oth).slice(0,Math.max(0,need)));if(o.length<3)o.push(nos);
+  o=o.slice(0,4);if(!L.mix)o=o.map(x=>Object.assign({},x,{t:x.t.replace(/ \([^)]*\)$/,'')})); // 이름표가 정답 힌트가 되지 않게(섞기 단계만 이름 보임)
+  return dwSh(o)}
+function dwMiss(k){const s=KDW.st;s.miss[k]=(s.miss[k]||0)+1;return s.miss[k]}
+function dwFb(h){KDW.st.fb=h}
+function dwReveal(h){const s=KDW.st;s.reveal=1;s.fb=`<div class="dwhint">${h}</div><button class="dwgo" id="dwok">알겠어</button>`}
+function dwBindW(L,q,g,c){const s=KDW.st;
+  const next=()=>{s.fb='';s.step++;if(s.fold&&s.step===4){dwSegEnd(q,g);return}dwDraw()};
+  document.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{const i=+b.dataset.g;
+    if(i===g.at-1){s.fb='';s.step=1;dwDraw();return}
+    if(q.segs.slice(s.seg+1).some(x=>x.at-1===i)){dwFb(`<div class="dwhint">여기도 바뀌어! 그런데 앞쪽부터 차례로 봐.</div>`);dwDraw();return}
+    s.gx=(s.gx||[]).concat(i);const A=c.chars[i],B=c.chars[i+1],j=dwJong(A);
+    const m=dwMiss('g');if(m>=2){s.gx=c.chars.map((_,k)=>k).filter(k=>k!==g.at-1);dwReveal(`바뀌는 곳은 <b>${c.A}｜${c.B}</b>야. ${c.A}의 받침 ${c.jo} + ${c.B}의 첫소리 ${c.ch}.`);dwDraw();return}
+    dwFb(`<div class="dwhint">${j?`${A}｜${B}: ${j} + ${dwCho(B)}는 바뀌는 규칙이 없어. 다른 곳을 봐.`:`${A}에는 받침이 없어. 받침이 있는 곳을 봐.`}</div>`);dwDraw()});
+  document.querySelectorAll('[data-o2]').forEach(b=>b.onclick=()=>{const i=+b.dataset.o2;const t=b.textContent;
+    const good=c.ch==='ㅇ'?t==='그대로 뒤로 넘어가':t===c.rep;if(good){next();return}
+    s.xo2=(s.xo2||[]).concat(i);const m=dwMiss('o2');
+    const why=c.ch==='ㅇ'?'뒤 첫소리가 ㅇ이고 돕는 말이면 받침이 그대로 넘어가요(옷이 [오시]).':`받침은 ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ 7개로만 나요. ${c.jo} → [${c.rep}].`;
+    if(m>=2){dwReveal(why);dwDraw();return}dwFb(`<div class="dwhint">${c.ch==='ㅇ'?'4주차 연음을 떠올려 봐.':'받침은 7개 소리(ㄱ ㄴ ㄷ ㄹ ㅁ ㅂ ㅇ)로만 나요.'}</div>`);dwDraw()});
+  document.querySelectorAll('[data-o3]').forEach(b=>b.onclick=()=>{const o=s.o3[+b.dataset.o3];if(o.ok){next();return}
+    s.x3=(s.x3||[]).concat(+b.dataset.o3);const m=dwMiss('o3');if(o.cx)s.cx++;
+    if(m>=2){dwReveal(`정답: <b>${DW_RULE[g.r]}</b>${o.cx?`<br><br>${o.cx}`:''}`);dwDraw();return}
+    dwFb(`<div class="dwhint">${o.cx?o.cx+'<br>둘 다 맞는 규칙은 뭘까?':o.no?'만난 두 소리를 다시 봐. 바뀌는 규칙이 있어.':`그 규칙은 ${DW_RNAME[o.other]}. 만난 두 소리 ${c.jo}${c.rep!==c.jo&&c.ch!=='ㅇ'?'['+c.rep+']':''} + ${c.ch}을 다시 봐.`}</div>`);dwDraw()});
+  document.querySelectorAll('[data-o4]').forEach(b=>b.onclick=()=>{const v=s.o4[+b.dataset.o4];if(v===g.s[0]){s.cur=g.s[0];next();return}
+    s.x4=(s.x4||[]).concat(+b.dataset.o4);const m=dwMiss('o4');
+    if(m>=2){s.cur=g.s[0];dwReveal(`정답: <b>${g.s[0]}</b>. ${DW_RULE[g.r]}.`);dwDraw();return}
+    dwFb(`<div class="dwhint">③에서 고른 규칙대로 바꿔 봐: ${DW_RULE[g.r]}</div>`);dwDraw()});
+  document.querySelectorAll('[data-o5]').forEach(b=>b.onclick=()=>{const more=s.seg<q.segs.length-1;const yes=b.textContent==='있어';
+    if(yes===more){dwSegEnd(q,g);return}s.xo5=(s.xo5||[]).concat(+b.dataset.o5);const m=dwMiss('o5');
+    const why=more?`${s.cur}를 다시 봐. 바뀐 소리 때문에 받침과 뒤 첫소리가 또 만나서 바뀌어.`:`${s.cur}이 끝이야. 더 바뀔 곳이 없어.`;
+    if(m>=2){dwReveal(why);dwDraw();return}dwFb(`<div class="dwhint">${more?'바뀐 소리를 한 글자씩 다시 봐.':'바뀐 소리를 다시 봐. 또 바뀌는 규칙이 있을까?'}</div>`);dwDraw()});
+  const ok=$('#dwok');if(ok)ok.onclick=()=>{s.fb='';if(s.step===4){dwSegEnd(q,g,true);return}next()}}
+function dwSegEnd(q,g){const s=KDW.st;if(s.seg<q.segs.length-1){s.seg++;s.step=s.fold||q.segs[s.seg].skip12?2:0;s.o3=null;s.o4=null;s.x3=[];s.x4=[];s.gx=[];s.xo2=[];s.xo5=[];s.fb='';dwDraw();return}
+  dwItemEnd(q)}
+function dwItemEnd(q){const s=KDW.st;const miss=Object.values(s.miss).reduce((a,b)=>a+b,0);const ok=miss===0;
+  KDW.res.push({i:q.oi,w:q.w||String(q.q||'').replace(/<[^>]+>/g,'').slice(0,40),k:q.k,ok,miss:s.miss,cx:s.cx,twin:!!q.twin,fold:!!s.fold,sec:Math.round((Date.now()-s.t0)/1000)});
+  if(q.k==='w'){KDW.streak=ok?KDW.streak+1:0;if(KDW.streak>=3){const S=dwStore();S.cmp[KDW.lid]=1;dwPut(S)}}
+  if(!ok&&q.tw&&!q.twin)KDW.qs.splice(KDW.qi+1,0,Object.assign({oi:q.oi,twin:true},q.tw));
+  KDW.qi++;dwSaveCur();
+  const L=DW_L[KDW.lid];const done=q.k==='w'?`<div class="dwcard" style="text-align:center"><div class="dwword">${q.w}</div><div class="dwres">${q.segs[q.segs.length-1].s[0]}</div><div class="dwsm">${ok?'한 번에 맞혔어 ★':'규칙대로 다시 한 번 해 보자'}</div></div>`:'';
+  if(q.k==='w'){dwWrap(dwHead(L)+done);dwBindTop(L);KDW.tm=setTimeout(dwQ,ok?1300:1800)}else dwQ()}
+/* 고르기 문제 */
+function dwPick(L,q){const s=KDW.st;if(!s.o)s.o=dwSh(q.o.map((t,i)=>({t,ok:i===0})));
+  dwWrap(dwHead(L)+`<div class="dwcard"><div class="dwq">${q.q}</div>${q.tb?dwTable(['pa','bi']):''}${s.o.map((o,i)=>`<button class="dwo ${(s.x||[]).includes(i)?'x':''} ${s.okI===i?'ok':''}" data-pk="${i}" ${(s.x||[]).includes(i)||s.okI!=null?'disabled':''}>${o.t}</button>`).join('')}</div><div id="dwfb">${s.fb||''}</div>`);dwBindTop(L);
+  document.querySelectorAll('[data-pk]').forEach(b=>b.onclick=()=>{const i=+b.dataset.pk;const o=s.o[i];
+    if(o.ok){s.okI=i;s.fb=`<div class="dwhint">✓ ${q.why}</div>`;dwPick(L,q);KDW.tm=setTimeout(()=>dwItemEnd(q),1600);return}
+    s.x=(s.x||[]).concat(i);const m=dwMiss('p');
+    if(m>=2||q.o.length<=2){s.fb=`<div class="dwhint">정답: <b>${q.o[0]}</b><br>${q.why}</div><button class="dwgo" id="dwok">알겠어</button>`;s.okI=s.o.findIndex(x=>x.ok)}
+    else s.fb=`<div class="dwhint">다시 생각해 봐. ${L.id===0?'자음표를 떠올려 봐.':'방법 카드의 규칙을 떠올려 봐.'}</div>`;
+    dwPick(L,q);const ok=$('#dwok');if(ok)ok.onclick=()=>dwItemEnd(q)})}
+/* ○표 모두 */
+function dwMulti(L,q){const s=KDW.st;s.sel=s.sel||{};
+  dwWrap(dwHead(L)+`<div class="dwcard"><div class="dwq">${q.q}</div><div class="dwrow">${q.words.map((w,i)=>`<button class="dwo ${s.sel[i]?'ok':''}" data-mw="${i}" ${s.chk?'disabled':''}>${s.sel[i]?'○ ':''}${w.w}</button>`).join('')}</div>
+   ${s.chk?'':'<button class="dwgo" id="dwchk">다 골랐어</button>'}</div><div id="dwfb">${s.fb||''}</div>`);dwBindTop(L);
+  document.querySelectorAll('[data-mw]').forEach(b=>b.onclick=()=>{const i=+b.dataset.mw;s.sel[i]=!s.sel[i];dwMulti(L,q)});
+  const c=$('#dwchk');if(c)c.onclick=()=>{const bad=q.words.map((w,i)=>!!s.sel[i]!==w.y?i:-1).filter(i=>i>=0);
+    if(!bad.length){s.chk=1;s.fb=`<div class="dwhint">✓ 다 맞았어!</div>`;dwMulti(L,q);KDW.tm=setTimeout(()=>dwItemEnd(q),1300);return}
+    const m=dwMiss('m');if(m>=2){s.chk=1;s.fb=`<div class="dwhint">${q.words.map(w=>`${w.y?'○':'✕'} <b>${w.w}</b>: ${w.why}`).join('<br>')}</div><button class="dwgo" id="dwok">알겠어</button>`;dwMulti(L,q);$('#dwok').onclick=()=>dwItemEnd(q);return}
+    s.fb=`<div class="dwhint">${bad.length}개가 달라. 단어마다 푸는 순서대로 다시 봐.</div>`;dwMulti(L,q)}}
+/* 단계 끝: 계통도 칸 → 예측 vs 결과 */
+function dwLessonEnd(){const L=DW_L[KDW.lid];const R=KDW.res.filter(r=>!r.twin);const first=R.filter(r=>r.ok).length;const n=L.qs.length;
+  const S=dwStore();S.L[L.id]={done:1,first,n,pred:KDW.pred,at:new Date().toISOString()};S.cur=null;dwPut(S);
+  push({type:'cls',cls:'w5-dong',part:L.part,lid:L.id,title:L.t,n,first,pred:KDW.pred,items:KDW.res,cx:KDW.res.reduce((a,r)=>a+(r.cx||0),0),fold:!!S.cmp[L.id],sec:Math.round((Date.now()-KDW.t0)/1000),done:true});
+  KDW.sum={first,n};if(L.node)dwNodeFill(L.node,false,()=>dwResult(L));else dwResult(L)}
+function dwResult(L){const {first,n}=KDW.sum;const P=DW_PART[L.part].ls;const i=P.indexOf(L.id);const last=i===P.length-1;
+  const wrong=KDW.res.filter(r=>!r.twin&&!r.ok).map(r=>r.w);
+  let msg='';if(KDW.pred!=null){msg=KDW.pred===first?'<b>예측이 딱 맞았어. 네 판단이 정확했어 = 똑똑한 거야.</b>':KDW.pred>first?`예측보다 ${KDW.pred-first}개 적었어.`:`예측보다 ${first-KDW.pred}개 더 맞혔어.`}
+  dwWrap(dwTop(`${L.id}. ${L.t} 끝`,true,true)+`<div class="dwcard" style="text-align:center">${KDW.pred!=null?`<div>처음에 고른 것: <b>${KDW.pred}개</b></div>`:''}<div style="font-size:24px;margin-top:6px">한 번에 맞힌 것: <b>${first}개</b> / ${n}개</div>
+   ${msg?`<div style="margin-top:10px">${msg}</div>`:''}${wrong.length?`<div class="dwsm" style="margin-top:8px">다시 본 것: ${wrong.join(', ')}</div>`:''}</div>
+   <button class="dwgo" id="dwn">${last?`🌳 ${L.part}부 계통도 처음부터 채우기`:'다음 단계로 →'}</button>`);
+  dwBindTop(L);$('#dwn').onclick=()=>{if(last)dwBlank(L.part);else dwStart(P[i+1])}}
+/* 계통도 그림 */
+function dwTreeHTML(filled,curId){const cell=id=>{const N=DW_NODE[id];if(!N)return '';const f=filled[id],c=id===curId;
+    return `<button class="dwn ${f?'':c?'cur':'e'}" data-nd="${id}">${N.t}${f||c?`<b>${f?N.a:'<span class="dwblank">?</span>'}</b>`:'<span class="dwblank">&nbsp;</span>'}${N.b}</button>`};
+  const col=k=>Object.keys(DW_NODE).filter(id=>DW_NODE[id].col===k).map(cell).join('<div style="height:6px"></div>');
+  return `<div class="dwcard"><div style="display:flex;justify-content:center">${cell('n1')}</div><div style="margin-top:8px">${cell('n0')}</div>
+   <div class="dwtree"><div><div class="dwcolh">비음화</div>${col('bi')}</div><div><div class="dwcolh">유음화</div>${col('yu')}</div><div><div class="dwcolh">구개음화</div>${col('gu')}</div></div><div id="dwpop"></div></div>`}
+function dwTreeBind(filled){document.querySelectorAll('[data-nd]').forEach(b=>b.onclick=()=>{const N=DW_NODE[b.dataset.nd];if(!filled[b.dataset.nd])return;$('#dwpop').innerHTML=`<div class="dwpop"><b>${N.t}${N.a}${N.b}</b><br>${N.sum}</div>`})}
+function dwTreeView(part){const S=dwStore();dwWrap(`<div class="dwtop"><button class="dwnb" id="dwbk">⏮</button><h2>🌳 내 계통도</h2></div><div class="dwsm" style="text-align:center">채운 칸을 누르면 설명이 나와요. 빈칸은 그 단계를 하면 채워요.</div>${dwTreeHTML(S.tree,null)}`);
+  dwTreeBind(S.tree);$('#dwbk').onclick=()=>dwHome(part)}
+/* 한 칸 채우기 (단계 끝, 또는 백지 테스트 중) */
+function dwNodeFill(id,blank,done){const N=DW_NODE[id];const S=dwStore();const filled=blank?KDW.bf:S.tree;let miss=0;const o=dwSh(N.o);
+  const draw=(fb)=>{dwWrap(`<div class="dwtop"><h2>🌳 ${blank?`${KDW.part}부 계통도 처음부터`:'내 계통도 채우기'}</h2></div><div class="dwsm" style="text-align:center">${blank?'아무것도 안 보고 한 칸씩 채워요.':'방금 배운 칸을 내가 채워요.'}</div>${dwTreeHTML(filled,id)}
+   <div class="dwcard"><div class="dwq">${N.t}<span class="dwblank">?</span>${N.b}</div><div class="dwrow">${o.map((x,i)=>`<button class="dwo" data-nf="${i}">${x}</button>`).join('')}</div></div><div>${fb||''}</div>`);
+    dwTreeBind(filled);
+    document.querySelectorAll('[data-nf]').forEach(b=>b.onclick=()=>{const v=o[+b.dataset.nf];
+      if(v===N.a){filled[id]=1;if(!blank){const T=dwStore();T.tree[id]=1;dwPut(T)}else KDW.bm[id]=miss;
+        dwWrap(`<div class="dwtop"><h2>🌳 ${blank?`${KDW.part}부 계통도 처음부터`:'내 계통도 채우기'}</h2></div>${dwTreeHTML(filled,null)}<div class="dwhint">✓ ${N.t}${N.a}${N.b}</div>`);dwTreeBind(filled);KDW.tm=setTimeout(done,1300);return}
+      miss++;b.disabled=true;b.classList.add('x');
+      if(miss>=2){filled[id]=1;if(blank)KDW.bm[id]=miss;else{const T=dwStore();T.tree[id]=1;dwPut(T)}
+        dwWrap(`<div class="dwtop"><h2>🌳 계통도</h2></div>${dwTreeHTML(filled,null)}<div class="dwhint">정답: <b>${N.a}</b><br>${N.sum}</div><button class="dwgo" id="dwok">알겠어</button>`);dwTreeBind(filled);$('#dwok').onclick=done;return}
+      const h=document.querySelector('.dw > div:last-child');if(h)h.innerHTML=`<div class="dwhint">그 단계 방법 카드를 떠올려 봐.</div>`})};
+  draw()}
+/* 부 끝 백지 테스트 */
+function dwBlank(part){clearTimeout(KDW&&KDW.tm);KDW={part,ph:'blank',bf:{},bm:{},t0:Date.now()};const ids=DW_PART[part].nodes;let k=0;
+  const nx=()=>{if(k>=ids.length){dwBlankEnd(part,ids);return}dwNodeFill(ids[k++],true,nx)};nx()}
+function dwBlankEnd(part,ids){const first=ids.filter(id=>!KDW.bm[id]).length;const S=dwStore();S.part[part]=1;dwPut(S);
+  push({type:'cls',cls:'w5-dong',part,blank:true,n:ids.length,first,miss:KDW.bm,sec:Math.round((Date.now()-KDW.t0)/1000),partDone:true,done:true});
+  dwWrap(`<div class="dwtop"><h2>🌳 ${part}부 끝!</h2></div><div class="dwcard" style="text-align:center"><div style="font-size:24px">빈 계통도 ${ids.length}칸 중 <b>${first}칸</b>을 한 번에 채웠어.</div>
+   <div class="dwsm" style="margin-top:6px">${first===ids.length?'처음부터 끝까지 네 머릿속에 지도가 있어.':'헷갈린 칸은 계통도에서 눌러서 다시 봐.'}</div></div>${dwTreeHTML(KDW.bf,null)}
+   ${part===1?'<button class="dwgo" id="dw2">2부로 →</button>':''}<button class="dwgo lt" id="dwhm">수업 처음 화면</button>`);
+  dwTreeBind(KDW.bf);const b2=$('#dw2');if(b2)b2.onclick=()=>dwStart(DW_PART[2].ls[0]);$('#dwhm').onclick=()=>dwHome(part);
+  if(PLAN){const s=KO_PLAN.steps[PS];if(s&&s.k==='cls'&&s.part===part)planAfter(PS)}}
+function viewCls(part){dwHome(part||1)}
+
+const VIEWS={cls:()=>viewCls(),hw:()=>viewHW(),wk:()=>viewWrite(),fill:viewFill,prev:viewPrev,note:viewNote,daily:viewDaily,test:viewTest,weak:viewWeak,struct:viewStruct,gram:viewGram,lit:viewLit,read:viewRead,know:viewKnow,log:viewLog};
 function go(v){if(!VIEWS[v])v='daily';TAREA=null;document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='weak'?'test':v)));clearInterval(window._tm);VIEWS[v]();window.scrollTo(0,0)}
 document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{clearInterval(window._tm);resetAll();if(location.hash.slice(1)===b.dataset.v)go(b.dataset.v);else location.hash=b.dataset.v});
 
