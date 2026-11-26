@@ -1103,7 +1103,7 @@ const HUB=(()=>{
 function autoWatch(root){let tok=0,last=0,back=false;
   const arm=b=>{if(b._armed)return;b._armed=1;if(Date.now()-last>3000||back)return;const ms=+(b.dataset.ms)||(b.dataset.auto==='ok'?1500:4000);
     // 엄마 11/26 "문제 풀 때는 다음 버튼 없애": data-hide 단 버튼은 숨기고 그대로 넘어감(화면을 눌러도 안 멈춤). 지난 문제를 다시 볼 땐 버튼이 보여요.
-    if(b.dataset.hide){b.style.display='none';setTimeout(()=>{if(b.isConnected&&!b.disabled)b.click()},ms);return}
+    if(b.dataset.hide){b.style.display='none';let hm=ms;if(b.dataset.auto==='x'&&!b.dataset.ms){const box=b.closest('.card')||root;const res=box.querySelector&&box.querySelector('.res');const n=res?(res.textContent||'').length:0;hm=Math.max(4000,Math.min(8000,2500+n*60))}setTimeout(()=>{if(b.isConnected&&!b.disabled)b.click()},hm);return}
     const my=++tok;
     b.style.position='relative';b.style.overflow='hidden';const bar=document.createElement('i');bar.className='autobar';
     bar.style.cssText='position:absolute;left:0;bottom:0;height:5px;width:0;background:rgba(255,255,255,.9);box-shadow:0 0 0 1px rgba(0,0,0,.08);transition:width '+ms+'ms linear;pointer-events:none';
@@ -1432,7 +1432,7 @@ function mapPkHTML(d){const cs=mapCells(),P=d.pk||[],done=new Set(P.map(x=>x.k))
   else if(d.pkExtra===1&&left)h+=`<div class="row" style="justify-content:center"><button class="btn big" data-act="mapPkGo">⭐ 보너스 새 문장 고르기 ▶</button></div>`;
   else h+=`<div class="row" style="justify-content:center">${left?'<button class="btn big" data-act="mapPkGo">✍️ 하나 더</button>':''}<button class="btn ${left?'light':'big'}" data-act="mapPkEnd">오늘은 여기까지 ▶</button></div>`;
   return h}
-function mapPkRec(ok){const d=mapDay(),c=mapCells()[MZ.i];d.pk=d.pk||[];if(MZ.pr==='retry'){const r=d.pk.filter(x=>x.k===c.k).pop();if(r)r.retryOk=ok}else d.pk.push({k:c.k,ok,extra:d.pkExtra===1});
+function mapPkRec(ok){const d=mapDay(),c=mapCells()[MZ.i];d.pk=d.pk||[];if(MZ.pr==='retry'){const r=d.pk.filter(x=>x.k===c.k).pop();if(r)r.retryOk=ok}else d.pk.push({k:c.k,ok,extra:d.pkExtra===1,ko:c.ko,en:c.en[0],typed:(MZ.fb&&MZ.fb.typed)||(($('#min')||{}).value||'').trim()});
   if(!ok&&MZ.pr!=='retry'&&!d.pkBonusUsed){d.pkBonusUsed=true;d.pkNeed=1}
   if(MZ.pr!=='retry'&&d.pk[d.pk.length-1].extra)d.pkExtra=2;
   if(MZ.pr==='retry'&&d.pkNeed===1){d.pkNeed=0;d.pkExtra=1}else if(MZ.pr==='retry'&&d.pkExtra===1&&d.pk[d.pk.length-1].extra)d.pkExtra=2;save()}
@@ -1441,6 +1441,84 @@ function mapOpen(){const d=mapDay();if(!d)return;const M=mapS(),cs=mapCells();
   let step=d.memoAt||d.blkAt||d.ruleAt?'rule':'blk';const NEWD=!!d.blkAt||!!d.v26||(!d.memoAt&&!d.ruleAt);if(NEWD&&!d.v26){d.v26=1;save()}if(d.ruleAt)step=d.blkAt&&(d.quiz||[]).length<mapQuiz().length?'quiz':'pred';if(d.pred!=null)step='cell';if(cs.every(c=>M.cells[c.k]&&M.cells[c.k].d===today()))step=!d.spoke&&mapRevLeft(d)?'rev':d.spoke?(chatDone(dayRec(today()))?(d.blkAt&&!d.teachAt&&mapTeach().length?'teach':d.write&&d.write.at?((d.quiz||[]).length<mapQuiz().length?'quiz':'end'):'write'):'chat'):'speak';if(NEWD)step=mapStepNew(d);if(d.end)step='end';if(step==='end'&&!d.end){mapFinish();return}
   if(step==='chat'){V={view:'chat'};render();return}
   if(d.write&&d.write.tr==='wait'){d.write.tr='self';if(d.write.v3)setTimeout(()=>{if(MZ&&MZ.step==='write')mapW3Trans()},0);save()}MZ={step,ti:mapTResume(d.teach),tp:'pick',w:0,ri:Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k])),qi:(d.quiz||[]).length,i:cs.findIndex(c=>!(M.cells[c.k]&&M.cells[c.k].d===today())),si:0,t0:Date.now(),fb:null};if(step==='blk'){MZ.i=cs.findIndex(c=>!(d.blk||{})[c.k]);if(MZ.i<0){d.blkAt=new Date().toISOString();save();MZ.step=mapStepNew(d);MZ.i=0}}if(step==='rule')MZ.rs=d.rs||0;if(MZ.i<0||step==='memo')MZ.i=0;V={view:'map'};render();if(step==='memo')say(cs[0].en[0])}
+// 🌳 빈 지도(계통도) 채우기(엄마 11/26 「한눈에 정리」 대신: "글로 정리하면 안 읽어, 그림도 안 되고 자기가 하나씩 채워 가는 백지 테스트", "계통도를 누르면 개념·요약이 나오게").
+// 엄마가 맡김("효율적인 방법으로"): 줄 이름은 보이고 칸은 비어 있음 → 그 줄에 맞는 블록을 눌러 채움(가짜 블록 섞임). 틀리면 빨간 표시 없이 반례 한 줄.
+// 칸을 다 채운 줄만 📖 눌러 요약 보기. 끝나면 틀렸던 줄만 한 번 더 빈칸. ord=true 줄은 순서대로.
+const MAPTREE={
+M1:{t:'명사와 대명사',rows:[
+ {g:'명사',lab:'명사 꼬리 (보이면 명사)',ans:['-tion','-ness','-ment'],x:['-ly','-ful'],ce:'{x}로 끝나는 말이 명사일까? quickly, careful 은 이름이 아니잖아.',sum:'명사 = 사람·물건·장소·생각의 이름. -tion · -sion · -ness · -ment · -ship · -er/-or 꼬리면 명사 (decision, kindness).'},
+ {g:'대명사',lab:'주어 자리 (~은/는)',ans:['I','he','she','we','they'],x:['him','my'],ce:'「{x} like pizza.」 이상하지 않아?',sum:'동사 앞 주어 자리: I · you · he · she · it · we · they',ex:'We like pizza.'},
+ {g:'대명사',lab:'동사·전치사 뒤 (~을/를, ~와)',ans:['me','him','her','us','them'],x:['he','they'],ce:'「Mom loves {x}.」 이상하지 않아?',sum:'동사 뒤·전치사 뒤: me · you · him · her · it · us · them',ex:'I like him. I went with her.'},
+ {g:'대명사',lab:'명사 앞 (~의)',ans:['my','his','her','our','their'],x:['me','mine'],ce:'「This is {x} bag.」 이상하지 않아?',sum:'명사 바로 앞 = ~의: my · your · his · her · its · our · their. 혼자 못 서요.',ex:'Her decision surprised everyone.'},
+ {g:'대명사',lab:'혼자 서는 ~의 것',ans:['mine','hers','ours','theirs'],x:['my','her'],ce:'「The bag is {x}.」 하고 끝나면 이상하지 않아?',sum:'뒤에 명사가 없으면 ~의 것: mine · yours · his · hers · ours · theirs',ex:'This bag is mine.'}]},
+M2:{t:'동사',rows:[
+ {lab:'동사 = 주어의 ( ) 이나 ( )',ans:['동작','상태'],x:['이름','모양'],sum:'동사 = 주어의 동작(run, eat)이나 상태(be, have, know). 국어의 "어찌하다 · 어떠하다".'},
+ {lab:'be동사',ans:['am','is','are','was','were'],x:['be','has'],ce:'「She {x} happy.」 이렇게 말해?',sum:'be동사: am · is · are · was · were (~이다, ~에 있다)',ex:'She is a doctor.'},
+ {lab:'조동사 (+ 동사원형)',ans:['can','will','must'],x:['has','is'],ce:'「He {x} swim.」 말이 돼?',sum:'조동사 can · will · must + 동사원형. 시제는 조동사가 가져가요 (can swims ✗).',ex:'He can swim.'},
+ {lab:'목적어 없이 끝 (자동사)',ans:['arrive','sleep','happen'],x:['enjoy','finish'],ce:'「I {x}.」 하고 끝내면, 뭘? 이 궁금하지 않아?',sum:'자동사 = 목적어(~을) 없이 끝나요: arrive · sleep · happen',ex:'The train arrived late.'},
+ {lab:'목적어가 꼭 필요 (타동사)',ans:['enjoy','finish','make'],x:['sleep','arrive'],ce:'「I {x}.」 하고 끝내도 말이 되네? 그럼 목적어가 꼭 필요할까?',sum:'타동사 = 바로 뒤에 목적어(~을)가 꼭 필요: enjoy · finish · make · realize',ex:'I finished my homework.'},
+ {lab:'동사 꼬리',ans:['-ize','-ate','-ify'],x:['-ness','-ful'],ce:'{x}로 끝나는 말(kindness, careful)이 동작이야?',sum:'-ize · -ate · -ify · -en 꼬리면 동사 (realize, celebrate)'}]},
+M3:{t:'형용사와 부사',rows:[
+ {lab:'형용사 (어떠한)',ans:['young','happy','careful','friendly'],x:['slowly','often'],ce:'「a {x} girl」 말이 돼?',sum:'형용사 = 명사의 모양·성질. ① 명사 앞에서 꾸밈 a young girl ② be동사 뒤에서 주어 설명 She is happy. friendly · lovely는 -ly여도 형용사.'},
+ {lab:'부사 (어떻게 · 얼마나)',ans:['carefully','slowly','very'],x:['careful','friendly'],ce:'「He drives {x}.」 — 어떻게 운전해? 형용사가 동사를 꾸밀 수 있을까?',sum:'부사 = 명사 말고 나머지(동사·형용사·문장)를 꾸밈. 빼도 문장이 돼요. careful → carefully',ex:'He drives carefully.'},
+ {lab:'얼마나 자주 (빈도부사)',ans:['always','usually','often','never'],x:['slowly','very'],sum:'빈도부사 자리: be동사·조동사 뒤, 일반동사 앞.',ex:'She is always busy. He never eats breakfast.'},
+ {lab:'be동사 뒤에 오는 것',ans:['형용사'],x:['부사'],ce:'「She is carefully.」 이상하지 않아?',sum:'be동사 뒤 주어 설명 자리 → 형용사 (The test was easy.)'}]},
+M4:{t:'전치사 · 접속사 · 감탄사',rows:[
+ {lab:'전치사 (+ 명사)',ans:['on','in','during','with','because of'],x:['because','when'],ce:'「{x} the rain」 말이 돼?',sum:'전치사 + 명사 = 한 덩어리 (on the sofa, during the movie). 전치사 뒤 대명사는 him · her · them.',ex:'I slept during the movie.'},
+ {lab:'접속사 (+ 주어 + 동사)',ans:['and','but','because','when','if'],x:['during','because of'],ce:'「{x} it rained」 말이 돼?',sum:'접속사 = 이어 주는 말. when · because · if 뒤엔 주어 + 동사.',ex:'When I came home, the phone rang.'},
+ {lab:'감탄사 (느낌)',ans:['Oh','Wow','Ouch'],x:['With','On'],sum:'감탄사 = 느낌을 나타내는 말. 문장 성분으로 따지지 않아요.',ex:'Wow, it is great!'}]},
+M5:{t:'한 단어, 여러 품사',rows:[
+ {lab:'a · the 뒤 → ( )',ans:['명사'],x:['동사','형용사'],sum:'Turn on the light. — the 뒤 → 명사 light(전등)'},
+ {lab:'주어 뒤 시제 자리 → ( )',ans:['동사'],x:['명사','부사'],sum:'He lit a candle. — 주어 뒤 → 동사 light(켜다)의 과거 lit'},
+ {lab:'be동사 뒤 · 명사 앞 → ( )',ans:['형용사'],x:['부사','동사'],sum:'This bag is light. — be동사 뒤 → 형용사 light(가벼운)'},
+ {lab:'동사를 꾸미면 → ( )',ans:['부사'],x:['형용사','명사'],sum:'She runs fast. — 동사를 꾸밈 → 부사 fast(빨리)'},
+ {lab:'hard(열심히) + ly → hardly = ( )',ans:['거의 ~않다'],x:['더 열심히','어렵게'],sum:'-ly가 붙으면 뜻이 바뀌기도 해요: hardly(거의 ~않다) · lately(최근에). fastly는 없는 말.'}]},
+M6:{t:'문장 성분 다섯 가지',rows:[
+ {lab:'S 주어',ans:['누가·무엇이'],x:['무엇을','어떻게'],sum:'주어 S = 동사 바로 앞, 누가·무엇이 (~은/는/이/가). 동사 모양을 정해요.'},
+ {lab:'V 동사',ans:['어찌하다'],x:['누가·무엇이','무엇을'],sum:'동사 V = 어찌하다 · 어떠하다'},
+ {lab:'O 목적어',ans:['무엇을'],x:['누가·무엇이','언제'],sum:'목적어 O = 동사 뒤 누구를·무엇을 (~을/를)'},
+ {lab:'C 보어',ans:['주어 = 그것'],x:['무엇을','어디서'],sum:'보어 C = 주어가 무엇인지·어떤지 (She is a doctor. She = a doctor)'},
+ {lab:'M 수식어',ans:['언제·어디서·어떻게'],x:['누가·무엇이','무엇을'],sum:'수식어 M = 언제·어디서·어떻게. 빼도 문장이 돼요. 괄호로 묶으면 뼈대가 보여요.'},
+ {lab:'빼도 되는 성분',ans:['M'],x:['S','O','C'],sum:'S · V · O · C는 빼면 무너지고, M만 빼도 돼요.'}]},
+M7:{t:'보어 자리',rows:[
+ {lab:'보어 자리에 오는 것',ans:['형용사'],x:['부사'],ce:'「He looks happily.」 — 보어는 주어가 어떤지야. 어떻게는 동사를 꾸미는 말 아니야?',sum:'보어 = 주어가 어떤지 → 형용사. 부사는 못 와요.'},
+ {lab:'이 동사 뒤 = 보어 자리',ans:['be','become','look','sound','smell','taste','feel'],x:['run','eat'],ce:'「He {x} happy.」 — 주어가 어떤지 말하는 거야?',sum:'be · become · look · sound · smell · taste · feel · turn · get 뒤엔 형용사.',ex:'This cake tastes sweet.'},
+ {lab:'감각동사 + 명사 → 사이에 ( )',ans:['like'],x:['as','to'],ce:'「She looks {x} a doctor.」 이렇게 말해?',sum:'감각동사 뒤에 명사를 쓰려면 like (She looks like a doctor.)'}]},
+M8:{t:'수식어 자리',rows:[
+ {lab:'형용사 한 단어 → 명사 ( )',ans:['앞'],x:['뒤'],ce:'「a car red」 이상하지 않아?',sum:'형용사 한 단어는 명사 앞 (a red car)'},
+ {lab:'두 단어 이상 덩어리 → 명사 ( )',ans:['뒤'],x:['앞'],ce:'「the on the sofa cat」 이상하지 않아?',sum:'덩어리는 명사 뒤 (the cat on the sofa, a place to stay)'},
+ {lab:'-thing · -one · -body → 형용사가 ( )',ans:['뒤'],x:['앞'],ce:'「cold something」 이상하지 않아?',sum:'something cold · someone special'},
+ {lab:'부사 역할 수식어',ans:['어디서','언제','왜'],x:['누가','무엇을'],sum:'부사 역할: 어디서 · 언제 · 왜. to + 동사원형 = ~하려고.'},
+ {lab:'순서 (먼저 → 나중)',ans:['장소','시간'],x:[],ord:true,ce:'「I played at 3 in the park.」보다 「in the park at 3」가 자연스러워.',sum:'보통 장소 → 시간 순서.',ex:'She went to the library to borrow books.'}]},
+M9:{t:'형식 판별 · 1·2형식',rows:[
+ {lab:'형식 판별 순서',ans:['수식어 빼기','동사 찾기','동사 뒤 보기','판정'],x:[],ord:true,sum:'① 수식어 괄호로 빼기 ② 동사 찾기 ③ 동사 뒤에 남은 것 보기 ④ 판정'},
+ {lab:'동사 뒤에 아무것도 없음',ans:['1형식'],x:['2형식','3형식'],sum:'S V = 1형식 (The baby cried.)'},
+ {lab:'동사 뒤가 주어 설명 (주어 = 그것)',ans:['2형식'],x:['1형식','3형식'],sum:'S V C = 2형식 (She is a nurse. She = a nurse)'},
+ {lab:'빼면 뜻이 무너지는 장소 말',ans:['M*'],x:['보어','목적어'],ce:'「My grandparents live in Jeonju.」 in Jeonju가 grandparents랑 같은 거야?',sum:'필수 부사어 M*: 그래도 1형식 (The cat is on the sofa.)'}]},
+M10:{t:'3·4·5형식',rows:[
+ {lab:'동사 뒤 하나, 주어 = 그것',ans:['2형식'],x:['3형식'],sum:'She is a nurse. (She = a nurse) → 2형식'},
+ {lab:'동사 뒤 하나, 주어 ≠ 그것 (무엇을)',ans:['3형식'],x:['2형식','4형식'],sum:'I ate an apple. (나 ≠ 사과) → 3형식'},
+ {lab:'동사 뒤 둘, ~에게 ~을',ans:['4형식'],x:['5형식','3형식'],sum:'He gave me a gift. → 4형식'},
+ {lab:'동사 뒤 둘, 목적어 = 그 뒤 말',ans:['5형식'],x:['4형식','2형식'],sum:'We named the dog Max. (the dog = Max) → 5형식'},
+ {lab:'4형식 → 3형식: He gave a gift ( ) me.',ans:['to'],x:['at','on'],ce:'「He gave a gift {x} me.」 이렇게 말해?',sum:'He gave me a gift. = He gave a gift to me.'}]}
+};
+function mapTreeOf(d){return d&&d.v26&&MAPTREE[d.set]||null}
+function mapTrInit(T,rows){const all=rows||T.rows.map((_,i)=>i);MZ.tr={rows:all,ri:0,fill:{},wrong:[],open:{},msg:'',round:rows?2:1,pool:null};all.forEach(i=>MZ.tr.fill[i]=[])}
+function mapTrPool(T){const tr=MZ.tr,r=T.rows[tr.rows[tr.ri]];if(!r)return [];if(!tr.pool){const L=r.ans.concat(r.x||[]);let o,n=0;do{o=L.map((w,j)=>({w,j})).sort(()=>Math.random()-.5);n++}while(n<6&&r.ord&&o.every((x,j)=>x.j===j));tr.pool=o.map(x=>x.w)}
+  const used=tr.fill[tr.rows[tr.ri]].slice();return tr.pool.filter(w=>{const k=used.indexOf(w);if(k>=0){used.splice(k,1);return false}return true})}
+function mapTreeHTML(d,S,T){if(!MZ.tr)mapTrInit(T);const tr=MZ.tr,cur=tr.rows[tr.ri],done=tr.ri>=tr.rows.length;let g='';
+  let h=`<div class="tip">${esc(S.t)} · 🌳 빈 지도 채우기${tr.round>1?' · 틀렸던 줄 한 번 더':''}</div><h2 style="margin:6px 0 4px">🌳 ${esc(T.t)}</h2><p class="tip" style="margin:0 0 8px">${done?'다 채웠어요. 📖 를 누르면 그 줄 정리가 나와요.':'파란 줄의 빈칸을 블록으로 채워요.'}</p>`;
+  T.rows.forEach((r,i)=>{const on=i===cur&&!done,f=tr.fill[i],full=f?f.length>=r.ans.length:true,re=tr.rows.includes(i);
+    if(r.g&&r.g!==g){g=r.g;h+=`<div style="font:800 17px 'Noto Sans KR';color:#1f2330;margin:10px 0 2px">${esc(g)}</div>`}
+    h+=`<div style="border:2px solid ${on?'#2f5fa3':'#e3ded2'};background:#fff;border-radius:12px;padding:8px 10px;margin:6px 0 6px ${r.g?'14px':'0'}">
+      <div style="display:flex;align-items:center;gap:8px;justify-content:space-between"><b style="font-size:17px;color:#1f2330">${esc(r.lab)}</b>${full&&(!re||f.length)?`<button class="btn light sm" data-act="mapTrSum" data-i="${i}">📖</button>`:''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${r.ans.map((a,j)=>{const v=re?f[j]:a;return `<span style="min-width:54px;min-height:30px;padding:4px 10px;border-radius:10px;font:800 17px 'Noto Sans KR';color:#1f2330;background:${v?'#eef3ff':'#fff'};border:2px ${v?'solid #b9c9ee':'dashed #c3cbe0'}">${v?esc(v):'&nbsp;'}</span>`}).join('')}</div>
+      ${tr.open[i]?`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5">${esc(r.sum)}${r.ex?`<div style="margin-top:4px"><b>${esc(r.ex)}</b></div>`:''}</div>`:''}</div>`});
+  if(!done){if(tr.msg)h+=`<div class="notice" style="text-align:left;color:#1f2330">${tr.msg}</div>`;
+    h+=`<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0">${mapTrPool(T).map(w=>`<button class="chip" data-act="mapTrB" data-w="${esc(w)}" style="font:800 19px 'Noto Sans KR';padding:10px 14px">${esc(w)}</button>`).join('')}</div>`}
+  else{const again=tr.round===1&&tr.wrong.length;h+=`<div class="row" style="justify-content:center"><button class="btn big" data-act="${again?'mapTrAgain':'mapRuleOk'}">${again?'틀렸던 줄 한 번 더 ▶':'알겠어 ▶'}</button></div>`}
+  return h}
+
 function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}const S=mapSetOf(d),cs=S.cells,M=mapS();let h=topbar('🗺️ 내 지도 채우기',true)+'<div class="card">';
   if(MZ.step==='blk'){const c=cs[MZ.i],b=mapBlks(c);if(!MZ.bo)mapBlkInit();h+=`<div class="tip">🧱 블록 ${MZ.i+1} / ${cs.length} · ${esc(S.t)} · 한국어를 보고 블록을 순서대로 눌러요</div><div style="font:800 24px 'Noto Sans KR';text-align:center;margin:12px 0 6px">${esc(c.ko)}</div>${c.h?`<div class="tip" style="text-align:center;background:#fffbe8;border-radius:10px;padding:6px 10px;margin:4px 0">💡 ${esc(c.h)}</div>`:''}
     <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0">${b.map((x,j)=>{const R=BROLE[x[1]]||['','#555'],on=j<MZ.bp;return `<div style="min-width:64px;border:2px ${on?'solid':'dashed'} ${R[1]};border-radius:12px;padding:6px 10px;text-align:center;background:${on?R[1]+'1f':'#fff'}"><div style="font:800 18px 'Noto Sans KR';min-height:24px;color:#1f2330">${on?esc(x[0]):'&nbsp;'}</div><div style="font:700 12px 'Noto Sans KR';color:${R[1]}">${R[0]}</div></div>`}).join('')}</div>`;
@@ -1462,6 +1540,7 @@ function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}cons
     h+=`<div class="tip">${esc(S.t)} · 원리 ${k+1} / ${N} · 한 장씩 천천히</div><div style="height:6px;background:#eef1f6;border-radius:4px;margin:6px 0 10px"><div style="height:6px;width:${Math.round((k)/N*100)}%;background:#2b4d86;border-radius:4px"></div></div><div class="res ok" style="text-align:left;font-size:19px;line-height:1.6">${st.t}</div>${st.ex?`<div style="margin:10px 0;text-align:center"><div class="ans" style="font-size:22px">${esc(st.ex[0])} <button class="btn light sm" data-act="mapRsSay">🔊</button></div><div class="tip">${esc(st.ex[1])}</div></div>`:''}
     <div style="font:800 19px 'Noto Sans KR';margin:12px 0 8px">🤔 ${esc(st.q)}</div><div style="display:grid;gap:8px">${ord.map(i=>`<button class="chip" data-act="mapRsAns" data-i="${i}" ${ans!=null?'disabled':''} style="text-align:left;font-size:18px;${ans!=null&&i===st.a?'background:#e3f6ea!important;border:2px solid #2a9d5c;color:#1f2330!important;opacity:1!important':''}${ans!=null&&i===ans&&i!==st.a?'background:#fff7e0!important;border:2px solid #f2d36b;color:#1f2330!important;opacity:1!important':''}${ans!=null&&i!==st.a&&i!==ans?'background:#eef1f7!important;color:#1f2330!important;opacity:1!important':''}">${esc(st.o[i])}</button>`).join('')}</div>
     ${ans!=null?`<div class="res ${ans===st.a?'ok':''}" style="margin-top:10px;${ans===st.a?'':'background:#fff7e0;border:2px solid #f2d36b'}">${ans===st.a?'⭕ 맞았어요!':'🔁 정답은 <b>'+esc(st.o[st.a])+'</b>'} · ${esc(st.w)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapRsNext" data-auto="${ans===st.a?'ok':'x'}" data-hide="1">${k+1<N?'다음 카드 ▶':'정리 보기 ▶'}</button></div>`:''}`}
+  else if(MZ.step==='rule'&&mapTreeOf(d)){h+=mapTreeHTML(d,S,mapTreeOf(d))}
   else if(MZ.step==='rule'){h+=`<div class="tip">${esc(S.t)} · ${d.v26&&S.steps?'📌 오늘 원리 정리':'먼저 원리 한 장'}</div><h2 style="margin:6px 0 10px">${d.v26&&S.steps?'📌 한눈에 정리':'이것만 알면 돼요'}</h2>${S.rule.map(r=>`<div class="res ok" style="text-align:left">${r}</div>`).join('')}
     <div class="row" style="justify-content:center"><button class="btn big" data-act="mapRuleOk">알겠어 ▶</button></div>`}
   else if(MZ.step==='pred'){h+=`<h2>${cs.length}칸 중에 몇 칸이나 바로 맞힐 것 같아?</h2><p class="tip">"바로" = 블록 없이, 철자까지 맞게, 20초 안에.</p>
@@ -1520,7 +1599,7 @@ const ACT_MAP={
   mapRevSay:()=>{const c=mapRevCells(mapDay())[MZ.ri];if(c)say(c.en[0])},
   mapRevNext:()=>{const d=mapDay(),R=mapRevCells(d);if(MZ.ri+1<R.length){MZ.ri++;MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.fb=null;MZ.t0=Date.now();render()}},
   mapBlk:t=>{const j=+t.dataset.j,x=MZ.bo[j],c=mapCells()[MZ.i],b=mapBlks(c),exp=b[MZ.bp];if(!x||MZ.bdone)return;
-    if(x.i===MZ.bp||(x.i>=0&&x.t===exp[0])){MZ.bgone.push(j);MZ.bp++;MZ.bmsg='';MZ.bw=0;if(MZ.bp>=b.length){MZ.bdone=true;const d=mapDay();d.blk=d.blk||{};d.blk[c.k]={sec:Math.max(1,Math.round((Date.now()-MZ.t0)/1000)),w:MZ.bwt||0,d:today()};save();say(c.en[0])}render()}
+    if(x.i===MZ.bp||(x.i>=0&&x.t===exp[0])){MZ.bgone.push(j);MZ.bp++;MZ.bmsg='';MZ.bw=0;if(MZ.bp>=b.length){MZ.bdone=true;const d=mapDay();d.blk=d.blk||{};d.blk[c.k]={sec:Math.max(1,Math.round((Date.now()-MZ.t0)/1000)),w:MZ.bwt||0,d:today(),ko:c.ko,en:c.en[0]};save();say(c.en[0])}render()}
     else{MZ.bw++;MZ.bwt=(MZ.bwt||0)+1;const R=BROLE[exp[1]];MZ.bmsg=x.i<0?`🔁 ${esc(x.why)}`:`🔁 다음은 <b>${R?R[0]:''}</b> 자리예요${MZ.bw>=2?' · 반짝이는 블록을 눌러요':''}`;render()}},
   mapTPick:t=>{const it=mapTeach()[MZ.ti],r=mapTRec(),isNew=MZ.tp==='new',q=isNew?it.nw:it,c=mapCellEn(q.s),b=c?mapBlks(c):[],x=b[+t.dataset.j];if(!x)return;
     if(x[0]===q.t){MZ.tw=0;MZ.tmsg='';if(isNew){r.newOk=true;MZ.tp='done'}else MZ.tp='picked';save();render();return}
@@ -1538,8 +1617,16 @@ const ACT_MAP={
   mapPkMemoOk:()=>{MZ.pm='write';MZ.pr='retry';MZ.fb=null;MZ.hs=null;MZ.htext='';MZ.t0=Date.now();render()},
   mapPkEnd:()=>{const d=mapDay();d.pickDone=new Date().toISOString();d.pkN=(d.pk||[]).length;d.pkOk=(d.pk||[]).filter(x=>x.ok||x.retryOk).length;save();MZ.fb=null;const st=mapStepNew(d);MZ.step=st;MZ.ri=Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k]));MZ.si=0;MZ.t0=Date.now();if(st==='chat'){V={view:'chat'}}render()},
   mapBlkNext:()=>{const cs=mapCells();MZ.bo=null;if(MZ.i+1<cs.length){MZ.i++;render()}else{const d=mapDay();d.blkAt=new Date().toISOString();if(d.set!=='A'&&d.set!=='R')cs.forEach(c=>{const M=mapS();M.sr=M.sr||{};if(!M.sr[c.k])mapSrCell(c.k,'yellow')});save();MZ.i=0;MZ.step='rule';render()}},
-  mapRsAns:t=>{if(MZ.ra!=null)return;const d=mapDay(),S=mapSetOf(d),st=S.steps[MZ.rs||0],i=+t.dataset.i;MZ.ra=i;d.rsx=d.rsx||{};d.rsx[MZ.rs||0]=i===st.a?1:0;save();render()},
+  mapRsAns:t=>{if(MZ.ra!=null)return;const d=mapDay(),S=mapSetOf(d),st=S.steps[MZ.rs||0],i=+t.dataset.i;MZ.ra=i;d.rsx=d.rsx||{};d.rsx[MZ.rs||0]=i===st.a?1:0;d.rsl=d.rsl||{};d.rsl[MZ.rs||0]={q:st.q,ex:st.ex?st.ex[0]:'',pick:st.o[i],ans:st.o[st.a],ok:i===st.a,why:st.w||''};save();render()},
   mapRsNext:()=>{const d=mapDay();MZ.rs=(MZ.rs||0)+1;MZ.ra=null;d.rs=MZ.rs;save();render();try{window.scrollTo(0,0)}catch(e){}},
+  mapTrB:t=>{const d=mapDay(),T=mapTreeOf(d),tr=MZ.tr;if(!T||!tr)return;const i=tr.rows[tr.ri],r=T.rows[i];if(!r)return;const w=t.dataset.w,f=tr.fill[i];
+    const left=r.ans.slice();f.forEach(v=>{const k=left.indexOf(v);if(k>=0)left.splice(k,1)});const ok=r.ord?w===r.ans[f.length]:left.includes(w);
+    const R=d.tree||(d.tree={wrong:{},at:null});
+    if(ok){f.push(w);tr.msg='';if(f.length>=r.ans.length){tr.ri++;tr.pool=null;if(tr.ri>=tr.rows.length){if(tr.round>1)R.again=true;R.at=new Date().toISOString()}}save();render();return}
+    if(!tr.wrong.includes(i))tr.wrong.push(i);(R.wrong[r.lab]=R.wrong[r.lab]||[]).push(w);
+    tr.msg=r.ord&&r.ans.includes(w)?'🔁 음… 순서를 생각해 봐. 그보다 먼저 하는 게 있지 않아?':'🔁 '+esc(r.ce?r.ce.replace('{x}',w):`음… ${w}는 이 줄이 아닌 것 같아. 줄 이름을 다시 읽어 봐.`);save();render()},
+  mapTrSum:t=>{const i=+t.dataset.i;MZ.tr.open[i]=!MZ.tr.open[i];render()},
+  mapTrAgain:()=>{const d=mapDay(),T=mapTreeOf(d);mapTrInit(T,MZ.tr.wrong.slice());render();try{window.scrollTo(0,0)}catch(e){}},
   mapRsSay:()=>{const d=mapDay(),st=mapSetOf(d).steps[MZ.rs||0];if(st&&st.ex)say(st.ex[0])},
   mapRuleOk:()=>{const d=mapDay();d.ruleAt=new Date().toISOString();save();if(d.blkAt||d.v26){MZ.i=Math.max(0,mapCells().findIndex(c=>!(d.blk||{})[c.k]));MZ.bo=null;MZ.step=mapStepNew(d);MZ.qi=(d.quiz||[]).length}else MZ.step='pred';render()},
   mapPred:t=>{const d=mapDay();d.pred=+t.dataset.n;save();MZ.step='cell';MZ.t0=Date.now();MZ.fb=null;render()},
@@ -1550,8 +1637,8 @@ const ACT_MAP={
   mapPadKb:t=>{MZ.kb=t.dataset.v==='1';MZ.hs=null;render()},
   mapPadDone:async()=>{const cv=$('#mpad'),bg=$('#mpadbg');if(!cv||!cv._ink)return;const o=document.createElement('canvas');o.width=cv.width;o.height=cv.height;const ox=o.getContext('2d');ox.drawImage(bg,0,0);ox.drawImage(cv,0,0);const img=o.toDataURL('image/png').split(',')[1],i=MZ.i;MZ.himg=img;MZ.hs='wait';render();const r=await mapPadRead(img);mapPadGot(r,i)},
   mapChk:()=>{if(!MZ||MZ.fb)return;const inp=$('#min');const v=(inp&&inp.value||'').trim();if(!v)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));
-    const an=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');const ok=c.en.some(e=>an(e)===an(v));const M=mapS();M.cells[c.k]={ok,sec,typed:v,d:today(),set:mapDay().set};const col=mapColor(M.cells[c.k]);if(mapDay().set!=='A')mapSrCell(c.k,col);MZ.fb={col,typed:v};if(MZ.step==='pick')mapPkRec(col!=='gray');save();render();say(c.en[0])},
-  mapIdk:()=>{if(!MZ||MZ.fb)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));const M=mapS();M.cells[c.k]={ok:false,sec,typed:'(모르겠어)',d:today(),set:mapDay().set};if(mapDay().set!=='A')mapSrCell(c.k,'gray');MZ.fb={col:'gray',typed:''};if(MZ.step==='pick')mapPkRec(false);save();render();say(c.en[0])},
+    const an=x=>tnorm(x).replace(/\b(the|an)\b/g,'a');const ok=c.en.some(e=>an(e)===an(v));const M=mapS();M.cells[c.k]={ok,sec,typed:v,d:today(),set:mapDay().set,ko:c.ko,en:c.en[0]};const col=mapColor(M.cells[c.k]);if(mapDay().set!=='A')mapSrCell(c.k,col);MZ.fb={col,typed:v};if(MZ.step==='pick')mapPkRec(col!=='gray');save();render();say(c.en[0])},
+  mapIdk:()=>{if(!MZ||MZ.fb)return;const c=mapCells()[MZ.i];const sec=Math.max(1,Math.round((Date.now()-MZ.t0)/1000));const M=mapS();M.cells[c.k]={ok:false,sec,typed:'(모르겠어)',d:today(),set:mapDay().set,ko:c.ko,en:c.en[0]};if(mapDay().set!=='A')mapSrCell(c.k,'gray');MZ.fb={col:'gray',typed:''};if(MZ.step==='pick')mapPkRec(false);save();render();say(c.en[0])},
   mapNext:()=>{const cs=mapCells();if(MZ.i+1<cs.length){MZ.i++;MZ.fb=null;MZ.t0=Date.now();render()}else if(mapRevLeft(mapDay())){const d=mapDay();MZ.step='rev';MZ.ri=Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k]));MZ.fb=null;MZ.t0=Date.now();render()}else{MZ.step='speak';MZ.si=0;MZ.t0=Date.now();render()}},
   mapSay:()=>say(mapCells()[MZ.i].en[0]),
   mapSaid:t=>{mapMicStop();const d=mapDay(),c=mapSpeakList()[MZ.si];d.speak=d.speak||{};d.speak[c.k]={sec:Math.max(1,Math.round((Date.now()-MZ.t0)/1000)),d:today(),how:t&&t.dataset&&t.dataset.skip?'skip':t&&t.how?t.how:'hand',heard:MZ.heardAll||''};MZ.miss=null;MZ.heardShow='';MZ.heardAll='';save();render();say(c.en[0])},
@@ -1562,7 +1649,7 @@ const ACT_MAP={
   mapSay2:()=>say(mapSpeakList()[MZ.si].en[0]),
   mapSaidNext:()=>{mapMicStop();const L=mapSpeakList();if(MZ.si+1<L.length){MZ.si++;MZ.t0=Date.now();render()}else ACT_MAP.mapSpoke()},
   mapSpoke:()=>{const d=mapDay();d.spoke=new Date().toISOString();save();V={view:'chat'};render()},
-  mapQ:t=>{const d=mapDay();d.quiz=d.quiz||[];if(d.quiz[MZ.qi])return;const q=mapQuiz()[MZ.qi],i=+t.dataset.i;d.quiz[MZ.qi]={pick:i,ok:i===q.a};save();render()},
+  mapQ:t=>{const d=mapDay();d.quiz=d.quiz||[];if(d.quiz[MZ.qi])return;const q=mapQuiz()[MZ.qi],i=+t.dataset.i;d.quiz[MZ.qi]={pick:i,ok:i===q.a,q:q.q,ko:q.ko||'',o:q.o,a:q.a,why:q.why||''};save();render()},
   mapQNext:()=>{if(MZ.qi+1<mapQuiz().length){MZ.qi++;render()}else{const d=mapDay();if(d.blkAt){MZ.step=mapStepNew(d);MZ.pm=null;MZ.fb=null;MZ.t0=Date.now();if(MZ.step==='chat'){V={view:'chat'}}render()}else mapFinish()}},
   mapTalk:t=>{const v=t&&t.dataset.skip?'(건너뜀)':($('#mwr').value||'').trim();if(!v)return;const d=mapDay();d.write=d.write||{talk:[]};d.write.talk.push(v);save();render()},
   mapKo:t=>{const d=mapDay();if(t&&t.dataset.skip){d.write.ko='(건너뜀)';d.write.en='';d.write.at=new Date().toISOString();save();render();return}const v=($('#mwr').value||'').trim();if(!v)return;d.write.ko=v;d.write.t0=Date.now();save();if(d.write.v2)mapWTrans();else render()},
@@ -1607,7 +1694,7 @@ function mapDicWire(){if(mapDicOn||!DIC)return;mapDicOn=true;
     if(state!=='idle')return;clearInterval(MZ.micT);const c=mapSpeakList()[MZ.si],h=(MZ.heard||'').trim();
     if(c&&h){const j=judge(c.en,h);if(j==='exact'||j==='fuzzy'){mapAccept();return}}
     clearTimeout(MZ.okT);MZ.okJ=null;MZ.listen=false;MZ.heardShow=h;MZ.heardAll=h;MZ.miss=h?'diff':'quiet';render()})}
-function mapRevRec(d,c,r){const M=mapS();d.rev=d.rev||{};d.rev[c.k]=Object.assign({d:today()},r);M.cells[c.k]=Object.assign({},r,{d:today(),set:c.set});const col=mapColor(M.cells[c.k]);mapSrCell(c.k,col);MZ.fb={col,typed:r.typed};save();render()}
+function mapRevRec(d,c,r){const M=mapS();d.rev=d.rev||{};d.rev[c.k]=Object.assign({d:today(),ko:c.ko,en:c.en[0]},r);M.cells[c.k]=Object.assign({},r,{d:today(),set:c.set});const col=mapColor(M.cells[c.k]);mapSrCell(c.k,col);MZ.fb={col,typed:r.typed};save();render()}
 function mapFinish(){const d=mapDay();if(!d)return;if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));const M=mapS();if(M.done[d.set]&&M.done[d.set]!==today()&&d.set!=='R'){M.again=M.again||{};M.again[d.set]=today()}M.done[d.set]=M.done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
 function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length)return '';const C={green:'🟢',yellow:'🟡',gray:'⬜','':'·'};
   let h='<div class="card"><h2>🗺️ 내 지도 (문법 칸 확인)</h2><p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 틀림(다음에 배울 칸). 난이도 조정할 때 보는 기록이에요.</p>';
