@@ -198,6 +198,9 @@ async function koFill(KR){
       else{const it=r.items||[];const bad=it.filter(x=>!x.ok);const step={g:'① 자리',o2:'② 받침',o3:'③ 규칙',o4:'④ 소리',o5:'⑤ 또',p:'고르기',m:'○표'};
         h+=`<li><b>🧱 ${r.lid}. ${esc(r.title)}</b> — 한 번에 ${r.first}/${r.n}${r.pred!=null?` · 예측 ${r.pred}${r.pred===r.first?' (딱 맞음)':''}`:''}${r.cx?` · 반례 본 횟수 ${r.cx}`:''}${r.fold?' · 칸 줄임(3연속)':''}${time}
         ${bad.length?`<br><span class="muted">헤맨 것:</span> ${bad.map(x=>`${esc(x.w)}${x.twin?'(다시)':''} [${Object.entries(x.miss||{}).filter(([k,v])=>v).map(([k,v])=>(step[k]||k)+' '+v).join(', ')}]`).join(' · ')}`:''}</li>`}}
+    else if(r.type==='map'){ // 🗺️ 시훈이 지도 칸 채우기
+      const AN={gram:'문법',lit:'문학',bi:'비문학',sk:'스키마'};const mm=Object.entries(r.miss||{});
+      h+=`<li><b>🗺️ ${AN[r.area]||esc(r.area)} 지도 ${r.blank?'백지 채우기':'칸 채우기'}</b> — 한 번에 ${r.first}/${r.n}칸${mm.length?`<br><span class="muted">헤맨 칸:</span> ${mm.map(([k,v])=>esc(k)+(v==='skip'?'(넘김)':v>=2?'(정답 봄)':'')).join(' · ')}`:''}${time}</li>`}
     else if(r.type==='write'){
       h+=`<li><b>독서 워크지</b> · ${esc(r.title)} — 문제 한 번에 ${r.qok}/${r.qn}${r.miss?` · 틀린 고르기 ${r.miss}`:''}${r.emiss?` · 서술형 헤맴 ${r.emiss}`:''}${r.asked?` · 되물음 ${r.asked}번`:''}${r.restart?' <span class="muted">(🔄 처음부터 다시 하기 전 첫 시도)</span>':''}${r.done===false?` <span class="muted">(중간 저장 · ${esc(r.stage||'')})</span>`:''}${time}
         ${r.ev&&r.ev.length?`<br><span class="muted">고른 근거:</span> ${r.ev.map(e=>'“'+esc(e)+'”').join(' ')}`:''}
