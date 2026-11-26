@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="6";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="7";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -117,7 +117,7 @@ else{
 <div id="app"></div>
 <script>
 /* ⚡ 5분 말하기 (엄마 11/25): 「오늘의 공부」는 새로 배우기, 이 앱은 아는 걸 빨리 꺼내기만.
-   하루 10문장 · 한국어 보고 영어로 말하기 → 정답 듣고 따라 말하기. 쓰기 없음.
+   하루 10문장 · 한국어 보고 영어로 말하기(녹음은 한 번, 틀리면 한 번 더) → 정답 소리 듣기. 쓰기 없음.
    엄마 11/26: 한 단계를 이틀에 나눠요. 첫날은 회색 기준 문장을 보고 한 군데만 바꿔 말하기 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계.
    통과 = 10문장 중 9문장 「막힘 없이」(처음에 맞게 + 한글이 나오고 5초 안에 🎤). 막힌 문장은 다음 날 앞에 다시 나와요. 빨간 X 없음.
    🎤 녹음(엄마 11/26): 생각하고 🎤 누르기 → 다 말하면 ⏹ 누르기. 자동으로 끊지 않고, 멈춘 뒤 한 번만 서버(stt, Google 받아쓰기)로 받아 적어요.
@@ -263,7 +263,7 @@ function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=last
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
   h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2><div class="ex">${esc(st.ex)}</div>
     <p style="margin:12px 0 0">${modeOf()==='base'?'회색 문장을 보고, 한국어 뜻대로 <b>한 군데만 바꿔서 영어로 말해요.</b>':'오늘은 회색 문장이 없어요. <b>한글만 보고 영어로 말해요.</b>'}</p>
-    <p style="margin:6px 0 0">생각이 되면 <b>🎤 녹음</b>을 누르고 말해요. 다 말하면 <b>⏹</b>을 눌러요. 맞으면 정답을 듣고 한 번 따라 말해요.</p>
+    <p style="margin:6px 0 0">생각이 되면 <b>🎤 녹음</b>을 누르고 말해요. 다 말하면 <b>⏹</b>을 눌러요. 끝나면 정답 소리를 들어요.</p>
     ${prev?`<p class="sub" style="margin:8px 0 0">지난번(${prev.date.slice(5).replace('-','/')}) <b>${fmt(prev.ms)}</b> 걸렸어요.</p>`:''}
     ${ST.cur&&ST.cur.date===today()&&!TRY?`<p class="sub">하던 데서 이어서 해요 (${ST.cur.i+1} / 10)</p>`:''}
     <button class="big" data-act="start">🎤 시작</button>
@@ -364,7 +364,8 @@ function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
   else if(ph==='rec'||ph==='frec'){
     h+=`<div class="state">🔴 녹음 중 <span id="clk">0:00</span></div><div class="meter" id="mt"><b></b></div><button class="fin" data-act="stop">다 말했어 ⏹</button>`}
   else if(ph==='think'||ph==='fthink'){h+=`<div class="state"><span class="spin">⏳</span> 듣고 있어요…</div>`}
-  else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`}
+  else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`;
+    if(!R.ok&&R.heardModel)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div><button class="fin" data-act="nextq">다음 ▶</button>`}
   else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b><br>한 번 더 해 볼까요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
   else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
   else if(ph==='good'){h+=`<div class="okbox">👍</div>`}
@@ -392,6 +393,7 @@ const ACT={
   again(){const it=SP.byId(RUN.ids[RUN.i]);speak(it.en)},
   resay(){RUN.ph='ready';RUN.msg='';render()},
   show(){RUN.ok=false;toModel()},
+  nextq(){if(RUN&&RUN.ph==='model')next()},
   skip(){const R=RUN;if(R.ph[0]!=='f')R.skipped=R.tries===0?'quiet':'wrong';next()},
   quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();micClose();V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
   home(){V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
@@ -426,7 +428,9 @@ async function judged(v,h,fol){const R=RUN,it=SP.byId(R.ids[R.i]);const ok=v==='
   R.ftries++;R.fails++;
   if(R.ftries<2){R.msg=v==='unclear'?'🙉 잘 안 들렸어요. 한 번 더 들어 보고 따라 말해요.':'한 번 더 들어 보고 따라 말해요.';R.ph='model';render();await speak(it.en);if(R===RUN&&!R.quit){R.ph='fready';render()}return}
   next()}
-async function toModel(){const R=RUN,it=SP.byId(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;render();await speak(it.en);if(R!==RUN||R.quit)return;R.ph='fready';render()}
+// 엄마 11/26 「왜 두 번 녹음하는 거야? / 한 번만 녹음」: 따라 말하기 녹음을 없앰. 맞으면 정답 소리를 듣고 저절로 다음, 틀렸으면 정답을 보고 들은 뒤 「다음 ▶」.
+async function toModel(){const R=RUN,it=SP.byId(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;R.heardModel=false;render();await speak(it.en);if(R!==RUN||R.quit)return;
+  if(R.ok){setTimeout(()=>{if(R===RUN&&!R.quit&&R.ph==='model')next()},1200)}else{R.heardModel=true;render()}}
 function next(){const R=RUN;const ok1=R.first===true;
   R.res[R.i]={id:R.ids[R.i],ok1,onset:R.think,clean:ok1&&R.think!=null&&R.think<=FAST_MS,heard:(R.heard||'').slice(0,80),follow:!!R.follow,skip:R.skipped||undefined};
   R.i++;if(!TRY){ST.cur={date:R.date,stage:R.stage,mode:R.mode,ids:R.ids,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
