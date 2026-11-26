@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><script>/*옛 주소에서 넘어올 때 이 기기 기록 받기*/(function(){try{var h=location.hash,i=h.indexOf("__mig=");if(i<0)return;var p=h.slice(i+6),j=p.indexOf("__h="),d=j<0?p:p.slice(0,j),o=j<0?"":decodeURIComponent(p.slice(j+4)),m=JSON.parse(decodeURIComponent(escape(atob(d))));for(var k in m)if(localStorage.getItem(k)===null)localStorage.setItem(k,m[k]);history.replaceState(null,"",location.pathname+location.search+o)}catch(e){}})();</script><meta name="robots" content="noindex,nofollow,noarchive,nosnippet"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><link rel="manifest" href="manifest.json?v=2">
+<!doctype html><html><head><meta charset=utf8><script>/*옛 주소에서 넘어올 때 이 기기 기록 받기*/(function(){try{var h=location.hash,i=h.indexOf("__mig=");if(i<0)return;var p=h.slice(i+6),j=p.indexOf("__h="),d=j<0?p:p.slice(0,j),o=j<0?"":decodeURIComponent(p.slice(j+4)),m=JSON.parse(decodeURIComponent(escape(atob(d))));for(var k in m)if(localStorage.getItem(k)===null)localStorage.setItem(k,m[k]);history.replaceState(null,"",location.pathname+location.search+o)}catch(e){}})();</script><meta name="robots" content="noindex,nofollow,noarchive,nosnippet"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>/*과목 방(엄마 11/26): sihun/en/ 같은 과목 주소 → ./#s=en 으로 들어오면 이 창은 그 과목 방*/(function(){var R=["en","ko","math","write"],r="";try{var m=/^#s=(\w+)/.exec(location.hash);if(m){if(R.indexOf(m[1])>=0)sessionStorage.setItem("hub:room",m[1]);else sessionStorage.removeItem("hub:room");history.replaceState(null,"",location.pathname+location.search)}r=sessionStorage.getItem("hub:room")||""}catch(e){}if(R.indexOf(r)<0)r="";window.HUBROOM=r;document.write('<link rel="manifest" href="'+(r?r+"/manifest.json?v=1":"manifest.json?v=2")+'">')})();</script>
 <link rel="icon" href="icons/icon-192.png?v=3">
 <link rel="apple-touch-icon" href="icons/icon-192.png?v=3">
 <meta name="theme-color" content="#2f6b4f">
@@ -8329,10 +8329,10 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   const $h=s=>document.querySelector(s);
   const MATH_N=12;
   const SUBJ=[
-    {k:'en',ic:'🇺🇸',name:'영어',sub:'단어 10개 쓰기 → 5문장 혼자 쓰고 블록으로 고치고 따라 말하며 녹음'},
-    {k:'ko',ic:'📖',name:'국어',sub:'수능 입문반 · 복습 · 누적 테스트'},
-    {k:'math',ic:'🔢',name:'수학',sub:'큰 수 · 개념 확인'},
-    {k:'write',ic:'✍️',name:'글쓰기 첨삭',sub:'서술형 · 학교 숙제 · 엄마가 낸 글쓰기를 AI 쌤과 함께'}
+    {k:'en',ic:'🇺🇸',name:'계단영어',sub:'단어 10개 쓰기 → 5문장 혼자 쓰고 블록으로 고치고 따라 말하며 녹음'},
+    {k:'ko',ic:'📖',name:'계단국어',sub:'수능 입문반 · 복습 · 누적 테스트'},
+    {k:'math',ic:'🔢',name:'계단수학',sub:'큰 수 · 개념 확인'},
+    {k:'write',ic:'✍️',name:'계단글쓰기',sub:'서술형 · 학교 숙제 · 엄마가 낸 글쓰기를 AI 쌤과 함께'}
   ];
   const WHY=[['understand','📘 규칙을 잘 몰랐어'],['attention','🎯 처음엔 놓쳤는데 힌트 보고 알았어'],['retrieval','🗣️ 아는데 바로 안 나왔어'],
              ['fatigue','🔋 뒤로 갈수록 집중이 안 됐어'],['condition','🌊 오늘 좀 피곤했어'],['none','✨ 별로 안 막혔어']];
@@ -8340,7 +8340,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   // 수학 칸: 3-2(분수·들이와 무게·그림그래프)를 10개 기능 모두 최상위까지 통과하기 전엔 3-2, 다 통과하면 4학년 큰 수 (엄마 11/22)
   const M32=()=>{try{return !!APP_M32&&!APP_M32.done()}catch(e){return false}};
   const MSUB=()=>M32()?'3-2 · 분수 · 들이와 무게 · 그림그래프':'4-1 큰 수 · 개념 확인';
-  let day=HUB.today(), REC=load(day), F=0, VIEW='home', WHYSEL=[], CUR=null, DB=null, RET=null;
+  const ROOM=window.HUBROOM||'';
+  let day=HUB.today(), REC=load(day), F=ROOM?Math.max(0,SUBJ.findIndex(x=>x.k===ROOM)):0, VIEW='home', WHYSEL=[], CUR=null, DB=null, RET=null;
   try{if(sessionStorage.getItem('hub:goadmin')){sessionStorage.removeItem('hub:goadmin');if(sessionStorage.getItem('hub:mom')==='1')VIEW='admin'}}catch(e){} // 직접 해 보기 끝내기 → 관리자 모드로
   function load(d){try{return JSON.parse(localStorage.getItem(LSK+d))||{date:d,subjects:{}}}catch(e){return {date:d,subjects:{}}}}
   function S(k){REC.subjects[k]=REC.subjects[k]||{};return REC.subjects[k]}
@@ -8364,7 +8365,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
 
   function render(){window.scrollTo(0,0);if(HUB.today()!==day){day=HUB.today();REC=load(day)}({home,plan,why,admin})[VIEW]()}
   function navHTML(){const n=SUBJ.length;return `<div class="nav"><button data-h="f" data-i="0" ${F?'':'disabled'}>⏮ 처음으로</button><button data-h="f" data-i="${F-1}" ${F?'':'disabled'}>◀ 이전</button><span>${F+1} / ${n}</span><button data-h="f" data-i="${F+1}" ${F<n-1?'':'disabled'}>다음 ▶</button></div>`}
-  function home(){const s=SUBJ[F];let body;
+  function home(){if(ROOM)F=Math.max(0,SUBJ.findIndex(x=>x.k===ROOM));const s=SUBJ[F];let body;
     if(s.off)body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='ko'?'곧 열려요.':'오늘은 특별 학습이 없어요.'}</p><span class="st">준비 중</span></div>`;
     else{const st=stats(s.k);
       const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
@@ -8373,7 +8374,19 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">오늘의 공부</h1><div class="d">${dateLabel()}</div></div>${navHTML()}${body}
       <div class="list">${SUBJ.map((x,i)=>`<button class="it ${i===F?'on':''} ${x.off?'off':''}" data-h="f" data-i="${i}"><span class="e">${x.ic}</span><b>${i+1}. ${x.name}</b>${x.off?'준비 중':doneMark(x.k)}</button>`).join('')}</div>
       <p class="note">순서: 영어 → 국어 → 수학. 글쓰기는 쓸 글이 있는 날 열어요. 아래 칸을 눌러 바로 갈 수도 있어요.<br>🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
-      <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`}
+      <div class="list" style="grid-template-columns:repeat(2,1fr)">${OUTAPP.en.concat(OUTAPP.math).map(o=>`<a class="it" href="${o.href}" style="text-decoration:none;color:inherit"><span class="e">${o.ic}</span><b>${o.name}</b>바로 가기</a>`).join('')}</div>
+      <button class="link" data-h="admin" style="display:block;margin:18px auto 0">👩 관리자 모드 (엄마용)</button>`;
+    if(ROOM)roomWrap(s,body)}
+  // 🚪 과목 방(엄마 11/26): 과목 주소로 열면 그 과목 + 같이 하는 앱 + 그 과목 리포트(엄마 비밀번호)만
+  const OUTAPP={en:[{ic:'⚡',name:'스피드 영어',href:'../sihun-speed/'}],math:[{ic:'🧮',name:'시훈 연산',href:'../math/'}],ko:[],write:[]};
+  const ROOMN={en:'🇺🇸 계단영어',ko:'📖 계단국어',math:'🔢 계단수학',write:'✍️ 계단글쓰기'};
+  const ROOMREP={en:['en','계단영어 리포트'],ko:['ko','계단국어 · 계단글쓰기 리포트'],math:['math','계단수학 리포트'],write:['ko','계단국어 · 계단글쓰기 리포트']};
+  function roomWrap(s,body){const o=OUTAPP[ROOM]||[],rp=ROOMREP[ROOM];
+    const more=(ROOM==='ko'?[`<button class="go light" data-h="open" data-app="write">✍️ 계단글쓰기 열기</button>`]:[]).concat(o.map(x=>`<a class="go light" href="${x.href}" style="text-decoration:none;text-align:center;box-sizing:border-box">${x.ic} ${x.name}</a>`));
+    $h('#hub').innerHTML=`<div class="hh"><h1><img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">${ROOMN[ROOM]}</h1><div class="d">${dateLabel()}</div></div>${body}
+      ${more.length?`<div class="panel" style="margin-top:14px"><h2 style="font-size:19px;margin:0 0 4px">같이 하는 공부</h2>${more.join('')}</div>`:''}
+      <a class="link" href="report.html#${rp[0]}" style="display:block;text-align:center;margin:18px auto 0">📋 ${rp[1]} (엄마용 · 비밀번호)</a>
+      <button class="link" data-h="allhub" style="display:block;margin:10px auto 0">🏠 오늘의 공부 전체 화면</button>`}
   // 관리자 모드 (엄마 11/24: 첫 화면에서 바로 · 비밀번호 한 번 / 11/25: 과목별 말고 한 화면에 — 💰 AI 비용 · 오늘 한눈에 · 하는 일별 버튼)
   const AIN={enchat:'⚡ 영어 카츄랑 말하기',m32tutor:'🔢 수학 과외',m32teachai:'🧑‍🏫 수학 가르치기',m32ana:'🔢 수학 AI 분석',kotutor:'📖 국어 과외',koana:'📖 국어 AI 분석',writecoach:'✍️ 글쓰기 첨삭'};
   const aiUsd=v=>(v.in||0)*4/1e6+(v.out||0)*20/1e6; // Opus 5.5: 입력 $4, 출력 $20 (100만 토큰당) — report.html 과 같은 값
@@ -8524,7 +8537,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='why'){const w=t.dataset.w;if(w==='none')WHYSEL=WHYSEL.includes('none')?[]:['none'];else{WHYSEL=WHYSEL.filter(x=>x!=='none');WHYSEL=WHYSEL.includes(w)?WHYSEL.filter(x=>x!==w):[...WHYSEL,w]}
       t.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',WHYSEL.includes(b.dataset.w)))}
     else if(a==='whydone'){const r=S(CUR.k);refresh(CUR.k);r.why=WHYSEL.slice();r.whyAsked=true;r.whyAt=new Date().toISOString();save();
-      const i=SUBJ.findIndex(x=>x.k===CUR.k);const nx=SUBJ.findIndex((x,j)=>j>i&&!x.off);F=nx>=0?nx:i;VIEW='home';render()}
+      const i=SUBJ.findIndex(x=>x.k===CUR.k);const nx=SUBJ.findIndex((x,j)=>j>i&&!x.off);F=ROOM?i:(nx>=0?nx:i);VIEW='home';render()}
+    else if(a==='allhub'){try{sessionStorage.removeItem('hub:room')}catch(e){}location.replace('./')}
   });
   render();
   setTimeout(()=>{if(VIEW==='home'&&!document.getElementById('hub').hidden)render()},2500);
