@@ -109,7 +109,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tt-nowl::before{content:"";position:absolute;left:-4px;top:-6.5px;width:10px;height:10px;border-radius:50%;background:#ff4d5e}
 #taskChip{border:2px solid var(--line)}
 .mv{display:inline-flex;flex-direction:column;flex:none}.mv .icon{padding:1px 9px;font-size:.95rem;line-height:1.1}
-.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcatb{flex:1;display:flex;align-items:center;gap:6px;border:none;background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:4px 0;text-align:left}.tcatb .tf{width:1em}.tcatb small{font-weight:400;color:var(--muted);margin-left:4px}
+.item.ingrp{margin-left:14px}.item.solo{margin-top:8px}.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcatb{flex:1;display:flex;align-items:center;gap:6px;border:none;background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:4px 0;text-align:left}.tcatb .tf{width:1em}.tcatb small{font-weight:400;color:var(--muted);margin-left:4px}
 .gcal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;text-align:center}
 .gcal .dow{font-size:.8rem;color:var(--muted);padding:2px 0}
 .gcal div.d{background:var(--bg);border-radius:8px;min-height:46px;display:grid;align-content:start;justify-items:center;gap:2px;padding:4px 0;font-variant-numeric:tabular-nums}
@@ -501,9 +501,11 @@ function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"
 function tplOf(x){return x.tplId&&S.taskTpls.find(y=>y.id===x.tplId)}
 function taskCat(x){const tp=tplOf(x);return String((x.cat!=null?x.cat:tp&&tp.cat)||"").trim()}
 function taskOrd(x){if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
-function taskGroups(l){const g=[];for(const x of l.slice().sort((a,b)=>taskOrd(a)-taskOrd(b))){const c=taskCat(x);let o=g.find(y=>y.cat===c);if(!o)g.push(o={cat:c,items:[]});o.items.push(x)}return g}
+// 대분류 없는 과제는 묶지 않고 혼자(엄마 11/26 「대분류 안 정한 건 혼자 나와 있게」): 과제 하나짜리 무리(solo)로 대분류들 사이를 오감
+function taskGroups(l){const g=[];for(const x of l.slice().sort((a,b)=>taskOrd(a)-taskOrd(b))){const c=taskCat(x);if(!c){g.push({cat:"",key:"#"+x.id,solo:true,items:[x]});continue}let o=g.find(y=>y.key===c);if(!o)g.push(o={cat:c,key:c,items:[]});o.items.push(x)}return g}
 function taskMoved(l,id,dir,cat){const g=taskGroups(l);
- if(cat!=null){const i=g.findIndex(y=>y.cat===cat),j=i+dir;if(i<0||j<0||j>=g.length)return null;[g[i],g[j]]=[g[j],g[i]]}
+ if(cat==null){const o=g.find(y=>y.items.some(x=>x.id===id));if(o&&o.solo)cat=o.key}
+ if(cat!=null){const i=g.findIndex(y=>y.key===cat),j=i+dir;if(i<0||j<0||j>=g.length)return null;[g[i],g[j]]=[g[j],g[i]]}
  else{const o=g.find(y=>y.items.some(x=>x.id===id));if(!o)return null;const i=o.items.findIndex(x=>x.id===id),j=i+dir;if(j<0||j>=o.items.length)return null;[o.items[i],o.items[j]]=[o.items[j],o.items[i]]}
  return g.flatMap(y=>y.items)}
 async function saveTaskOrder(l){const b=F.writeBatch(fs),tp=new Set();
@@ -511,8 +513,8 @@ async function saveTaskOrder(l){const b=F.writeBatch(fs),tp=new Set();
  try{await b.commit()}catch(e){toast("옮기지 못했어요: "+(e.code||e.message||""))}}
 const mvBtns=(a,v)=>`<span class="mv"><button class="icon" ${a}="${esc(v)}" data-dir="-1" aria-label="위로">▲</button><button class="icon" ${a}="${esc(v)}" data-dir="1" aria-label="아래로">▼</button></span>`;
 function taskGroupHTML(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
- const f=taskFolds();return g.map(y=>{const shut=f.includes(y.cat),dn=y.items.filter(x=>x.done).length;
-  return`<li class="tcat"><button type="button" class="tcatb" data-tfold="${esc(y.cat)}" aria-expanded="${!shut}"><span class="tf">${shut?"▸":"▾"}</span>${esc(y.cat||"기타")}<small>${dn}/${y.items.length}${dn===y.items.length?" ✓":""}</small></button>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+(shut?"":y.items.map(row).join(""))}).join("")}
+ const f=taskFolds();return g.map(y=>{if(y.solo)return y.items.map(x=>row(x).replace('<li class="item','<li class="item solo')).join("");const shut=f.includes(y.cat),dn=y.items.filter(x=>x.done).length;
+  return`<li class="tcat"><button type="button" class="tcatb" data-tfold="${esc(y.cat)}" aria-expanded="${!shut}"><span class="tf">${shut?"▸":"▾"}</span>${esc(y.cat||"기타")}<small>${dn}/${y.items.length}${dn===y.items.length?" ✓":""}</small></button>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+(shut?"":y.items.map(x=>row(x).replace('<li class="item','<li class="item ingrp')).join(""))}).join("")}
 // 대분류 접고 펴기(엄마 11/26): 이 기기에만 기억
 function taskFolds(){try{return JSON.parse(localStorage.getItem("taskFold")||"[]")}catch(e){return[]}}
 function taskFoldToggle(c){const f=taskFolds(),i=f.indexOf(c);if(i<0)f.push(c);else f.splice(i,1);try{localStorage.setItem("taskFold",JSON.stringify(f))}catch(e){}}
@@ -1009,7 +1011,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=84;
+const VERSION=85;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1054,7 +1056,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=84").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=85").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
