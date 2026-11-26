@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795677233";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795677799";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3309,9 +3309,10 @@ async function famLoad(){const t=today();
   if(view==="fam")render()}
 const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||[]).length&&!st.grad))return null;const mx=stepMax(T)+1;return st.grad||(STEPT(T)&&(st.step||0)>=mx)?{ok:1,n:mx,mx}:{n:STEPT(T)?(st.step||0)+1:0,mx:STEPT(T)?mx:0}};
 function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
-  const tot=p=>{const d=FAM[p.id].day,pl=d?Object.values(d.plan||{}).reduce((a,b)=>a+b,0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
+  /* 다른 사람의 오늘 계획은 그 사람이 새 버전을 열기 전까지 옛 계획(20)으로 저장돼 있다 → 평일이면 가벼운 유형을 빼고 센다 */
+  const tot=p=>{const d=FAM[p.id].day,cf=(FAM[p.id].core||{}).cfg||{},wd=cf.wkSplit!==false&&!isWE(),pl=d?Object.entries(d.plan||{}).reduce((a,[id,b])=>a+(wd&&LIGHT.has(id)?0:b),0)+Object.values(d.carry||{}).reduce((a,b)=>a+b,0):0;return{n:d?(d.sets||[]).length:0,pl}};
   const pass=p=>Object.keys(FAM[p.id].core.ts||{}).filter(id=>TYPES[id]&&(famSt(FAM[p.id].core,id)||{}).ok).length;
-  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="small muted">${CHAR[p.id][1]}</span><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>오늘 ${t.n}${t.pl?" / "+t.pl:""}세트</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
+  const top=P.map(p=>{const t=tot(p);return `<div class="fam-p${p.id===PID?" me":""}"><b>${p.icon} ${p.name}</b><span class="small muted">${CHAR[p.id][1]}</span><span class="pill ${p.id==="sihun"?"":"warm"}" style="align-self:flex-start">${p.id==="sihun"?"아이 통과 기준":"어른 통과 기준"}</span><span>${t.pl&&t.n>t.pl?`오늘 ${t.n}세트 (${t.pl}세트 다 함)`:`오늘 ${t.n}${t.pl?" / "+t.pl:""}세트`}</span><span>통과 ${pass(p)}유형</span></div>`}).join("");
   const ids=S.cfg.order.filter(id=>TYPES[id]&&P.some(p=>famSt(FAM[p.id].core,id)));
   const rows=ids.map(id=>`<tr><th>${TYPES[id].name}</th>${P.map(p=>{const x=famSt(FAM[p.id].core,id);return `<td class="${x&&x.ok?"ok":""}${p.id===PID?" me":""}">${!x?"·":x.ok?"통과":x.mx?`${x.n}<i>/${x.mx}</i>`:"하는 중"}</td>`}).join("")}</tr>`).join("");
   const miss=PROFILES.filter(p=>!P.includes(p)).map(p=>p.name);
