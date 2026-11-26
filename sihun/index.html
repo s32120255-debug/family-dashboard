@@ -9530,8 +9530,8 @@ function mapPath(area,id){for(const s of KMAP[area].secs)for(const g of s.gs)if(
 /* 칸 채우기: 한 칸씩 블록 고르기. 맞히면 「다음」 없이 넘어가고, 2번 틀리면 정답+설명 → 「알겠어」 */
 function mapRun(area,list,blank,o){KM=Object.assign({area,list,i:0,blank,miss:{},t0:Date.now()},o||{});mapOne()}
 function mapOne(){const R=KM;if(R.i>=R.list.length)return mapEnd();const N=R.list[R.i];let miss=0;const o=dwSh(N.o);const x=[];
-  const draw=(fb,lock)=>{$('#main').innerHTML=DW_CSS+MAP_CSS+`<div class="dw"><div class="dwtop"><button class="dwnb" id="mbk">⏮</button><h2>${R.ttl||(R.blank?'🗺️ 백지 채우기':'🗺️ 칸 채우기')} · ${R.i+1}/${R.list.length}</h2><button class="dwnb" id="mnx">▶</button></div>
-     <div class="dwsm">${mapPath(R.area,N.id)}</div>
+  const draw=(fb,lock)=>{$('#main').innerHTML=DW_CSS+MAP_CSS+(R.tree?KT_CSS:'')+`<div class="dw"><div class="dwtop"><button class="dwnb" id="mbk">⏮</button><h2>${R.ttl||(R.blank?'🗺️ 백지 채우기':'🗺️ 칸 채우기')} · ${R.i+1}/${R.list.length}</h2><button class="dwnb" id="mnx">▶</button></div>
+     ${R.tree?R.tree(R):`<div class="dwsm">${mapPath(R.area,N.id)}</div>`}
      <div class="dwcard" style="text-align:center"><div class="dwh">${N.n}</div><div class="dwp" style="margin-top:6px">${N.t}<span class="dwblank" style="min-width:90px">&nbsp;</span>${N.b}</div></div>
      <div class="dwcard"><div class="dwq">빈칸에 들어갈 것</div>${o.map((v,i)=>`<button class="dwo ${x.includes(i)?'x':''}" data-mo="${i}" ${x.includes(i)||lock?'disabled':''}>${v}</button>`).join('')}</div><div id="mfb">${fb||''}</div></div>`;
     $('#mbk').onclick=()=>{clearTimeout(R.tm);if(R.onEnd){viewMap(R.area);return}if(R.i)mapEnd();else viewMapCells(R.area)};
@@ -9574,20 +9574,55 @@ const KT_CSS=`<style>.dw .ktbr{background:#fff;border:2px solid #dfdacb;border-r
 .dw .ktl{display:inline-block;border-radius:16px 3px 16px 3px;padding:7px 11px;margin:4px 3px;font-size:17px;line-height:1.3}
 .dw .ktl.d{background:#2f5fa3;color:#fff;border:2px solid #2f5fa3}.dw .ktl.t{background:#fff;border:3px solid #2f5fa3;color:#1d2b4f;font-weight:bold}
 .dw .ktl.e{background:#e8eef7;border:2px solid #2f5fa3;color:#1d2b4f}.dw .ktl.k{background:#f3f1e7;border:2px dashed #c9c3b3;color:#6b665b}
-.dw .ktlg{font-size:14px;color:#4f4c45;text-align:center}.dw .ktlg .ktl{font-size:14px;padding:3px 8px}</style>`;
+.dw .ktlg{font-size:14px;color:#4f4c45;text-align:center}.dw .ktlg .ktl{font-size:14px;padding:3px 8px}
+.dw .kt3{position:relative;margin:10px 0;padding:22px 4px 64px;overflow:hidden;border-radius:22px}
+.dw .kt3 .cn{position:absolute;border-radius:50%;background:#e2eed4;border:2px solid #d2e3bf;z-index:0}
+.dw .kt3 .tk{position:absolute;left:50%;top:28px;bottom:22px;width:30px;transform:translateX(-50%);background:linear-gradient(90deg,#6f4a2a,#94663c 45%,#6f4a2a);border-radius:12px 12px 4px 4px;z-index:1}
+.dw .kt3 .rt{position:absolute;left:50%;bottom:14px;width:110px;height:22px;transform:translateX(-50%);background:#7a5230;clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);z-index:1}
+.dw .kt3 .gd{position:absolute;left:6%;right:6%;bottom:6px;height:14px;border-radius:50%;background:#cfe0b8;z-index:0}
+.dw .kt3 .rl{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:3;background:#fffdf5;border:2px solid #8a6a3c;border-radius:10px;padding:3px 14px;font-family:'Do Hyeon',sans-serif!important;font-size:19px;color:#4a3217;white-space:nowrap}
+.dw .ktrw{position:relative;z-index:2;display:grid;grid-template-columns:1fr 34px 1fr;margin:4px 0 14px}
+.dw .ktg{display:flex;flex-direction:column;gap:5px;position:relative}
+.dw .ktg.L{grid-column:1;align-items:flex-end;padding-right:22px}.dw .ktg.R{grid-column:3;align-items:flex-start;padding-left:22px}
+.dw .ktg .bn{position:absolute;top:14px;height:7px;width:50px;background:#7a5230;border-radius:4px;z-index:-1}
+.dw .ktg.L .bn{right:-30px;transform:rotate(10deg);transform-origin:right center}.dw .ktg.R .bn{left:-30px;transform:rotate(-10deg);transform-origin:left center}
+.dw .ktg::after{content:'';position:absolute;top:16px;bottom:16px;width:4px;background:#7a5230;border-radius:3px;z-index:-1}
+.dw .ktg.L::after{right:9px}.dw .ktg.R::after{left:9px}
+.dw .ktg .kl3,.dw .ktg .bh{position:relative}
+.dw .ktg .kl3::after{content:'';position:absolute;top:50%;width:14px;height:3px;background:#7a5230}
+.dw .ktg.L .kl3::after{right:-16px}.dw .ktg.R .kl3::after{left:-16px}
+.dw .ktg .bh{background:#2f5a35;color:#fff;border-radius:12px;padding:4px 12px;font-family:'Do Hyeon',sans-serif!important;font-size:18px;margin-bottom:2px;text-align:center}
+.dw .kl3{display:flex;align-items:center;gap:6px;max-width:100%;border-radius:14px;padding:5px 10px;font-size:16px;line-height:1.3;text-align:left;background:#fff;color:#1f3a22;border:2px solid #7fa56f}
+.dw .ktg.L .kl3{flex-direction:row-reverse;text-align:right}
+.dw .kl3 i{flex:none;width:16px;height:11px;border-radius:0 100% 0 100%;background:#a9c99a;display:inline-block}
+.dw .kl3.d{background:#3f7d3a;border-color:#3f7d3a;color:#fff}.dw .kl3.d i{background:#cfe8c2}
+.dw .kl3.t{border:3px solid #3f7d3a;font-weight:bold;color:#1f3a22}.dw .kl3.t i{background:#3f7d3a}
+.dw .kl3.k{background:#f6f3ea;border:2px dashed #c9c3b3;color:#6b665b}.dw .kl3.k i{background:none;border:1.5px dashed #b9b3a3}
+.dw .kl3.b{border:2px dashed #7fa56f;color:#7fa56f;min-width:86px;min-height:32px}.dw .kl3.b i{background:none;border:1.5px dashed #7fa56f}
+.dw .kl3.c{border:3px solid #2f5fa3;color:#1d2b4f;font-weight:bold;min-width:86px}.dw .kl3.c i{background:#2f5fa3}
+.dw .kt3.sm{padding:14px 2px 50px}.dw .kt3.sm .kl3{font-size:15px;padding:4px 8px}
+@media (max-width:520px){.dw .ktrw{grid-template-columns:1fr 24px 1fr}.dw .kt3 .tk{width:22px}.dw .ktg.L{padding-right:18px}.dw .ktg.R{padding-left:18px}.dw .ktg.L::after{right:7px}.dw .ktg.R::after{left:7px}.dw .ktg .kl3::after{width:11px}.dw .ktg.L .kl3::after{right:-12px}.dw .ktg.R .kl3::after{left:-12px}.dw .kl3{font-size:15px;padding:4px 8px}.dw .ktg .bh{font-size:16px;padding:3px 9px}}
+.dw .ktlg2{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;font-size:14px}.dw .ktlg2 .kl3{font-size:14px;padding:3px 8px}</style>`;
+/* 진짜 나무 그림(엄마 11/26 "아예 나무, 나뭇잎 채우는"): 덤불(잎 무더기) + 줄기 + 가지(좌우 번갈아) + 잎 + 뿌리 이름
+   groups: [{h:가지 이름, items:[{t, st:'d'채움|'t'오늘|'e'다음|'k'잠김|'b'빈 잎|'c'지금 채울 잎, a:버튼 속성}]}] */
+function ktTreeHTML(groups,root,sm){const blobs=[[4,0,50,22],[46,0,50,22],[22,-3,56,20],[-8,14,52,26],[56,14,52,26],[18,20,64,26],[-10,38,52,26],[58,38,52,26],[16,44,68,26],[-6,60,50,24],[56,60,50,24],[20,66,60,22]];
+  const leaf=x=>{const tag=x.a?'button':'span';return `<${tag} class="kl3 ${x.st}" ${x.a||''}><i></i><span>${x.t}</span></${tag}>`};
+  return `<div class="kt3 ${sm?'sm':''}">${blobs.map(([l,t,w,h])=>`<div class="cn" style="left:${l}%;top:${t}%;width:${w}%;height:${h}%"></div>`).join('')}<div class="tk"></div><div class="rt"></div><div class="gd"></div>
+   ${groups.map((g,i)=>`<div class="ktrw"><div class="ktg ${i%2?'R':'L'}"><div class="bn"></div>${g.h?`<div class="bh">${g.h}</div>`:''}${g.items.map(leaf).join('')}</div></div>`).join('')}
+   <div class="rl">${root}</div></div>`}
 function viewMap(area){clearTimeout(KM&&KM.tm);clearTimeout(KT&&KT.tm);area=area||(KM&&KM.area)||'lit';KM={area};KT=null;
   const S=ktStore();const tabs=[['lit','문학'],['bi','비문학'],['sk','스키마'],['gram','문법']];
-  let body='';
-  if(area==='gram'){body=`<div class="kttw">${KTREE_GRAM.map(([c,p,t])=>`<button class="ktl ${ktGramDone(c,p)?'d':'e'}" data-kg="${c}" data-kp="${p}">${t}</button>`).join('')}${['된소리되기','품사','문장'].map(t=>`<span class="ktl k">🔒 ${t}</span>`).join('')}</div>
-     <div class="dwsm" style="margin-top:6px">문법 잎은 문법 탭의 기초 수업이에요. 누르면 그 수업이 열려요.</div>`}
+  let groups;
+  if(area==='gram'){const it=([c,p,t])=>({t,st:ktGramDone(c,p)?'d':'e',a:`data-kg="${c}" data-kp="${p}"`});
+    groups=[{h:'음운 · 소리',items:KTREE_GRAM.slice(0,4).map(it)},{h:'음운 변동',items:KTREE_GRAM.slice(4).map(it).concat([{t:'된소리되기',st:'k'}])},{h:'단어 · 문장',items:[{t:'품사',st:'k'},{t:'문장',st:'k'}]}]}
   else{const nx=ktNext(area);
-    body=KMAP[area].secs.map((s,si)=>{const lv=KLEAF[area].filter(l=>l.sec===si);const lk=ktLocks(area,si);if(!lv.length&&!lk.length)return '';
-      return `<div class="kttw"><div class="ktth">${s.h.replace(/^[ⅠⅡⅢⅣⅤ]+\s*/,'')}</div>${lv.map(l=>`<button class="ktl ${S.done[l.id]?'d':nx&&nx.id===l.id?'t':'e'}" data-kl="${l.id}">${l.t}</button>`).join('')}${lk.map(t=>`<span class="ktl k">🔒 ${t}</span>`).join('')}</div>`}).join('')}
+    groups=KMAP[area].secs.map((s,si)=>({h:s.h.replace(/^[ⅠⅡⅢⅣⅤ]+\s*/,''),items:KLEAF[area].filter(l=>l.sec===si).map(l=>({t:l.t,st:S.done[l.id]?'d':nx&&nx.id===l.id?'t':'e',a:`data-kl="${l.id}"`})).concat(ktLocks(area,si).map(t=>({t,st:'k'})))})).filter(g=>g.items.length)}
+  const body=ktTreeHTML(groups,KMAP[area].t+' 나무')+(area==='gram'?'<div class="dwsm" style="margin-top:6px">문법 잎은 문법 탭의 기초 수업이에요. 누르면 그 수업이 열려요.</div>':'');
   const dn=area==='gram'?KTREE_GRAM.filter(([c,p])=>ktGramDone(c,p)).length:KLEAF[area].filter(l=>S.done[l.id]).length;const all=area==='gram'?KTREE_GRAM.length:KLEAF[area].length;
   $('#main').innerHTML=DW_CSS+MAP_CSS+KT_CSS+`<div class="dw"><div class="dwtop"><h2>🌳 시훈이 국어 나무</h2></div>
    <div class="mtabs">${tabs.map(([k,t])=>`<button class="${k===area?'on':''}" data-ma="${k}">${t}</button>`).join('')}</div>
-   <div class="ktlg"><span class="ktl d">채운 잎</span><span class="ktl t">오늘 잎</span><span class="ktl e">다음 잎</span><span class="ktl k">🔒 나중에</span></div>
-   <div class="ktbr"><div class="dwh" style="display:flex;justify-content:space-between"><span>${KMAP[area].t}</span><small class="dwsm">잎 ${dn} / ${all}</small></div>${body}<div id="dwpop"></div></div>
+   <div class="ktlg2"><span class="kl3 d"><i></i>채운 잎</span><span class="kl3 t"><i></i>오늘 잎</span><span class="kl3 e"><i></i>다음 잎</span><span class="kl3 k"><i></i>나중에</span><span class="dwsm" style="align-self:center">· 잎 ${dn} / ${all}</span></div>
+   ${body}<div id="dwpop"></div>
    ${area!=='gram'&&ktNext(area)?`<button class="dwgo" id="ktgo">🍃 오늘 잎: ${ktNext(area).t}</button>`:''}
    ${area!=='gram'&&dn?`<button class="dwgo lt" id="ktbl">🧠 이 가지 빈 나무 처음부터 채우기</button>`:''}
    <button class="dwgo lt" id="ktcells">🗺️ 칸 지도로 보기</button></div>`;
@@ -9600,6 +9635,9 @@ function viewMap(area){clearTimeout(KM&&KM.tm);clearTimeout(KT&&KT.tm);area=area
   const g=$('#ktgo');if(g)g.onclick=()=>ktStart(area,ktNext(area).id);
   const bl=$('#ktbl');if(bl)bl.onclick=()=>{const L=KLEAF[area].filter(l=>S.done[l.id]).flatMap(l=>l.c).map(ktCell).filter(Boolean);mapRun(area,L,true)};
   $('#ktcells').onclick=()=>viewMapCells(area==='gram'?'gram':area)}
+/* 블록·빈 나무 화면 위의 작은 나무: 채운 칸 = 초록 잎(이름), 지금 칸 = ?, 남은 칸 = 빈 잎 */
+function ktFillTree(spec,root){return M=>{const dn=new Set(M.list.slice(0,M.i).map(N=>N.id));const cur=M.list[M.i]&&M.list[M.i].id;
+  return ktTreeHTML(spec.map(g=>({h:g.h,items:g.ids.map(id=>{const N=ktCell(id)||{n:id};return dn.has(id)?{t:N.n,st:'d'}:id===cur?{t:'?',st:'c'}:{t:'',st:'b'}})})),root,true)}}
 /* 잎 하나 공부 */
 function ktStart(area,lid){clearTimeout(KT&&KT.tm);const l=KLEAF[area].find(x=>x.id===lid);if(!l)return viewMap(area);
   KT={area,l,ci:0,cells:l.c.map(ktCell).filter(Boolean),t0:Date.now()};ktCard()}
@@ -9610,10 +9648,10 @@ function ktCard(){const R=KT;const N=R.cells[R.ci];const last=R.ci>=R.cells.leng
    ${R.ci?'<button class="dwgo lt" id="ktpv">← 앞 카드</button>':''}<button class="dwgo" id="ktnx">${last?'알겠어, 해 볼게':'다음 →'}</button></div>`;window.scrollTo(0,0);
   $('#ktbk').onclick=()=>viewMap(R.area);const pv=$('#ktpv');if(pv)pv.onclick=()=>{R.ci--;ktCard()};
   $('#ktnx').onclick=()=>{if(!last){R.ci++;ktCard();return}
-    mapRun(R.area,R.cells,false,{ttl:'🍃 블록으로 채우기',onEnd:(M,done,first)=>{R.fill={n:done.length,first,miss:M.miss};ktReview()}})}}
+    mapRun(R.area,R.cells,false,{tree:ktFillTree([{h:R.l.t,ids:R.cells.map(N=>N.id)}],'오늘 잎'),ttl:'🍃 블록으로 채우기',onEnd:(M,done,first)=>{R.fill={n:done.length,first,miss:M.miss};ktReview()}})}}
 function ktReview(){const R=KT;const S=ktStore();const prev=S.ord.filter(id=>id!==R.l.id&&KLEAF[R.area].some(l=>l.id===id)).slice(-2);
   const L=R.cells.concat(prev.flatMap(id=>KLEAF[R.area].find(l=>l.id===id).c).map(ktCell).filter(Boolean));R.prev=prev;
-  mapRun(R.area,dwSh(L),true,{ttl:'🌳 빈 나무',onEnd:(M,done,first)=>{R.rv={n:done.length,first,miss:M.miss};ktEnd(done.length>=L.length)}})}
+  mapRun(R.area,dwSh(L),true,{tree:ktFillTree(prev.map(id=>{const l=KLEAF[R.area].find(x=>x.id===id);return {h:l.t,ids:l.c}}).concat([{h:R.l.t,ids:R.cells.map(N=>N.id)}]),'빈 나무'),ttl:'🌳 빈 나무',onEnd:(M,done,first)=>{R.rv={n:done.length,first,miss:M.miss};ktEnd(done.length>=L.length)}})}
 function ktEnd(full){const R=KT;const S=ktStore();
   if(full){S.done[R.l.id]=HUB.today();S.ord=S.ord.filter(x=>x!==R.l.id).concat(R.l.id);store(KTK,S)}
   const nm=o=>Object.fromEntries(Object.entries(o||{}).filter(([k,v])=>v).map(([k,v])=>[(R.cells.concat(R.prev.flatMap(id=>KLEAF[R.area].find(l=>l.id===id).c).map(ktCell)).find(N=>N&&N.id===k)||{n:k}).n,v]));
