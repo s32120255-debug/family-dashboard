@@ -1975,9 +1975,9 @@ function topbar(title,back){return `<div class="top"><h1>${title}</h1><button cl
 function mins(ms){return Math.max(1,Math.round(ms/60000))}
 function lastActual(){const ds=Object.keys(RLOG.days||{}).sort().reverse();for(const d of ds){const D=RLOG.days[d];if(D.actualMin&&d!==today())return {d,m:D.actualMin}}return null}
 function home(){const s=SES(),D=(RLOG.days||{})[today()];
-  if(!BANK||!BANK.items.length){$('#main').innerHTML=topbar('🗣️ 영어 5문장')+'<div class="card">문장이 아직 없어요.</div>';return}
-  let h=topbar('🗣️ 영어 5문장');
-  if(mapSetToday()){h=topbar('🗺️ 영어 · 내 지도')+mapHomeHTML();$('#main').innerHTML=h;return}
+  if(!BANK||!BANK.items.length){$('#main').innerHTML=topbar('🇺🇸 계단영어')+'<div class="card">문장이 아직 없어요.</div>';return}
+  let h=topbar('🇺🇸 계단영어');
+  if(mapSetToday()){h=topbar('🇺🇸 계단영어')+mapHomeHTML();$('#main').innerHTML=h;return}
 
   if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
     <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`+afterHTML()}
@@ -4318,7 +4318,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
   SKILLS.forEach((sk,i)=>{ if(sk.unit!==lastU){ if(lastU) units+='</div>'; units+=`<div class="day">${sk.unit}</div><div class="grid">`; lastU=sk.unit; } units+=skCard(sk,i); if(!SKILLS[i+1]||SKILLS[i+1].unit!==sk.unit) units+=bookCard(sk.unit); }); units+='</div>';
   // 엄마 11/26: 그림그래프 다음에 4학년 1학기 큰 수 단원을 잠긴 모습으로(3-2를 빨리 끝내고 싶은 마음 들게)
   units+=`<div class="day">4학년 1학기</div><div class="grid"><button class="sk g4c" style="${allPassed()?'':'opacity:.55'}"><h3>${allPassed()?'':'🔒 '}큰 수</h3><div class="pips"><span class="pip ${allPassed()?'now':''}">${allPassed()?'열렸어요! 계단수학 첫 화면에서 시작해요':'3-2 문제를 1~5단계까지 다 하면 열려요'}</span></div></button></div>`;
-  app().innerHTML=`<div class="wrap">${topBar('시훈 수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
+  app().innerHTML=`<div class="wrap">${topBar('계단수학 · 3-2','분수 · 들이와 무게 · 그림그래프',false)}
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
    ${pfReviewHome()}<button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
    ${EMBED?`<button class="big tbig ${teachDone()?'done':''}" id="tgo"><div><div class="t">${teachDone()?'✅ 오늘의 가르치기 끝':'🧑‍🏫 오늘의 가르치기 · 1문제'}</div><div class="s">${teachDone()?'카츄에게 잘 알려 줬어요. 내일 또 해요!':'카츄에게 풀이를 처음부터 순서대로 알려 줘요'}</div></div><span class="go">${teachDone()?'✓':'▶'}</span></button>`:''}
