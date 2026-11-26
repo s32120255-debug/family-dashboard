@@ -362,6 +362,7 @@ function mapRep(C,k){const M=C.routine&&C.routine.map;const d=M&&M.days&&M.days[
       ${(t.wrong||[]).length?`<div class="bad" style="font-weight:400">틀린 설명: ${esc(t.wrong.filter(Boolean).join(' / '))}</div>`:''}${mom?`<div><b>카츄 메모:</b> ${esc(mom)}</div>`:''}</div>`}).join('')));
   // 🌳 빈 나무(하루 끝, 문법 나무 잎 날)
   if(d.tree&&d.trK){const tw=d.tree.wrong||{},ks=Object.keys(tw);L.push(sec(`🌳 빈 나무 채우기 ${d.trK.length}줄${d.tree.at?'':' (아직)'}${ks.length?` · 틀린 줄 ${ks.length}`:' · 한 번에 다 맞힘'}`,ks.length?`<ul style="margin:4px 0;padding-left:20px">${ks.map(l=>li(`${esc(l)} <span class="muted">잘못 누른 블록:</span> ${esc([...new Set(tw[l])].join(', '))}`)).join('')}</ul>`:''))}
+  if(d.cm&&d.cm.b){const cw=Array.isArray(d.cm.wrong)?d.cm.wrong:[];L.push(sec(`🧭 계통도 · ${esc(d.cm.b)}${d.cm.at?` · ${d.cm.n||'?'}칸 중 한 번에 ${d.cm.first||0}칸`:' (아직)'}`,cw.length?`<ul style="margin:4px 0;padding-left:20px">${cw.map(x=>li(`${esc(x.q)} <span class="muted">고른 것:</span> ${esc(x.p)} <span class="muted">정답:</span> ${esc(x.a)}`)).join('')}</ul>`:''))}
   // 내 이야기
   const W=d.write;if(W&&W.at)L.push(sec('📖 내 이야기',`<div class="tut">${W.ko?esc(W.ko)+'<br>':''}<b>${esc(W.en||'')}</b>${W.wrong?` <span class="muted">(블록 ${W.wrong}번 잘못 누름)</span>`:''}</div>`));
   return `<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px"><b>🗺️ 내 지도 · ${esc(MKT[d.set]||d.set||'')}</b>${d.end?' <span class="ok">끝</span>':' <span class="muted">아직 안 끝남</span>'}${L.join('')}</div>`}
