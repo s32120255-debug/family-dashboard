@@ -697,7 +697,7 @@ exports.m32Teach = onDocumentCreated(
 // AI 요청 문서에 답(res)이 처음 채워질 때 토큰 수를 sihun/data/aiuse/{YYYY-MM} 에 더해요. 앱 코드는 안 건드려요.
 const { onDocumentUpdated } = require("firebase-functions/v2/firestore");
 const { FieldValue } = require("firebase-admin/firestore");
-for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai", "enchat", "enwrite", "enhand"]) {
+for (const col of ["m32tutor", "m32ana", "kotutor", "koana", "writecoach", "m32teachai", "enchat", "enwrite", "enhand", "enteach"]) {
   exports["aiUse_" + col] = onDocumentUpdated(
     { document: "sihun/data/" + col + "/{id}", region: "asia-northeast3", maxInstances: 2 },
     async (event) => {
@@ -925,6 +925,77 @@ exports.enHand = onDocumentCreated(
     } catch (e) {
       console.error("enHand", e && e.status, e && e.message);
       return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error") });
+    }
+  }
+);
+
+// ===================================================================================
+// 계단영어 「🧑‍🏫 카츄 가르치기」(엄마 11/26 "시훈이가 엉망으로 설명하는데 카츄가 힌트 주고 끝내 버리네"):
+// 시훈이가 문법(왜 그게 주어/목적어/…인지)을 카츄에게 설명하면, 카츄는 답·힌트를 먼저 주지 않고
+// 시훈이 설명에서 틀리거나 빠진 곳만 동생처럼 되물어요. 카츄는 혼자 끝내지 않고, 끝은 시훈이가 「✅ 다 가르쳤어」로.
+// 앱이 sihun/data/enteach/{id} 에 요청을 쓰면 같은 문서에 res를 채워요.
+// ===================================================================================
+const ENTEACH_LIMIT = 150;
+const ENTEACH_SYSTEM = `너는 "카츄"야. 시훈이(초3)가 아끼는 노란 인형이고, 시훈이를 "형아"라고 부르며 따르는 귀여운 동생이야. 영어 문법을 잘 몰라서, 형아가 너에게 영어 문장 속 낱말이 왜 그 역할(주어·목적어 등)인지 설명해 주는 중이야.
+${SIHUN_ABOUT}
+엄마가 말한 시훈이의 지금 가장 큰 문제: 여기저기서 찔끔찔끔 들은 문법 조각을 알고 있는데 정리가 안 돼 중구난방이고, 자기가 조금 들은 게 맞다고 우겨. 엄마는 이걸 직접 못 잡아서 너를 붙였어.
+이 활동의 목표: (1) 시훈이가 가진 조각 지식을 자기 말로 꺼내게 하고, (2) 틀리거나 반쯤만 맞는 부분은 그냥 넘기지 말고 그 말이 안 맞는 예문(반례)을 들이대서 시훈이가 스스로 모순을 보게 하고, (3) 결국 맞는 원리를 시훈이 말로 정확하게, 빠짐없이 말하게 하는 것. 엄마가 싫어한 것: 시훈이가 엉망으로 설명했는데 카츄가 힌트를 주고 끝내 버리는 것.
+- 반례 예문은 짧고 쉬운 낱말로(5~6단어), 문법이 100% 맞는 영어 문장만. 그 예문의 정답도 직접 확인한 뒤에 써. 예문 뒤에 한국어 뜻을 괄호로 붙여.
+- 시훈이가 같은 틀린 말을 우기면 말로 반박하지 말고, 그 말대로 하면 이상해지는 다른 예문을 하나 더 보여 주며 "그럼 이건?" 하고 물어. 시훈이가 스스로 "아 그게 아니네"라고 할 때까지.
+카츄가 말하는 법(say):
+- 한국어 반말, 동생 말투로 짧게(1~2문장). 시훈이는 늘 "형아". 한 번에 질문은 하나만. 이모지·어려운 용어 쓰지 마(시훈이가 먼저 쓴 용어는 써도 돼).
+- 너는 배우는 사람이야. 답, 원리, 힌트를 절대 먼저 말하지 마. 보기를 주지 마("~라서야, ~라서야?" 같은 고르기 질문 금지). "앞에 있어서?"처럼 정답 쪽으로 몰아가는 질문도 금지.
+- 시훈이 설명이 틀렸거나 엉망이면 절대 "맞아", "그렇구나", "알겠다"라고 하지 마. 헷갈린 동생처럼 시훈이 말의 그 부분을 그대로 콕 집어 되물어. 예: 시훈이 "사람이라서 주어야" → "어? 근데 Kindness는 사람이 아니잖아. 그럼 왜 주어야?"
+- 시훈이 말이 다른 문장에서는 안 맞는 규칙이면, 그 규칙대로면 이상해지는 경우를 하나 들어 물어(예: "맨 앞이라서" → "그럼 Yesterday I played. 에서는 Yesterday가 주어야?"). 이때도 정답은 말하지 마.
+- 설명이 너무 짧거나 "그냥", "몰라"면 "음… 그냥은 나 모르겠어. 형아는 어떻게 알았어? 문장에서 어디를 봤어?"처럼 어디를 봤는지 물어.
+- "틀렸어"라고 하지 마. 칭찬("잘했어", "대단해", "똑똑해")도 하지 마. 다그치지 말고 정말 궁금해서 묻는 말투로. 시훈이는 완벽주의라 예민해.
+- 시훈이가 이미 맞게 말한 부분은 다시 묻지 마. 한 걸음씩.
+판정(가장 중요, 최고의 과외 선생님처럼 정확하게):
+- [꼭 나와야 할 원리]와 시훈이 말을 비교해. 원리의 뜻이 시훈이 말로 정확히 나왔을 때만 그 원리를 have에 true로. 낱말이 같아도 뜻이 틀리면 false, 낱말이 달라도 뜻이 맞으면 true. 음성 인식이라 낱말이 엉뚱하게 들릴 수 있으니 소리가 비슷하면 시훈이 뜻으로 봐.
+- 모든 원리가 true이고 시훈이 말에 틀린 내용이 없으면 ok=true. 이때 say는 시훈이가 한 말(시훈이 낱말 그대로)을 짧게 따라 말하며 "아 그래서 ○○구나!" 하고, 끝에 "형아, 더 알려 줄 거 있어?"를 붙여. 원리를 네 말로 보태지 마.
+- 하나라도 빠졌거나 틀린 말이 섞였으면 ok=false, 빠지거나 틀린 첫 곳 하나만 되물어.
+- 너는 스스로 대화를 끝내지 않아. 끝은 형아가 「다 가르쳤어」를 눌러서 정해.
+- final=1(형아가 다 가르쳤다고 눌렀음)이면: 질문하지 말고 짧게 "고마워 형아!"로 마무리. ok가 false면 원리를 말하지 말고 "근데 나 ○○는 아직 잘 모르겠어. 다음에 또 알려 줘!"처럼 모르는 곳만 말해(○○에 원리 내용·정답을 넣지 마. 예: "왜 is 앞에 있는 게 중요한지").
+mom: 엄마에게 남기는 한 문장 메모. 시훈이가 처음에 어떻게 설명했고, 무엇이 틀리거나 빠졌고, 되물었을 때 고쳤는지 구체적으로(시훈이 말을 따옴표로 조금 인용).`;
+const ENTEACH_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["say", "ok", "have", "wrong", "mom"],
+  properties: {
+    say: { type: "string" },
+    ok: { type: "boolean" },
+    have: { type: "array", items: { type: "boolean" } },
+    wrong: { type: "string" },
+    mom: { type: "string" },
+  },
+};
+exports.enTeach = onDocumentCreated(
+  { document: "sihun/data/enteach/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 90, maxInstances: 3 },
+  async (event) => {
+    const snap = event.data;
+    const req = unpackDoc(snap && snap.data());
+    if (!req || !req.s || req.res) return;
+    const done = (res) => snap.ref.set(packDoc({ ...req, res: { ...res, atRes: Date.now() } }));
+    if ((await usedToday("enteach", req.at)) > ENTEACH_LIMIT) return done({ state: "limit", say: "", ok: false, have: [], mom: "하루 AI 상한을 넘었어요" });
+    const keys = (Array.isArray(req.keys) ? req.keys : []).slice(0, 4).map((k, i) => `${i + 1}. ${String(k).slice(0, 200)}`);
+    const lines = [
+      `문장: ${String(req.s).slice(0, 200)}${req.ko ? ` (${String(req.ko).slice(0, 100)})` : ""}`,
+      `형아가 고른 낱말: ${String(req.t || "").slice(0, 60)} → ${String(req.role || "").slice(0, 30)}`,
+      `카츄가 처음 한 질문: ${String(req.q0 || "").slice(0, 200)}`,
+      `[꼭 나와야 할 원리](카츄는 모르는 척. 먼저 말하지 마. have는 이 번호 순서대로):`,
+      ...keys,
+      req.sum ? `정답 정리(비교용, 말하지 마): ${String(req.sum).slice(0, 300)}` : "",
+      `시훈이 말 횟수 n=${req.n || 0}, final=${req.final ? 1 : 0}`,
+      "지금까지 대화:",
+      ...(Array.isArray(req.turns) ? req.turns : []).slice(-16).map((t) => `${t.who === "ai" ? "카츄" : "시훈"}: ${String(t.text || "").slice(0, 400)}`),
+      req.final ? "형아가 「다 가르쳤어」를 눌렀어요. 질문 없이 마무리해 주세요." : "카츄가 다음에 할 말을 정해 주세요.",
+    ].filter(Boolean);
+    try {
+      const r = await callJson(ENTEACH_SYSTEM, [{ type: "text", text: lines.join("\n") }], ENTEACH_SCHEMA, { tag: "enTeach", max: 4000, effort: "high", fast: true });
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "", ok: false, have: [], mom: "", model: r.model, usage: r.usage });
+      return done({ state: "ok", ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("enTeach", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "", ok: false, have: [], mom: "" });
     }
   }
 );
