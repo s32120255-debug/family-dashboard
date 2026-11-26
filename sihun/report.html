@@ -319,6 +319,34 @@ async function teachFill(k){ const el=document.getElementById('tcbody'); if(!el)
   el.innerHTML=L.length?L.map(teachHTML).join(''):'<p class="muted">이날 가르치기 기록이 없어요.</p>'; }
 const POSK={n:'명사',v:'동사',a:'형용사',d:'부사',p:'대명사',q:'의문사',r:'전치사'};
 const stat=(v,l)=>`<div class="st"><b>${v}</b><span>${l}</span></div>`;
+
+// 🗺️ 계단영어 내 지도 자세히(엄마 11/26 "리포트가 어설퍼, 틀린 거·카츄랑 한 것 자세히"): 그날 틀린 문제(고른 답 → 정답), 헤맨 블록, 쓴 문장, 카츄 가르치기 대화 전체
+const MKT={M1:'MARK 1-1 · 명사와 대명사',M2:'MARK 1-2 · 동사',M3:'MARK 1-3 · 형용사와 부사',M4:'MARK 1-4 · 전치사 · 접속사 · 감탄사',M5:'MARK 1-5 · 한 단어, 여러 품사',M6:'MARK 2-1 · 문장 성분',M7:'MARK 2-3 · 보어 자리',M8:'MARK 2-4 · 수식어 자리',M9:'MARK 3-1·3-2 · 1·2형식',M10:'MARK 3-3 · 3·4·5형식',A:'be · There',R:'다시 채우기'};
+function mapRep(C,k){const M=C.routine&&C.routine.map;const d=M&&M.days&&M.days[k];if(!d)return '';const L=[];const li=x=>`<li style="margin:4px 0">${x}</li>`;const sec=(t,b)=>b?`<div style="margin-top:10px"><b>${t}</b>${b}</div>`:'';
+  // 원리 카드
+  const rx=d.rsx||{},rl=d.rsl||{},rn=Object.keys(rx).length,rok=Object.values(rx).filter(v=>v).length;
+  const rbad=Object.keys(rx).filter(i=>!rx[i]).map(i=>{const r=rl[i];return r?li(`${r.ex?`<span class="muted">예문</span> ${esc(r.ex)}<br>`:''}${esc(r.q)}<br>시훈 <span class="bad">${esc(r.pick)}</span> → 정답 <span class="ok">${esc(r.ans)}</span>`):li(`${+i+1}번 카드 <span class="muted">(자세한 기록은 11/26 오후부터)</span>`)});
+  L.push(sec(`📌 원리 카드 ${rn?rok+' / '+rn+' 맞힘':'–'}`,rbad.length?`<ul style="margin:4px 0;padding-left:20px">${rbad.join('')}</ul>`:''));
+  // 블록
+  const bk=Object.values(d.blk||{}),bw=bk.filter(x=>x.w>0);
+  L.push(sec(`🧱 블록 문장 ${bk.length}개${bk.length?` · 헤맨 문장 ${bw.length}`:''}`,bw.length?`<ul style="margin:4px 0;padding-left:20px">${bw.map(x=>li(`${esc(x.ko||'')} → ${esc(x.en||'')} <span class="muted">(${x.w}번 잘못 누름 · ${x.sec}초)</span>`)).join('')}</ul>`:''));
+  // 문법 문제
+  const qz=(d.quiz||[]).filter(Boolean),qbad=qz.filter(x=>!x.ok);
+  L.push(sec(`📝 문법 문제 ${qz.length?qz.filter(x=>x.ok).length+' / '+qz.length+' 맞힘':'–'}`,qbad.length?`<ul style="margin:4px 0;padding-left:20px">${qbad.map(x=>x.q?li(`${esc(x.q)}${x.ko?` <span class="muted">${esc(x.ko)}</span>`:''}<br>시훈 <span class="bad">${esc(x.o[x.pick])}</span> → 정답 <span class="ok">${esc(x.o[x.a])}</span>`):li(`<span class="muted">틀림 (자세한 기록은 11/26 오후부터)</span>`)).join('')}</ul>`:''));
+  // 쓴 문장(자신 있는 문장 · 지도 칸 · 복습)
+  const cells=Object.values((M&&M.cells)||{}).filter(x=>x&&x.d===k&&x.typed),cbad=cells.filter(x=>!x.ok);
+  const rev=Object.values(d.rev||{}),rvbad=rev.filter(x=>!x.ok);
+  const wr=[...cbad,...rvbad.filter(x=>!cbad.some(y=>y.en&&y.en===x.en))];
+  L.push(sec(`✍️ 안 보고 쓰기 ${cells.length+rev.length?`맞힘 ${cells.filter(x=>x.ok).length+rev.filter(x=>x.ok).length} / ${cells.length+rev.length}`:'–'}`,wr.length?`<ul style="margin:4px 0;padding-left:20px">${wr.map(x=>li(`${x.ko?esc(x.ko)+'<br>':''}시훈 <span class="bad">${esc(x.typed)}</span>${x.en?` → 정답 <span class="ok">${esc(x.en)}</span>`:''} <span class="muted">${x.sec?x.sec+'초':''}</span>`)).join('')}</ul>`:''));
+  // 카츄 가르치기
+  const T=(d.teach||[]).filter(Boolean);
+  if(T.length)L.push(sec(`🧑‍🏫 카츄 가르치기 ${T.length}문장`,T.map(t=>{const turns=t.turns||[];const mom=(t.mom||[]).slice(-1)[0];
+    return `<div class="tut">${t.end?(t.end==='ok'?'<span class="ok">✅ 원리를 다 설명함</span>':'<span class="bad">⏸ 원리를 아직 다 설명 못 하고 끝냄</span>'):turns.length?'<span class="muted">중간에 멈춤</span>':''}${(t.pickW||0)?` <span class="muted">· 자리 고르기 ${t.pickW}번 틀림</span>`:''}
+      ${turns.length?turns.map(x=>`<div>${x.who==='ai'?'⚡ 카츄':'🙋 시훈'}: ${esc(x.text)}</div>`).join(''):t.why!=null?`<div>🙋 시훈: ${esc(t.why||'(잘 모르겠어)')}</div>${(t.miss||[]).length?`<div class="muted">빠진 원리 ${t.miss.length}개 → 보기 고르기 ${t.probeW||0}번 틀림 (예전 방식)</div>`:''}`:''}
+      ${(t.wrong||[]).length?`<div class="bad" style="font-weight:400">틀린 설명: ${esc(t.wrong.filter(Boolean).join(' / '))}</div>`:''}${mom?`<div><b>카츄 메모:</b> ${esc(mom)}</div>`:''}</div>`}).join('')));
+  // 내 이야기
+  const W=d.write;if(W&&W.at)L.push(sec('📖 내 이야기',`<div class="tut">${W.ko?esc(W.ko)+'<br>':''}<b>${esc(W.en||'')}</b>${W.wrong?` <span class="muted">(블록 ${W.wrong}번 잘못 누름)</span>`:''}</div>`));
+  return `<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px"><b>🗺️ 내 지도 · ${esc(MKT[d.set]||d.set||'')}</b>${d.end?' <span class="ok">끝</span>':' <span class="muted">아직 안 끝남</span>'}${L.join('')}</div>`}
 async function render(){
   const k=dkey(day);const C=CACHE;
   const D=await getD('daily/'+k).catch(()=>null)||{subjects:{}};const S=D.subjects||{};
@@ -334,8 +362,9 @@ async function render(){
       return `<p>📌 <b>문법 단계: ${esc(STN[g.k]||g.k)}</b>${g.back?' (🔁 다시 다지는 날)':''}<br>혼자 · 철자까지 정확 <b>${g.perfect??'–'} / ${g.n??'–'}</b> · 오늘의 문법 고르기 <b>${q.n?q.ok+' / '+q.n:'–'}</b>${(q.picks||[]).some(p=>p&&!p.ok)?` <span class="muted">(틀린 고르기: ${(q.picks||[]).filter(p=>p&&!p.ok).map(p=>esc(p.v)).join(', ')})</span>`:''}
       <br>${g.pass?`<span class="ok">🎉 통과${g.fast?' (빠른 통과)':''}</span>`:g.eval?(g.good?'4문장 이상 정확 · 한 번 더 이러면 통과':'아직 · 다음에 새 문장으로 다시'):'<span class="muted">아직 안 끝남</span>'}${g.sendBack?` · 복습 이틀 틀려 <b>${esc(STN[g.sendBack]||g.sendBack)}</b> 하루 다시`:''}
       <br><span class="muted">지금까지 통과: ${Object.keys(G.passed||{}).map(x=>esc(STN[x]||x)).join(' → ')||'없음'}</span></p>`})()}
+    ${mapRep(C,k)}
     ${R.nook?`<p>🧩 틈새 코너: <b>${esc(R.nook.p||'')}</b> 따라 말하고 뜻 봄</p>`:''}<div id="enchat"></div>
-    ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
+    ${clsL?`<ul>${clsL}</ul>`:''}${!vn&&!(en.main||R.n)&&!(C.routine&&C.routine.map&&C.routine.map.days&&C.routine.map.days[k])?'<p class="muted">이날 영어 기록이 없어요.</p>':''}</div>`;
   // 국어 (엄마 11/23: 그날 한 것 + 틀린 문제를 시훈 답·정답 나란히)
   const KR=C.results.filter(r=>r.at&&dkey(new Date(r.at))===k).sort((a,b)=>a.at<b.at?-1:1);
   h+=`<div class="card"><h2>📖 국어</h2><div id="kobody">${KR.length?'<p class="muted">불러오는 중…</p>':'<p class="muted">이날 국어 기록이 없어요.</p>'}</div></div>`;
