@@ -1,6 +1,6 @@
 {
-  "name": "5분 말하기",
-  "short_name": "5분 말하기",
+  "name": "스피드 영어",
+  "short_name": "스피드 영어",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
