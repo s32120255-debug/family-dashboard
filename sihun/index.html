@@ -1680,19 +1680,45 @@ const MAPUNITK=MARKU.map(u=>u.k),MAPLT={},LEAFBY={};
     const L=(WFIX[x]&&LEAFBY[WFIX[x]])||has(new RegExp('\\b'+x+'\\b'))||has(new RegExp('\\b'+x))||(x.length>=5&&has(new RegExp('\\b'+x.slice(0,-1))))||live.find(L=>(L.st||[]).concat(L.c||[]).some(x=>typeof x==='string'&&x.split('.')[0]===u.k));if(L)MAPSET[L.k].words.push(w)}));
   MAPORDER.length=0;live.forEach(L=>MAPORDER.push(L.k))})();
 function mapLeafDone(M,k){return !!(M.done||{})[k]}
-// 🌳 나무 그림: 가지(8품사) → 잎, 아래 뿌리(문장 만들기). ✓ 채운 잎(누르면 정리) · 🍃 오늘 잎 · 점선 = 아직 · 🔒 나중에
 let LTOPEN=null;
-function mapLeafView(cur){const M=mapS(),A=[],seen=[];MAPLEAF.forEach(L=>{const key=L.br==='뿌리'?'뿌리':L.br;if(!seen.includes(key)){seen.push(key);A.push({br:key,ls:[]})}A.find(x=>x.br===key).ls.push(L)});
+// 🌳 나무 그림(엄마 11/26 「나무 모양으로, 아예 나무」): 줄기 가운데, 가지 8품사(왼쪽 명사·대명사·형용사·전치사 / 오른쪽 동사·부사·접속사·감탄사), 가지 끝에 잎, 땅 아래 뿌리 = 문장 만들기.
+// 잎: ✓ 초록 = 채운 잎(누르면 정리) · 파란 테 = 오늘 잎 · 점선 = 아직 · 🔒 = 나중에. 반짝임 없음.
+const LSN={N1:'이름 = 명사',N2:'꼬리 -ness',N3:'하나·여럿 a, -s',P1:'주어 I·he',P2:'동사 뒤 me·him',P3:'~의 my·his',P4:'~의 것 mine',V1:'be동사',V2:'동사 + -s',V3:'can·will·must',V4:'자동사·타동사',V5:'시제·수동태',A1:'명사 꾸미기',A2:'be 뒤',A3:'look·taste 뒤',A4:'비교급',D1:'-ly 부사',D2:'always·never',D3:'Sadly, (문장)',R1:'전치사 + 명사',R2:'at·on·in',R3:'with me·him',J1:'and·but·so',J2:'when·if',J3:'because (of)',I1:'Oh·Wow·Ouch'};
+function mapTw(s,f){let w=0;for(const ch of s)w+=/[가-힣]/.test(ch)?f:/[✓🔒🍃]/.test(ch)?f*1.1:/[ .·,]/.test(ch)?f*.36:f*.64;return w}
+function mapLeafView(cur){const M=mapS(),W=760,TX=380,F=17,LH=38;
+  const st=L=>L.lock?'lock':L.k===cur?'now':mapLeafDone(M,L.k)?'done':'todo';
+  const SKIN={done:['#d6efdc','#2a9d5c','solid','✓ '],now:['#eef3ff','#2f5fa3','solid','🍃 '],todo:['#ffffff','#9fb0cc','dash',''],lock:['#f4f4f2','#9a9ea8','dot','🔒 ']};
+  const by=b=>MAPLEAF.filter(L=>L.br===b),PAIR=[['명사','동사'],['대명사','부사'],['형용사','접속사'],['전치사','감탄사']];
+  let y=78;const rows=PAIR.map(([a,b])=>{const la=by(a),lb=by(b),h=Math.max(la.length,lb.length)*LH+26,r={a,b,la,lb,y:y+h/2};y+=h;return r});
+  const top=40,bot=y+10,gy=bot+50;let g='',leaves='',br='';
+  // 잎 하나(알약 모양 + 작은 잎사귀)
+  const leaf=(L,x,ly,side)=>{const s=st(L),K=SKIN[s],t=K[3]+(LSN[L.k]||L.n),w=mapTw(t,F)+34,x0=side<0?x-w:x,dn=s==='done';
+    const tw=side<0?`M${x+30} ${ly} q-14 0 -30 0`:`M${x-30} ${ly} q14 0 30 0`;
+    return `<path d="${tw}" stroke="#7a5230" stroke-width="3" fill="none"/><ellipse cx="${side<0?x+8:x-8}" cy="${ly-7}" rx="9" ry="4.5" fill="#6fb27f" transform="rotate(${side<0?-30:30} ${side<0?x+8:x-8} ${ly-7})"/>
+      <g ${dn?`data-act="mapLfOpen" data-k="${L.k}" style="cursor:pointer"`:''}><rect x="${x0}" y="${ly-15}" width="${w}" height="30" rx="15" fill="${K[0]}" stroke="${K[1]}" stroke-width="${s==='now'?3:2}" ${K[2]==='dash'?'stroke-dasharray="6 4"':K[2]==='dot'?'stroke-dasharray="2 4"':''}/>
+      <text x="${x0+w/2}" y="${ly+6}" text-anchor="middle" font-size="${F}" font-weight="${s==='now'?800:700}" fill="${s==='lock'?'#5d6270':'#1f2330'}">${esc(t)}</text></g>`};
+  rows.forEach(r=>{[[r.a,r.la,-1],[r.b,r.lb,1]].forEach(([name,ls,side])=>{if(!ls.length)return;const px=TX+side*92,n=ls.length;
+      br+=`<path d="M${TX} ${r.y+16} C ${TX+side*30} ${r.y+14}, ${TX+side*40} ${r.y+2}, ${px} ${r.y}" stroke="#7a5230" stroke-width="12" fill="none" stroke-linecap="round"/>`;
+      const lx=TX+side*172;ls.forEach((L,i)=>{const ly=r.y+(i-(n-1)/2)*LH;
+        br+=`<path d="M${px+side*40} ${r.y} C ${px+side*58} ${r.y}, ${lx-side*40} ${ly}, ${lx-side*30} ${ly}" stroke="#7a5230" stroke-width="3.5" fill="none"/>`;leaves+=leaf(L,lx,ly,side)});
+      leaves+=`<rect x="${px-46}" y="${r.y-18}" width="92" height="36" rx="18" fill="#2f6b45"/><text x="${px}" y="${r.y+7}" text-anchor="middle" font-size="19" font-weight="800" fill="#ffffff">${esc(name)}</text>`})});
+  // 나뭇잎 덩어리(차분한 연두)
+  const cy=(top+bot)/2,ry=(bot-top)/2+20;g+=`<ellipse cx="${TX}" cy="${cy}" rx="372" ry="${ry}" fill="#e7f2df"/>`;
+  for(let i=0;i<18;i++){const a=i/18*Math.PI*2;g+=`<circle cx="${TX+Math.cos(a)*330}" cy="${cy+Math.sin(a)*(ry-30)}" r="62" fill="#e7f2df"/>`}
+  g+=`<path d="M${TX-34} ${gy} C ${TX-20} ${gy-60}, ${TX-14} ${top+120}, ${TX-12} ${top+60} L ${TX+12} ${top+60} C ${TX+14} ${top+120}, ${TX+20} ${gy-60}, ${TX+34} ${gy} Z" fill="#8a5a33"/>`;
+  // 땅 · 뿌리(문장 만들기)
+  const RG=[];MAPLEAF.filter(L=>L.br==='뿌리').forEach(L=>{let x=RG.find(z=>z.g===L.g);if(!x)RG.push(x={g:L.g,ls:[]});x.ls.push(L)});
   const brDone=MAPLEAF.filter(L=>L.br!=='뿌리'&&!L.lock).every(L=>mapLeafDone(M,L.k));
-  const chip=L=>{const dn=!L.lock&&mapLeafDone(M,L.k)&&L.k!==cur,on=L.k===cur;
-    const st=L.lock?'background:#f4f4f2;border:2px dotted #b9bcc4;color:#5d6270':on?'background:#eef3ff;border:2px solid #2f5fa3;color:#1f2330;font-weight:800':dn?'background:#e3f6ea;border:2px solid #7cc79b;color:#1f2330':'background:#fff;border:2px dashed #c3cbe0;color:#4a5163';
-    return `<button ${dn?`data-act="mapLfOpen" data-k="${L.k}"`:'disabled'} style="${st};opacity:1;border-radius:14px;padding:5px 10px;margin:3px;font:700 15px 'Noto Sans KR';cursor:${dn?'pointer':'default'}">${L.lock?'🔒 ':on?'🍃 ':dn?'✓ ':''}${esc(L.n)}${L.lock?' · 나중에':''}</button>`};
-  let h=`<div style="border:2px solid #e3ded2;border-radius:14px;padding:8px 10px;background:#fff;margin:8px 0">`;
-  A.forEach(b=>{if(b.br==='뿌리'){h+=`<div style="border-top:2px solid #e3ded2;margin:8px 0 4px;padding-top:6px;font:800 16px 'Noto Sans KR';color:#1f2330">🌱 뿌리 · 문장 만들기 ${brDone?'':'<span class="tip" style="font-weight:700">(가지를 다 채우면 열려요)</span>'}</div>`;
-      const gs=[];b.ls.forEach(L=>{if(!gs.includes(L.g))gs.push(L.g)});gs.forEach(g=>{h+=`<div style="display:flex;align-items:flex-start;gap:6px;margin:2px 0"><div style="flex:0 0 96px;font:800 14px 'Noto Sans KR';color:#5d4a1f;padding-top:9px">${esc(g)}</div><div style="flex:1;display:flex;flex-wrap:wrap">${b.ls.filter(L=>L.g===g).map(chip).join('')}</div></div>`})}
-    else h+=`<div style="display:flex;align-items:flex-start;gap:6px;margin:2px 0"><div style="flex:0 0 auto;min-width:74px;white-space:nowrap;font:800 15px 'Noto Sans KR';color:#2a6b45;padding-top:8px">🌿 ${esc(b.br)}</div><div style="flex:1;display:flex;flex-wrap:wrap">${b.ls.map(chip).join('')}</div></div>`});
-  if(LTOPEN&&MAPLT[LTOPEN]){const L=LEAFBY[LTOPEN];h+=`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5"><b>${esc(L.br==='뿌리'?L.g:L.br)} · ${esc(L.n)}</b>${MAPLT[LTOPEN].map(r=>`<div style="margin-top:4px">• ${esc(r.sum)}${r.ex?` <b>${esc(r.ex)}</b>`:''}</div>`).join('')}</div>`}
-  return h+'</div>'}
+  let rt=`<rect x="0" y="${gy}" width="${W}" height="10" rx="5" fill="#c9b48a"/>`,rp='';
+  const per=[4,3];let k=0,yy=gy+86;per.forEach(n=>{const part=RG.slice(k,k+n);k+=n;const gap=W/(part.length+1);part.forEach((z,i)=>{const x=gap*(i+1),dn=z.ls.every(L=>mapLeafDone(M,L.k)),now=z.ls.some(L=>L.k===cur),s=now?'now':dn?'done':'todo',K=SKIN[s],t=K[3]+(z.g==='자리가 품사를 정해요'?'자리 = 품사':z.g),w=mapTw(t,16)+24;
+      rp+=`<path d="M${TX} ${gy+4} C ${TX} ${yy-30}, ${x} ${gy+30}, ${x} ${yy-15}" stroke="#a07a4e" stroke-width="4" fill="none"/>`;
+      rt+=`<g ${dn?`data-act="mapLfOpen" data-k="g:${esc(z.g)}" style="cursor:pointer"`:''}><rect x="${x-w/2}" y="${yy-15}" width="${w}" height="30" rx="8" fill="${K[0]}" stroke="${K[1]}" stroke-width="2" ${s==='todo'?'stroke-dasharray="6 4"':''}/><text x="${x}" y="${yy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2330">${esc(t)}</text></g>`});yy+=52});
+  rt=rp+rt+`<text x="${TX}" y="${yy+4}" text-anchor="middle" font-size="18" font-weight="800" fill="#5d4a1f">🌱 뿌리 · 문장 만들기${brDone?'':' (가지를 다 채우면 열려요)'}</text>`;
+  const H=yy+20;
+  let h=`<div style="overflow-x:auto;margin:8px 0;-webkit-overflow-scrolling:touch"><svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;font-family:'Noto Sans KR',sans-serif;font-size-adjust:none!important" role="img" aria-label="문법 나무">${g}${br}${leaves}${rt}</svg></div>`;
+  if(LTOPEN){const ks=LTOPEN.startsWith('g:')?MAPLEAF.filter(L=>L.g===LTOPEN.slice(2)).map(L=>L.k):[LTOPEN];const L0=LEAFBY[ks[0]];
+    if(L0)h+=`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5"><b>${esc(L0.br==='뿌리'?L0.g:L0.br+' · '+L0.n)}</b>${ks.flatMap(k=>MAPLT[k]||[]).map(r=>`<div style="margin-top:4px">• ${esc(r.sum)}${r.ex?` <b>${esc(r.ex)}</b>`:''}</div>`).join('')}</div>`}
+  return h}
 // 하루 끝 빈 나무: 오늘 잎 줄 전부 + 지난 잎 2개에서 한 줄씩(전에 틀린 줄 먼저)
 function mapLeafT(d){if(!d.trK){const M=mapS(),wr={};Object.keys(M.days).forEach(x=>{const y=M.days[x];if(x.startsWith('try')||!y.tree||!y.tree.wrong)return;Object.keys(y.tree.wrong).forEach(l=>wr[l]=(wr[l]||0)+1)});
     const past=MAPORDER.filter(k=>k!==d.set&&mapLeafDone(M,k)&&(MAPLT[k]||[]).length).map(k=>{const rs=MAPLT[k].map((r,i)=>({i,w:wr[r.lab]||0}));const top=rs.sort((a,b)=>b.w-a.w||Math.random()-.5)[0];return {k,i:top.i,w:top.w,r:Math.random()}}).sort((a,b)=>b.w-a.w||a.r-b.r).slice(0,2);
@@ -1702,7 +1728,26 @@ function mapTreeOf(d){if(!d)return null;const S=MAPSET[d.set];if(S&&S.leaf)retur
 function mapTrInit(T,rows){const all=rows||T.rows.map((_,i)=>i);MZ.tr={rows:all,ri:0,fill:{},wrong:[],open:{},msg:'',round:rows?2:1,pool:null};all.forEach(i=>MZ.tr.fill[i]=[])}
 function mapTrPool(T){const tr=MZ.tr,r=T.rows[tr.rows[tr.ri]];if(!r)return [];if(!tr.pool){const L=r.ans.concat(r.x||[]);let o,n=0;do{o=L.map((w,j)=>({w,j})).sort(()=>Math.random()-.5);n++}while(n<6&&r.ord&&o.every((x,j)=>x.j===j));tr.pool=o.map(x=>x.w)}
   const used=tr.fill[tr.rows[tr.ri]].slice();return tr.pool.filter(w=>{const k=used.indexOf(w);if(k>=0){used.splice(k,1);return false}return true})}
-function mapTreeHTML(d,S,T){if(!MZ.tr)mapTrInit(T);const tr=MZ.tr,cur=tr.rows[tr.ri],done=tr.ri>=tr.rows.length;let g='';
+// 🍃 하루 끝 빈 나무(엄마 11/26 「나뭇잎 채우는」): 가운데 줄기, 줄마다 가지가 좌우로 번갈아 뻗고, 가지 끝 빈 나뭇잎에 블록을 채움
+function mapTreeFillHTML(d,S,T){const tr=MZ.tr,cur=tr.rows[tr.ri],done=tr.ri>=tr.rows.length;let g='';
+  const LEAFS="border-radius:2px 22px 2px 22px;min-width:58px;min-height:34px;padding:5px 12px;font:800 17px 'Noto Sans KR';color:#1f2330;display:inline-flex;align-items:center;justify-content:center";
+  let h=`<div class="tip">${esc(S.t)} · 🍃 빈 나무 채우기${tr.round>1?' · 틀렸던 가지 한 번 더':''}</div><h2 style="margin:6px 0 4px">🌳 나뭇잎 채우기</h2><p class="tip" style="margin:0 0 6px">${done?'다 채웠어요. 📖 를 누르면 그 가지 정리가 나와요.':'파란 가지의 빈 나뭇잎을 아래 블록으로 채워요.'}</p>`;
+  h+=`<div style="position:relative;background:radial-gradient(ellipse at 50% 45%,#e7f2df 0,#e7f2df 62%,rgba(231,242,223,0) 72%);border-radius:40px;padding:14px 0 0">
+    <div style="position:absolute;left:50%;top:6px;bottom:0;width:26px;margin-left:-13px;background:#8a5a33;border-radius:12px 12px 4px 4px"></div>`;
+  T.rows.forEach((r,i)=>{const on=i===cur&&!done,f=tr.fill[i],full=f?f.length>=r.ans.length:true,re=tr.rows.includes(i),L=i%2===0;
+    const hd=r.g&&r.g!==g?(g=r.g,`<div style="font:800 14px 'Noto Sans KR';color:#2a6b45;margin-bottom:3px">${esc(r.g)}</div>`):'';
+    h+=`<div style="position:relative;display:flex;justify-content:${L?'flex-end':'flex-start'};width:50%;margin-left:${L?'0':'50%'};padding:${L?'0 26px 0 4px':'0 4px 0 26px'};margin-top:${i?'-6px':'0'};margin-bottom:12px">
+      <div style="position:absolute;top:30px;${L?'right:0':'left:0'};width:30px;height:8px;background:#8a5a33;border-radius:4px;transform:rotate(${L?'-14deg':'14deg'})"></div>
+      <div style="position:relative;max-width:100%;background:#fff;border:2px solid ${on?'#2f5fa3':'#cfe3c6'};${on?'box-shadow:0 0 0 2px #2f5fa3 inset;':''}border-radius:16px;padding:7px 9px">${hd}
+        <div style="display:flex;align-items:center;gap:6px;justify-content:space-between"><b style="font-size:16px;color:#1f2330;line-height:1.35">${esc(r.lab)}</b>${full&&(!re||f.length)?`<button class="btn light sm" data-act="mapTrSum" data-i="${i}">📖</button>`:''}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;justify-content:${L?'flex-end':'flex-start'}">${r.ans.map((a,j)=>{const v=re?f[j]:a;return `<span style="${LEAFS};background:${v?'#cfeccf':'#fff'};border:2px ${v?'solid #6db37f':'dashed #8cc49a'}">${v?esc(v):'&nbsp;'}</span>`}).join('')}</div>
+        ${tr.open[i]?`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5">${esc(r.sum)}${r.ex?`<div style="margin-top:4px"><b>${esc(r.ex)}</b></div>`:''}</div>`:''}</div></div>`});
+  h+=`<div style="position:relative;height:14px;background:#c9b48a;border-radius:7px;margin:0 8px"></div></div>`;
+  if(!done){if(tr.msg)h+=`<div class="notice" style="text-align:left;color:#1f2330">${tr.msg}</div>`;
+    h+=`<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0">${mapTrPool(T).map(w=>`<button class="chip" data-act="mapTrB" data-w="${esc(w)}" style="font:800 19px 'Noto Sans KR';padding:10px 14px">${esc(w)}</button>`).join('')}</div>`}
+  else{const again=tr.round===1&&tr.wrong.length;h+=`<div class="row" style="justify-content:center"><button class="btn big" data-act="${again?'mapTrAgain':'mapTreeOk'}">${again?'틀렸던 가지 한 번 더 ▶':'나무 다 채웠어 ▶'}</button></div>`}
+  return h}
+function mapTreeHTML(d,S,T){if(!MZ.tr)mapTrInit(T);if(MZ.step==='tree')return mapTreeFillHTML(d,S,T);const tr=MZ.tr,cur=tr.rows[tr.ri],done=tr.ri>=tr.rows.length;let g='';
   let h=`<div class="tip">${esc(S.t)} · 🌳 ${MZ.step==='tree'?'빈 나무':'빈 지도'} 채우기${tr.round>1?' · 틀렸던 줄 한 번 더':''}</div><h2 style="margin:6px 0 4px">🌳 ${esc(T.t)}</h2><p class="tip" style="margin:0 0 8px">${done?'다 채웠어요. 📖 를 누르면 그 줄 정리가 나와요.':'파란 줄의 빈칸을 블록으로 채워요.'}</p>`;
   T.rows.forEach((r,i)=>{const on=i===cur&&!done,f=tr.fill[i],full=f?f.length>=r.ans.length:true,re=tr.rows.includes(i);
     if(r.g&&r.g!==g){g=r.g;h+=`<div style="font:800 17px 'Noto Sans KR';color:#1f2330;margin:10px 0 2px">${esc(g)}</div>`}
