@@ -1294,7 +1294,9 @@ function mapWordsFill(){Object.values(MAPSET).forEach(S=>(S.words||[]).forEach((
 
 const MAPWHY=[['📘','이해'],['🌊','컨디션'],['🎯','주의'],['🗣️','꺼내기'],['🔋','후반 집중']];
 let MZ=null;
-function mapS(){const M=RLOG.map||(RLOG.map={cells:{},days:{},done:{}});if(!M.bf1126&&!window.HUBTRY&&MAPORDER.length&&Object.keys(M.days||{}).length){M.bf1126=1;try{mapBackfill(M)}catch(e){}setTimeout(()=>{try{save()}catch(e){}},0)}return M}
+function mapS(){const M=RLOG.map||(RLOG.map={cells:{},days:{},done:{}});if(!M.bf1126&&!window.HUBTRY&&MAPORDER.length&&Object.keys(M.days||{}).length){M.bf1126=1;try{mapBackfill(M)}catch(e){}setTimeout(()=>{try{save()}catch(e){}},0)}
+  // 🌳 나무로 바꾸기 전에 끝낸 단원(오늘 하던 M1 포함) → 그 단원에서 온 잎은 채운 것으로(잎 첫 내용의 단원 기준)
+  if(typeof MAPLEAF!=='undefined'){M.done=M.done||{};MAPLEAF.forEach(L=>{if(L.lock||M.done[L.k])return;const r=(L.st||[]).concat(L.c||[]).find(x=>typeof x==='string');const u=r&&r.split('.')[0];if(u&&M.done[u])M.done[L.k]=M.done[u]})}return M}
 // 엄마 11/26 "오늘 지나간 것도?": 자세한 리포트 기록(문제 글·한국어·정답)을 넣기 전에 한 기록에도 아는 만큼 채워 넣음(한 번만).
 // 원리 카드는 고른 답이 저장돼 있지 않아 정답만, 오늘 오후에 문제를 바꾼 카드는 문제 글도 비움(시훈이가 본 것과 달라서).
 function mapBackfill(M){const A=MAPALL(),CH={M1:[0,1,2,6,7],M2:[4,6],M3:[0],M4:[4],M6:[3,6],M7:[4,5],M9:[1,2,4],M10:[0,4]};const fill=(o,k)=>{const c=A[k];if(o&&c&&!o.ko){o.ko=c.ko;o.en=c.en[0]}};
@@ -1309,6 +1311,7 @@ function mapBackfill(M){const A=MAPALL(),CH={M1:[0,1,2,6,7],M2:[4,6],M3:[0],M4:[
 function mapDKey(){if(window.HUBTRY){if(window.TRYDAY==='today')return 'tryT:'+today();if(window.TRYDAY==='tomorrow')return 'try:'+today();const d=mapS().days[today()];if(d&&d.end)return 'try:'+today()}return today()}
 function mapWeak(k){const M=mapS(),S=MAPSET[k];if(!S)return 0;const ds=Object.keys(M.days).filter(x=>!x.startsWith('try')&&M.days[x].set===k).sort(),L=ds.length?M.days[ds[ds.length-1]]:null;
   // 블록 방식 날(11/26~): 블록에서 두 번 넘게 헤맨 문장 수로 판단(직접 쓰기는 고른 문장만이라 기준에서 뺌)
+  if(S.leaf){if(!L||!L.blkAt)return 0;const n=S.cells.filter(c=>{const b=(L.blk||{})[c.k];return b&&b.w>=2}).length;return n>=Math.max(2,Math.ceil(S.cells.length/2))?MAP_WEAK:0}
   if(L&&L.blkAt)return S.cells.filter(c=>{const b=(L.blk||{})[c.k];return b&&b.w>=2}).length;return S.cells.filter(c=>mapColor(M.cells[c.k])!=='green').length}
 function mapSetToday(){if(today()<MAP_FROM&&!window.HUBTRY)return null;const M=mapS();let d=M.days[mapDKey()];
   // MARK로 바꾸기 전에 열어 둔 be·There 날: 칸을 하나도 안 했으면 MARK로 바꿈
@@ -1319,7 +1322,7 @@ function mapSetToday(){if(today()<MAP_FROM&&!window.HUBTRY)return null;const M=m
     if(mapWeak(k)>=MAP_WEAK)return k}
   return 'R'}
 // R = 다시 채우기: 지금까지 칸 중 ⬜ → 🟡(느린 순) → 🟢(느린 순)으로 10칸
-const MAPALL=()=>{const o={};MAPORDER.forEach(k=>MAPSET[k].cells.forEach(c=>o[c.k]=Object.assign({set:k},c)));return o};
+const MAPALL=()=>{const o={};MARKU.map(u=>u.k).concat(MAPORDER).forEach(k=>((MAPSET[k]||{}).cells||[]).forEach(c=>{if(!o[c.k])o[c.k]=Object.assign({set:k},c)}));return o};
 function mapPickR(){const M=mapS(),A=MAPALL(),o={gray:0,yellow:1,green:2,'':3};return Object.values(A).filter(c=>M.cells[c.k]).sort((a,b)=>{const x=M.cells[a.k],y=M.cells[b.k];return o[mapColor(x)]-o[mapColor(y)]||(y.sec||0)-(x.sec||0)}).slice(0,10).map(c=>c.k)}
 function mapSetOf(d){if(!d)return null;if(d.set!=='R')return MAPSET[d.set];const A=MAPALL(),cells=(d.rk||[]).map(k=>A[k]).filter(Boolean),sets=[...new Set(cells.map(c=>c.set))];
   return {t:'다시 채우기 · 느린 칸과 다음에 배울 칸',rule:['오늘은 지금까지 지도에서 <b>느렸던 칸 · 다음에 배울 칸</b>을 다시 채워요. 원리가 기억 안 나면 아래를 한 번 보고 가요.'].concat(sets.map(k=>`<b>${esc(MAPSET[k].t)}</b><br>`+MAPSET[k].rule[sets.length>2?0:1]||MAPSET[k].rule[0])),
@@ -1354,7 +1357,7 @@ function mapBlkInit(){const c=mapCells()[MZ.i],b=mapBlks(c);const pool=b.map((x,
 function mapBlkPrev(k){const M=mapS();const ks=Object.keys(M.days).filter(x=>x<today()&&!x.startsWith('try')).sort().reverse();for(const x of ks){const r=(M.days[x].blk||{})[k];if(r&&r.sec!=null)return r.sec}return null}
 // 🧑‍🏫 카츄에게 원리 설명하기(엄마 11/25 「영어대화 · 한국어 원리설명 2코너」): 문장에서 고르기 → 한국어로 왜? 설명 → 빠진 핵심은 카츄가 되물음(고르기) → 원리 한 줄 → 새 문장 풀기. 서버 AI 없이 앱 안에서.
 function mapTeach(){const S=mapSetOf(mapDay());return S?S.teach||[]:[]}
-function mapCellEn(en){for(const k of MAPORDER.concat(['A'])){const c=((MAPSET[k]||{}).cells||[]).find(c=>c.en[0]===en);if(c)return c}return null}
+function mapCellEn(en){for(const k of MARKU.map(u=>u.k).concat(MAPORDER,['A'])){const c=((MAPSET[k]||{}).cells||[]).find(c=>c.en[0]===en);if(c)return c}return null}
 const TASK={S:'주어가 뭐야?',V:'동사가 뭐야?',O:'목적어(무엇을)가 뭐야?',IO:"'~에게'가 뭐야?",C:'보어가 뭐야?',M:'수식어가 뭐야?',Ms:'빼면 안 되는 장소 말(M*)이 뭐야?',J:'접속사가 뭐야?'};
 function mapKat(t){return `<div style="display:flex;gap:10px;align-items:flex-start;margin:8px 0"><div style="flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:#ffd84d;display:flex;align-items:center;justify-content:center;font-size:24px">⚡</div><div style="background:#fffbe8;border:2px solid #f2d36b;border-radius:16px;padding:8px 12px;font:700 18px 'Noto Sans KR'">${t}</div></div>`}
 function mapTeachPick(en,t,glow){const c=mapCellEn(en),b=c?mapBlks(c):[[en,'N']];return `<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:10px 0">${b.map((x,j)=>`<button class="chip" data-act="mapTPick" data-j="${j}" style="font:800 19px 'Noto Sans KR';padding:10px 14px;${glow&&x[0]===t?'box-shadow:0 0 0 4px #ffd84d':''}">${esc(x[0])}</button>`).join('')}</div>`}
@@ -1401,7 +1404,7 @@ async function mapWTrans(){const d=mapDay(),W=d.write;W.tr='wait';save();render(
   try{if(DB){const id=today()+'-'+Date.now().toString(36);await DB.doc('enwrite/'+id).set({ko:W.ko,at:today()});for(let i=0;i<25&&!res;i++){await new Promise(r=>setTimeout(r,1000));if(i>=12)break;try{const sn=await DB.doc('enwrite/'+id).get();const x=sn.exists?sn.data():null;if(x&&x.res)res=x.res}catch(e){}}}}catch(e){}
   const W2=mapDay().write;if(res&&res.state==='ok'&&res.en&&Array.isArray(res.blocks)&&res.blocks.length>1&&res.blocks.map(b=>b.t).join(' ')===res.en){W2.tr='ok';W2.en0=res.en;W2.blocks=res.blocks;W2.koBack=res.ko||''}else{W2.tr='self';W2.trErr=res?(res.state||'bad'):'timeout'}MZ.wo=null;save();if(V.view==='map'&&MZ&&MZ.step==='write')render()}
 // 블록 방식 날 순서(11/26 엄마: 원리 먼저): 원리 카드 → 블록 → 문법 문제 → 자신 있는 문장 골라 쓰기 → 복습 → 말하기 → 카츄 영어 → 카츄 가르치기 → 내 이야기
-function mapStepNew(d){if(!d.ruleAt)return 'rule';if(!d.blkAt)return 'blk';if((d.quiz||[]).length<mapQuiz().length)return 'quiz';if(!d.pickDone)return 'pick';if(!d.spoke&&mapRevLeft(d))return 'rev';if(!d.spoke)return 'speak';if(!chatDone(dayRec(today())))return 'chat';if(!d.teachAt&&mapTeach().length)return 'teach';if(!(d.write&&d.write.at))return 'write';return 'end'}
+function mapStepNew(d){if(!d.ruleAt)return 'rule';if(!d.blkAt)return 'blk';if((d.quiz||[]).length<mapQuiz().length)return 'quiz';if(!d.pickDone)return 'pick';if(!d.spoke&&mapRevLeft(d))return 'rev';if(!d.spoke)return 'speak';if(!chatDone(dayRec(today())))return 'chat';if(!d.teachAt&&mapTeach().length)return 'teach';if(!(d.write&&d.write.at))return 'write';if(MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.tree&&d.tree.at))return 'tree';return 'end'}
 // ✍️ 자신 있는 문장 골라 쓰기(엄마 11/25): 1개 쓰면 성공 · 하나 더는 원하는 만큼 · 자신 있게 고른 걸 다르게 쓰면 보너스 라운드(다시 외우고 다시 쓰기 + 새 문장 1개). 처음에 게임 규칙처럼 안내
 function mapPadPref(){if(!window.__padPref){let v=null;try{v=JSON.parse(localStorage.getItem('en50:padPref')||'null')}catch(e){}window.__padPref=v&&v.pw!=null?v:{pw:1,ew:1}}return window.__padPref}
 const PADW=[2,3.5,5.5],PADE=[10,20,36];
@@ -1512,12 +1515,195 @@ M10:{t:'3·4·5형식',rows:[
  {lab:'동사 뒤 둘, 목적어 = 그 뒤 말',ans:['5형식'],x:['4형식','2형식'],sum:'We named the dog Max. (the dog = Max) → 5형식'},
  {lab:'4형식 → 3형식: He gave a gift ( ) me.',ans:['to'],x:['at','on'],ce:'「He gave a gift {x} me.」 이렇게 말해?',sum:'He gave me a gift. = He gave a gift to me.'}]}
 };
-function mapTreeOf(d){return d&&d.v26&&MAPTREE[d.set]||null}
+// ===== 🌳 문법 나무 (엄마 11/26 「저 스타일로 쪼개 가자」 → 설계안 OK 「응 그리 하고」) =====
+// 가지 = 8품사, 잎 = 하루 공부(그 잎 원리 카드 2~3장 + 블록 + 문제 + 카츄 가르치기), 뿌리 = 문장 만들기(가지 다 채운 뒤).
+// 내용은 MARK 단원(MARKU)에서 잎에 맞는 것만 골라 옴('M1.3' = M1의 4번째). 비는 잎(하나·여럿, 주어 자리 등)은 새로 씀.
+// 하루 끝 = 🌳 빈 나무 채우기: 오늘 잎 줄 + 지난 잎 줄 몇 개를 블록으로 채움. 칸 키(M1-3 등)는 그대로라 예전 기록·복습이 이어짐.
+const MAPLEAF=[
+ {k:'N1',br:'명사',n:'이름이 명사',st:['M1.0','M1.8'],c:['M1.2','M1.6',
+   {n:'명사 주어·목적어',ko:'그 소녀는 책을 가지고 있어.',en:['The girl has a book.'],kat:{scene:'📚 카츄가 그 소녀가 뭘 들고 있냐고 물어요. 책을 가지고 있다고 말해 줘요.',say:'What does the girl have?',ko:'그 소녀는 뭘 가지고 있어?'},b:[['The girl','S'],['has','V'],['a book.','O']],x:['have','girl(한 명)이 주어 → has'],h:'girl(소녀) · book(책) = 이름 → 명사'}],
+  q:[{t:'찾기',q:'"We talked about the problem." 에서 명사는?',ko:'우리는 그 문제에 대해 이야기했어.',o:['problem','talked','about'],a:0,why:'problem(문제) = 이름 → 명사. talked는 동사, about은 전치사'},
+     {t:'개념',q:'사람·물건·장소의 이름을 부르는 품사는?',o:['명사','동사','형용사'],a:0,why:'이름 = 명사 (girl, book, Seoul)'},
+     {t:'찾기',q:'"My brother became a teacher." 에서 명사가 아닌 것은?',ko:'우리 형은 선생님이 되었어.',o:['became','brother','teacher'],a:0,why:'became(~이 되었다)은 동사. brother · teacher는 사람 이름'}],
+  te:[{s:'The girl has a book.',r:'O',t:'a book.',k:[{w:['이름','물건','명사','책'],q:'book은 왜 명사일까?',o:['물건의 이름이라서','동사 뒤라서','짧아서'],a:0}],sum:'명사 = 사람·물건·장소·생각의 이름.',nw:{s:'We talked about the problem.',r:'M',t:'about the problem.'}}],
+  tr:[{lab:'명사 = 사람·물건·장소의 ( )',ans:['이름'],x:['동작','모양'],ce:'{x}을 나타내는 말이 명사일까? run(달리다)은 동작이잖아.',sum:'명사 = 이름. girl · book · Seoul · teacher · problem',ex:'The girl has a book.'},
+      {lab:'명사인 것',ans:['girl','book','Seoul'],x:['run','happy'],ce:'「{x}」는 무엇의 이름이야? 「a {x}」 하고 말하면 이상하지 않아?',sum:'사람(girl) · 물건(book) · 장소(Seoul)의 이름 → 명사'}]},
+ {k:'N2',br:'명사',n:'명사 꼬리 -tion·-ness',st:['M1.1'],c:['M1.8','M1.1',
+   {n:'생각 명사 friendship',ko:'우정은 중요해.',en:['Friendship is important.'],kat:{scene:'🤝 카츄가 친구랑 싸웠대요. 우정은 중요하다고 말해 줘요.',say:'I fought with my friend.',ko:'나 친구랑 싸웠어.'},b:[['Friendship','S'],['is','V'],['important.','C']],x:['Friend','친구 한 명이 아니라 우정 → Friendship (-ship 꼬리)'],h:'-ship 꼬리 → 명사 (friendship 우정)'}],
+  q:['M1.0','M1.1',{t:'고르기',q:'다음 중 명사는?',o:['kindness','kind','kindly'],a:0,why:'-ness 꼬리 → 명사. kind(친절한)는 형용사, kindly(친절하게)는 부사'}],
+  te:['M1.0'],tr:['M1.0']},
+ {k:'N3',br:'명사',n:'하나·여럿 (a, -s)',
+  st:[{t:'명사가 <b>하나</b>면 앞에 <b>a</b>를 붙여요. a book · a cat · a dog',q:'"I have a dog." 에서 a는 왜 붙었나요?',o:['개가 한 마리라서','개가 여럿이라서','dog가 동사라서'],a:0,w:'명사가 하나 → a dog. 여럿이면 dogs',ex:['I have a dog.','나는 개 한 마리가 있어.']},
+      {t:'명사가 <b>여럿</b>이면 끝에 <b>-s</b>를 붙여요. 그때는 a를 안 붙여요. two cats · three books',q:'"I have two cats." 에서 cats의 -s는 왜 붙었나요?',o:['고양이가 여럿이라서','동사라서','과거라서'],a:0,w:'two(둘) → 여럿 → cats',ex:['I have two cats.','나는 고양이가 두 마리 있어.']},
+      {t:'주어가 여럿이면 be동사도 바뀌어요. The cat <b>is</b> … / The cats <b>are</b> …',q:'"The cats ___ cute." 에 맞는 것은?',o:['is','are'],a:1,w:'cats = 여럿 → are',ex:['The cats are cute.','고양이들은 귀여워.']}],
+  c:[{n:'하나 = a',ko:'나는 개 한 마리가 있어.',en:['I have a dog.'],kat:{scene:'🐶 카츄가 형아네 집에 동물이 있냐고 물어요.',say:'Do you have a pet?',ko:'형아 반려동물 있어?'},b:[['I','S'],['have','V'],['a dog.','O']],x:['dogs','한 마리면 a dog. 여럿일 때만 -s'],h:'a = 하나'},
+     {n:'여럿 = -s',ko:'나는 고양이가 두 마리 있어.',en:['I have two cats.'],kat:{scene:'🐱 카츄가 고양이 몇 마리 키우냐고 물어요.',say:'How many cats do you have?',ko:'고양이 몇 마리 있어?'},b:[['I','S'],['have','V'],['two cats.','O']],x:['cat','two(둘)면 여럿 → cats'],h:'two + 명사-s'},
+     {n:'여럿 주어 + are',ko:'고양이들은 귀여워.',en:['The cats are cute.'],kat:{scene:'😺 카츄가 고양이들 어떠냐고 물어요.',say:'How are the cats?',ko:'고양이들 어때?'},b:[['The cats','S'],['are','V'],['cute.','C']],x:['is','여럿(cats)이면 are'],h:'cats = 여럿 → are'},
+     {n:'three + -s',ko:'그녀는 책이 세 권 있어.',en:['She has three books.'],kat:{scene:'📚 카츄가 그 누나 책이 몇 권이냐고 물어요.',say:'How many books does she have?',ko:'그 누나 책 몇 권 있어?'},b:[['She','S'],['has','V'],['three books.','O']],x:['book','three(셋) → 여럿 → books'],h:'three + 명사-s'}],
+  q:[{t:'고르기',q:'I have two ___.',ko:'나는 고양이가 두 마리 있어.',o:['cat','cats','a cat'],a:1,why:'two(둘) → 여럿 → cats'},
+     {t:'고르기',q:'I have ___ dog.',ko:'나는 개 한 마리가 있어.',o:['a','two','many'],a:0,why:'한 마리 → a dog'},
+     {t:'어법',q:'다음 중 바른 문장은?',o:['The cats is cute.','The cats are cute.','The cat are cute.'],a:1,why:'cats(여럿) → are, cat(하나) → is'}],
+  te:[{s:'I have two cats.',r:'O',t:'two cats.',k:[{w:['여럿','두','둘','two','-s'],q:'왜 cat이 아니라 cats일까?',o:['two(둘)라서 여럿','동사라서','과거라서'],a:0}],sum:'명사가 하나면 a, 여럿이면 끝에 -s.',nw:{s:'She has three books.',r:'O',t:'three books.'}}],
+  tr:[{lab:'하나면 앞에 ( )',ans:['a'],x:['-s','the'],ce:'개 한 마리는 a dog 이야, dogs 야?',sum:'명사가 하나 → a (a dog, a book)',ex:'I have a dog.'},
+      {lab:'여럿이면 끝에 ( )',ans:['-s'],x:['a','-ly'],ce:'고양이 두 마리는 two cat 이야, two cats 야?',sum:'명사가 여럿 → 끝에 -s (two cats). 주어가 여럿이면 are.',ex:'The cats are cute.'}],
+  w:[['cute','귀여운','a','cu_e','The cats are cute.','고양이들은 귀여워.']]},
+
+ {k:'P1',br:'대명사',n:'주어 자리 I·he',st:['M1.2','M1.3'],
+  c:[{n:'주어 We',ko:'우리는 피자를 좋아해.',en:['We like pizza.'],kat:{scene:'🍕 카츄가 형아네 가족은 뭘 좋아하냐고 물어요.',say:'What food do you like?',ko:'무슨 음식 좋아해?'},b:[['We','S'],['like','V'],['pizza.','O']],x:['Us','주어 자리(~은/는)엔 We. us는 동사 뒤'],h:'우리는 = We (주어 자리)'},
+     {n:'주어 He',ko:'그는 친절해.',en:['He is kind.'],kat:{scene:'🙂 카츄가 새로 온 친구 어떠냐고 물어요.',say:'How is the new boy?',ko:'새로 온 애 어때?'},b:[['He','S'],['is','V'],['kind.','C']],x:['Him','주어 자리엔 He. him은 동사 뒤'],h:'그는 = He (주어 자리)'},
+     {n:'주어 They',ko:'그들은 바빠.',en:['They are busy.'],kat:{scene:'⏰ 카츄가 엄마 아빠 지금 뭐 하시냐고 물어요.',say:'Are your mom and dad free?',ko:'엄마 아빠 시간 있으셔?'},b:[['They','S'],['are','V'],['busy.','C']],x:['Them','주어 자리엔 They. them은 동사 뒤'],h:'그들은 = They (주어 자리)'}],
+  q:['M1.8','M1.5',{t:'고르기',q:'___ like pizza. (우리는)',ko:'우리는 피자를 좋아해.',o:['We','Us','Our'],a:0,why:'동사 앞 주어 자리 → We'}],
+  te:[{s:'We like pizza.',r:'S',t:'We',k:[{w:['주어','앞','동사 앞','은','는'],q:'왜 Us가 아니라 We일까?',o:['동사 앞 주어 자리라서','여럿이라서','짧아서'],a:0}],sum:'동사 앞 주어 자리 → I · you · he · she · it · we · they',nw:{s:'They are busy.',r:'S',t:'They'}}],
+  tr:['M1.1'],w:[['kind','친절한','a','ki_d','He is kind.','그는 친절해.']]},
+ {k:'P2',br:'대명사',n:'동사 뒤 me·him',st:['M1.4'],
+  c:['M1.3','M1.7',{n:'목적격 me',ko:'엄마는 나를 사랑해.',en:['Mom loves me.'],kat:{scene:'❤️ 카츄가 엄마가 형아를 어떻게 생각하시냐고 물어요.',say:'Does your mom love you?',ko:'엄마가 형아 사랑하셔?'},b:[['Mom','S'],['loves','V'],['me.','O']],x:['I','동사 뒤(~을/를)엔 me'],h:'나를 = me (동사 뒤)'}],
+  q:['M1.9',{t:'고르기',q:'I like ___. (그를)',ko:'나는 그를 좋아해.',o:['he','him','his'],a:1,why:'동사 like 뒤 → him'},
+     {t:'찾기',q:'"I like him." 에서 him은 어디에 있나요?',o:['동사 like 뒤','동사 앞','명사 앞'],a:0,why:'동사 뒤 목적어 자리 → him'}],
+  te:['M1.1'],tr:['M1.2']},
+ {k:'P3',br:'대명사',n:'~의 my·his',st:['M1.5','M1.6'],
+  c:['M1.4',{n:'소유격 his + 명사',ko:'이건 그의 가방이야.',en:['This is his bag.'],kat:{scene:'🎒 카츄가 이 가방 누구 거냐고 물어요. 그(친구)의 가방이라고 말해 줘요.',say:'Whose bag is this?',ko:'이거 누구 가방이야?'},b:[['This','S'],['is','V'],['his bag.','C']],x:['him','명사 bag 앞(~의)엔 his'],h:'그의 = his (명사 앞)'},
+     {n:'소유격 her + 명사',ko:'나는 그녀의 가방이 좋아.',en:['I like her bag.'],kat:{scene:'👜 카츄가 그 누나 가방 어떠냐고 물어요.',say:'Do you like her bag?',ko:'그 누나 가방 좋아?'},b:[['I','S'],['like','V'],['her bag.','O']],x:['she','명사 bag 앞 ~의 → her'],h:'her + 명사 = 그녀의 ~'}],
+  q:[{t:'고르기',q:'This is ___ bag. (그의)',ko:'이건 그의 가방이야.',o:['he','him','his'],a:2,why:'명사 bag 앞 → his'},
+     {t:'뜻',q:'"I like her bag." 에서 her의 뜻은?',o:['그녀의','그녀를','그녀는'],a:0,why:'명사 bag 바로 앞 → ~의'},
+     {t:'뜻',q:'"I like her." 에서 her의 뜻은?',o:['그녀를','그녀의','그녀는'],a:0,why:'동사 뒤, 뒤에 명사 없음 → 그녀를'}],
+  te:[{s:'I like her bag.',r:'O',t:'her bag.',k:[{w:['명사 앞','앞','bag','의'],q:"여기 her는 왜 '그녀의'일까?",o:['바로 뒤에 명사 bag이 있어서','동사 뒤라서','여자라서'],a:0}],sum:'명사 바로 앞 = ~의: my · his · her · our · their',nw:{s:'This is his bag.',r:'C',t:'his bag.'}}],
+  tr:['M1.3']},
+ {k:'P4',br:'대명사',n:'~의 것 mine·hers',st:['M1.7'],c:['M1.0','M1.5'],
+  q:['M1.3','M1.6',{t:'고르기',q:'The bag is ___. (그녀의 것)',ko:'그 가방은 그녀의 거야.',o:['her','hers','she'],a:1,why:'뒤에 명사가 없어요 → hers'}],te:['M1.2'],tr:['M1.4']},
+
+ {k:'V1',br:'동사',n:'be동사',st:['M2.0','M2.1'],
+  c:[{n:'I + am',ko:'나는 배고파.',en:['I am hungry.'],kat:{scene:'🍙 카츄가 간식 먹을 거냐고 물어요. 배고프다고 말해 줘요.',say:'Do you want a snack?',ko:'간식 먹을래?'},b:[['I','S'],['am','V'],['hungry.','C']],x:['is','I 뒤엔 am'],h:'I → am'},
+     {n:'you + are',ko:'너는 내 친구야.',en:['You are my friend.'],kat:{scene:'🤗 카츄가 자기가 형아한테 뭐냐고 물어요.',say:'Am I your friend?',ko:'나 형아 친구야?'},b:[['You','S'],['are','V'],['my friend.','C']],x:['is','you 뒤엔 are'],h:'you → are'},
+     {n:'they + were (과거)',ko:'그들은 집에 있었어.',en:['They were at home.'],kat:{scene:'🏠 카츄가 어제 사촌들이 어디 있었냐고 물어요.',say:'Where were your cousins?',ko:'사촌들 어디 있었어?'},b:[['They','S'],['were','V'],['at home.','M']],x:['was','they(여럿) 과거 → were'],h:'they + 과거 → were'}],
+  q:[{t:'고르기',q:'She ___ a doctor. (지금)',ko:'그녀는 의사야.',o:['am','is','are'],a:1,why:'she(한 명) 지금 → is'},
+     {t:'고르기',q:'They ___ at home yesterday.',ko:'그들은 어제 집에 있었어.',o:['was','were','are'],a:1,why:'they(여럿) + 어제(과거) → were'},
+     {t:'찾기',q:'"I am hungry." 에서 동사는?',o:['I','am','hungry'],a:1,why:'am = be동사(~이다)'}],
+  te:[{s:'They were at home.',r:'V',t:'were',k:[{w:['여럿','과거','they','어제'],q:'왜 was가 아니라 were일까?',o:['they가 여럿이고 과거라서','지금이라서','she라서'],a:0}],sum:'be동사: I am · he/she/it is · you/we/they are · 과거 was/were',nw:{s:'I am hungry.',r:'V',t:'am'}}],
+  tr:['M2.0','M2.1']},
+ {k:'V2',br:'동사',n:'일반동사 + -s',st:['M2.2'],c:['M2.9','M2.0','M2.5','M2.8'],
+  q:['M2.8',{t:'고르기',q:'She ___ a cat.',ko:'그녀는 고양이가 있어.',o:['have','has','haves'],a:1,why:'she(한 명) + 지금 → has (have의 -s 모양)'},
+     {t:'까닭',q:'"I know the answer." 에서 know에 -s가 없는 까닭은?',o:['주어가 I라서','과거라서','여럿이라서'],a:0,why:'-s는 주어가 he · she · it(하나)이고 지금일 때만'}],
+  te:['M2.2'],tr:[{lab:'he · she · it + 지금 → 동사 끝에 ( )',ans:['-s'],x:['-ly','-ed'],ce:'「She have a cat.」 이렇게 말해? 지금 일이면 동사 끝에 뭐가 붙지?',sum:'주어가 he · she · it(하나) + 지금·늘 그런 일 → 동사-s (has, rises, sleeps)',ex:'The sun rises in the east.'}]},
+ {k:'V3',br:'동사',n:'조동사 can·will·must',st:['M2.3'],
+  c:['M2.2','M2.7',{n:'조동사 will + 원형',ko:'내가 너를 도와줄게.',en:['I will help you.'],kat:{scene:'🧩 카츄가 숙제가 너무 어렵대요. 도와주겠다고 말해 줘요.',say:'My homework is so hard.',ko:'숙제 너무 어려워.'},b:[['I','S'],['will help','V'],['you.','O']],x:['helps','will 뒤엔 맨몸 help'],h:'will + 맨몸 동사'}],
+  q:['M2.2','M2.4','M2.5','M2.7','M2.9'],te:['M2.0'],tr:['M2.2']},
+ {k:'V4',br:'동사',n:'자동사·타동사',st:['M2.4','M2.5','M2.6'],c:['M2.1','M2.3','M2.4','M2.6'],q:['M2.0','M2.1','M2.3','M2.6'],te:['M2.1'],tr:['M2.3','M2.4','M2.5']},
+ {k:'V5',br:'동사',n:'시제·수동태',lock:1},
+
+ {k:'A1',br:'형용사',n:'명사 꾸미기',st:['M3.0','M8.1','M8.4'],c:['M3.8','M8.1','M8.0','M8.5'],q:['M3.0','M3.4','M8.6','M8.7'],te:['M8.0'],tr:['M3.0','M8.0','M8.2']},
+ {k:'A2',br:'형용사',n:'be 뒤 (become·get도)',st:['M3.1','M7.1','M7.3'],c:['M3.1','M3.7','M7.9','M7.2'],
+  q:['M7.0','M7.2',{t:'고르기',q:'The test was ___.',ko:'시험은 쉬웠어.',o:['easy','easily'],a:0,why:'be동사 뒤, 주어가 어떤지 → 형용사 easy'}],te:['M3.1','M7.2'],
+  tr:['M3.3',{lab:'이 동사 뒤에도 형용사 (~하게 되다)',ans:['become','turn','get'],x:['run','eat'],ce:'「It {x} cold.」 말이 돼?',sum:'become · turn · get(~하게 되다) 뒤도 형용사 (It got cold. The leaves turned red.)',ex:'It got cold.'}]},
+ {k:'A3',br:'형용사',n:'look·taste 뒤',st:['M7.0','M7.2','M7.5'],c:['M7.0','M7.1','M7.4','M7.6','M7.8','M7.3'],q:['M7.4','M7.5','M7.6','M7.7','M7.8','M7.9'],te:['M7.0','M7.1'],tr:['M7.0','M7.1','M7.2']},
+ {k:'A4',br:'형용사',n:'비교급',lock:1},
+
+ {k:'D1',br:'부사',n:'-ly 부사',st:['M3.2','M3.3'],c:['M3.4','M3.9','M3.0','M3.2'],q:['M3.1','M3.5','M3.6','M3.7'],te:['M3.0'],tr:['M3.1']},
+ {k:'D2',br:'부사',n:'빈도부사 always·never',st:['M3.5'],
+  c:['M3.5','M3.6',{n:'빈도부사 (일반동사 앞)',ko:'우리는 자주 축구를 해.',en:['We often play soccer.'],kat:{scene:'⚽ 카츄가 쉬는 시간에 뭐 하냐고 물어요.',say:'What do you do at break?',ko:'쉬는 시간에 뭐 해?'},b:[['We','S'],['often','M'],['play','V'],['soccer.','O']],x:['are','일반동사 play가 있으니 are는 필요 없어요'],h:'often(자주)은 일반동사 play 앞'}],
+  q:['M3.3','M3.8','M3.9'],te:['M3.2'],tr:['M3.2']},
+ {k:'D3',br:'부사',n:'문장 꾸미기 Sadly,',
+  st:['M3.4',{t:'<b>Luckily,</b>(다행히도) · <b>Sadly,</b>(안타깝게도)는 문장 맨 앞에서 <b>문장 전체</b>에 내 마음을 얹어요. 빼도 문장이 돼요.',q:'"Luckily, I found my bag." 에서 Luckily를 빼면?',o:['I found my bag. 그대로 문장이 돼요','문장이 무너져요'],a:0,w:'부사(수식어)는 빼도 문장이 돼요. Luckily = 다행히도',ex:['Luckily, I found my bag.','다행히도 나는 가방을 찾았어.']}],
+  c:['M3.3',{n:'문장 꾸미는 Luckily',ko:'다행히도 나는 가방을 찾았어.',en:['Luckily, I found my bag.'],kat:{scene:'🎒 카츄가 잃어버린 가방 찾았냐고 물어요.',say:'Did you find your bag?',ko:'가방 찾았어?'},b:[['Luckily,','M'],['I','S'],['found','V'],['my bag.','O']],x:['Lucky,','문장 전체를 꾸미는 건 부사 Luckily'],h:'Luckily, = 다행히도 (문장 전체)'},
+     {n:'문장 꾸미는 Sadly',ko:'안타깝게도 비가 왔어.',en:['Sadly, it rained.'],kat:{scene:'☔ 카츄가 소풍 갔냐고 물어요. 안타깝게도 비가 왔다고 말해 줘요.',say:'Did you go on a picnic?',ko:'소풍 갔어?'},b:[['Sadly,','M'],['it','S'],['rained.','V']],x:['Sad,','문장을 꾸미는 건 부사 Sadly'],h:'Sadly, = 안타깝게도 (문장 전체)'}],
+  q:['M3.2',{t:'고르기',q:'___, I found my bag. (다행히도)',ko:'다행히도 나는 가방을 찾았어.',o:['Luckily','Lucky','Luck'],a:0,why:'문장 전체를 꾸미는 부사 → Luckily'},
+     {t:'찾기',q:'"Sadly, it rained." 에서 빼도 문장이 되는 말은?',o:['Sadly','it','rained'],a:0,why:'부사(수식어)는 빼도 돼요 → It rained.'}],
+  te:[{s:'Sadly, the store closed.',r:'M',t:'Sadly,',k:[{w:['빼도','문장 전체','안타깝','마음'],q:'Sadly는 무엇을 꾸밀까?',o:['문장 전체','store 하나','closed 하나'],a:0}],sum:'문장 맨 앞 부사 + 쉼표 = 문장 전체를 꾸밈. 빼도 문장이 돼요.',nw:{s:'Luckily, I found my bag.',r:'M',t:'Luckily,'}}],
+  tr:[{lab:'문장 맨 앞 + 쉼표 → 문장 전체를 꾸미는 ( )',ans:['부사'],x:['형용사','명사'],ce:'「Sad, the store closed.」 말이 돼?',sum:'Sadly, · Luckily, = 문장 전체를 꾸미는 부사. 빼도 문장이 돼요.',ex:'Sadly, the store closed.'}],
+  w:[['luckily','다행히도','d','luck_ly','Luckily, I found my bag.','다행히도 나는 가방을 찾았어.']]},
+
+ {k:'R1',br:'전치사',n:'전치사 + 명사 덩어리',st:['M4.0','M8.2'],
+  c:['M4.0','M8.6',{n:'전치사구 in the sea',ko:'우리는 바다에서 수영했어.',en:['We swam in the sea.'],kat:{scene:'🌊 카츄가 여름에 뭐 했냐고 물어요.',say:'What did you do last summer?',ko:'지난 여름에 뭐 했어?'},b:[['We','S'],['swam','V'],['in the sea.','M']],x:['on','바다 속(안)에서 → in'],h:'in the sea = 한 덩어리 (전치사 + 명사)'}],
+  q:['M4.0','M4.1','M4.5','M8.3'],te:['M4.1'],tr:['M4.0','M8.1']},
+ {k:'R2',br:'전치사',n:'시간·장소 on·in·at',
+  st:[{t:'시간 전치사: <b>at</b> + 시각(at seven) · <b>on</b> + 요일(on Monday) · <b>in</b> + 달·아침(in May, in the morning)',q:'I get up ___ seven.',o:['at','on','in'],a:0,w:'seven(7시) = 시각 → at',ex:['I get up at seven.','나는 7시에 일어나.']},
+      {t:'장소 전치사: <b>in</b> = 안에(in the box) · <b>on</b> = 위에 붙어(on the desk) · <b>at</b> = 한 지점(at school)',q:'The cat is ___ the box. (상자 안에)',o:['in','on','at'],a:0,w:'상자 안 → in',ex:['The cat is in the box.','고양이가 상자 안에 있어.']},'M4.5'],
+  c:['M4.4','M4.5','M8.7','M4.8',{n:'시각 at',ko:'나는 7시에 일어나.',en:['I get up at seven.'],kat:{scene:'⏰ 카츄가 아침에 몇 시에 일어나냐고 물어요.',say:'When do you get up?',ko:'몇 시에 일어나?'},b:[['I','S'],['get up','V'],['at seven.','M']],x:['on','시각 앞엔 at'],h:'시각 → at'}],
+  q:['M8.9','M8.1',{t:'고르기',q:"Let's meet ___ Monday.",ko:'월요일에 만나자.',o:['on','in','at'],a:0,why:'요일 → on'}],te:['M4.2'],
+  tr:['M8.4',{lab:'시간: 시각 at · 요일 ( ) · 달 in',ans:['on'],x:['at','in'],ce:'「{x} Monday」 이렇게 말해?',sum:'at seven · on Monday · in May · in the morning',ex:'I get up at seven.'}],
+  w:[['get up','일어나다','v','get _p','I get up at seven.','나는 7시에 일어나.']]},
+ {k:'R3',br:'전치사',n:'전치사 뒤 me·him',
+  st:['M4.1',{t:'전치사 뒤 자리는 동사 뒤와 같은 모양: with <b>me</b> · for <b>him</b> · with <b>us</b> · about <b>them</b>',q:'Come with ___. (우리와)',o:['we','us','our'],a:1,w:'전치사 with 뒤 → us',ex:['Come with us.','우리와 같이 가자.']}],
+  c:['M1.9',{n:'전치사 뒤 them',ko:'나는 그들과 이야기했어.',en:['I talked with them.'],kat:{scene:'🗣️ 카츄가 쉬는 시간에 누구랑 이야기했냐고 물어요.',say:'Who did you talk with?',ko:'누구랑 이야기했어?'},b:[['I','S'],['talked','V'],['with them.','M']],x:['they','전치사 with 뒤엔 them'],h:'with + them (전치사 뒤)'},
+     {n:'전치사 뒤 us',ko:'우리와 같이 가자.',en:['Come with us.'],kat:{scene:'🚲 카츄가 혼자 심심하대요. 우리와 같이 가자고 말해 줘요.',say:'I am bored.',ko:'나 심심해.'},b:[['Come','V'],['with us.','M']],x:['we','전치사 with 뒤엔 us'],h:'with + us (전치사 뒤)'}],
+  q:['M1.2','M1.7',{t:'고르기',q:'I talked with ___. (그들과)',ko:'나는 그들과 이야기했어.',o:['they','them','their'],a:1,why:'전치사 with 뒤 → them'}],
+  te:[{s:'I went with her.',r:'M',t:'with her.',k:[{w:['전치사','with','뒤'],q:'왜 she가 아니라 her일까?',o:['전치사 with 뒤라서','여자라서','과거라서'],a:0}],sum:'전치사 뒤 대명사 → me · him · her · us · them',nw:{s:'I talked with them.',r:'M',t:'with them.'}}],
+  tr:[{lab:'전치사 뒤 대명사',ans:['me','him','us','them'],x:['I','they'],ce:'「Come with {x}.」 이상하지 않아?',sum:'전치사 뒤 = 동사 뒤와 같은 모양: me · him · her · us · them',ex:'I went with her.'}]},
+
+ {k:'J1',br:'접속사',n:'and·but·or·so',
+  st:['M4.2',{t:'<b>so</b>(그래서) = 앞이 까닭, 뒤가 결과. <b>or</b>(또는) = 둘 중 하나.',q:'I was tired, ___ I went to bed. (그래서)',o:['so','but','or'],a:0,w:'피곤했다(까닭) → 잤다(결과) → so',ex:['I was tired, so I went to bed.','나는 피곤해서 잤어.']}],
+  c:['M4.3',{n:'접속사 so',ko:'나는 피곤해서 잤어.',en:['I was tired, so I went to bed.'],kat:{scene:'😴 카츄가 어젯밤 왜 일찍 잤냐고 물어요.',say:'Why did you sleep early?',ko:'어제 왜 일찍 잤어?'},b:[['I','S'],['was','V'],['tired,','C'],['so','J'],['I','S'],['went','V'],['to bed.','M']],x:['but','피곤해서 → 잤어: 까닭 → 결과는 so'],h:'so = 그래서 (앞 까닭 → 뒤 결과)'},
+     {n:'접속사 and',ko:'나는 개와 고양이를 좋아해.',en:['I like dogs and cats.'],kat:{scene:'🐶🐱 카츄가 무슨 동물 좋아하냐고 물어요.',say:'What animals do you like?',ko:'무슨 동물 좋아해?'},b:[['I','S'],['like','V'],['dogs','O'],['and','J'],['cats.','O']],x:['but','둘 다 좋아하면 and'],h:'and = 그리고, ~와'}],
+  q:['M4.9',{t:'고르기',q:'I was tired, ___ I went to bed.',ko:'나는 피곤해서 잤어.',o:['so','but','or'],a:0,why:'까닭 → 결과 = so'},{t:'고르기',q:'I like dogs ___ cats.',ko:'나는 개와 고양이를 좋아해.',o:['and','but','so'],a:0,why:'둘 다 → and'}],
+  te:[{s:'I was tired, so I went to bed.',r:'J',t:'so',k:[{w:['그래서','결과','까닭','때문'],q:'왜 but이 아니라 so일까?',o:['앞이 까닭, 뒤가 결과라서','둘이 반대라서','둘 중 하나라서'],a:0}],sum:'and 그리고 · but 하지만 · or 또는 · so 그래서',nw:{s:'I like pizza, but my sister likes pasta.',r:'J',t:'but'}}],
+  tr:[{lab:'이어 주는 말 (그리고·하지만·또는·그래서)',ans:['and','but','or','so'],x:['on','with'],ce:'「I like pizza, {x} my sister likes pasta.」 말이 돼?',sum:'and 그리고 · but 하지만 · or 또는 · so 그래서',ex:'I like pizza, but my sister likes pasta.'}],
+  w:[['tired','피곤한','a','ti_ed','I was tired, so I went to bed.','나는 피곤해서 잤어.']]},
+ {k:'J2',br:'접속사',n:'when·because·if',st:['M4.3'],
+  c:['M4.9',{n:'접속사 if',ko:'비가 오면 우리는 집에 있어.',en:['If it rains, we stay home.'],kat:{scene:'🌧️ 카츄가 비 오는 날엔 뭐 하냐고 물어요.',say:'What do you do on rainy days?',ko:'비 오는 날엔 뭐 해?'},b:[['If','J'],['it','S'],['rains,','V'],['we','S'],['stay','V'],['home.','M']],x:['rain','if 뒤엔 주어 + 동사: it rains'],h:'If + 주어 + 동사 = ~하면'}],
+  q:['M4.2','M4.3','M4.4'],
+  te:[{s:'When I came home, the phone rang.',r:'J',t:'When',k:[{w:['뒤','주어','동사','이어','때'],q:'When 뒤에는 무엇이 올까?',o:['주어 + 동사 (I came)','명사만','아무것도 안 와요'],a:0}],sum:'when · because · if 뒤엔 주어 + 동사가 와요.',nw:{s:'If it rains, we stay home.',r:'J',t:'If'}}],
+  tr:['M4.1']},
+ {k:'J3',br:'접속사',n:'because vs because of',st:['M4.4'],c:['M4.1','M4.2'],q:['M4.7','M4.8'],te:['M4.0'],
+  tr:[{lab:'because + ( )',ans:['주어 + 동사'],x:['명사만'],ce:'「because the rain」 말이 돼?',sum:'because + 주어 + 동사 (because it rained)',ex:'We played inside because it rained.'},
+      {lab:'because of + ( )',ans:['명사'],x:['주어 + 동사'],ce:'「because of it rained」 말이 돼?',sum:'because of + 명사 (because of the rain)',ex:'We played inside because of the rain.'}]},
+ {k:'I1',br:'감탄사',n:'Oh·Wow·Ouch',st:['M4.6'],c:['M4.6','M4.7'],q:['M4.6'],te:[],tr:['M4.2']},
+
+ {k:'X1',br:'뿌리',g:'자리가 품사를 정해요',n:'light 하나, 품사 셋',st:['M5.0','M5.1','M5.2'],c:['M5.0','M5.1','M5.2'],q:['M5.0','M5.3','M5.4'],te:['M5.0','M5.2'],tr:['M5.0','M5.1','M5.2']},
+ {k:'X2',br:'뿌리',g:'자리가 품사를 정해요',n:'fast·hard·well',st:['M5.3','M5.4','M5.5','M7.4'],c:['M5.3','M5.4','M5.5','M5.6','M5.7','M5.8','M5.9','M7.5'],q:['M5.1','M5.2','M5.5','M5.6','M5.7','M5.8','M5.9'],te:['M5.1'],
+  tr:['M5.3','M5.4',{lab:'잘(동사를 꾸밈) = ( ) · 좋은 = good',ans:['well'],x:['good'],ce:'「She sings {x}.」 노래를 어떻게 불러? 좋은? 잘?',sum:'well = 잘(부사, 동사를 꾸밈) · good = 좋은(형용사, 보어 자리)',ex:'She sings well. The music sounds good.'}]},
+ {k:'X3',br:'뿌리',g:'문장 성분',n:'성분 다섯 S·V·O·C·M',st:['M6.0','M6.1','M6.2','M6.3','M6.4'],c:['M6.5','M6.1','M6.6','M6.4','M6.3'],q:['M6.0','M6.1','M6.2','M6.3','M6.5','M1.4'],te:['M6.1'],tr:['M6.0','M6.1','M6.2','M6.3','M6.4']},
+ {k:'X4',br:'뿌리',g:'문장 성분',n:'수식어 빼고 뼈대',st:['M6.5','M6.6','M6.7'],c:['M6.0','M6.2','M6.7','M6.8','M6.9'],q:['M6.4','M6.6','M6.7','M6.8','M6.9'],te:['M6.0','M6.2'],
+  tr:['M6.5',{lab:'영작 순서',ans:['누가','한다','무엇을','어디서·언제'],x:[],ord:true,ce:'뼈대가 먼저야, 꾸미는 말이 먼저야?',sum:'뼈대 먼저 [누가][한다][무엇을], 수식어(어디서·언제)는 뒤에.',ex:'I played soccer in the park.'}]},
+ {k:'X5',br:'뿌리',g:'1·2형식',n:'1형식 S V',st:['M9.0','M9.1','M9.2','M9.3'],c:['M9.0','M9.1','M9.2','M9.3','M9.4','M9.8'],q:['M9.1','M9.2','M9.4','M9.6','M9.8'],te:['M9.0','M9.2'],tr:['M9.0','M9.1','M9.3']},
+ {k:'X6',br:'뿌리',g:'1·2형식',n:'2형식 S V C',st:['M9.4','M9.5'],c:['M9.5','M9.6','M9.7','M9.9','M7.7'],q:['M9.0','M9.3','M9.5','M9.7','M9.9','M7.1','M7.3'],te:['M9.1'],tr:['M9.2','M10.0']},
+ {k:'X7',br:'뿌리',g:'3형식',n:'3형식 S V O',
+  st:['M10.0',{t:'3형식 동사 뒤 말은 <b>무엇을</b>. 주어와 같은 것이 아니에요. (I ≠ an apple)',q:'"He likes soccer." 에서 He = soccer 인가요?',o:['아니요, 다른 것 → 목적어','네, 같은 것 → 보어'],a:0,w:'He ≠ soccer → 무엇을 → 목적어 → 3형식',ex:['He likes soccer.','그는 축구를 좋아해.']}],
+  c:['M10.0','M10.6',{n:'3형식 meet',ko:'그녀는 간호사를 만났어.',en:['She met a nurse.'],kat:{scene:'🏥 카츄가 누나가 병원에서 누구를 만났냐고 물어요.',say:'Who did she meet?',ko:'누나가 누구 만났어?'},b:[['She','S'],['met','V'],['a nurse.','O']],x:['is','만났어 = met'],h:'She ≠ a nurse → 목적어 → 3형식'}],
+  q:['M10.0',{t:'형식',q:'"He likes soccer." 는 몇 형식?',o:['2형식','3형식','4형식'],a:1,why:'동사 뒤 하나, He ≠ soccer → 3형식'},
+     {t:'가르기',q:'"She is a nurse." 와 "She met a nurse." 의 차이는?',o:['앞은 She = a nurse(2형식), 뒤는 She ≠ a nurse(3형식)','둘 다 3형식','둘 다 2형식'],a:0,why:'같으면 보어(2형식), 다르면 목적어(3형식)'}],
+  te:['M10.2'],tr:['M10.1']},
+ {k:'X8',br:'뿌리',g:'4형식',n:'4형식 ~에게 ~을',st:['M10.1','M10.2','M10.3'],c:['M10.1','M10.2','M10.5','M10.7'],q:['M10.1','M10.2','M10.5','M10.7'],te:['M10.0'],tr:['M10.2','M10.4']},
+ {k:'X9',br:'뿌리',g:'5형식',n:'5형식 목적어 = 뒤 말',st:['M10.4','M10.5'],c:['M10.3','M10.4','M10.8','M10.9'],q:['M10.3','M10.4','M10.6','M10.8','M10.9'],te:['M10.1'],tr:['M10.3']},
+ {k:'X10',br:'뿌리',g:'수식어 자리',n:'명사 뒤 덩어리 · to',st:['M8.0','M8.3','M8.5'],c:['M8.2','M8.3','M8.4','M8.8','M8.9'],q:['M8.0','M8.2','M8.4','M8.5','M8.8'],te:['M8.1','M8.2'],
+  tr:['M8.3',{lab:'a place to stay 의 to stay = ( )',ans:['머물'],x:['머물려고'],ce:'place(곳)를 꾸미는 말이야. 「머물려고 곳」 말이 돼?',sum:'명사 뒤 to + 동사원형 = ~할 (a place to stay 머물 곳, a book to read 읽을 책)',ex:'We need a place to stay.'}]}
+];
+
+const MAPUNITK=MARKU.map(u=>u.k),MAPLT={},LEAFBY={};
+(function(){const F={st:'steps',c:'cells',q:'quiz',te:'teach'};
+  const ref=(f,x)=>{if(typeof x!=='string')return x;const [u,i]=x.split('.');return f==='tr'?MAPTREE[u].rows[+i]:MAPSET[u][F[f]][+i]};
+  MAPLEAF.forEach(L=>{LEAFBY[L.k]=L;if(L.lock)return;let n=0;const cells=(L.c||[]).map(x=>typeof x==='string'?ref('c',x):Object.assign({k:L.k+'-'+(++n)},x)),steps=(L.st||[]).map(x=>ref('st',x));
+    MAPSET[L.k]={t:(L.g||L.br)+' · '+L.n,leaf:L,rule:steps.map(x=>x.t),words:(L.w||[]).slice(),cells,quiz:(L.q||[]).map(x=>ref('q',x)),teach:(L.te||[]).map(x=>ref('te',x)),steps};
+    MAPLT[L.k]=(L.tr||[]).map(x=>{const r=Object.assign({},ref('tr',x));delete r.g;return r})});
+  // 단원 단어 → 그 단어가 처음 나오는 잎(없으면 그 단원 내용을 처음 쓰는 잎)
+  const live=MAPLEAF.filter(L=>!L.lock);
+  const WFIX={ring:'J2',buy:'X4',cry:'X5',lately:'X2',send:'X8',turn:'A2'};
+  MARKU.forEach(u=>u.words.forEach(w=>{const x=w[0].toLowerCase(),has=re=>live.find(L=>MAPSET[L.k].cells.some(c=>re.test(c.en[0].toLowerCase())));
+    const L=(WFIX[x]&&LEAFBY[WFIX[x]])||has(new RegExp('\\b'+x+'\\b'))||has(new RegExp('\\b'+x))||(x.length>=5&&has(new RegExp('\\b'+x.slice(0,-1))))||live.find(L=>(L.st||[]).concat(L.c||[]).some(x=>typeof x==='string'&&x.split('.')[0]===u.k));if(L)MAPSET[L.k].words.push(w)}));
+  MAPORDER.length=0;live.forEach(L=>MAPORDER.push(L.k))})();
+function mapLeafDone(M,k){return !!(M.done||{})[k]}
+// 🌳 나무 그림: 가지(8품사) → 잎, 아래 뿌리(문장 만들기). ✓ 채운 잎(누르면 정리) · 🍃 오늘 잎 · 점선 = 아직 · 🔒 나중에
+let LTOPEN=null;
+function mapLeafView(cur){const M=mapS(),A=[],seen=[];MAPLEAF.forEach(L=>{const key=L.br==='뿌리'?'뿌리':L.br;if(!seen.includes(key)){seen.push(key);A.push({br:key,ls:[]})}A.find(x=>x.br===key).ls.push(L)});
+  const brDone=MAPLEAF.filter(L=>L.br!=='뿌리'&&!L.lock).every(L=>mapLeafDone(M,L.k));
+  const chip=L=>{const dn=!L.lock&&mapLeafDone(M,L.k)&&L.k!==cur,on=L.k===cur;
+    const st=L.lock?'background:#f4f4f2;border:2px dotted #b9bcc4;color:#5d6270':on?'background:#eef3ff;border:2px solid #2f5fa3;color:#1f2330;font-weight:800':dn?'background:#e3f6ea;border:2px solid #7cc79b;color:#1f2330':'background:#fff;border:2px dashed #c3cbe0;color:#4a5163';
+    return `<button ${dn?`data-act="mapLfOpen" data-k="${L.k}"`:'disabled'} style="${st};opacity:1;border-radius:14px;padding:5px 10px;margin:3px;font:700 15px 'Noto Sans KR';cursor:${dn?'pointer':'default'}">${L.lock?'🔒 ':on?'🍃 ':dn?'✓ ':''}${esc(L.n)}${L.lock?' · 나중에':''}</button>`};
+  let h=`<div style="border:2px solid #e3ded2;border-radius:14px;padding:8px 10px;background:#fff;margin:8px 0">`;
+  A.forEach(b=>{if(b.br==='뿌리'){h+=`<div style="border-top:2px solid #e3ded2;margin:8px 0 4px;padding-top:6px;font:800 16px 'Noto Sans KR';color:#1f2330">🌱 뿌리 · 문장 만들기 ${brDone?'':'<span class="tip" style="font-weight:700">(가지를 다 채우면 열려요)</span>'}</div>`;
+      const gs=[];b.ls.forEach(L=>{if(!gs.includes(L.g))gs.push(L.g)});gs.forEach(g=>{h+=`<div style="display:flex;align-items:flex-start;gap:6px;margin:2px 0"><div style="flex:0 0 96px;font:800 14px 'Noto Sans KR';color:#5d4a1f;padding-top:9px">${esc(g)}</div><div style="flex:1;display:flex;flex-wrap:wrap">${b.ls.filter(L=>L.g===g).map(chip).join('')}</div></div>`})}
+    else h+=`<div style="display:flex;align-items:flex-start;gap:6px;margin:2px 0"><div style="flex:0 0 auto;min-width:74px;white-space:nowrap;font:800 15px 'Noto Sans KR';color:#2a6b45;padding-top:8px">🌿 ${esc(b.br)}</div><div style="flex:1;display:flex;flex-wrap:wrap">${b.ls.map(chip).join('')}</div></div>`});
+  if(LTOPEN&&MAPLT[LTOPEN]){const L=LEAFBY[LTOPEN];h+=`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5"><b>${esc(L.br==='뿌리'?L.g:L.br)} · ${esc(L.n)}</b>${MAPLT[LTOPEN].map(r=>`<div style="margin-top:4px">• ${esc(r.sum)}${r.ex?` <b>${esc(r.ex)}</b>`:''}</div>`).join('')}</div>`}
+  return h+'</div>'}
+// 하루 끝 빈 나무: 오늘 잎 줄 전부 + 지난 잎 2개에서 한 줄씩(전에 틀린 줄 먼저)
+function mapLeafT(d){if(!d.trK){const M=mapS(),wr={};Object.keys(M.days).forEach(x=>{const y=M.days[x];if(x.startsWith('try')||!y.tree||!y.tree.wrong)return;Object.keys(y.tree.wrong).forEach(l=>wr[l]=(wr[l]||0)+1)});
+    const past=MAPORDER.filter(k=>k!==d.set&&mapLeafDone(M,k)&&(MAPLT[k]||[]).length).map(k=>{const rs=MAPLT[k].map((r,i)=>({i,w:wr[r.lab]||0}));const top=rs.sort((a,b)=>b.w-a.w||Math.random()-.5)[0];return {k,i:top.i,w:top.w,r:Math.random()}}).sort((a,b)=>b.w-a.w||a.r-b.r).slice(0,2);
+    d.trK=(MAPLT[d.set]||[]).map((_,i)=>[d.set,i]).concat(past.map(x=>[x.k,x.i]));save()}
+  return {t:'오늘 잎 + 지난 잎 채우기',rows:d.trK.filter(([k,i])=>MAPLT[k]&&MAPLT[k][i]).map(([k,i])=>Object.assign({},MAPLT[k][i],{g:(k===d.set?'🍃 오늘 · ':'✓ 지난 잎 · ')+(LEAFBY[k].br==='뿌리'?LEAFBY[k].g:LEAFBY[k].br)+' · '+LEAFBY[k].n}))}}
+function mapTreeOf(d){if(!d)return null;const S=MAPSET[d.set];if(S&&S.leaf)return MZ&&MZ.step==='tree'?mapLeafT(d):null;return d.v26&&MAPTREE[d.set]||null}
 function mapTrInit(T,rows){const all=rows||T.rows.map((_,i)=>i);MZ.tr={rows:all,ri:0,fill:{},wrong:[],open:{},msg:'',round:rows?2:1,pool:null};all.forEach(i=>MZ.tr.fill[i]=[])}
 function mapTrPool(T){const tr=MZ.tr,r=T.rows[tr.rows[tr.ri]];if(!r)return [];if(!tr.pool){const L=r.ans.concat(r.x||[]);let o,n=0;do{o=L.map((w,j)=>({w,j})).sort(()=>Math.random()-.5);n++}while(n<6&&r.ord&&o.every((x,j)=>x.j===j));tr.pool=o.map(x=>x.w)}
   const used=tr.fill[tr.rows[tr.ri]].slice();return tr.pool.filter(w=>{const k=used.indexOf(w);if(k>=0){used.splice(k,1);return false}return true})}
 function mapTreeHTML(d,S,T){if(!MZ.tr)mapTrInit(T);const tr=MZ.tr,cur=tr.rows[tr.ri],done=tr.ri>=tr.rows.length;let g='';
-  let h=`<div class="tip">${esc(S.t)} · 🌳 빈 지도 채우기${tr.round>1?' · 틀렸던 줄 한 번 더':''}</div><h2 style="margin:6px 0 4px">🌳 ${esc(T.t)}</h2><p class="tip" style="margin:0 0 8px">${done?'다 채웠어요. 📖 를 누르면 그 줄 정리가 나와요.':'파란 줄의 빈칸을 블록으로 채워요.'}</p>`;
+  let h=`<div class="tip">${esc(S.t)} · 🌳 ${MZ.step==='tree'?'빈 나무':'빈 지도'} 채우기${tr.round>1?' · 틀렸던 줄 한 번 더':''}</div><h2 style="margin:6px 0 4px">🌳 ${esc(T.t)}</h2><p class="tip" style="margin:0 0 8px">${done?'다 채웠어요. 📖 를 누르면 그 줄 정리가 나와요.':'파란 줄의 빈칸을 블록으로 채워요.'}</p>`;
   T.rows.forEach((r,i)=>{const on=i===cur&&!done,f=tr.fill[i],full=f?f.length>=r.ans.length:true,re=tr.rows.includes(i);
     if(r.g&&r.g!==g){g=r.g;h+=`<div style="font:800 17px 'Noto Sans KR';color:#1f2330;margin:10px 0 2px">${esc(g)}</div>`}
     h+=`<div style="border:2px solid ${on?'#2f5fa3':'#e3ded2'};background:#fff;border-radius:12px;padding:8px 10px;margin:6px 0 6px ${r.g?'14px':'0'}">
@@ -1526,7 +1712,7 @@ function mapTreeHTML(d,S,T){if(!MZ.tr)mapTrInit(T);const tr=MZ.tr,cur=tr.rows[tr
       ${tr.open[i]?`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5">${esc(r.sum)}${r.ex?`<div style="margin-top:4px"><b>${esc(r.ex)}</b></div>`:''}</div>`:''}</div>`});
   if(!done){if(tr.msg)h+=`<div class="notice" style="text-align:left;color:#1f2330">${tr.msg}</div>`;
     h+=`<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0">${mapTrPool(T).map(w=>`<button class="chip" data-act="mapTrB" data-w="${esc(w)}" style="font:800 19px 'Noto Sans KR';padding:10px 14px">${esc(w)}</button>`).join('')}</div>`}
-  else{const again=tr.round===1&&tr.wrong.length;h+=`<div class="row" style="justify-content:center"><button class="btn big" data-act="${again?'mapTrAgain':'mapRuleOk'}">${again?'틀렸던 줄 한 번 더 ▶':'알겠어 ▶'}</button></div>`}
+  else{const again=tr.round===1&&tr.wrong.length;h+=`<div class="row" style="justify-content:center"><button class="btn big" data-act="${again?'mapTrAgain':MZ.step==='tree'?'mapTreeOk':'mapRuleOk'}">${again?'틀렸던 줄 한 번 더 ▶':MZ.step==='tree'?'나무 다 채웠어 ▶':'알겠어 ▶'}</button></div>`}
   return h}
 
 function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}const S=mapSetOf(d),cs=S.cells,M=mapS();let h=topbar('🗺️ 내 지도 채우기',true)+'<div class="card">';
@@ -1547,9 +1733,11 @@ function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}cons
       <div class="ans" style="margin-top:6px">${esc(c.en[0])} <button class="btn light sm" data-act="mapRevSay">🔊</button></div>${col==='gray'&&fb.typed?`<div class="tip">내가 쓴 것: ${esc(fb.typed)}</div>`:''}</div>
       <div class="row" style="justify-content:center"><button class="btn big" data-act="mapRevNext" data-auto="${col==='gray'?'x':'ok'}" data-hide="1">${MZ.ri+1<R.length?'다음 ▶':'말하기로 ▶'}</button></div>`}}
   else if(MZ.step==='rule'&&S.steps&&d.v26&&(MZ.rs||0)<S.steps.length){const N=S.steps.length,k=MZ.rs||0,st=S.steps[k],ans=MZ.ra,ord=st.o.map((_,i)=>i).sort((x,y)=>((x*7+k*3+st.q.length)%5)-((y*7+k*3+st.q.length)%5)||x-y);
-    h+=`<div class="tip">${esc(S.t)} · 원리 ${k+1} / ${N} · 한 장씩 천천히</div><div style="height:6px;background:#eef1f6;border-radius:4px;margin:6px 0 10px"><div style="height:6px;width:${Math.round((k)/N*100)}%;background:#2b4d86;border-radius:4px"></div></div><div class="res ok" style="text-align:left;font-size:19px;line-height:1.6">${st.t}</div>${st.ex?`<div style="margin:10px 0;text-align:center"><div class="ans" style="font-size:22px">${esc(st.ex[0])} <button class="btn light sm" data-act="mapRsSay">🔊</button></div><div class="tip">${esc(st.ex[1])}</div></div>`:''}
+    h+=`<div class="tip">${S.leaf?`🌳 ${esc(S.leaf.br==='뿌리'?'뿌리 · '+S.leaf.g:S.leaf.br+' 가지')} · 오늘 잎 「${esc(S.leaf.n)}」`:esc(S.t)} · 원리 ${k+1} / ${N}</div><div style="height:6px;background:#eef1f6;border-radius:4px;margin:6px 0 10px"><div style="height:6px;width:${Math.round((k)/N*100)}%;background:#2b4d86;border-radius:4px"></div></div><div class="res ok" style="text-align:left;font-size:19px;line-height:1.6">${st.t}</div>${st.ex?`<div style="margin:10px 0;text-align:center"><div class="ans" style="font-size:22px">${esc(st.ex[0])} <button class="btn light sm" data-act="mapRsSay">🔊</button></div><div class="tip">${esc(st.ex[1])}</div></div>`:''}
     <div style="font:800 19px 'Noto Sans KR';margin:12px 0 8px">🤔 ${esc(st.q)}</div><div style="display:grid;gap:8px">${ord.map(i=>`<button class="chip" data-act="mapRsAns" data-i="${i}" ${ans!=null?'disabled':''} style="text-align:left;font-size:18px;${ans!=null&&i===st.a?'background:#e3f6ea!important;border:2px solid #2a9d5c;color:#1f2330!important;opacity:1!important':''}${ans!=null&&i===ans&&i!==st.a?'background:#fff7e0!important;border:2px solid #f2d36b;color:#1f2330!important;opacity:1!important':''}${ans!=null&&i!==st.a&&i!==ans?'background:#eef1f7!important;color:#1f2330!important;opacity:1!important':''}">${esc(st.o[i])}</button>`).join('')}</div>
-    ${ans!=null?`<div class="res ${ans===st.a?'ok':''}" style="margin-top:10px;${ans===st.a?'':'background:#fff7e0;border:2px solid #f2d36b'}">${ans===st.a?'⭕ 맞았어요!':'🔁 정답은 <b>'+esc(st.o[st.a])+'</b>'} · ${esc(st.w)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapRsNext" data-auto="${ans===st.a?'ok':'x'}" data-hide="1">${k+1<N?'다음 카드 ▶':'정리 보기 ▶'}</button></div>`:''}`}
+    ${ans!=null?`<div class="res ${ans===st.a?'ok':''}" style="margin-top:10px;${ans===st.a?'':'background:#fff7e0;border:2px solid #f2d36b'}">${ans===st.a?'⭕ 맞았어요!':'🔁 정답은 <b>'+esc(st.o[st.a])+'</b>'} · ${esc(st.w)}</div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapRsNext" data-auto="${ans===st.a?'ok':'x'}" data-hide="1">${k+1<N?'다음 카드 ▶':S.leaf?'블록 만들기 ▶':'정리 보기 ▶'}</button></div>`:''}`}
+  else if(MZ.step==='rule'&&S.leaf){h+=`<div class="tip">🌳 오늘 잎 「${esc(S.leaf.n)}」 원리 카드 끝</div>${mapLeafView(d.set)}<div class="row" style="justify-content:center"><button class="btn big" data-act="mapRuleOk">블록 만들기 ▶</button></div>`}
+  else if(MZ.step==='tree'){const T=mapTreeOf(d);if(T)h+=mapTreeHTML(d,S,T)}
   else if(MZ.step==='rule'&&mapTreeOf(d)){h+=mapTreeHTML(d,S,mapTreeOf(d))}
   else if(MZ.step==='rule'){h+=`<div class="tip">${esc(S.t)} · ${d.v26&&S.steps?'📌 오늘 원리 정리':'먼저 원리 한 장'}</div><h2 style="margin:6px 0 10px">${d.v26&&S.steps?'📌 한눈에 정리':'이것만 알면 돼요'}</h2>${S.rule.map(r=>`<div class="res ok" style="text-align:left">${r}</div>`).join('')}
     <div class="row" style="justify-content:center"><button class="btn big" data-act="mapRuleOk">알겠어 ▶</button></div>`}
@@ -1595,7 +1783,8 @@ function map(){const d=mapDay();if(!d||!MZ){V={view:'home'};render();return}cons
     else if(!W.ko)h+=kat('형아 이야기 중에 <b>영어로 쓰고 싶은 말</b>을 한국어 한 문장으로 정해 봐!<div style="font:500 14px \'Noto Sans KR\';color:#6b5a1a;margin-top:4px">예: 나는 농구를 했어. · 나는 피곤했어. · 나는 수학을 안 했어.</div>')+ta('한국어 한 문장','mapKo');
     else if(!W.at)h+=kat('좋아! 이제 그 말을 <b>영어로</b> 써 줘. 나도 영어 배우고 싶어!')+`<div class="res ok" style="text-align:center;font:800 22px 'Noto Sans KR'">${esc(W.ko)}</div><p class="tip">be(am · is · are · was · were)나 do(do · does · did)를 떠올려 봐요. 맞고 틀리고는 따지지 않아요.</p>`+ta('영어로 써요','mapEn');
     else{h+=kat('고마워 형아! 형아 이야기 잘 들었어 🐾')+`<div class="res ok" style="text-align:left"><div class="tip">${esc(W.ko)}</div><div class="ans">${esc(W.en)} ${W.tr==='ok'?'<button class="btn light sm" data-act="mapWSay">🔊</button>':''}</div></div><div class="row" style="justify-content:center"><button class="btn big" data-act="mapWriteDone" data-auto="ok" data-ms="2500">${(d.quiz||[]).length<mapQuiz().length?'📝 마지막 덤: 내신 문제 ▶':'오늘 끝 ▶'}</button></div>`}}}
-  else if(MZ.step==='end'){const g=mapGreen().length,diff=d.pred!=null?g-d.pred:null,miss=cs.filter(c=>mapColor(M.cells[c.k])!=='green');
+  else if(MZ.step==='end'){const g=mapGreen().length,diff=d.pred!=null?g-d.pred:null,miss=S.leaf?[]:cs.filter(c=>mapColor(M.cells[c.k])!=='green');
+    if(S.leaf)h+=`<h2>🌳 오늘 잎 「${esc(S.leaf.n)}」 채웠어요</h2>${mapLeafView(null)}<p class="tip">📝 문법 문제 ${(d.quiz||[]).filter(x=>x.ok).length} / ${mapQuiz().length}</p>`;else
     h+=`<h2>🗺️ 오늘 내 지도</h2>${mapGrid()}<div class="stat" style="grid-template-columns:repeat(2,1fr)"><div><b>${d.pred!=null?d.pred+'칸':'-'}</b>내 예측</div><div><b>${g}칸</b>바로 맞힘 🟢</div></div><p class="tip">📝 내신 문제 ${(d.quiz||[]).filter(x=>x.ok).length} / ${mapQuiz().length}</p>
       ${diff==null?'':Math.abs(diff)<=1?`<div class="res ok">🎯 예측 적중! 내 실력을 정확히 알고 있었어요.</div>`:`<div class="res slow">예측과 ${Math.abs(diff)}칸 차이. 다음엔 더 가깝게 맞혀 보자.</div>`}`;
     if(miss.length)h+=`<p style="margin-top:12px"><b>막혔던 칸, 왜 그랬을까?</b> <span class="tip">골라도 되고 안 골라도 돼요</span></p>`+miss.map(c=>{const w=(d.why||{})[c.k];return `<div style="margin:6px 0"><div class="tip">${MAPC[mapColor(M.cells[c.k])][2]} ${esc(mapCN(c))}</div><div class="row" style="margin-top:2px">${MAPWHY.map(x=>`<button class="chip" data-act="mapWhy" data-k="${c.k}" data-w="${x[1]}" style="font-size:14px;padding:6px 9px;${w===x[1]?'':'background:#eef1f7;color:#1f2330'}">${x[0]} ${x[1]}</button>`).join('')}</div></div>`}).join('');
@@ -1628,13 +1817,15 @@ const ACT_MAP={
   mapPkEnd:()=>{const d=mapDay();d.pickDone=new Date().toISOString();d.pkN=(d.pk||[]).length;d.pkOk=(d.pk||[]).filter(x=>x.ok||x.retryOk).length;save();MZ.fb=null;const st=mapStepNew(d);MZ.step=st;MZ.ri=Math.max(0,mapRevCells(d).findIndex(c=>!(d.rev||{})[c.k]));MZ.si=0;MZ.t0=Date.now();if(st==='chat'){V={view:'chat'}}render()},
   mapBlkNext:()=>{const cs=mapCells();MZ.bo=null;if(MZ.i+1<cs.length){MZ.i++;render()}else{const d=mapDay();d.blkAt=new Date().toISOString();if(d.set!=='A'&&d.set!=='R')cs.forEach(c=>{const M=mapS();M.sr=M.sr||{};if(!M.sr[c.k])mapSrCell(c.k,'yellow')});save();MZ.i=0;MZ.step='rule';render()}},
   mapRsAns:t=>{if(MZ.ra!=null)return;const d=mapDay(),S=mapSetOf(d),st=S.steps[MZ.rs||0],i=+t.dataset.i;MZ.ra=i;d.rsx=d.rsx||{};d.rsx[MZ.rs||0]=i===st.a?1:0;d.rsl=d.rsl||{};d.rsl[MZ.rs||0]={q:st.q,ex:st.ex?st.ex[0]:'',pick:st.o[i],ans:st.o[st.a],ok:i===st.a,why:st.w||''};save();render()},
-  mapRsNext:()=>{const d=mapDay();MZ.rs=(MZ.rs||0)+1;MZ.ra=null;d.rs=MZ.rs;save();render();try{window.scrollTo(0,0)}catch(e){}},
+  mapRsNext:()=>{const d=mapDay();MZ.rs=(MZ.rs||0)+1;MZ.ra=null;d.rs=MZ.rs;save();{const S=mapSetOf(d);if(S&&S.leaf&&MZ.rs>=S.steps.length){ACT_MAP.mapRuleOk();try{window.scrollTo(0,0)}catch(e){}return}}render();try{window.scrollTo(0,0)}catch(e){}},
   mapTrB:t=>{const d=mapDay(),T=mapTreeOf(d),tr=MZ.tr;if(!T||!tr)return;const i=tr.rows[tr.ri],r=T.rows[i];if(!r)return;const w=t.dataset.w,f=tr.fill[i];
     const left=r.ans.slice();f.forEach(v=>{const k=left.indexOf(v);if(k>=0)left.splice(k,1)});const ok=r.ord?w===r.ans[f.length]:left.includes(w);
     const R=d.tree||(d.tree={wrong:{},at:null});
     if(ok){f.push(w);tr.msg='';if(f.length>=r.ans.length){tr.ri++;tr.pool=null;if(tr.ri>=tr.rows.length){if(tr.round>1)R.again=true;R.at=new Date().toISOString()}}save();render();return}
     if(!tr.wrong.includes(i))tr.wrong.push(i);(R.wrong[r.lab]=R.wrong[r.lab]||[]).push(w);
     tr.msg=r.ord&&r.ans.includes(w)?'🔁 음… 순서를 생각해 봐. 그보다 먼저 하는 게 있지 않아?':'🔁 '+esc(r.ce?r.ce.replace('{x}',w):`음… ${w}는 이 줄이 아닌 것 같아. 줄 이름을 다시 읽어 봐.`);save();render()},
+  mapTreeOk:()=>{const d=mapDay();d.tree=d.tree||{wrong:{}};d.tree.at=d.tree.at||new Date().toISOString();save();MZ.tr=null;mapFinish()},
+  mapLfOpen:t=>{const k=t.dataset.k;LTOPEN=LTOPEN===k?null:k;render()},
   mapTrSum:t=>{const i=+t.dataset.i;MZ.tr.open[i]=!MZ.tr.open[i];render()},
   mapTrAgain:()=>{const d=mapDay(),T=mapTreeOf(d);mapTrInit(T,MZ.tr.wrong.slice());render();try{window.scrollTo(0,0)}catch(e){}},
   mapRsSay:()=>{const d=mapDay(),st=mapSetOf(d).steps[MZ.rs||0];if(st&&st.ex)say(st.ex[0])},
@@ -1705,7 +1896,7 @@ function mapDicWire(){if(mapDicOn||!DIC)return;mapDicOn=true;
     if(c&&h){const j=judge(c.en,h);if(j==='exact'||j==='fuzzy'){mapAccept();return}}
     clearTimeout(MZ.okT);MZ.okJ=null;MZ.listen=false;MZ.heardShow=h;MZ.heardAll=h;MZ.miss=h?'diff':'quiet';render()})}
 function mapRevRec(d,c,r){const M=mapS();d.rev=d.rev||{};d.rev[c.k]=Object.assign({d:today(),ko:c.ko,en:c.en[0]},r);M.cells[c.k]=Object.assign({},r,{d:today(),set:c.set});const col=mapColor(M.cells[c.k]);mapSrCell(c.k,col);MZ.fb={col,typed:r.typed};save();render()}
-function mapFinish(){const d=mapDay();if(!d)return;if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));const M=mapS();if(M.done[d.set]&&M.done[d.set]!==today()&&d.set!=='R'){M.again=M.again||{};M.again[d.set]=today()}M.done[d.set]=M.done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
+function mapFinish(){const d=mapDay();if(!d)return;if(!d.end&&MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.tree&&d.tree.at)){MZ={step:'tree',i:0,si:0};V={view:'map'};render();try{window.scrollTo(0,0)}catch(e){}return}if(!d.end){d.end=new Date().toISOString();d.min=Math.max(1,Math.round((Date.now()-new Date(d.start).getTime())/60000));const M=mapS();if(M.done[d.set]&&M.done[d.set]!==today()&&d.set!=='R'){M.again=M.again||{};M.again[d.set]=today()}M.done[d.set]=M.done[d.set]||today();save()}MZ={step:'end',i:0,si:0};V={view:'map'};render()}
 function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length)return '';const C={green:'🟢',yellow:'🟡',gray:'⬜','':'·'};
   let h='<div class="card"><h2>🗺️ 내 지도 (문법 칸 확인)</h2><p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 틀림(다음에 배울 칸). 난이도 조정할 때 보는 기록이에요.</p>';
   Object.keys(M.days).sort().reverse().forEach(dt=>{const d=M.days[dt],S=mapSetOf(d);if(!S||dt.startsWith('try'))return;const g=S.cells.filter(c=>mapColor(M.cells[c.k])==='green').length;
@@ -1715,6 +1906,10 @@ function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length
     const W=d.write;if(W)h+=`<div class="res ok" style="text-align:left"><b>✍️ 내 이야기</b><div class="tip">카츄랑 한 말: ${(W.talk||[]).map(esc).join(' / ')}</div><div>한국어: ${esc(W.ko||'')}</div><div class="ans">${esc(W.en||'')}</div>${W.sec?`<div class="tip">영어로 쓰는 데 ${W.sec}초</div>`:''}</div>`});
   return h+'</div>'}
 function mapHomeHTML(){const d=mapDay(),S=mapSetOf(d),M=mapS();const n=S.cells.filter(c=>M.cells[c.k]&&M.cells[c.k].d===today()).length;
+  if(d.end&&S.leaf)return `<div class="card"><h2>🌳 오늘 잎 「${esc(S.leaf.n)}」 끝! ✅</h2>${mapLeafView(null)}<div class="row"><button class="btn" data-act="mapStart">결과 다시 보기</button><button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`;
+  if(S.leaf)return `<div class="card"><h2>🌳 오늘은 문법 나무 잎 하나</h2><p>오늘 잎: <b>${esc(S.leaf.br==='뿌리'?'뿌리 · '+S.leaf.g:S.leaf.br+' 가지')} · 「${esc(S.leaf.n)}」</b></p>${mapLeafView(d.set)}<p class="tip">✓ 채운 잎을 누르면 정리가 나와요 · 점선 = 아직 · 🔒 = 나중에</p>
+   ${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> → ② 원리 카드 → ③ 🧱 블록 → ④ 📝 문법 문제 → ⑤ ✍️ 자신 있는 문장 쓰기 → ⑥ 🔁 복습 → ⑦ 말하기 → ⑧ 카츄 → ⑨ 🧑‍🏫 카츄 가르치기 → ⑩ 내 이야기 → ⑪ 🌳 빈 나무 채우기</div>`:''}
+   <div class="row"><button class="btn big" data-act="mapStart">${vNeedToday()?'▶ 단어 시작':d.ruleAt?'▶ 이어서 하기':'▶ 시작'}</button></div></div>`;
   if(d.end)return `<div class="card"><h2>🗺️ 오늘 지도 끝! ✅</h2>${mapGrid()}<div class="row"><button class="btn" data-act="mapStart">결과 다시 보기</button><button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`;
   return `<div class="card"><h2>🗺️ 오늘은 내 지도 채우기</h2><p class="tip">${esc(S.t)} · 오늘은 5문장 대신이에요</p><p>문법 지도에서 <b>내가 어디까지 아는지</b> 칸을 채워요. 칸마다 한국어 한 문장을 보고 <b>블록 없이 바로 영어로</b> 써요. 쉬운 단어만 나와요.</p>
    <p class="tip">🟢 철자까지 맞고 20초 안 · 🟡 맞았는데 20초 넘음 · ⬜ 다음에 배울 칸</p>
@@ -2408,6 +2603,7 @@ const ACT={
 Object.assign(ACT,ACT_MAP);
 // 👀 직접 해 보기 「건너뛰기 ▶」: 하나씩 다 눌러야 하는 지도 화면은 한 번에 다음 순서로(엄마 11/26)
 window.__enTrySkip=function(stuck){if(!window.HUBTRY||!MZ||!V||V.view!=='map')return false;const d=mapDay();if(!d)return false;
+  if(MZ.step==='tree'){ACT_MAP.mapTreeOk();return true}
   if(MZ.step==='rule'&&MZ.tr){ACT_MAP.mapRuleOk();return true}
   const nx=()=>{MZ.i=0;MZ.bo=null;MZ.step=mapStepNew(d);MZ.qi=(d.quiz||[]).length;if(MZ.step==='chat')V={view:'chat'};render();return true};
   if(MZ.step==='blk'){d.blkAt=new Date().toISOString();return nx()}
