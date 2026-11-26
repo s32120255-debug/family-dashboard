@@ -45,7 +45,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .card h2 .ttl svg{width:34px;height:34px}
 .card h2 small{font-family:var(--body);font-size:.95rem;color:var(--muted);font-weight:400}
 .list{display:grid;gap:6px;margin:0;padding:0;list-style:none}
-.go{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;text-decoration:none;font-size:.8rem;padding-left:2px}
+.go{flex:none;display:inline-grid;place-items:center;height:26px;padding:0 9px;border-radius:999px;background:var(--accent);color:#fff;text-decoration:none;font-size:.8rem;font-weight:800;letter-spacing:.03em;font-family:var(--body)}
 #taskList .item,#lateBox .item{gap:7px;padding:8px 9px}#taskList .pill,#lateBox .pill{padding:1px 7px}
 .item{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:12px;background:var(--bg);min-width:0}
 .item .t{flex:1;min-width:0;overflow-wrap:anywhere}
@@ -517,7 +517,7 @@ function renderTasks(){
  const earned=sum(S.tasks.filter(x=>x.done))+bonusSum(S.tasks),used=sum(S.rewards.filter(x=>x.kind!=="help")),week=sum(S.tasks.filter(x=>x.done&&x.doneDate>=weekStart()))+bonusSum(S.tasks,weekStart());
  $("ptText").textContent=`쓸 수 있는 과제 포인트 ⭐${earned-used}`;
  renderGrow(earned,used,week);
- const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="go" href="${esc(taskLink(x))}" target="_blank" rel="noopener" aria-label="바로 가기" title="바로 가기">▶</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${mom&&!late?mvBtns("data-mv",x.id):""}</li>`;
+ const row=(x,late)=>`<li class="item ${x.done?"done":""} ${late?"overdue":""}"><button class="check ${x.done?"on":""}" data-task="${x.id}" aria-label="${x.done?"안 했어요":"했어요"}">${x.done?"✓":""}</button><span class="t">${esc(x.title)}</span>${taskLink(x)?`<a class="go" href="${esc(taskLink(x))}" target="_blank" rel="noopener" aria-label="바로 가기" title="바로 가기">GO</a>`:""}${late?`<span class="pill warn">${diffDays(t,x.date)}일 밀림</span>`:""}<span class="pill ok">⭐${Number(x.points)||0}</span>${mom&&!late?mvBtns("data-mv",x.id):""}</li>`;
  const tl=todayTasks(t);
  const dn=tl.filter(x=>x.done).length;
  $("taskList").innerHTML=bonusLine(t)+(tl.length?`<li class="meta" style="list-style:none;padding:0 4px">${tl.length}개 중 ${dn}개 했어요</li>`:"")+(taskGroupHTML(tl,x=>row(x,false),mom)||`<li class="empty">오늘 과제가 없어요.</li>`);
@@ -1003,7 +1003,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=77;
+const VERSION=78;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1048,7 +1048,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=77").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=78").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
