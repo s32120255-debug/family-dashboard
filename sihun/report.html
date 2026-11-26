@@ -200,7 +200,7 @@ async function koFill(KR){
         h+=`<li><b>🧱 ${CN} · ${r.lid}. ${esc(r.title)}</b> — 한 번에 ${r.first}/${r.n}${r.pred!=null?` · 예측 ${r.pred}${r.pred===r.first?' (딱 맞음)':''}`:''}${r.cx?` · 반례 본 횟수 ${r.cx}`:''}${r.fold?' · 칸 줄임(3연속)':''}${time}
         ${bad.length?`<br><span class="muted">헤맨 것:</span> ${bad.map(x=>`${esc(x.w)}${x.twin?'(다시)':''} [${Object.entries(x.miss||{}).filter(([k,v])=>v).map(([k,v])=>(step[k]||k)+' '+v).join(', ')}]`).join(' · ')}`:''}</li>`}}
     else if(r.type==='leaf'){ // 🌳 국어 나무 잎
-      const AN={lit:'문학',bi:'비문학',sk:'스키마'};const mm=o=>Object.entries(o||{}).map(([k,v])=>esc(k)+(v==='skip'?'(넘김)':v>=2?'(정답 봄)':'')).join(' · ');
+      const AN={gram:'문법',lit:'문학',bi:'비문학',sk:'스키마'};const mm=o=>Object.entries(o||{}).map(([k,v])=>esc(k)+(v==='skip'?'(넘김)':v>=2?'(정답 봄)':'')).join(' · ');
       h+=`<li><b>🍃 ${AN[r.area]||esc(r.area)} 잎 · ${esc(r.title||r.leaf)}</b> — 블록 한 번에 ${r.first}/${r.n} · 빈 나무 한 번에 ${r.rfirst}/${r.rn}${r.done?'':' <span class="muted">(끝까지 안 함)</span>'}${time}
         ${Object.keys(r.miss||{}).length?`<br><span class="muted">헤맨 칸:</span> ${mm(r.miss)}`:''}${Object.keys(r.rmiss||{}).length?`<br><span class="muted">빈 나무에서 헤맨 칸:</span> ${mm(r.rmiss)}`:''}</li>`}
     else if(r.type==='map'){ // 🗺️ 시훈이 지도 칸 채우기
