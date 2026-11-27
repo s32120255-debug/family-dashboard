@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=107">
-<link rel="icon" href="icon-192.png?v=107">
-<link rel="apple-touch-icon" href="icon-192.png?v=107">
+<link rel="manifest" href="manifest.json?v=108">
+<link rel="icon" href="icon-192.png?v=108">
+<link rel="apple-touch-icon" href="icon-192.png?v=108">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -254,6 +254,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .nextup b{color:var(--fg)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar{background:rgba(0,0,0,.15)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.tsave{list-style:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;margin:0 0 8px;border:2px dashed var(--admin,#b9a6e6);border-radius:12px;font-size:.9rem}.tsave span{flex:1;min-width:150px}
 </style>
 </head>
 <body>
@@ -263,7 +264,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 107</p></div></div>
+<p style="font-size:.75rem">버전 108</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -418,8 +419,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=107";
-import {SEED_SCHEDULE} from "./seed.js?v=107";
+import {firebaseConfig} from "./config.js?v=108";
+import {SEED_SCHEDULE} from "./seed.js?v=108";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -754,7 +755,9 @@ function taskKindLabel(x){if(!x.tplId)return"하루만";const tp=S.taskTpls.find
 // 순서: 과제 order → 반복 과제 틀 order → 만든 순서. 대분류 순서는 그 안 맨 앞 과제 순서를 따름
 function tplOf(x){return x.tplId&&S.taskTpls.find(y=>y.id===x.tplId)}
 function taskCat(x){const tp=tplOf(x);return String((x.cat!=null?x.cat:tp&&tp.cat)||"").trim()}
-function taskOrd(x){if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
+/* 순서 바꾸기는 바로 저장하지 않고 「저장」을 눌러야 저장 (sy 11/27) */
+let taskDraft=null;
+function taskOrd(x){if(taskDraft&&taskDraft.has(x.id))return taskDraft.get(x.id);if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
 // 대분류 없는 과제는 묶지 않고 혼자(엄마 11/26 「대분류 안 정한 건 혼자 나와 있게」): 과제 하나짜리 무리(solo)로 대분류들 사이를 오감
 function taskGroups(l){const g=[];for(const x of l.slice().sort((a,b)=>taskOrd(a)-taskOrd(b))){const c=taskCat(x);if(!c){g.push({cat:"",key:"#"+x.id,solo:true,items:[x]});continue}let o=g.find(y=>y.key===c);if(!o)g.push(o={cat:c,key:c,items:[]});o.items.push(x)}return g}
 function taskMoved(l,id,dir,cat){const g=taskGroups(l);
@@ -764,9 +767,10 @@ function taskMoved(l,id,dir,cat){const g=taskGroups(l);
  return g.flatMap(y=>y.items)}
 async function saveTaskOrder(l){const b=writeBatch(fs),tp=new Set();
  l.forEach((x,k)=>{b.update(doc(fs,"tasks",x.id),{order:k*10});if(x.tplId&&S.taskTpls.some(y=>y.id===x.tplId)&&!tp.has(x.tplId)){tp.add(x.tplId);b.update(doc(fs,"taskTpls",x.tplId),{order:k*10})}});
- try{await b.commit()}catch(e){toast("옮기지 못했어요: "+(e.code||e.message||""))}}
+ try{await b.commit();return true}catch(e){toast("저장하지 못했어요: "+(e.code||e.message||""));return false}}
 const mvBtns=(a,v)=>`<span class="mv"><button class="icon" ${a}="${esc(v)}" data-dir="-1" aria-label="위로">▲</button><button class="icon" ${a}="${esc(v)}" data-dir="1" aria-label="아래로">▼</button></span>`;
-function taskGroupHTML(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
+function taskGroupHTML(l,row,canMove){const bar=canMove&&taskDraft&&l.some(x=>taskDraft.has(x.id))?`<li class="tsave"><span>순서를 바꿨어요. 저장해야 반영돼요.</span><button type="button" class="btn small" data-tcancel="1">취소</button><button type="button" class="btn small primary" data-tsave="1">저장</button></li>`:"";return bar+taskGroupHTML0(l,row,canMove)}
+function taskGroupHTML0(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
  const f=taskFolds();return g.map(y=>{if(y.solo)return y.items.map(x=>row(x).replace('<li class="item','<li class="item solo')).join("");const shut=f.includes(y.cat),dn=y.items.filter(x=>x.done).length;
   return`<li class="tcat"><button type="button" class="tcatb" data-tfold="${esc(y.cat)}" aria-expanded="${!shut}"><span class="tf">${shut?"▸":"▾"}</span>${esc(y.cat||"기타")}<small>${dn}/${y.items.length}${dn===y.items.length?" ✓":""}</small></button>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+(shut?"":y.items.map(x=>row(x).replace('<li class="item','<li class="item ingrp')).join(""))}).join("")}
 // 대분류 접고 펴기(엄마 11/26): 이 기기에만 기억
@@ -1107,7 +1111,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!
  if(d.sundo){const o=S.schedOverrides.find(o=>o.date===schedDate&&o.baseId===d.sundo);if(o)run(db.collection("schedOverrides").doc(o.id).delete(),"원래 일정으로 돌렸어요");return}
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x)return;run(db.collection("tasks").doc(x.id).update(x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}),x.done?null:lastOfDay(x)?`오늘 과제 다 했어! 포인트 2배 ⚡`:`잘했어! ⭐${Number(x.points)||0}`);return}
  if(d.tfold!==undefined){taskFoldToggle(d.tfold);renderTasks();return}
- if(d.mv!==undefined||d.mvcat!==undefined){if(!admin||!fs)return;const l=taskMoved(S.tasks.filter(x=>x.date===taskDate),d.mv,Number(d.dir),d.mvcat);if(l)saveTaskOrder(l);return}
+ if(d.tcancel){taskDraft=null;renderTasks();return}
+ if(d.tsave){if(!admin||!fs||!taskDraft)return;const dr=taskDraft;const l=S.tasks.filter(x=>dr.has(x.id)).sort((a,b)=>dr.get(a.id)-dr.get(b.id));saveTaskOrder(l).then(ok=>{if(ok){taskDraft=null;renderTasks();toast("순서를 저장했어요")}});return}
+ if(d.mv!==undefined||d.mvcat!==undefined){if(!admin||!fs)return;const l=taskMoved(S.tasks.filter(x=>x.date===taskDate),d.mv,Number(d.dir),d.mvcat);if(l){taskDraft=new Map(l.map((x,k)=>[x.id,k*10]));renderTasks()}return}
  if(d.pick){if(!admin)return;const tp=S.taskTpls.find(x=>x.id===d.pick);if(!tp)return;const id=`${tp.id}_${taskDate}`;if(S.tasks.some(x=>x.id===id)){toast("그날 이미 들어가 있어요");return}
   run(db.collection("tasks").doc(id).set({title:tp.title,points:tp.points||1,link:tp.link||null,date:taskDate,tplId:tp.id,done:false,createdAt:Date.now()}),`${parse(taskDate).getMonth()+1}/${parse(taskDate).getDate()} 과제로 넣었어요`);return}
  if(b.id==="taskReset"){if(admin)taskReset();return}
@@ -1282,7 +1288,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=107;
+const VERSION=108;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
