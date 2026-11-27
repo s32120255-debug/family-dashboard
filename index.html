@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=104">
-<link rel="icon" href="icon-192.png?v=104">
-<link rel="apple-touch-icon" href="icon-192.png?v=104">
+<link rel="manifest" href="manifest.json?v=105">
+<link rel="icon" href="icon-192.png?v=105">
+<link rel="apple-touch-icon" href="icon-192.png?v=105">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -32,6 +32,7 @@ button,input,select{font:inherit;color:inherit}
 .date{font-family:var(--display);font-size:1.9rem;line-height:1.1}
 .clock{font-family:var(--display);font-size:3rem;font-variant-numeric:tabular-nums;line-height:1}
 .top .sub{color:var(--muted);margin-top:4px}
+.dday{display:block;font-size:.95rem;font-weight:700;color:var(--admin);margin-top:4px}
 .adminbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 16px;cursor:pointer}
 body.admin .adminbtn{background:var(--admin);border-color:var(--admin);color:var(--card)}
 .adminbar{display:none;background:var(--admin-soft);border:1px solid var(--admin);border-radius:12px;padding:10px 14px;gap:10px;align-items:center;flex-wrap:wrap}
@@ -251,7 +252,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 104</p></div></div>
+<p style="font-size:.75rem">버전 105</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -367,6 +368,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
   </section>
 
  </main>
+ <div style="text-align:center;margin:18px 0 30px"><button class="adminbtn" id="adminBtn2">관리자</button></div>
  <div id="sheetBg" class="sheetbg" hidden></div>
  <section class="card sheet" id="c-shop" role="dialog" aria-label="상점" hidden>
    <h2>🏪 상점 <small>포인트로 사요</small><button class="btn small" data-close aria-label="닫기">닫기</button></h2>
@@ -401,8 +403,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=104";
-import {SEED_SCHEDULE} from "./seed.js?v=104";
+import {firebaseConfig} from "./config.js?v=105";
+import {SEED_SCHEDULE} from "./seed.js?v=105";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -455,6 +457,7 @@ function openForm(col,doc,preset,defOv,onSave){
   return`<label for="${id}">${label}<input id="${id}" name="${k}" type="${type}" value="${esc(val)}"></label>`}).join("");
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="mform"><h3>${def.title} ${doc&&doc.id?"수정":"추가"}${v._label?" · "+esc(v._label):""}</h3>${fields}<div class="row"><button type="button" class="btn" id="mcancel">취소</button>${def.more?`<button class="btn" id="mmore">${def.more}</button>`:""}<button class="btn primary">저장</button></div></form></div>`;
  $("mcancel").onclick=closeForm;
+ dateDays($("mform"));
  $("mform").onsubmit=e=>{e.preventDefault();const more=!!(e.submitter&&e.submitter.id==="mmore");const data={};
   for(const[k,,type]of def.f){if(type==="note")continue;
    if(type==="days"){data[k]=[...e.target.querySelectorAll(`input[name="${k}"]:checked`)].map(x=>x.value);continue}
@@ -470,6 +473,8 @@ function openForm(col,doc,preset,defOv,onSave){
   data.createdAt=Date.now();return run(db.collection(col).add(data),"추가했어요")};
  const first=$("layer").querySelector("input,select");if(first)first.focus();
 }
+/* 날짜 칸 옆에 「11월 27일 (금)」 */
+function dateDays(f){const W="일월화수목금토";f.querySelectorAll('input[type=date]').forEach(i=>{const sp=document.createElement("span");sp.className="dday";i.after(sp);const up=()=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(i.value);if(!m){sp.textContent="";return}const d=new Date(+m[1],m[2]-1,+m[3]);sp.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${W[d.getDay()]})`};i.addEventListener("input",up);i.addEventListener("change",up);up()})}
 function closeForm(){$("layer").innerHTML=""}
 function confirmDel(col,id,name){
  $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>지울까요?</h3><p style="margin:0">「${esc(name)}」을(를) 지워요. 되돌릴 수 없어요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div></div>`;
@@ -480,12 +485,13 @@ const admBtns=(col,id,name)=>`<span class="${ADMIN_ONLY.has(col)?"adm":"own"}" s
 /* ---------- admin ---------- */
 // 상세 시훈 오늘·시훈 오늘 과제는 기본 접힘, 제목 옆 「펼치기」로 열기(sy 11/24). 펼친 상태는 이 기기 세션 동안 기억
 function setFold(id,open){const c=$(id);if(!c)return;c.classList.toggle("folded",!open);const b=c.querySelector("[data-fold]");if(b){b.textContent=open?"접기 ▴":"펼치기 ▾";b.setAttribute("aria-expanded",String(open))}try{sessionStorage.setItem("fold_"+id,open?"1":"")}catch(e){}}
-function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);$("adminBtn").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
+function setAdmin(on){admin=on;document.body.classList.toggle("admin",on);$("adminBtn").textContent=$("adminBtn2").textContent=on?"관리자 모드 켜짐":"관리자";renderAll()}
 $("adminBtn").onclick=()=>{if(admin)return setAdmin(false);const pin=(S.settings.find(d=>d.id==="main")||{}).pin;
  if(!pin)return setAdmin(true);
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="pf"><h3>관리자 비밀번호</h3><label for="pinIn">비밀번호<input id="pinIn" type="password" inputmode="numeric" autocomplete="off"></label><div class="row"><button type="button" class="btn" id="pc">취소</button><button class="btn primary">열기</button></div></form></div>`;
  $("pinIn").focus();$("pc").onclick=closeForm;
  $("pf").onsubmit=e=>{e.preventDefault();if($("pinIn").value===pin){closeForm();setAdmin(true)}else{toast("비밀번호가 달라요")}}};
+$("adminBtn2").onclick=()=>$("adminBtn").click();
 $("adminOff").onclick=()=>setAdmin(false);
 $("pinBtn").onclick=()=>{
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="pf"><h3>관리자 비밀번호 설정</h3><p class="status" style="margin:0">아이가 실수로 고치지 않게 막는 용도예요. 비워 두면 비밀번호 없이 열려요.</p><label for="pinNew">새 비밀번호<input id="pinNew" type="password" inputmode="numeric" autocomplete="off"></label><div class="row"><button type="button" class="btn" id="pc">취소</button><button class="btn primary">저장</button></div></form></div>`;
@@ -661,20 +667,20 @@ function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정
 const noRange=({from,until,...f})=>f;
 const badRange=d=>d.scope==="range"&&!d.until?(toast("기간은 끝 날짜를 정해 주세요"),true):(d.scope==="week"||d.scope==="range")&&d.from&&d.until&&d.from>d.until?(toast("끝나는 날짜가 시작 날짜보다 앞이에요"),true):false;
 function openSched(item,src,preset){
- const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
+ const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)],lab=`${pd.getMonth()+1}월 ${pd.getDate()}일 (${dn})`;
  const pick=d=>({title:d.title,allDay:d.allDay||"",start:d.start,end:d.end,color:d.color||"",note:d.note,from:d.from,until:d.until});
- if(!item){openForm("schedule",null,{scope:"date",...(preset||{})},{...schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`],["range","기간 (여러 날 매일, 여행 등)"]]),more:"저장하고 다음 일정"},(data,more)=>{
+ if(!item){openForm("schedule",null,{scope:"date",_label:lab,...(preset||{})},{...schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`],["range","기간 (여러 날 매일, 여행 등)"]]),more:"저장하고 다음 일정"},(data,more)=>{
    if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(badRange(data))return false;const {scope,...f}=data;
    if(f.allDay){f.start=null;f.end=null}
    if(more)setTimeout(()=>openSched(null,null,{scope,start:f.end||"",color:""}),60);
    if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요${f.until?` (${+f.until.slice(5,7)}/${+f.until.slice(8)}까지)`:""}`);
    else if(scope==="range"){const a=f.from||schedDate;run(db.collection("schedOverrides").add({...noRange(f),date:a,until:f.until,createdAt:Date.now()}),`${+a.slice(5,7)}/${+a.slice(8)}~${+f.until.slice(5,7)}/${+f.until.slice(8)} 매일 넣었어요`)}
    else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
- if(src==="date"&&item.until&&!item.baseId){const def=schedDef(null);def.f.push(["from","시작 날짜","date"],["until","끝 날짜","date"]);openForm("schedule",{...pick(item),from:item.date,id:item.id},null,def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(!data.from||!data.until||data.from>data.until){toast("시작·끝 날짜를 확인해 주세요");return false}
+ if(src==="date"&&item.until&&!item.baseId){const def=schedDef(null);def.f.push(["from","시작 날짜","date"],["until","끝 날짜","date"]);openForm("schedule",{_label:lab,...pick(item),from:item.date,id:item.id},null,def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(!data.from||!data.until||data.from>data.until){toast("시작·끝 날짜를 확인해 주세요");return false}
    const {from,...f}=data;run(db.collection("schedOverrides").doc(item.id).update({...f,date:from}),"저장했어요")});return}
- if(src==="date"){openForm("schedule",{...noRange(pick(item)),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}
+ if(src==="date"){openForm("schedule",{_label:lab,...noRange(pick(item)),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}
    run(db.collection("schedOverrides").doc(item.id).update(data),"저장했어요")});return}
- openForm("schedule",{...pick(item),id:item.id,scope:"date"},null,schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일 모두`]]),data=>{
+ openForm("schedule",{_label:lab,...pick(item),id:item.id,scope:"date"},null,schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일 모두`]]),data=>{
   if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(badRange(data))return false;const {scope,...f}=data;
   if(scope==="week")run(db.collection("schedule").doc(item.id).update(f),"매주 일정을 바꿨어요");
   else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
@@ -1183,7 +1189,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=104;
+const VERSION=105;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
