@@ -217,6 +217,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .mv{display:inline-flex;flex-direction:column;flex:none}.mv .icon{padding:1px 9px;font-size:.95rem;line-height:1.1}
 .item.ingrp{margin-left:14px}.item.solo{margin-top:8px}.tcat{list-style:none;display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-weight:700;border-bottom:2px solid var(--line);padding-bottom:3px}.tcatb{flex:1;display:flex;align-items:center;gap:6px;border:none;background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:4px 0;text-align:left}.tcatb .tf{width:1em}.tcatb small{font-weight:400;color:var(--muted);margin-left:4px}
 .go{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#ffc928;color:#3a2a00;border:2px solid #3a2a00;box-shadow:0 2px 0 #e0a800;text-decoration:none;font-size:.8rem;padding-left:2px}
+.codebox{position:fixed;inset:0;z-index:80;background:#fff;display:flex;flex-direction:column}.codebox>div{flex:1;position:relative}.codebox iframe{display:block;width:100%;height:100%;border:0}.codebox .x{position:absolute;right:10px;top:10px;z-index:1}
 .sub2{font-weight:700;font-size:.9rem;color:var(--muted);margin:4px 0 0}
 .msg{display:grid;gap:2px;padding:8px 10px;border-radius:10px;background:var(--bg)}
 .msg .h{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.8rem}
@@ -309,6 +310,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <ul class="list" id="taskList"></ul>
    <div id="lateBox"></div>
    <div class="adm" style="display:none" id="tplBox"></div>
+  </section>
+
+  <section class="card full" data-tab="today" id="c-code">
+   <h2>🎮 시훈이가 만든 게임</h2>
+   <ul class="list" id="codeList"></ul>
   </section>
 
   <section class="card" data-tab="cal">
@@ -1118,7 +1124,24 @@ function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.fil
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
 // 한 칸에서 오류가 나도 나머지 칸(포인트 등)은 계속 새로 그리기
-function renderAll(){try{autoMe()}catch(e){}if(wkDay&&$("wkBox")&&!$("wkBox").contains(document.activeElement))try{openWeek()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
+/* ---------- 🎮 시훈이가 만든 게임(코딩 앱 code/, 엄마 11/27) ----------
+   시훈이가 코딩 앱에서 「가족에게 올리기」를 누르면 sihunCode/main/pub/{게임} 에 state "wait"로 와요.
+   관리자 모드에서 해 보고 OK → "ok"(가족 모두 보임), 「다시 고쳐 보자」 → "no". 📎 = Claude에게 줄 파일(프로젝트 채팅에 올리면 Claude가 저장소에서 같이 고쳐요).
+   게임은 코딩 앱과 같은 잠긴 상자(code/box.js, 바깥 연결 막힘)에서만 돌아가요. */
+let codePubs=[];
+function renderCodeGames(){const el=$("codeList");if(!el)return;
+ const l=codePubs.filter(p=>p.state==="ok"||(admin&&(p.state==="wait"||p.state==="no"))).sort((a,b)=>(b.at||0)-(a.at||0));
+ el.innerHTML=l.length?l.map(p=>`<li class="item"><span class="t"><b>${esc(p.title||"게임")}</b> <span class="meta">${p.ver||""}번째 모습</span>${p.state==="wait"?' <span class="pill warn">확인 기다림</span>':p.state==="no"?' <span class="pill">다시 고쳐 보자 함</span>':""}</span>
+  <span style="display:inline-flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn small" data-cplay="${esc(p.id)}">▶ 해 보기</button>${admin&&p.state==="wait"?`<button class="btn small primary" data-cok="${esc(p.id)}">OK 올리기</button><button class="btn small" data-cno="${esc(p.id)}">다시 고쳐 보자</button>`:""}${admin&&p.state==="ok"?`<button class="btn small" data-cfile="${esc(p.id)}">📎 Claude에게 줄 파일</button>`:""}</span></li>`).join("")
+  :`<li class="status">${admin?"시훈이가 올린 게임이 아직 없어요.":"아직 올라온 게임이 없어요. 시훈이가 코딩 앱에서 만들어 올리면 여기서 해 볼 수 있어요."}</li>`;
+ el.querySelectorAll("[data-cplay]").forEach(b=>b.onclick=async()=>{const p=codePubs.find(x=>x.id===b.dataset.cplay);if(!p)return;
+  try{const {mountGame}=await import("./code/box.js?v=1");const d=document.createElement("div");d.className="codebox";d.innerHTML='<div></div><button class="btn x">✕ 닫기</button>';document.body.appendChild(d);mountGame(d.firstChild,p.html);d.querySelector(".x").onclick=()=>d.remove()}catch(e){toast("게임을 열지 못했어요")}});
+ el.querySelectorAll("[data-cok]").forEach(b=>b.onclick=()=>run(updateDoc(doc(fs,"sihunCode/main/pub",b.dataset.cok),{state:"ok",okAt:Date.now()}),"가족에게 올렸어요"));
+ el.querySelectorAll("[data-cno]").forEach(b=>b.onclick=()=>run(updateDoc(doc(fs,"sihunCode/main/pub",b.dataset.cno),{state:"no",noAt:Date.now()}),"시훈이에게 「다시 고쳐 보자」로 보였어요"));
+ el.querySelectorAll("[data-cfile]").forEach(b=>b.onclick=()=>{const p=codePubs.find(x=>x.id===b.dataset.cfile);if(!p)return;
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([p.html],{type:"text/html"}));a.download=`시훈게임-${p.id}-${String(p.title||"게임").replace(/[\\/:*?"<>|\s]+/g,"_")}-${p.ver||0}.html`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast("파일을 받았어요. 프로젝트 채팅에 올려 주세요.")});
+}
+function renderAll(){try{autoMe()}catch(e){}if(wkDay&&$("wkBox")&&!$("wkBox").contains(document.activeElement))try{openWeek()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc,renderCodeGames]){try{f()}catch(e){console.error(f.name,e)}}}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -1421,9 +1444,10 @@ function startData(user){
    renderAll()},err=>{clearTimeout(timer);
    if(err&&err.code==="permission-denied"){if(!denied){denied=true;stopData();gate(`${user.email} 계정은 아직 허용되지 않았어요. 가족 계정으로 다시 로그인해 주세요.`,false,true)}return}
    $("status").textContent="불러오지 못했어요: "+(err&&err.message||"")}))}
+ unsubs.push(onSnapshot(collection(fs,"sihunCode/main/pub"),snap=>{codePubs=snap.docs.map(d=>({id:d.id,...d.data()}));renderCodeGames()},()=>{}));
  seedIfNeeded().catch(()=>{});
 }
-function stopData(){unsubs.forEach(u=>u());unsubs=[];db=null;loadedCols.clear();for(const c of COLS)S[c]=[];if(admin)setAdmin(false);renderAll()}
+function stopData(){unsubs.forEach(u=>u());unsubs=[];codePubs=[];db=null;loadedCols.clear();for(const c of COLS)S[c]=[];if(admin)setAdmin(false);renderAll()}
 
 onAuthStateChanged(auth,user=>{if(user){window.__email=(user.email||"").toLowerCase();$("gateMsg").textContent="로그인됨: "+user.email;if(!me&&/^kwonsi0104@/i.test(user.email))me="시훈"}
  stopData();

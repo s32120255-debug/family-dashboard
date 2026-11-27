@@ -416,7 +416,8 @@ async function callJson(system, content, schema, opts) {
   }
   if (res.stop_reason === "refusal") return { refusal: true, model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } };
   const text = res.content.filter((b) => b.type === "text").map((b) => b.text).join("");
-  return { out: JSON.parse(text), model: res.model, usage: { in: res.usage && res.usage.input_tokens, out: res.usage && res.usage.output_tokens } };
+  const cu = res.usage || {};
+  return { out: JSON.parse(text), model: res.model, stop: res.stop_reason, usage: { in: cu.input_tokens, out: cu.output_tokens, cw: cu.cache_creation_input_tokens || 0, cr: cu.cache_read_input_tokens || 0 } };
 }
 async function usedToday(col, at) {
   return (await getFirestore().collection("sihun/data/" + col).where("at", "==", at || "").get()).size;
@@ -1068,6 +1069,165 @@ exports.aiJudge = onDocumentCreated(
     } catch (e) {
       console.error("aiJudge", e && e.status, e && e.message);
       return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "판사님이 잠깐 자리를 비웠어요. 조금 뒤에 다시 해 주세요." });
+    }
+  }
+);
+
+// ===================================================================================
+// 🎮 시훈이 코딩 앱(엄마 11/27): 시훈이가 카츄에게 말해서 게임을 직접 설계하고 만들고 고쳐요.
+// 앱(code/)이 sihunCode/main/req/{id} 에 요청을 쓰면 같은 문서에 res를 채워요.
+//  - mode "talk": 카츄가 바로 만들지 않고 되물어서 시훈이가 설계하게 해요(새 게임은 주인공·이기는 법·끝나는 법).
+//  - mode "build": 시훈이가 「응」 한 설계(plan)대로 게임 HTML을 만들거나 고쳐서 새 모습(vers)으로 저장해요.
+// 하루 한도 = 비용 약 1,000원(엄마 11/27, 횟수 아님): 토큰으로 원을 계산해 sihunCode/main/use/{날짜}.won 에 더해요.
+// 게임은 앱에서 네트워크가 막힌 잠긴 상자(sandbox iframe + CSP)에서만 돌아가요.
+// ===================================================================================
+const CODE_DAY_WON = 1000;   // 하루 한도(원)
+const KRW_PER_USD = 1450;    // 대략 환율
+const codeWon = (u) => ((+u.in || 0) * 4 + (+u.cw || 0) * 5 + (+u.cr || 0) * 0.4 + (+u.out || 0) * 20) / 1e6 * KRW_PER_USD;
+const CODE_SAFE = `안 되는 것(이런 부탁이면 action "refuse"로 다정하게 거절하고 다른 방법을 하나 제안해):
+- 피가 나오거나 잔인하게 다치는 장면, 무서운 귀신·공포, 어른용 내용, 욕, 실제 사람(친구·선생님 등)을 놀리거나 괴롭히는 게임.
+- 다른 사이트·유튜브·링크·인터넷 연결·채팅, 이름·주소·전화번호·사진 같은 개인 정보를 적게 하는 것, 진짜 돈.
+- 만화 같은 대결(닌자 고양이가 로봇을 물리치기, 운석 피하기 등)은 괜찮아.
+- 이미 있는 유명 게임(마인크래프트·포켓몬 등)을 똑같이 베끼는 건 안 돼. "그 느낌을 살린 우리만의 게임"으로 바꾸자고 해.`;
+const CODE_TALK_SYSTEM = `너는 "카츄"야. 시훈이(초3)가 아끼는 노란 인형이고, 시훈이를 "형아"라고 부르며 따르는 동생이야. 지금 형아가 게임을 설계하고, 카츄는 형아 말대로 게임을 만들어 주는 개발자야.
+${SIHUN_ABOUT}
+가장 중요한 규칙: 게임을 정하는 사람은 형아야. 카츄가 마음대로 정하지 마. 바로 만들지 말고 먼저 물어서 형아가 정하게 해.
+말하는 법: 한국어 반말, 1~2문장, 쉬운 말, 한 번에 질문 하나. 이모지·어려운 컴퓨터 낱말(코드, 변수, 함수 등) 금지. 과한 칭찬 금지.
+choices: 형아가 누를 수 있는 짧은 보기 0~3개(각 12자 이하). 형아가 직접 말해도 되니까 "내가 말할래" 같은 보기는 넣지 마.
+action:
+- "ask": 아직 정할 게 남아서 하나 물어봄.
+- "confirm": 만들 내용을 plan에 정리하고 say에서 "이대로 만들까?"처럼 확인. choices는 ["응 만들어","바꿀래"] 또는 ["응","아니"].
+- "build": 형아가 방금 확인에 "응/맞아/만들어"라고 했을 때만. plan에 만들 내용을 그대로 담아. say는 "좋아, 만들게!"처럼 짧게.
+- "refuse": 안 되는 부탁.
+- "chat": 게임과 상관없는 말에 짧게 답하고 게임 얘기로 돌아올 때.
+새 게임(isNew)일 때: 만들기 전에 꼭 정할 것 = ①주인공 ②어떻게 하면 이기는지 ③어떻게 되면 끝나는지(지는 법). 형아가 이미 말한 건 묻지 마. 하나씩 묻고, 다 정해지면 plan에 4줄 이하로 정리해 confirm. title도 형아가 말한 게 있으면 그걸로, 없으면 plan을 보고 짧게(나중에 형아가 바꿀 수 있어).
+고칠 때: 형아 말이 분명하면 바로 confirm — say에 "○○를 ○○로 바꿀게. 맞아?" 한 줄. 애매하면 한 번만 되물어(어느 걸? 얼마나?). "안 돼/이상해/버그" 같은 말이면 무엇을 눌렀을 때 어떻게 됐는지 한 번 물어봐. 두 번째부터는 들은 만큼으로 confirm해.
+plan은 만드는 사람이 읽을 거라 구체적으로(무엇을 어떻게 바꾸는지). 게임 요약(summary)에 없는 걸 지어내지 마.
+${CODE_SAFE}`;
+const CODE_TALK_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["action", "say", "choices", "plan", "title"],
+  properties: {
+    action: { type: "string", enum: ["ask", "confirm", "build", "refuse", "chat"] },
+    say: { type: "string" }, choices: { type: "array", items: { type: "string" } },
+    plan: { type: "string" }, title: { type: "string" },
+  },
+};
+const CODE_BUILD_SYSTEM = `너는 초등학교 3학년 시훈이가 설계한 게임을 만드는 개발자야. 시훈이가 정한 설계(plan)를 그대로 따라. 설계에 없는 큰 기능을 마음대로 더하지 마.
+게임 규칙(꼭 지켜):
+- HTML 파일 하나 안에 모든 것(CSS·JS·그림). 그림은 canvas나 CSS, 이모지, 인라인 SVG, data: 주소로만.
+- 바깥 연결 금지: 외부 script·이미지·소리 파일·fetch·XMLHttpRequest·WebSocket·링크(<a href>)·window.open·location 바꾸기 금지. 글꼴만 Google Fonts(<link href="https://fonts.googleapis.com/...">) 허용.
+- localStorage는 막혀 있을 수 있으니 꼭 try/catch. 없어도 게임은 돌아가야 해.
+- 태블릿·폰 세로/가로 모두. 손가락 터치로 조작(키보드 있으면 같이). 화면 밖으로 넘치지 않게. 글자는 한국어, 크고 또렷하게.
+- 반짝임·깜빡임·번쩍이는 효과 금지(시훈이가 거기에 주의를 빼앗김). 부드러운 움직임은 괜찮아.
+- 소리는 Web Audio로 짧게만(시작은 사용자 터치 뒤).
+- 처음 화면에 게임 이름과 「시작」 버튼, 끝나면 「다시 하기」.
+출력:
+- 새 게임이면 mode "full", html에 완성된 파일 전체. edits는 [].
+- 고칠 때는 되도록 mode "edits": edits = [{find, replace}] 목록. find는 지금 HTML에 정확히 한 번만 나오는 원래 글자 그대로(줄바꿈·띄어쓰기까지). 여러 군데면 edits 여러 개. html은 "".
+  바꿀 게 너무 많을 때만 mode "full"로 전체를 다시 써.
+- note: 이번에 바뀐 것, 시훈이가 볼 한 줄(12자 안팎, 예: "거북이 빨라짐").
+- summary: 바뀐 뒤 게임 전체 요약 6줄 이하(주인공, 조작, 이기는 법, 끝나는 법, 화면·장소, 특별한 것). 다음 설계 대화에서 쓰여.
+- title: 게임 이름(바뀌지 않았으면 그대로).`;
+const CODE_BUILD_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["mode", "html", "edits", "note", "summary", "title"],
+  properties: {
+    mode: { type: "string", enum: ["full", "edits"] }, html: { type: "string" },
+    edits: { type: "array", items: { type: "object", additionalProperties: false, required: ["find", "replace"], properties: { find: { type: "string" }, replace: { type: "string" } } } },
+    note: { type: "string" }, summary: { type: "string" }, title: { type: "string" },
+  },
+};
+function codeApply(html, edits) {
+  let out = html; const bad = [];
+  for (const e of edits || []) {
+    const f = String(e.find || "");
+    const n = f ? out.split(f).length - 1 : 0;
+    if (n !== 1) { bad.push({ find: f.slice(0, 120), n }); continue; }
+    const i = out.indexOf(f);
+    out = out.slice(0, i) + String(e.replace || "") + out.slice(i + f.length);
+  }
+  return { out, bad };
+}
+exports.codeKatchu = onDocumentCreated(
+  { document: "sihunCode/main/req/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 540, memory: "512MiB", maxInstances: 2 },
+  async (event) => {
+    const snap = event.data;
+    const req = snap && snap.data();
+    if (!req || req.res || !req.gid) return;
+    const fs = getFirestore();
+    const base = fs.doc("sihunCode/main");
+    const at = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); // 한국 날짜(앱 값은 안 믿음)
+    const useRef = base.collection("use").doc(at);
+    const done = (res) => snap.ref.update({ res: { ...res, atRes: Date.now() } });
+    const spent = +(((await useRef.get()).data() || {}).won || 0);
+    if (spent >= CODE_DAY_WON) return done({ state: "limit", say: "오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!", spent });
+    const addUse = async (u, tag) => {
+      const won = codeWon(u);
+      await useRef.set({ won: FieldValue.increment(won), n: FieldValue.increment(1), [tag]: FieldValue.increment(1) }, { merge: true });
+      // 엄마 리포트의 AI 비용(💰)에도 같이 보이게: 캐시 토큰은 값에 맞춰 입력 토큰으로 바꿔 더함
+      const inEq = Math.round((+u.in || 0) + (+u.cw || 0) * 1.25 + (+u.cr || 0) * 0.1);
+      await fs.doc("sihun/data/aiuse/" + at.slice(0, 7)).set(
+        { days: { [at]: { code: { n: FieldValue.increment(1), in: FieldValue.increment(inEq), out: FieldValue.increment(+u.out || 0) } } } }, { merge: true }
+      ).catch(() => {});
+      return won;
+    };
+    const cut = (s, k) => String(s || "").slice(0, k);
+    const gRef = base.collection("games").doc(String(req.gid));
+    const game = (await gRef.get()).data() || {};
+    try {
+      if (req.mode === "talk") {
+        const lines = [
+          game.ver ? `지금 게임: 「${cut(game.title, 60)}」 (${game.ver}번째 모습)` : "새 게임(isNew): 아직 아무것도 안 만들었어.",
+          game.summary ? `게임 요약:\n${cut(game.summary, 1500)}` : "",
+          "지금까지 대화:",
+          ...(req.turns || []).slice(-16).map((t) => `${t.who === "k" ? "카츄" : "형아"}: ${cut(t.text, 600)}`),
+        ].filter(Boolean);
+        const r = await callJson(CODE_TALK_SYSTEM, [{ type: "text", text: lines.join("\n") }], CODE_TALK_SCHEMA, { tag: "codeTalk", max: 4000, effort: "low" });
+        const won = await addUse(r.usage || {}, "talk");
+        if (r.refusal) return done({ state: "ok", action: "refuse", say: "그건 카츄가 만들 수 없어. 다른 걸 만들어 보자!", choices: [], plan: "", title: "", won });
+        const o = r.out;
+        return done({ state: "ok", ...o, choices: (o.choices || []).slice(0, 3).map((c) => cut(c, 20)), won });
+      }
+      if (req.mode === "build") {
+        const plan = cut(req.plan, 3000);
+        if (!plan) return done({ state: "error", say: "무엇을 만들지 다시 말해 줄래?" });
+        let cur = "";
+        if (game.ver) cur = ((await base.collection("vers").doc(`${req.gid}_${game.ver}`).get()).data() || {}).html || "";
+        const content = [];
+        if (cur) content.push({ type: "text", text: "지금 게임 HTML:\n" + cur, cache_control: { type: "ephemeral" } });
+        const ask = cur
+          ? `고칠 내용(시훈이가 확인함):\n${plan}\n\n지금 이름: ${cut(game.title, 60)}`
+          : `새 게임 설계(시훈이가 확인함):\n${plan}\n\n이름: ${cut(req.title || game.title, 60) || "(설계를 보고 짧게)"}`;
+        content.push({ type: "text", text: ask });
+        let r = await callJson(CODE_BUILD_SYSTEM, content, CODE_BUILD_SCHEMA, { tag: "codeBuild", max: 32000, effort: "medium" });
+        let won = await addUse(r.usage || {}, "build");
+        if (r.refusal) return done({ state: "ok", action: "refuse", say: "그건 카츄가 만들 수 없어. 다른 걸 만들어 보자!", won });
+        let o = r.out, html = "";
+        if (o.mode === "full" || !cur) html = o.html;
+        else {
+          let a = codeApply(cur, o.edits);
+          if (a.bad.length) { // 한 번 더: 못 찾은 부분을 알려 주고 다시
+            content.push({ type: "text", text: `방금 edits 중 find가 정확히 한 번 나오지 않은 게 있어: ${JSON.stringify(a.bad)}. 지금 HTML에 그대로 있는 글자로 edits 전체를 다시 줘.` });
+            r = await callJson(CODE_BUILD_SYSTEM, content, CODE_BUILD_SCHEMA, { tag: "codeBuild2", max: 32000, effort: "medium" });
+            won += await addUse(r.usage || {}, "build");
+            if (r.refusal) return done({ state: "error", say: "고치다가 꼬였어. 다시 말해 줄래?", won });
+            o = r.out;
+            a = o.mode === "full" ? { out: o.html, bad: [] } : codeApply(cur, o.edits);
+          }
+          if (a.bad.length) return done({ state: "error", say: "고치다가 꼬였어. 조금 다르게 말해 줄래?", won });
+          html = a.out;
+        }
+        if (!/<html|<body|<canvas|<script/i.test(html || "") || html.length > 900000) return done({ state: "error", say: "만들다가 꼬였어. 다시 해 볼까?", won });
+        const ver = (+game.ver || 0) + 1;
+        const title = cut(o.title || game.title || "내 게임", 40);
+        await base.collection("vers").doc(`${req.gid}_${ver}`).set({ gid: req.gid, n: ver, html, note: cut(o.note, 60), at: Date.now() });
+        await gRef.set({ title, ver, summary: cut(o.summary, 1500), upd: Date.now(), made: game.made || Date.now(), notes: { [ver]: cut(o.note, 60) } }, { merge: true });
+        return done({ state: "ok", action: "built", ver, note: cut(o.note, 60), title, say: `${ver}번째 모습 완성! 해 보고 어땠는지 말해 줘.`, won });
+      }
+    } catch (e) {
+      console.error("codeKatchu", e && e.status, e && e.message);
+      return done({ state: "error", say: "카츄가 잠깐 멈췄어. 조금 뒤에 다시 말해 줄래?", err: String((e && e.status) || (e && e.message) || "error") });
     }
   }
 );
