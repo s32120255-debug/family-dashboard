@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="11";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="12";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -282,21 +282,15 @@ addEventListener('appinstalled',()=>{INSTALL=null;if(V.view==='home')render()});
 if('serviceWorker' in navigator&&!MOCK)navigator.serviceWorker.register('sw.js').catch(()=>{});
 function installHTML(){if(STANDALONE)return '';
   return INSTALL?`<button class="light" style="display:block;margin:12px auto 0" data-act="install">📲 앱으로 설치하기</button>`
-    :`<p class="sub" style="text-align:center;font-size:13px;margin-top:12px">📲 앱으로 설치: Chrome 오른쪽 위 ⋮ → 「홈 화면에 추가」 또는 「앱 설치」</p>`}
+    :''}
 function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
-  let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1><div class="sub">아는 걸 빨리 꺼내는 연습 · 하루 ${DAY_N}문장</div>
+  let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1>
    <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span><button class="link" style="margin:0" data-act="out">다른 아이디로</button></div>`;
   if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select> <select id="tryMode"><option value="base"${modeOf()==='base'?' selected':''}>첫날: 회색 문장 보고</option><option value="ko"${modeOf()==='ko'?' selected':''}>둘째 날: 한글만</option></select></div>`;
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
-  h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2><div class="ex">${esc(st.ex)}</div>
-    ${TREE_IDS.length?`<p style="margin:12px 0 0;background:#e3f6ea;border-radius:12px;padding:8px 10px;color:#1f2330">🌳 계단영어에서 채운 잎 문장 <b>${Math.min(TREE_IDS.length,DAY_N)}개</b>${TREE_IDS.length<DAY_N?` + 이 단계 문장 ${DAY_N-TREE_IDS.length}개`:''}<br><span class="sub">${esc(TREE_N.map(n=>n.split(' · ').slice(1).join(' · ')).join(', '))}</span></p>`:''}
-    <p style="margin:12px 0 0">${modeOf()==='base'?'회색 문장을 보고, 한국어 뜻대로 <b>한 군데만 바꿔서 영어로 말해요.</b>':'오늘은 회색 문장이 없어요. <b>한글만 보고 영어로 말해요.</b>'}</p>
-    <p style="margin:6px 0 0">생각이 되면 <b>🎤 녹음</b>을 누르고 말해요. 다 말하면 <b>⏹</b>을 눌러요. 끝나면 정답 소리를 들어요.</p>
-    ${prev?`<p class="sub" style="margin:8px 0 0">지난번(${prev.date.slice(5).replace('-','/')}) <b>${fmt(prev.ms)}</b> 걸렸어요.</p>`:''}
-    ${ST.cur&&ST.cur.date===today()&&!TRY?`<p class="sub">하던 데서 이어서 해요 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length||DAY_N})</p>`:''}
-    <button class="big" data-act="start">🎤 시작</button>
-    ${MIME||MOCK?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}
-    <div class="sub" style="margin-top:10px;font-size:13px">처음 한 번은 마이크를 써도 되는지 물어봐요 → 「허용」</div></div>`;
+  h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>
+    <button class="big" data-act="start">${ST.cur&&ST.cur.date===today()&&!TRY?`🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length||DAY_N})`:'🎤 시작'}</button>
+    ${MIME||MOCK?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}</div>`;
   if(!TRY)h+=`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
   h+=installHTML();
   return h}
@@ -341,14 +335,15 @@ async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncod
 function adminHTML(){if(ADMIN)return `<div class="row"><span class="sub">🔓 관리자 모드</span><button class="link" style="margin:0" data-act="adminOff">끄기</button></div>`;
   if(!ADMIN_ASK)return `<div class="row"><button class="link" data-act="adminAsk">🔒 관리자</button></div>`;
   return `<div class="row" style="align-items:center"><input id="apw" type="password" inputmode="numeric" placeholder="관리자 비밀번호" style="font-size:17px;padding:9px;border-radius:10px;border:1.5px solid var(--line);width:180px"><button class="light" style="margin:0" data-act="adminGo">확인</button></div>${ADMIN_MSG?`<p class="sub" style="text-align:center">${ADMIN_MSG}</p>`:''}`}
+function calT(ms){const t=Math.round((ms||0)/1000);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
 function calHTML(st,key){const days=st.days||{},base=new Date();base.setDate(1);base.setMonth(base.getMonth()+CALM);
   const y=base.getFullYear(),m=base.getMonth(),first=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate(),td=today();
   let h=`<div class="calnav"><button class="light" data-act="calm" data-d="-1">◀</button><b>${y}년 ${m+1}월</b><button class="light" data-act="calm" data-d="1"${CALM>=0?' disabled':''}>▶</button></div><div class="cal">`;
   ['일','월','화','수','목','금','토'].forEach(w=>h+=`<div class="wd">${w}</div>`);
   for(let i=0;i<first;i++)h+='<div></div>';
   for(let d=1;d<=n;d++){const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),r=days[k]&&days[k].end?days[k]:null;
-    h+=`<button class="day${r?(r.passed?' pass':' did'):''}${k===td?' today':''}${CALSEL[key]===k?' sel':''}" ${r?`data-act="calsel" data-k="${esc(key)}" data-d="${k}"`:'disabled'}><span>${d}</span>${r?`<small>${r.stage}${(r.mode||'base')==='ko'?'한':'회'}${r.passed?'🎉':''}</small>`:''}</button>`}
-  h+=`</div><div class="sub" style="font-size:12px;margin-top:4px">숫자 = 단계 · 회 = 회색 문장 보고 · 한 = 한글만 · 🎉 통과 · 날짜를 누르면 자세히</div>`;
+    h+=`<button class="day${r?(r.passed?' pass':' did'):''}${k===td?' today':''}${CALSEL[key]===k?' sel':''}" ${r?`data-act="calsel" data-k="${esc(key)}" data-d="${k}"`:'disabled'}><span>${d}</span>${r?`<small>${(r.items||[]).length||r.n||''}개</small><small>${calT(r.ms)}</small>`:''}</button>`}
+  h+=`</div>`;
   const sk=CALSEL[key],d=sk&&days[sk];
   if(d){const o=(d.items||[]).map(i=>i.onset).filter(v=>v!=null),a=o.length?o.reduce((x,y)=>x+y,0)/o.length:null;
     h+=`<div class="daydet"><b>${sk.slice(5).replace('-','/')} · ${d.stage}단계 ${(d.mode||'base')==='ko'?'한글만':'회색 문장'}${d.passed?' · 🎉 통과':''}</b><div class="sub">걸린 시간 ${fmt(d.ms)} · 생각 시간 평균 ${a!=null?sec1(a):'-'} · 막힘 없이 ${d.clean}/${d.n||10}</div>
@@ -358,21 +353,11 @@ function personCard(st,name,key,me){const days=st.days||{},ks=Object.keys(days).
   const last=ks.map(k=>Object.assign({date:k},days[k])).find(d=>d.stage===stage&&(d.mode||'base')===mode);
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:20px">👤 ${esc(name)}${me?' <span class="sub">(나)</span>':''}</b>${ADMIN?`<button class="light" style="margin:0" data-act="csv" data-k="${esc(key)}">📥 엑셀</button>`:''}</div>`;
   h+=calHTML(st,key);
-  h+=`<div class="stagebox"><div><span class="stage">지금 ${stage}단계 / ${SP.STAGES.length}</span> <b>${esc(S.t)}</b></div>`;
-  h+=`<div class="steps"><span class="${mode==='ko'?'ok':'now'}">${mode==='ko'?'✓':'①'} 첫날 · 회색 문장 보고</span><span class="${mode==='ko'?'now':''}">② 둘째 날 · 한글만</span><span>→ ${Math.min(stage+1,SP.STAGES.length)}단계</span></div>`;
-  if(last){const ln=last.sn!=null?last.sn:(last.n||10),lc=last.sc!=null?last.sc:last.clean,need=last.sn!=null?Math.max(1,Math.ceil(ln*PASS_N/10)):Math.max(1,ln-(10-PASS_N));const pct=Math.min(100,Math.round(lc/need*100));
-    h+=`<p style="margin:10px 0 4px">이 칸 마지막(${last.date.slice(5).replace('-','/')}): 단계 문장 막힘 없이 <b>${lc}</b> / 필요 ${need}${last.passed?' 🎉 통과':` · ${need-lc}개 더`}</p><div class="meter" style="max-width:none;margin:0"><b style="width:${pct}%;background:${last.passed?'var(--ok)':'var(--en)'}"></b></div>`}
-  else h+=`<p class="sub" style="margin:10px 0 0">이 칸은 아직 안 했어요.</p>`;
-  return h+'</div></div>'}
+  return h+'</div>'}
 function logHTML(){let h=tabsHTML('log')+`<h1>📊 기록</h1>`;
   h+=personCard(ST,USER.name,WHO,true);
   OTHERS.forEach(o=>{h+=personCard(o.st,o.st.name||'같이 하는 사람',o.id,false)});
-  h+=`<div class="card"><b>한 단계 올라가는 기준</b><ol style="margin:8px 0 0;padding-left:20px">
-    <li>한 단계는 이틀이에요. <b>첫날</b>은 회색 문장을 보고 바꿔 말하고, 통과하면 <b>다음 날</b> 같은 단계를 한글만 보고 해요. 그것도 통과하면 다음 단계로 가요.</li>
-    <li>하루 50문장: 🌳 계단영어에서 채운 잎 문장 먼저, 모자라면 지금 단계 문장으로 채워요.</li><li>단계 통과 = 단계 문장의 <b>90% 「막힘 없이」</b>.</li>
-    <li>「막힘 없이」 = 한글이 나오고 <b>5초 안에 🎤를 누르고</b>, <b>처음에 맞게</b> 말한 것.</li>
-    <li>소리가 안 들려서 넘어간 문장은 빼고 세요(그때도 하나까지 봐줘요).</li>
-    <li>통과 못 하면 다음 날 같은 칸을 다시 해요. 막힌 문장은 다음 날 앞에 다시 나와요.</li></ol></div>`;
+
   h+=adminHTML();
   return h}
 // 드릴 화면(상태는 RUN.ph)
