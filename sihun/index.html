@@ -1404,7 +1404,9 @@ async function mapWTrans(){const d=mapDay(),W=d.write;W.tr='wait';save();render(
   try{if(DB){const id=today()+'-'+Date.now().toString(36);await DB.doc('enwrite/'+id).set({ko:W.ko,at:today()});for(let i=0;i<25&&!res;i++){await new Promise(r=>setTimeout(r,1000));if(i>=12)break;try{const sn=await DB.doc('enwrite/'+id).get();const x=sn.exists?sn.data():null;if(x&&x.res)res=x.res}catch(e){}}}}catch(e){}
   const W2=mapDay().write;if(res&&res.state==='ok'&&res.en&&Array.isArray(res.blocks)&&res.blocks.length>1&&res.blocks.map(b=>b.t).join(' ')===res.en){W2.tr='ok';W2.en0=res.en;W2.blocks=res.blocks;W2.koBack=res.ko||''}else{W2.tr='self';W2.trErr=res?(res.state||'bad'):'timeout'}MZ.wo=null;save();if(V.view==='map'&&MZ&&MZ.step==='write')render()}
 // 블록 방식 날 순서(11/26 엄마: 원리 먼저): 원리 카드 → 블록 → 문법 문제 → 자신 있는 문장 골라 쓰기 → 복습 → 말하기 → 카츄 영어 → 카츄 가르치기 → 내 이야기
-function mapStepNew(d){if(!d.ruleAt)return 'rule';if(!d.blkAt)return 'blk';if((d.quiz||[]).length<mapQuiz().length)return 'quiz';if(!d.pickDone)return 'pick';if(!d.spoke&&mapRevLeft(d))return 'rev';if(!d.spoke)return 'speak';if(!chatDone(dayRec(today())))return 'chat';if(!d.teachAt&&mapTeach().length)return 'teach';if(!(d.write&&d.write.at))return 'write';if(MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.tree&&d.tree.at))return 'tree';if(MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.cm&&d.cm.at)&&cmPick(d))return 'cmap';return 'end'}
+// 🤖 영어 AI 끄기(엄마 11/27 「AI 기능은 다 빼 봐, 다지고 다시 만들자」 · 영어만): 자신 있는 문장 쓰기(손글씨 읽기 enhand) · 카츄 대화(enchat) · 카츄 가르치기(enTeach) · 내 이야기(enwrite) 건너뜀. 코드는 그대로, true로 바꾸면 다시 켜짐. 말하기 받아쓰기(stt)는 그대로.
+const EN_AI=false;
+function mapStepNew(d){if(!d.ruleAt)return 'rule';if(!d.blkAt)return 'blk';if((d.quiz||[]).length<mapQuiz().length)return 'quiz';if(EN_AI&&!d.pickDone)return 'pick';if(!d.spoke&&mapRevLeft(d))return 'rev';if(!d.spoke)return 'speak';if(EN_AI&&!chatDone(dayRec(today())))return 'chat';if(EN_AI&&!d.teachAt&&mapTeach().length)return 'teach';if(EN_AI&&!(d.write&&d.write.at))return 'write';if(MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.tree&&d.tree.at))return 'tree';if(MAPSET[d.set]&&MAPSET[d.set].leaf&&!(d.cm&&d.cm.at)&&cmPick(d))return 'cmap';return 'end'}
 // ✍️ 자신 있는 문장 골라 쓰기(엄마 11/25): 1개 쓰면 성공 · 하나 더는 원하는 만큼 · 자신 있게 고른 걸 다르게 쓰면 보너스 라운드(다시 외우고 다시 쓰기 + 새 문장 1개). 처음에 게임 규칙처럼 안내
 function mapPadPref(){if(!window.__padPref){let v=null;try{v=JSON.parse(localStorage.getItem('en50:padPref')||'null')}catch(e){}window.__padPref=v&&v.pw!=null?v:{pw:1,ew:1}}return window.__padPref}
 const PADW=[2,3.5,5.5],PADE=[10,20,36];
@@ -2071,7 +2073,7 @@ function mapReportHTML(){const M=RLOG.map;if(!M||!Object.keys(M.days||{}).length
 function mapHomeHTML(){const d=mapDay(),S=mapSetOf(d),M=mapS();const n=S.cells.filter(c=>M.cells[c.k]&&M.cells[c.k].d===today()).length;
   if(d.end&&S.leaf)return `<div class="card"><h2>🌳 오늘 잎 「${esc(S.leaf.n)}」 끝! ✅</h2>${mapLeafView(null)}<div class="row"><button class="btn" data-act="mapStart">결과 다시 보기</button><button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`;
   if(S.leaf)return `<div class="card"><h2>🌳 오늘은 문법 나무 잎 하나</h2><p>오늘 잎: <b>${esc(S.leaf.br==='뿌리'?'뿌리 · '+S.leaf.g:S.leaf.br+' 가지')} · 「${esc(S.leaf.n)}」</b></p>${mapLeafView(d.set)}<p class="tip">✓ 채운 잎을 누르면 정리가 나와요 · 점선 = 아직 · 🔒 = 나중에</p>
-   ${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> → ② 원리 카드 → ③ 🧱 블록 → ④ 📝 문법 문제 → ⑤ ✍️ 자신 있는 문장 쓰기 → ⑥ 🔁 복습 → ⑦ 말하기 → ⑧ 카츄 → ⑨ 🧑‍🏫 카츄 가르치기 → ⑩ 내 이야기 → ⑪ 🌳 빈 나무 채우기 → ⑫ 🧭 계통도</div>`:''}
+   ${vNeedToday()?`<div class="notice" style="background:#eef3ff">${EN_AI?'① 먼저 <b>단어</b> → ② 원리 카드 → ③ 🧱 블록 → ④ 📝 문법 문제 → ⑤ ✍️ 자신 있는 문장 쓰기 → ⑥ 🔁 복습 → ⑦ 말하기 → ⑧ 카츄 → ⑨ 🧑‍🏫 카츄 가르치기 → ⑩ 내 이야기 → ⑪ 🌳 빈 나무 채우기 → ⑫ 🧭 계통도':'① 먼저 <b>단어</b> → ② 원리 카드 → ③ 🧱 블록 → ④ 📝 문법 문제 → ⑤ 🔁 복습 → ⑥ 말하기 → ⑦ 🌳 빈 나무 채우기 → ⑧ 🧭 계통도'}</div>`:''}
    <div class="row"><button class="btn big" data-act="mapStart">${vNeedToday()?'▶ 단어 시작':d.ruleAt?'▶ 이어서 하기':'▶ 시작'}</button></div></div>`;
   if(d.end)return `<div class="card"><h2>🗺️ 오늘 지도 끝! ✅</h2>${mapGrid()}<div class="row"><button class="btn" data-act="mapStart">결과 다시 보기</button><button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`;
   return `<div class="card"><h2>🗺️ 오늘은 내 지도 채우기</h2><p class="tip">${esc(S.t)} · 오늘은 5문장 대신이에요</p><p>문법 지도에서 <b>내가 어디까지 아는지</b> 칸을 채워요. 칸마다 한국어 한 문장을 보고 <b>블록 없이 바로 영어로</b> 써요. 쉬운 단어만 나와요.</p>
@@ -2081,7 +2083,7 @@ function mapHomeHTML(){const d=mapDay(),S=mapSetOf(d),M=mapS();const n=S.cells.f
 // 문장 끝난 뒤 다음 할 것: 틈새 → 카츄
 function afterHTML(){const D=(RLOG.days||{})[today()];if(!D||!D.end)return '';
   if(!D.nook)return `<div class="card" style="text-align:center"><div class="tip">다음 할 것</div><button class="btn big" data-act="nook">🧩 틈새 코너 (덩어리 표현 1개) ▶</button></div>`;
-  if(!chatDone(D))return `<div class="card" style="text-align:center"><div class="tip">마지막!</div><button class="btn big" data-act="chat">⚡ 카츄랑 말하기 ▶</button><div class="tip" style="margin-top:6px">오늘 배운 문장을 카츄한테 써 봐요</div></div>`;
+  if(EN_AI&&!chatDone(D))return `<div class="card" style="text-align:center"><div class="tip">마지막!</div><button class="btn big" data-act="chat">⚡ 카츄랑 말하기 ▶</button><div class="tip" style="margin-top:6px">오늘 배운 문장을 카츄한테 써 봐요</div></div>`;
   return `<div class="card" style="text-align:center"><div class="res ok">✅ 오늘 영어 다 했어요! 틈새 코너 · 카츄랑 말하기${D.chat.used!=null?` (오늘 문장 ${D.chat.used} / ${D.chat.of} 씀)`:''}</div></div>`}
 let DB=null,TTS=null,DIC=null,BANK=null,RLOG=null,V={view:'home'},rc=null,loaded=false;
 const LS={get(k,d){try{const v=localStorage.getItem('en50:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('en50:'+k,JSON.stringify(v))}catch(e){}}};
@@ -10073,7 +10075,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else{const st=stats(s.k);
       const btn=s.k==='write'?`<button class="go ko" data-h="open" data-app="write">▶ 글쓰기 열기</button>`:s.k==='ko'?koPlan(st):s.k==='en'?`<button class="go en" data-h="open" data-app="en">${st.done?'영어 다시 보기':st.main?'▶ 이어서 하기':'▶ 시작'}</button>`
         :(M32()?`<button class="go math" data-h="open" data-app="m32">▶ 3-2 이어서 하기</button><button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>`:`<button class="go math" data-h="plan">${st.n?'▶ 큰 수 이어서 하기':'▶ 시작'}</button><button class="go light" data-h="open" data-app="m32">3-2 복습 열기</button>`)+`<button class="go light" data-h="open" data-app="concept">개념 확인 열기</button>`;
-      body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.k==='en'&&stats('en').mode==='map'?'단어 → 원리 → 🧱 블록 → 📝 문법 → ✍️ 자신 있는 문장 → 🔁 복습 → 말하기 → 카츄 → 🧑‍🏫 카츄 가르치기 → 내 이야기':s.sub}</p>${status(s.k)}${btn}</div>`}
+      body=`<div class="focus"><div class="ic">${s.ic}</div><h2>${s.name}</h2><p>${s.k==='math'?MSUB():s.k==='en'&&stats('en').mode==='map'?'단어 → 원리 → 🧱 블록 → 📝 문법 → 🔁 복습 → 말하기 → 🌳 나무 → 🧭 계통도':s.sub}</p>${status(s.k)}${btn}</div>`}
     return body}
   const CATIMG='<img src="icons/cat-study.svg?v=1" alt="" style="width:60px;height:60px;border-radius:16px;vertical-align:middle;margin-right:10px">';
   // 과목 화면: 과목 방(주소로 연 창) 또는 메인에서 칸을 눌렀을 때
