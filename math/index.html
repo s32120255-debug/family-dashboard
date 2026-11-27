@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795755044";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795757500";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -255,7 +255,7 @@ const parseT=s=>{s=String(s||"").trim();if(!s)return null;const m=s.match(/^(\d+
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const dayLabel=k=>{const [y,m,d]=k.split("-").map(Number);const w="일월화수목금토"[new Date(y,m-1,d).getDay()];return `${m}월 ${d}일 ${w}요일`};
 const LD=v=>+String(v).replace(/\D/g,"").slice(-1),BC=v=>![2,4,5,9].includes(LD(v)),ro=v=>[3,6,0].includes(LD(v))?"으로":"로",eun=v=>BC(v)?"은":"는",eul=v=>BC(v)?"을":"를",iga=v=>BC(v)?"이":"가";
-const STEPT=T=>!!(T.steps7||T.lv),stepLabel=(T,k)=>T.seq?T.seq(k).label:T.lv[Math.min(k,T.lv.length-1)],stepMax=T=>T.seq?(T.nseq||3)-1:T.lv.length-1;
+const STEPT=T=>!!(T.steps7||T.lv),stepLabel=(T,k)=>T.seq?T.seq(k).label:T.lv[Math.min(k,T.lv.length-1)],stepMax=T=>T.seq?(T.nseq||3)-1:T.lv?T.lv.length-1:0;
 const GCD=(a,b)=>b?GCD(b,a%b):a,LCM=(a,b)=>a/GCD(a,b)*b,gwa=v=>BC(v)?"과":"와";
 const decS=n=>{const w=Math.floor(n/100),f=String(n%100).padStart(2,"0").replace(/0+$/,"");return f?w+"."+f:String(w)},decParts=n=>{const w=Math.floor(n/100),f=String(n%100).padStart(2,"0").replace(/0+$/,"");return[String(w),f]};
 const seqOf=p=>{const q=[];let v=p.s,d=p.k;for(let i=0;i<5;i++){q.push(v);if(p.L===0)v+=p.k;else if(p.L===1)v*=p.k;else{v+=d;d++}}return q};
@@ -3374,7 +3374,7 @@ function vFamCal(){const t=today();if(!CALM)CALM=t.slice(0,7);const[y,m]=CALM.sp
    ${info||'<p class="small muted" style="text-align:center">날짜를 누르면 그날 세트 수와 시간이 보여요.</p>'}
    <div class="card"><h3>밀림 정리</h3><p class="small muted">못 한 세트는 다음 날로 넘어가지 않아요. 여기서는 계획보다 덜 한 날만 모아 보여 줘요. 오늘은 아직 하는 중이라 빼고 세요.</p>${tbl("이번 주 (월요일부터)",wkKeys)}${tbl(`${m}월`,moKeys)}${lows?`<p class="small"><b>${m}월에 덜 한 날 (한 세트/계획)</b></p>${lows}`:`<p class="small muted">${m}월에 덜 한 날이 없어요.</p>`}</div>
    <button class="nb" style="align-self:center" data-act="famcal">새로 보기</button></div>`}
-const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||[]).length&&!st.grad))return null;const mx=stepMax(T)+1;return st.grad||(STEPT(T)&&(st.step||0)>=mx)?{ok:1,n:mx,mx}:{n:STEPT(T)?(st.step||0)+1:0,mx:STEPT(T)?mx:0}};
+const famSt=(c,id)=>{const st=c&&c.ts&&c.ts[id],T=TYPES[id];if(!st||(!(st.runs||[]).length&&!st.grad))return null;const mx=STEPT(T)?stepMax(T)+1:0;/* 단계가 없는 유형(구구단 무작위)에서 stepMax가 터져 가족 발자국이 안 열리던 문제 */return st.grad||(STEPT(T)&&(st.step||0)>=mx)?{ok:1,n:mx,mx}:{n:STEPT(T)?(st.step||0)+1:0,mx:STEPT(T)?mx:0}};
 function vFam(){FAM[PID]={core:S,day:D()};const P=PROFILES.filter(p=>FAM[p.id]&&FAM[p.id].core&&Object.keys(FAM[p.id].core.ts||{}).some(id=>TYPES[id]&&famSt(FAM[p.id].core,id))||p.id===PID);
   /* 다른 사람의 오늘 계획은 그 사람이 새 버전을 열기 전까지 옛 계획(20)으로 저장돼 있다 → 평일이면 가벼운 유형을 빼고 센다 */
   const tot=p=>{const d=FAM[p.id].day,pl=dayPlanN(d,(FAM[p.id].core||{}).cfg,today());return{n:d?(d.sets||[]).length:0,pl}};
@@ -3432,7 +3432,9 @@ function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
   const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam,famcal:vFamCal,weak:vWeak}[view]||vHome;
-  app.innerHTML=f()+(TABV[view]&&!PREVIEW&&!(view==="home"&&f!==vHome)?tabs():"")+(modal?modal():"");
+  /* 화면 하나가 기록 때문에 못 그려져도 앱이 멈춘 것처럼 보이지 않게: 무슨 일인지 보여 주고 탭은 그대로 둔다 */
+  let H;try{H=f()}catch(e){try{console.error(e)}catch(_){}H=bar(view==="fam"?"가족 발자국":"")+`<div class="page"><div class="notice warm">이 화면을 그리다가 걸렸다냥. 아래 글을 엄마에게 보여 주면 고칠 수 있다옹.</div><p class="small muted" style="word-break:break-all">${esc(String(e&&e.message||e))}<br>${esc(String(e&&e.stack||"").split("\n").slice(1,3).join(" "))}</p><button class="nb" style="align-self:center" data-act="home">처음으로</button></div>`}
+  app.innerHTML=H+(TABV[view]&&!PREVIEW&&!(view==="home"&&f!==vHome)?tabs():"")+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="parent")foldParent();
   if(view==="concept"){const c=$(".st.cur")||$(".steps .st:last-child");if(c)c.scrollIntoView({block:"nearest"})}
