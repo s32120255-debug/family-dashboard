@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=106">
-<link rel="icon" href="icon-192.png?v=106">
-<link rel="apple-touch-icon" href="icon-192.png?v=106">
+<link rel="manifest" href="manifest.json?v=107">
+<link rel="icon" href="icon-192.png?v=107">
+<link rel="apple-touch-icon" href="icon-192.png?v=107">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -164,6 +164,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 @media (max-width:380px){.brand h1{font-size:1.25rem!important}.brand svg{width:38px;height:38px}.brand .date{font-size:.8rem}.hmini .missionbtn{font-size:.8rem;padding:4px 6px}.hbtns{gap:4px}.hbtns .missionbtn{font-size:.78rem;padding:4px 6px}}.missionbtn.mini b{background:#e03131;color:#fff}
 .ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
 @keyframes laddraw{to{stroke-dashoffset:0}}
+.wktabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.wktabs .btn{min-width:38px}
 .jform{display:grid;gap:10px}.jform label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}.jform textarea{min-height:76px;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card);color:var(--fg)}
 .jside{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center}.jside select{width:auto}
 .jcase{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card)}
@@ -262,7 +263,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 106</p></div></div>
+<p style="font-size:.75rem">버전 107</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -291,7 +292,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
   </section>
 
   <section class="card full folded" data-tab="today" id="c-sched">
-   <h2>상세 시훈 오늘 <span class="hb"><span class="adm"><button class="btn small" data-add="schedule">＋</button></span><button class="btn small" data-fold="c-sched" aria-expanded="false">펼치기 ▾</button></span></h2>
+   <h2>상세 시훈 오늘 <span class="hb"><span class="adm"><button class="btn small" id="wkBtn">요일별</button><button class="btn small" data-add="schedule">＋</button></span><button class="btn small" data-fold="c-sched" aria-expanded="false">펼치기 ▾</button></span></h2>
    <div id="heroBox"></div>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
    <div id="schedList"></div>
@@ -417,8 +418,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=106";
-import {SEED_SCHEDULE} from "./seed.js?v=106";
+import {firebaseConfig} from "./config.js?v=107";
+import {SEED_SCHEDULE} from "./seed.js?v=107";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -699,6 +700,29 @@ function openSched(item,src,preset){
   if(scope==="week")run(db.collection("schedule").doc(item.id).update(f),"매주 일정을 바꿨어요");
   else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
 }
+
+/* 요일별 매주 일정 보기·고치기 (sy 11/27): schedule 컬렉션(day=mon..sun)을 요일 칸으로 */
+let wkDay=null;
+function openWeek(dk){wkDay=dk||wkDay||dayKey(parse(schedDate));
+ const l=S.schedule.filter(x=>x.day===wkDay).sort((a,b)=>(a.allDay?"":a.start||"99").localeCompare(b.allDay?"":b.start||"99"));
+ const rng=x=>x.from||x.until?` <span class="pill info">${x.from?+x.from.slice(5,7)+"/"+(+x.from.slice(8)):""}~${x.until?+x.until.slice(5,7)+"/"+(+x.until.slice(8)):""}</span>`:"";
+ $("layer").innerHTML=`<div class="overlay"><div class="modal" id="wkBox"><h3>요일별 매주 일정</h3>
+ <div class="wktabs">${DAYS.map(([k,n])=>`<button class="btn small${k===wkDay?" primary":""}" data-wk="${k}">${n}</button>`).join("")}</div>
+ <ul class="list">${l.length?l.map(x=>`<li class="item"><span class="meta" style="min-width:92px">${x.allDay?"하루 종일":x.start?fmtT(x.start)+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${esc(x.title||"")}${rng(x)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-wkedit="${x.id}" aria-label="수정">✎</button><button class="icon" data-wkdel="${x.id}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="status">매주 ${DAYNAME[wkDay]}요일 일정이 없어요.</li>`}</ul>
+ <div class="row"><button class="btn" id="wkClose">닫기</button><button class="btn primary" id="wkAdd">＋ ${DAYNAME[wkDay]}요일에 넣기</button></div></div></div>`;
+ $("wkClose").onclick=()=>{wkDay=null;closeForm()};
+ $("wkAdd").onclick=()=>wkForm(null);
+ $("wkBox").onclick=e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
+  if(d.wk)openWeek(d.wk);
+  if(d.wkedit){const x=S.schedule.find(y=>y.id===d.wkedit);if(x)wkForm(x)}
+  if(d.wkdel){const x=S.schedule.find(y=>y.id===d.wkdel);if(x&&confirm(`매주 ${DAYNAME[x.day]}요일 「${x.title}」을(를) 지울까요?`)){run(db.collection("schedule").doc(x.id).delete(),"지웠어요");for(const o of S.schedOverrides.filter(o=>o.baseId===x.id))run(db.collection("schedOverrides").doc(o.id).delete())}}}}
+function wkForm(x){const def=schedDef(null);def.f.unshift(["day","요일","select",DAYS]);def.f.push(["from","언제부터 (비우면 계속)","date"],["until","언제까지 (비우면 계속)","date"]);
+ const v=x?{day:x.day,title:x.title,allDay:x.allDay||"",start:x.start,end:x.end,color:x.color||"",note:x.note,from:x.from,until:x.until,id:x.id}:null;
+ openForm("schedule",v,x?null:{day:wkDay},def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}
+  if(data.from&&data.until&&data.from>data.until){toast("끝나는 날짜가 시작 날짜보다 앞이에요");return false}
+  if(x)run(db.collection("schedule").doc(x.id).update(data),"저장했어요");else run(db.collection("schedule").add({...data,createdAt:Date.now()}),`매주 ${DAYNAME[data.day]}요일에 넣었어요`);
+  wkDay=data.day;setTimeout(()=>openWeek(),60)})}
+$("wkBtn").onclick=()=>openWeek(dayKey(parse(schedDate)));
 function delSched(item,src){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
  if(src==="date"&&!item.baseId)return confirmDel("schedOverrides",item.id,item.title);
@@ -1065,7 +1089,7 @@ function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.fil
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
 // 한 칸에서 오류가 나도 나머지 칸(포인트 등)은 계속 새로 그리기
-function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
+function renderAll(){try{autoMe()}catch(e){}if(wkDay&&$("wkBox")&&!$("wkBox").contains(document.activeElement))try{openWeek()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -1258,7 +1282,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=106;
+const VERSION=107;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
