@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#2f5fa3">
+<meta name="color-scheme" content="light only">
+<meta name="robots" content="noindex,nofollow">
+<title>코딩방</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+/* 🎮 시훈이 코딩 앱(엄마 11/27 설계안 OK)
+   시훈이가 카츄에게 말해서 게임을 설계하고 만들고 고쳐요. 게임은 바깥 연결이 막힌 잠긴 상자 안에서만 돌아가요.
+   디자인 = 스피드 연산 느낌(모눈 바탕, 파란 버튼 #2f5fa3, 제목 Do Hyeon, 본문 Gowun Dodum). 흰 바탕엔 진한 글자. 반짝임·깜빡임 없음. */
+:root{color-scheme:light;--bg:#fbfaf4;--card:#ffffff;--ink:#1f2530;--sub:#4a5260;--line:#cfd6e0;--blue:#2f5fa3;--blue-soft:#e4ecf8;--k:#f3f6fb;--warn:#8a4b12;--warn-soft:#fbf0e2;--ok:#24653f;--ok-soft:#e3f3e8}
+*{box-sizing:border-box;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%}
+body{background-color:var(--bg);background-image:linear-gradient(rgba(64,112,168,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(64,112,168,.14) 1px,transparent 1px);background-size:24px 24px;color:var(--ink);font:17px/1.5 'Gowun Dodum','Noto Sans KR',sans-serif;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+h1,h2,h3,button,.t{font-family:'Do Hyeon','Gowun Dodum',sans-serif;font-weight:400}
+button{font-size:17px;color:inherit;cursor:pointer}
+.wrap{max-width:1100px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.top h1{margin:0;font-size:26px;flex:1;line-height:1.2}
+.power{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--sub);white-space:nowrap}
+.power .bar{width:80px;height:10px;border:1.5px solid var(--blue);border-radius:6px;overflow:hidden;background:#fff}
+.power .bar i{display:block;height:100%;background:var(--blue)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:0 16px;border-radius:12px;border:2px solid var(--blue);background:var(--blue);color:#fff;font-size:18px}
+.btn.w{background:#fff;color:var(--blue)}
+.btn.s{min-height:40px;padding:0 12px;font-size:16px}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.ch:focus-visible{outline:3px solid #e3a92b;outline-offset:2px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card h2{margin:0 0 2px;font-size:22px}
+.mini{font-size:14px;color:var(--sub)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.list{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+.new{border-style:dashed;text-align:left;width:100%;font:inherit;color:inherit}
+.new h2{color:var(--blue)}
+.pill{display:inline-block;border-radius:999px;padding:1px 10px;font-size:14px;border:1.5px solid var(--line);background:#fff;color:var(--sub)}
+.pill.wait{border-color:#d9a865;background:var(--warn-soft);color:var(--warn)}
+.pill.ok{border-color:#8cc3a0;background:var(--ok-soft);color:var(--ok)}
+/* 만들기 화면 */
+.work{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:900px){.work{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}.chatcol{position:sticky;top:10px}}
+.stage{background:#fff;border:2px solid var(--ink);border-radius:12px;overflow:hidden;position:relative;height:min(62vh,640px)}
+@media (min-width:900px){.stage{height:calc(100dvh - 190px)}}
+.stage iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+.empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--sub)}
+.viewbar{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;border-radius:12px;background:var(--warn-soft);border:2px solid #d9a865;color:var(--warn)}
+.viewbar b{flex:1;font-weight:400}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.chatcol{display:flex;flex-direction:column;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px;min-height:420px}
+@media (min-width:900px){.chatcol{height:calc(100dvh - 120px)}}
+.msgs{flex:1;overflow-y:auto;padding-right:2px}
+.m{border-radius:14px;padding:9px 12px;margin:8px 0;max-width:90%;white-space:pre-wrap;overflow-wrap:anywhere}
+.m.k{background:var(--k);border:1.5px solid var(--line)}
+.m.me{background:var(--blue-soft);border:1.5px solid #9fb6d8;margin-left:auto}
+.m.k .who{display:block;font-family:'Do Hyeon';font-size:14px;color:var(--blue)}
+.m.sys{max-width:100%;text-align:center;background:none;color:var(--sub);font-size:14px;padding:2px}
+.m.plan{background:#fff;border:2px solid var(--blue)}
+.chs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
+.ch{border:2px solid var(--blue);color:var(--blue);background:#fff;border-radius:12px;padding:8px 14px;font-size:17px;min-height:44px}
+.wait{padding:10px 12px;border-radius:12px;background:var(--k);border:1.5px dashed var(--line);color:var(--sub);margin:8px 0}
+.inbar{display:flex;gap:8px;margin-top:8px;align-items:flex-end}
+.inbar textarea{flex:1;min-height:48px;max-height:140px;resize:none;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit;color:var(--ink);background:#fff}
+.inbar textarea:focus{outline:none;border-color:var(--blue)}
+.mic.on{background:#fff;color:#b23a1d;border-color:#b23a1d}
+.note{font-size:14px;color:var(--sub);margin:6px 2px 0}
+/* 아까로 돌리기 */
+.sheet{position:fixed;inset:0;background:rgba(20,28,40,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+@media (min-width:700px){.sheet{align-items:center}}
+.panel{background:#fff;width:min(100%,520px);max-height:88dvh;overflow:auto;border-radius:18px 18px 0 0;padding:16px;border:2px solid var(--line)}
+@media (min-width:700px){.panel{border-radius:18px}}
+.panel h2{margin:0 0 8px;font-size:24px}
+.ver{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:2px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:8px;font:inherit;color:inherit}
+.ver .n{font-family:'Do Hyeon';font-size:22px;min-width:34px;text-align:center;color:var(--blue)}
+.ver.now{border-color:var(--blue)}
+.full{position:fixed;inset:0;z-index:30;background:#fff;display:flex;flex-direction:column}
+.full iframe{flex:1;width:100%;border:0}
+.full .x{position:absolute;right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));min-height:40px;opacity:.92}
+.gate{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;text-align:center}
+.gate .card{max-width:360px}
+.road{display:flex;align-items:flex-start;margin:12px 0 4px}
+.st{flex:1;text-align:center;font-size:13px;position:relative;color:var(--sub);line-height:1.25}
+.st .c{width:30px;height:30px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-family:'Do Hyeon';font-size:16px;border:2px solid var(--line);background:#fff;color:#8a93a0;position:relative;z-index:1}
+.st.done .c{background:var(--blue);border-color:var(--blue);color:#fff}
+.st.now .c{border:3px solid var(--blue);color:var(--blue);background:var(--blue-soft)}
+.st.now{color:var(--ink);font-weight:700}
+.st:not(:last-child)::after{content:"";position:absolute;top:15px;left:calc(50% + 15px);right:calc(-50% + 15px);height:3px;background:var(--line)}
+.st.done:not(:last-child)::after{background:var(--blue)}
+.say{margin-top:8px;background:var(--blue-soft);border:1.5px solid #9fb6d8;border-radius:12px;padding:8px 12px;font-size:15px}
+.arrive{border:2px solid var(--blue);border-radius:14px;padding:12px;background:#fff;margin-top:8px}
+.arrive b{font-family:'Do Hyeon';font-size:19px;font-weight:400}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;z-index:60;max-width:90vw}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script type="module">
+/* =====================================================================
+   ⚙ 엄마가 정할 것 (엄마 11/27 「추천대로 가지 마」 → 정해질 때까지 비워 둠)
+   - APP_NAME: 앱 이름. 시훈이가 정함(엄마가 알려 주면 여기와 manifest.json에 넣기).
+   - INPUT: 카츄에게 부탁하는 방법. {text:글자 칸, mic:🎤 말하기}.
+   ===================================================================== */
+const APP_NAME = '';
+const INPUT = { text: true, mic: true };   // 엄마 11/27 「둘 다」
+const DAY_WON = 1000;          // 하루 한도 약 1,000원(엄마 11/27) — 서버(codeKatchu)도 같은 값으로 막아요
+const MOCK = /mock/.test(location.hash);   // #mock = Firebase 없이 화면 시험
+const TEST_INPUT = /input/.test(location.hash) && MOCK;
+const IN = TEST_INPUT ? { text: true, mic: true } : INPUT;
+
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kday = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+function toast(t) { const d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2600); }
+document.title = APP_NAME || '코딩방';
+
+import { mountGame, boxDoc } from './box.js?v=1';
+window.__boxDoc = boxDoc; // 시험용
+
+/* ---------------- 저장소(Firebase / 시험용) ---------------- */
+let API = null;
+async function firebaseApi() {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+  const { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+  const F = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+  const { firebaseConfig } = await import('../config.js');
+  const app = initializeApp(firebaseConfig), auth = getAuth(app);
+  const user = await new Promise((res) => { const off = onAuthStateChanged(auth, (u) => { off(); res(u); }); });
+  if (!user) {
+    gate(`<h2 class="t" style="font-size:28px;margin:4px 0">🎮 ${esc(APP_NAME || '코딩방')}</h2><p>가족 구글 계정으로 들어와요.</p><button class="btn" id="lg">구글로 로그인</button><p class="mini" id="lgErr"></p>`);
+    $('#lg').onclick = async () => { const p = new GoogleAuthProvider(); p.setCustomParameters({ prompt: 'select_account' }); try { await signInWithPopup(auth, p); location.reload(); } catch (e) { $('#lgErr').textContent = '로그인이 안 됐어요 (' + (e.code || e.message) + ')'; } };
+    return null;
+  }
+  const fs = F.getFirestore(app);
+  const B = 'sihunCode/main';
+  const d = (p) => F.doc(fs, B + '/' + p);
+  try { await F.getDoc(F.doc(fs, B)); } catch (e) {
+    if (e && e.code === 'permission-denied') { gate(`<h2 class="t">이 계정은 아직 허용 안 됐어요</h2><p>${esc(user.email)}</p><button class="btn" id="so">다른 계정으로</button>`); $('#so').onclick = async () => { await signOut(auth); location.reload(); }; return null; }
+  }
+  return {
+    watchGames: (cb) => F.onSnapshot(F.collection(fs, B + '/games'), (s) => cb(s.docs.map((x) => ({ id: x.id, ...x.data() }))), () => {}),
+    watchGame: (gid, cb) => F.onSnapshot(d('games/' + gid), (s) => cb(s.exists() ? { id: gid, ...s.data() } : null), () => {}),
+    setGame: (gid, data) => F.setDoc(d('games/' + gid), data, { merge: true }),
+    getVer: async (gid, n) => { const s = await F.getDoc(d(`vers/${gid}_${n}`)); return s.exists() ? s.data() : null; },
+    putVer: (gid, n, html, note) => F.setDoc(d(`vers/${gid}_${n}`), { gid, n, html, note, at: Date.now() }),
+    watchUse: (day, cb) => F.onSnapshot(d('use/' + day), (s) => cb(s.exists() ? s.data() : {}), () => cb({})),
+    watchPubs: (cb) => F.onSnapshot(F.collection(fs, B + '/pub'), (s) => cb(s.docs.map((x) => ({ id: x.id, ...x.data() }))), () => {}),
+    setPub: (gid, data) => F.setDoc(d('pub/' + gid), data),
+    addNote: (text) => F.addDoc(F.collection(fs, 'notes'), { text, from: '시훈', to: '엄마', createdAt: Date.now() }),
+    getMeta: async () => { const s = await F.getDoc(F.doc(fs, B)); return s.exists() ? s.data() : {}; },
+    setMeta: (data) => F.setDoc(F.doc(fs, B), data, { merge: true }),
+    ask: (data) => new Promise(async (res) => {
+      const id = kday() + '-' + rid(); const ref = d('req/' + id);
+      let off = null; const t = setTimeout(() => { off && off(); res({ state: 'error', say: '카츄가 대답이 없어. 조금 뒤에 다시 말해 줄래?' }); }, 600000);
+      try { await F.setDoc(ref, { ...data, at: kday(), t: Date.now() }); } catch (e) { clearTimeout(t); return res({ state: 'error', say: '저장이 안 됐어. 인터넷을 확인해 줘.' }); }
+      off = F.onSnapshot(ref, (s) => { const x = s.data(); if (x && x.res) { clearTimeout(t); off(); res(x.res); } }, () => {});
+    }),
+    stt: (b64, sec) => new Promise(async (res) => {
+      const d0 = new Date(), at = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0');
+      const ref = F.doc(fs, 'sihun/data/stt/' + at + '-' + rid());
+      try { await F.setDoc(ref, { at, lang: 'ko-KR', sec, audio: b64 }); } catch (e) { return res(''); }
+      const t = setTimeout(() => { off(); res(''); }, 45000);
+      const off = F.onSnapshot(ref, (s) => { let x = s.data(); if (x && typeof x._j === 'string') x = JSON.parse(x._j); if (x && x.res) { clearTimeout(t); off(); res(x.res.text || ''); } }, () => {});
+    }),
+  };
+}
+function mockApi() {
+  const M = window.__mock = window.__mock || { games: {}, vers: {}, use: {}, pub: {}, meta: {}, notes: [], subs: [] };
+  const fire = () => M.subs.forEach((f) => f());
+  const sub = (f) => { M.subs.push(f); f(); return () => { M.subs = M.subs.filter((x) => x !== f); }; };
+  let step = 0;
+  return {
+    watchGames: (cb) => sub(() => cb(Object.entries(M.games).map(([id, g]) => ({ id, ...g })))),
+    watchGame: (gid, cb) => sub(() => cb(M.games[gid] ? { id: gid, ...M.games[gid] } : null)),
+    setGame: async (gid, data) => { M.games[gid] = { ...(M.games[gid] || {}), ...data, notes: { ...((M.games[gid] || {}).notes || {}), ...(data.notes || {}) } }; fire(); },
+    getVer: async (gid, n) => M.vers[`${gid}_${n}`] || null,
+    putVer: async (gid, n, html, note) => { M.vers[`${gid}_${n}`] = { gid, n, html, note, at: Date.now() }; },
+    watchUse: (day, cb) => sub(() => cb(M.use[day] || {})),
+    watchPubs: (cb) => sub(() => cb(Object.entries(M.pub).map(([id, p]) => ({ id, ...p })))),
+    setPub: async (gid, data) => { M.pub[gid] = data; fire(); },
+    addNote: async (text) => { M.notes.push(text); },
+    getMeta: async () => M.meta,
+    setMeta: async (data) => { Object.assign(M.meta, data); },
+    ask: async (data) => {
+      await new Promise((r) => setTimeout(r, 400));
+      const day = kday(); M.use[day] = { won: (M.use[day] ? M.use[day].won : 0) + 60 }; fire();
+      if (window.__mockAsk) return window.__mockAsk(data, M);
+      if (data.mode === 'build') {
+        const g = M.games[data.gid] || {}; const v = (g.ver || 0) + 1;
+        M.vers[`${data.gid}_${v}`] = { html: `<!DOCTYPE html><html><head></head><body style="font:24px sans-serif;padding:20px"><h1>시험 게임 ${v}</h1><p>${esc(data.plan)}</p></body></html>`, note: '시험 ' + v };
+        M.games[data.gid] = { ...g, title: g.title || '운석 피하기', ver: v, summary: data.plan, upd: Date.now(), notes: { ...(g.notes || {}), [v]: '시험 ' + v } }; fire();
+        return { state: 'ok', action: 'built', ver: v, note: '시험 ' + v, say: `${v}번째 모습 완성! 해 보고 어땠는지 말해 줘.` };
+      }
+      step++;
+      if (step === 1) return { state: 'ok', action: 'ask', say: '좋아! 만들기 전에 정하자. 주인공은 누구야?', choices: ['우주선', '고양이 우주인'], plan: '', title: '' };
+      if (step === 2) return { state: 'ok', action: 'ask', say: '어떻게 하면 이기는 거야?', choices: ['오래 버티기', '별 모으기'], plan: '', title: '' };
+      if (step === 3) return { state: 'ok', action: 'confirm', say: '이대로 만들까?', choices: ['응 만들어', '바꿀래'], plan: '고양이 우주인 / 운석 피하기 / 별 10개면 승리 / 3번 부딪치면 끝', title: '운석 피하기' };
+      return { state: 'ok', action: 'build', say: '좋아, 만들게!', choices: [], plan: '고양이 우주인 / 운석 피하기 / 별 10개면 승리 / 3번 부딪치면 끝', title: '운석 피하기' };
+    },
+    stt: async () => '거북이가 너무 느려',
+  };
+}
+function gate(html) { let g = $('#gate'); if (!g) { g = document.createElement('div'); g.id = 'gate'; g.className = 'gate'; document.body.appendChild(g); } g.innerHTML = `<div class="card">${html}</div>`; }
+
+/* ---------------- 첫 작품: 세시풍속 지킴이 ---------------- */
+const SESI_SUMMARY = `픽셀 모험 게임. 주인공이 시대 순서로 한식 → 정월대보름 → 추석 → 중양절 → 설날 마을을 돌며 잊혀 가는 세시풍속을 지켜요.
+마을 사람 머리 위 ?를 누르면 퀴즈, !를 누르면 놀이·부탁. 풀면 엽전을 받아요.
+상점에서 엽전으로 무명 한복(옷), 펫 거북이 같은 것을 사요.
+화면: 위 이동 바, 가운데 캔버스(2:3), 아래 엽전·상점 버튼. 글꼴 Do Hyeon.`;
+async function seedSesi() {
+  const meta = await API.getMeta();
+  if (meta.seededSesi) return;
+  try {
+    const r = await fetch('../sesi/index.html', { cache: 'no-store' });
+    if (!r.ok) return;
+    const html = await r.text();
+    const gid = 'sesi';
+    await API.putVer(gid, 1, html, '첫 작품');
+    await API.setGame(gid, { title: '세시풍속 지킴이', ver: 1, summary: SESI_SUMMARY, notes: { 1: '첫 작품' }, made: Date.now(), upd: Date.now(), chat: [] });
+    await API.setMeta({ seededSesi: true });
+  } catch (e) { /* 다음에 다시 */ }
+}
+
+/* ---------------- 화면 ---------------- */
+const S = { repo: {}, games: [], pubs: [], use: {}, view: 'home', gid: null, game: null, chat: [], busy: false, choices: [], plan: '', title: '', preview: null, curHtml: '', offGame: null };
+const app = $('#app');
+const power = () => { const left = Math.max(0, DAY_WON - (+S.use.won || 0)); const pct = Math.round(left / DAY_WON * 100); return `<div class="power" title="오늘 카츄 힘">카츄 힘 <span class="bar"><i style="width:${pct}%"></i></span></div>`; };
+const pubOf = (gid) => S.pubs.find((p) => p.id === gid);
+/* ---------------- 길 5칸: 내가 만들기 → 엄마 확인 → 가족에게 올림 → 엄마랑 고치기 → 가져오기 ----------------
+   엄마랑 Claude가 저장소에서 같이 고친 게임은 games/list.json 에 적혀요: { "게임id": { "state": "working"|"ready", "note": "바뀐 것", "at": "2026-11-27T20:00:00+09:00", "path": "../sesi/index.html" } }
+   가져오면 게임에 imported(시각)를 적고, 그 뒤로 길은 다시 1번부터. */
+const ROAD = ['내가 만들기', '엄마 확인', '가족에게 올림', '엄마랑 고치기', '가져오기'];
+async function loadRepo() { try { const r = await fetch('games/list.json', { cache: 'no-store' }); if (r.ok) S.repo = await r.json(); } catch (e) {} }
+function stage(g) {
+  const imp = +g.imported || 0, e = S.repo[g.id], p = pubOf(g.id);
+  const eAt = e ? Date.parse(e.at) || 0 : 0;
+  if (e && eAt > imp && e.state === 'ready') return { now: 5, msg: '', arrive: e };
+  if (e && eAt > imp && e.state === 'working') return { now: 4, msg: '지금 엄마랑 Claude가 크게 고치고 있어. 다 되면 여기에 「가져오기」가 생겨. 그동안 형아 게임은 계속 고쳐도 돼.' };
+  const pp = p && (+p.at || 0) > imp ? p : null;
+  if (pp && pp.state === 'ok') return { now: 3, done3: true, msg: '가족에게 올라갔어! 엄마랑 크게 고치고 싶으면 엄마한테 말해 봐.' + (g.ver > pp.ver ? ' 올린 뒤에 더 고친 건 다시 올려야 가족이 볼 수 있어.' : '') };
+  if (pp && pp.state === 'wait') return { now: 2, msg: '엄마한테 보냈어. 엄마가 해 보고 OK 하면 가족에게 올라가.' };
+  if (pp && pp.state === 'no') return { now: 1, msg: '엄마가 조금 더 고쳐 보재. 고친 다음 다시 「가족에게 올리기」를 눌러 봐.' };
+  return { now: 1, msg: g.ver ? '마음에 들면 「가족에게 올리기」를 눌러 봐. 엄마가 보고 OK 하면 가족에게 올라가.' : '카츄랑 설계하는 중이야.' };
+}
+function roadHtml(g, gidAttr) {
+  const s = stage(g);
+  const steps = ROAD.map((t, i) => { const n = i + 1; const cls = n < s.now || (n === 3 && s.done3) ? 'done' : n === s.now ? 'now' : ''; return `<div class="st ${cls}${n === s.now && cls === 'done' ? ' now' : ''}"><div class="c">${cls === 'done' ? '✓' : n}</div>${t}</div>`; }).join('');
+  const body = s.arrive ? `<div class="arrive"><b>엄마랑 고친 모습이 도착했어</b><div class="mini" style="margin:4px 0 10px">${s.arrive.note ? '바뀐 것: ' + esc(s.arrive.note) : ''}</div><div class="row"><button class="btn s" data-imp="${esc(gidAttr)}">🔄 가져오기</button><button class="btn w s" data-tryrepo="${esc(gidAttr)}">먼저 해 보기</button></div></div>` : `<div class="say">${esc(s.msg)}</div>`;
+  return `<div class="road" role="list" aria-label="지금 단계: ${s.now}. ${ROAD[s.now - 1]}">${steps}</div>${body}`;
+}
+function bindRoad(root) {
+  root.querySelectorAll('[data-imp]').forEach((b) => b.onclick = () => importRepo(b.dataset.imp));
+  root.querySelectorAll('[data-tryrepo]').forEach((b) => b.onclick = async () => { const h = await repoHtml(b.dataset.tryrepo); if (h) playFull(h); else toast('가져오지 못했어요. 인터넷을 확인해 주세요.'); });
+}
+async function repoHtml(gid) { const e = S.repo[gid]; if (!e) return ''; try { const r = await fetch(e.path || `games/${gid}/index.html`, { cache: 'no-store' }); return r.ok ? await r.text() : ''; } catch (x) { return ''; } }
+async function importRepo(gid) {
+  const g = S.games.find((x) => x.id === gid) || (S.game && S.game.id === gid ? S.game : null); const e = S.repo[gid];
+  if (!g || !e) return;
+  const html = await repoHtml(gid); if (!html) return toast('가져오지 못했어요. 인터넷을 확인해 주세요.');
+  const n = (+g.ver || 0) + 1, note = '엄마랑 고친 것' + (e.note ? ': ' + String(e.note).slice(0, 40) : '');
+  await API.putVer(gid, n, html, note);
+  await API.setGame(gid, { ver: n, imported: Date.now(), upd: Date.now(), notes: { [n]: note } });
+  toast(n + '번째 모습으로 가져왔어요');
+  if (S.view === 'work' && S.gid === gid) { S.game = { ...S.game, ver: n, imported: Date.now(), notes: { ...(S.game.notes || {}), [n]: note } }; S.preview = null; S.chat.push({ who: 'sys', text: `${n}번째 모습: ${note}` }); saveChat(); await loadCurrent(); renderChat(); }
+}
+const ago = (t) => { if (!t) return ''; const m = Math.round((Date.now() - t) / 60000); if (m < 2) return '방금'; if (m < 60) return m + '분 전'; const h = Math.round(m / 60); if (h < 24) return h + '시간 전'; return Math.round(h / 24) + '일 전'; };
+
+function renderHome() {
+  const gs = S.games.filter((g) => g.ver > 0 || (g.chat && g.chat.length)).sort((a, b) => (b.upd || 0) - (a.upd || 0));
+  const pubs = S.pubs.filter((p) => p.state === 'ok');
+  app.innerHTML = `
+  <div class="top"><h1>🎮 ${esc(APP_NAME)}</h1>${power()}</div>
+  <div class="list">
+    <button class="card new" id="newG"><h2>＋ 새 게임 만들기</h2><div class="mini">카츄랑 먼저 설계부터 해요</div></button>
+    ${gs.map((g) => `<div class="card"><h2>${esc(g.title || '이름 없는 게임')}</h2>
+      <div class="mini">${g.ver ? g.ver + '번째 모습' : '설계 중'}${g.upd ? ' · ' + ago(g.upd) : ''}</div>
+      ${roadHtml(g, g.id)}
+      <div class="row" style="margin-top:10px"><button class="btn s" data-open="${esc(g.id)}">이어 고치기</button>${g.ver ? `<button class="btn w s" data-play="${esc(g.id)}">▶ 해 보기</button>` : ''}</div></div>`).join('')}
+  </div>
+  <div class="card"><h2>🏠 가족에게 올린 게임</h2>${pubs.length ? pubs.map((p) => `<div class="row" style="margin-top:8px"><span style="flex:1">${esc(p.title)} <span class="mini">${p.ver}번째 모습</span></span><button class="btn w s" data-playpub="${esc(p.id)}">▶ 해 보기</button></div>`).join('') : '<div class="mini">아직 없어요</div>'}</div>`;
+  bindRoad(app);
+  $('#newG').onclick = () => { const gid = 'g' + rid(); openGame(gid, true); };
+  app.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => openGame(b.dataset.open));
+  app.querySelectorAll('[data-play]').forEach((b) => b.onclick = async () => { const g = S.games.find((x) => x.id === b.dataset.play); const v = g && await API.getVer(g.id, g.ver); if (v) playFull(v.html); });
+  app.querySelectorAll('[data-playpub]').forEach((b) => b.onclick = () => { const p = pubOf(b.dataset.playpub); if (p) playFull(p.html); });
+}
+
+function playFull(html) {
+  const d = document.createElement('div'); d.className = 'full';
+  d.innerHTML = '<div style="flex:1;position:relative" id="fullStage"></div><button class="btn w s x" id="fullX">✕ 닫기</button>';
+  document.body.appendChild(d); mountGame($('#fullStage', d), html);
+  $('#fullX', d).onclick = () => d.remove();
+}
+
+async function openGame(gid, isNew) {
+  S.view = 'work'; S.gid = gid; S.preview = null; S.choices = []; S.plan = ''; S.title = ''; S.curHtml = ''; S.busy = false;
+  S.game = S.games.find((g) => g.id === gid) || null;
+  S.chat = (S.game && S.game.chat) || [];
+  if (isNew) { S.game = { id: gid, title: '', ver: 0, chat: [] }; S.chat = [{ who: 'k', text: '형아, 어떤 게임 만들고 싶어? 생각나는 대로 말해 줘.' }]; }
+  else if (!S.chat.length) S.chat = [{ who: 'k', text: '어디를 고쳐 볼까? 해 보고 바꾸고 싶은 걸 말해 줘.' }];
+  renderWork();
+  if (S.game && S.game.ver) await loadCurrent();
+  if (S.offGame) S.offGame();
+  S.offGame = API.watchGame(gid, (g) => { if (!g || S.gid !== gid) return; const changed = S.game && g.ver !== S.game.ver; S.game = { ...S.game, ...g }; if (changed && !S.preview) loadCurrent(); else if (!S.busy) renderTools(); });
+}
+async function loadCurrent() {
+  const g = S.game; if (!g || !g.ver) return;
+  const v = await API.getVer(g.id, g.ver);
+  S.curHtml = v ? v.html : '';
+  if (!S.preview) { const st = $('#stage'); if (st) mountGame(st, S.curHtml); }
+  renderTools();
+}
+function saveChat() { if (!S.gid) return; const keep = S.chat.slice(-40); API.setGame(S.gid, { chat: keep, upd: Date.now(), ...(S.game && !S.game.made ? { made: Date.now(), ver: S.game.ver || 0, title: S.game.title || '' } : {}) }).catch(() => {}); if (S.game) S.game.made = S.game.made || Date.now(); }
+
+function renderWork() {
+  const g = S.game || {};
+  app.innerHTML = `
+  <div class="top"><button class="btn w s" id="home" aria-label="내 게임 목록">⌂ 내 게임</button><h1 id="gTitle">${esc(g.title || '새 게임')}</h1>${power()}</div>
+  <div class="work">
+    <div>
+      <div class="stage" id="stage"><div class="empty">${g.ver ? '불러오는 중…' : '카츄랑 설계를 끝내면<br>여기에서 게임이 바로 돌아가요.'}</div></div>
+      <div id="viewbar"></div>
+      <div class="tools" id="tools"></div>
+      <div id="roadW"></div>
+    </div>
+    <div class="chatcol">
+      <div class="msgs" id="msgs"></div>
+      <div id="chs"></div>
+      <div id="inbar"></div>
+    </div>
+  </div>`;
+  $('#home').onclick = goHome;
+  renderTools(); renderChat(); renderInput();
+}
+function goHome() { if (S.offGame) { S.offGame(); S.offGame = null; } S.view = 'home'; S.gid = null; renderHome(); }
+function renderTools() {
+  const t = $('#tools'); if (!t) return; const g = S.game || {};
+  const title = $('#gTitle'); if (title) title.textContent = g.title || '새 게임';
+  const p = pubOf(S.gid);
+  t.innerHTML = g.ver ? `<button class="btn w s" id="reload">▶ 처음부터 다시</button><button class="btn w s" id="big">⛶ 크게</button><button class="btn w s" id="back">↩ 아까로 돌려 줘</button><button class="btn w s" id="pub" ${p && p.state === 'wait' && p.ver === g.ver ? 'disabled' : ''}>🏠 가족에게 올리기</button><span class="mini" style="align-self:center">${g.ver}번째 모습</span>` : '';
+  const rw = $('#roadW'); if (rw) { rw.innerHTML = g.ver || S.repo[g.id] ? `<div class="card" style="margin-top:10px">${roadHtml(g, g.id)}</div>` : ''; bindRoad(rw); }
+  if (!g.ver) return;
+  $('#reload').onclick = () => mountGame($('#stage'), S.preview ? S.preview.html : S.curHtml);
+  $('#big').onclick = () => playFull(S.preview ? S.preview.html : S.curHtml);
+  $('#back').onclick = openVersions;
+  $('#pub').onclick = askPublish;
+  const vb = $('#viewbar');
+  vb.innerHTML = S.preview ? `<div class="viewbar"><b>${S.preview.n}번째 모습을 보는 중</b><button class="btn s" id="useV">이걸로 돌려</button><button class="btn w s" id="curV">지금 모습으로</button></div>` : '';
+  if (S.preview) {
+    $('#useV').onclick = revertTo;
+    $('#curV').onclick = () => { S.preview = null; mountGame($('#stage'), S.curHtml); renderTools(); };
+  }
+}
+function renderChat() {
+  const m = $('#msgs'); if (!m) return;
+  m.innerHTML = S.chat.map((c) => c.who === 'k' ? `<div class="m k${c.plan ? ' plan' : ''}"><span class="who">카츄</span>${c.plan ? `<b>${esc(c.plan)}</b>\n\n` : ''}${esc(c.text)}</div>` : c.who === 'sys' ? `<div class="m sys">${esc(c.text)}</div>` : `<div class="m me">${esc(c.text)}</div>`).join('')
+    + (S.busy ? `<div class="wait">${S.busy === 'build' ? '카츄가 만드는 중이야. 1~3분쯤 걸려. 기다리는 동안 지금 게임을 해 봐도 돼.' : '카츄가 생각하는 중…'}</div>` : '');
+  m.scrollTop = m.scrollHeight;
+  const c = $('#chs');
+  c.innerHTML = !S.busy && S.choices.length ? `<div class="chs">${S.choices.map((x, i) => `<button class="ch" data-ch="${i}">${esc(x)}</button>`).join('')}</div>` : '';
+  c.querySelectorAll('[data-ch]').forEach((b) => b.onclick = () => send(S.choices[+b.dataset.ch]));
+}
+function renderInput() {
+  const el = $('#inbar'); if (!el) return;
+  if (!IN.text && !IN.mic) { el.innerHTML = '<p class="note">말하기·글자 쓰기는 엄마가 정하는 중이에요.</p>'; return; }
+  el.innerHTML = `<div class="inbar">${IN.text ? '<textarea id="say" rows="1" placeholder="카츄에게 부탁해요"></textarea>' : '<div id="say" class="note" style="flex:1">🎤를 누르고 말해요</div>'}${IN.mic ? '<button class="btn mic" id="mic" aria-label="말하기">🎤</button>' : ''}${IN.text ? '<button class="btn" id="go">보내기</button>' : ''}</div><p class="note" id="micNote"></p>`;
+  const ta = IN.text ? $('#say') : null;
+  if (ta) { ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(140, ta.scrollHeight) + 'px'; }); $('#go').onclick = () => { const v = ta.value.trim(); if (!v || S.busy) return; ta.value = ''; ta.style.height = ''; send(v); }; }
+  if (IN.mic) $('#mic').onclick = toggleMic;
+}
+/* 🎤 녹음 → 서버 받아쓰기(stt, 오늘의 공부와 같은 방식). 최대 50초. 글자 칸이 있으면 칸에 넣어 고친 뒤 보내고, 없으면 바로 보내요. */
+let REC = null;
+async function toggleMic() {
+  const b = $('#mic'), note = $('#micNote');
+  if (REC) { REC.stop(); return; }
+  if (S.busy) return;
+  let stream; try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); } catch (e) { note.textContent = '마이크를 쓸 수 없어요. 마이크 허용을 확인해 주세요.'; return; }
+  const mime = (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) ? 'audio/webm;codecs=opus' : '';
+  let r; try { r = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : undefined); } catch (e) { note.textContent = '이 기기에서는 녹음이 안 돼요.'; stream.getTracks().forEach((t) => t.stop()); return; }
+  const chunks = [], t0 = Date.now(); REC = r;
+  r.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  r.onstop = async () => {
+    REC = null; clearTimeout(cap); stream.getTracks().forEach((t) => t.stop()); b.classList.remove('on'); b.textContent = '🎤';
+    const blob = new Blob(chunks, { type: mime || 'audio/webm' }); const sec = Math.round((Date.now() - t0) / 1000);
+    if (blob.size < 1500) { note.textContent = ''; return; }
+    note.textContent = '말한 걸 글자로 바꾸는 중…';
+    const b64 = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(',')[1] || ''); fr.onerror = () => res(''); fr.readAsDataURL(blob); });
+    const txt = b64 ? await API.stt(b64, sec) : '';
+    if (!txt) { note.textContent = '잘 안 들렸어. 다시 말해 줄래?'; return; }
+    note.textContent = '';
+    const ta = IN.text ? $('#say') : null;
+    if (ta) { ta.value = (ta.value.trim() + ' ' + txt).trim(); ta.dispatchEvent(new Event('input')); ta.focus(); } else send(txt);
+  };
+  r.start(); b.classList.add('on'); b.textContent = '⏹'; note.textContent = '듣고 있어. 다 말하면 ⏹를 눌러.';
+  const cap = setTimeout(() => { if (REC === r) r.stop(); }, 50000);
+}
+
+async function send(text) {
+  if (S.busy || !text) return;
+  if ((+S.use.won || 0) >= DAY_WON) { S.chat.push({ who: 'k', text: '오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!' }); renderChat(); return; }
+  S.chat.push({ who: 'me', text }); S.choices = []; S.busy = 'talk'; renderChat(); saveChat();
+  const g = S.game || {};
+  const r = await API.ask({ mode: 'talk', gid: S.gid, turns: S.chat.filter((c) => c.who !== 'sys').slice(-16).map((c) => ({ who: c.who, text: c.plan ? c.text + '\n' + c.plan : c.text })) });
+  S.busy = false;
+  if (r.state !== 'ok') { S.chat.push({ who: 'k', text: r.say || '카츄가 잠깐 멈췄어. 다시 말해 줄래?' }); renderChat(); saveChat(); return; }
+  if (r.title && !g.ver && r.title !== g.title) { S.game.title = r.title; API.setGame(S.gid, { title: r.title }).catch(() => {}); renderTools(); }
+  if (r.action === 'build') {
+    S.chat.push({ who: 'k', text: r.say || '좋아, 만들게!' }); renderChat(); saveChat();
+    return build(r.plan || S.plan, r.title || S.title);
+  }
+  S.chat.push({ who: 'k', text: r.say, ...(r.action === 'confirm' && r.plan ? { plan: r.plan } : {}) });
+  if (r.action === 'confirm') { S.plan = r.plan; S.title = r.title; }
+  S.choices = r.choices || [];
+  renderChat(); saveChat();
+}
+async function build(plan, title) {
+  S.busy = 'build'; renderChat();
+  const r = await API.ask({ mode: 'build', gid: S.gid, plan, title: title || '' });
+  S.busy = false; S.plan = '';
+  S.chat.push({ who: 'k', text: r.say || (r.state === 'ok' ? '다 만들었어!' : '만들다가 꼬였어. 다시 말해 줄래?') });
+  if (r.state === 'ok' && r.action === 'built') { S.chat.push({ who: 'sys', text: `${r.ver}번째 모습: ${r.note || ''}` }); S.preview = null; S.game = { ...S.game, ver: r.ver, title: r.title || S.game.title }; await loadCurrent(); }
+  renderChat(); saveChat();
+}
+
+function openVersions() {
+  const g = S.game; if (!g || !g.ver) return;
+  const notes = g.notes || {};
+  const d = document.createElement('div'); d.className = 'sheet';
+  const rows = []; for (let n = g.ver; n >= 1; n--) rows.push(`<button class="ver${n === g.ver ? ' now' : ''}" data-v="${n}"><span class="n">${n}</span><span style="flex:1">${esc(notes[n] || '')}</span>${n === g.ver ? '<span class="mini">지금</span>' : ''}</button>`);
+  d.innerHTML = `<div class="panel"><h2>↩ 어느 때로 돌릴까?</h2><p class="mini" style="margin:0 0 10px">누르면 그때 모습을 먼저 해 보고, 「이걸로 돌려」를 눌러야 바뀌어요.</p>${rows.join('')}<div class="row" style="justify-content:flex-end"><button class="btn w s" id="vx">닫기</button></div></div>`;
+  document.body.appendChild(d);
+  d.onclick = (e) => { if (e.target === d) d.remove(); };
+  $('#vx', d).onclick = () => d.remove();
+  d.querySelectorAll('[data-v]').forEach((b) => b.onclick = async () => {
+    const n = +b.dataset.v; d.remove();
+    if (n === g.ver) { S.preview = null; mountGame($('#stage'), S.curHtml); renderTools(); return; }
+    const v = await API.getVer(g.id, n); if (!v) return toast('그 모습을 못 찾았어요');
+    S.preview = { n, html: v.html }; mountGame($('#stage'), v.html); renderTools();
+  });
+}
+async function revertTo() {
+  const g = S.game, p = S.preview; if (!g || !p) return;
+  const n = g.ver + 1, note = `${p.n}번째로 돌림`;
+  await API.putVer(g.id, n, p.html, note);
+  await API.setGame(g.id, { ver: n, upd: Date.now(), notes: { [n]: note } });
+  S.game = { ...g, ver: n, notes: { ...(g.notes || {}), [n]: note } }; S.curHtml = p.html; S.preview = null;
+  S.chat.push({ who: 'sys', text: `${n}번째 모습: ${note}` }); saveChat();
+  mountGame($('#stage'), S.curHtml); renderTools(); renderChat();
+}
+function askPublish() {
+  const g = S.game; if (!g || !g.ver) return;
+  const d = document.createElement('div'); d.className = 'sheet';
+  d.innerHTML = `<div class="panel"><h2>🏠 가족에게 올리기</h2><p>「${esc(g.title)}」 ${g.ver}번째 모습을 엄마에게 보내요. 엄마가 해 보고 OK 하면 가족 대시보드에 「시훈이 게임」으로 올라가요.</p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="px">아직</button><button class="btn s" id="pgo">엄마에게 보내기</button></div></div>`;
+  document.body.appendChild(d);
+  $('#px', d).onclick = () => d.remove();
+  $('#pgo', d).onclick = async () => {
+    const html = S.curHtml; if (!html) return;
+    try {
+      await API.setPub(g.id, { title: g.title || '내 게임', ver: g.ver, html, state: 'wait', at: Date.now() });
+      await API.addNote(`🎮 시훈이가 「${g.title || '내 게임'}」 게임을 가족에게 올리고 싶대요. 대시보드 「시훈이가 만든 게임」에서 관리자 모드로 해 보고 OK를 눌러 주세요.`);
+      d.remove(); S.chat.push({ who: 'sys', text: '엄마에게 보냈어요. 엄마가 OK 하면 가족에게 올라가요.' }); saveChat(); renderChat(); renderTools();
+    } catch (e) { toast('보내지 못했어요. 인터넷을 확인해 주세요.'); }
+  };
+}
+
+(async function start() {
+  API = MOCK ? mockApi() : await firebaseApi().catch((e) => { gate('<p>연결이 안 됐어요. 인터넷을 확인하고 다시 열어 주세요.</p>'); return null; });
+  if (!API) return;
+  await loadRepo();
+  await seedSesi();
+  document.addEventListener('visibilitychange', async () => { if (document.visibilityState === 'visible') { await loadRepo(); if (S.view === 'home') renderHome(); else renderTools(); } });
+  API.watchGames((gs) => { S.games = gs; if (S.view === 'home') renderHome(); });
+  API.watchPubs((ps) => { S.pubs = ps; if (S.view === 'home') renderHome(); else renderTools(); });
+  let day = kday(), offUse = API.watchUse(day, (u) => { S.use = u || {}; document.querySelectorAll('.power').forEach((p) => p.outerHTML = power()); });
+  setInterval(() => { if (kday() !== day) { day = kday(); offUse(); offUse = API.watchUse(day, (u) => { S.use = u || {}; document.querySelectorAll('.power').forEach((p) => p.outerHTML = power()); }); } }, 60000);
+  renderHome();
+})();
+if ('serviceWorker' in navigator && !MOCK) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
