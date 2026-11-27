@@ -2289,7 +2289,7 @@ function vLeft(){return VW&&VC?VW.words.filter(w=>w.map&&!(VC.words||{})[w.w]).l
 // 다시 볼 단어: 몰랐던 단어 중 오늘 전에 본 것
 function vDue(){if(!VW||!VC)return [];const K=VC.words||{};return VW.words.filter(w=>w.map&&K[w.w]&&K[w.w].known===false&&HUB.dkey(K[w.w].ts)<today()).sort((a,b)=>(K[a.w].ts||'').localeCompare(K[b.w].ts||''))}
 function vday(){VC.days=VC.days||{};return VC.days[today()]||(VC.days[today()]={n:0,known:0})}
-function vNeedToday(){if(!VW||!VC)return false;const s=VS();if(s){const left=s.queue.some(w=>!s.res[w])||(s.rev||[]).some(w=>!(s.revRes||{})[w]);return left||(!!window.HUBTRY&&!s.sim)}const D=(VC.days||{})[today()];if(D&&D.end&&!D.forced)return false;return vLeft()>0||vReview().length>0}
+function vNeedToday(){if(!VW||!VC)return false;if(window.HUBTRY&&window.__vTryDone===today())return false;const s=VS();if(s){const left=s.queue.some(w=>!s.res[w])||(s.rev||[]).some(w=>!(s.revRes||{})[w]);return left||(!!window.HUBTRY&&!s.sim)}const D=(VC.days||{})[today()];if(D&&D.end&&!D.forced)return false;return vLeft()>0||vReview().length>0}
 function vTricky(w){return vNeed(w)>=2||/(gh|kn|wr|ph|ea|ou|ie|ei|ck|ture|tion)/.test(w.w)}
 // 엄마 11/25 「하나로 통일」: 복습 단어도 따로 뜻 고르기 하지 않고, 새 단어와 같은 흐름(쓰기 → 소리 → 힌트 → 따라 쓰기 → 품사)으로.
 // 하루 10개 = 다시 볼 단어 3개(전에 틀린 단어 먼저, 그다음 망각곡선 1·3·7·14·30일이 된 단어) + 새 단어 7개.
@@ -2353,7 +2353,7 @@ function vDone(known,gave){const s=VS(),w=vc.w;s.res[w.w]={known,gave:!!gave,pre
   const D=vday();const r=Object.values(s.res);D.n=r.length;D.known=r.filter(x=>x.known).length;D.re=r.filter(x=>x.pred==='re').length;D.reOk=r.filter(x=>x.pred==='re'&&x.known).length;D.gave=r.filter(x=>x.gave).length;
   D.lv={};r.forEach(x=>{if(x.lvl)D.lv[x.lvl]=(D.lv[x.lvl]||0)+1});const pp=r.filter(x=>x.posOk!=null);D.posN=pp.length;D.posOk=pp.filter(x=>x.posOk).length;D.posBad=Object.entries(s.res).filter(([,x])=>x.posOk===false).map(([ww,x])=>({w:ww,pick:x.posPick,ans:x.posAns||posOf(VW.words.find(z=>z.w===ww)||{w:ww})}));
   vc.phase='result';vsave();render();say(w.w)}
-function vFinish(force){const s=VS(),D=vday();const left=s.queue.filter(w=>!s.res[w]).length;if(left&&!force){V={view:'vend'};render();return}D.skipped=left;if(force)D.forced=true;else delete D.forced;if(!D.end||force){D.end=new Date().toISOString();D.min=mins(Date.now()-s.start)}vsave();V={view:'home'};render()}
+function vFinish(force){const s=VS(),D=vday();const left=s.queue.filter(w=>!s.res[w]).length;if(window.HUBTRY)window.__vTryDone=today(); /* 👀 엄마 체험(11/27): 안 한 단어가 있어도 막지 않고 넘어감 */if(left&&!force&&!window.HUBTRY){V={view:'vend'};render();return}D.skipped=left;if(force)D.forced=true;else delete D.forced;if(!D.end||force){D.end=new Date().toISOString();D.min=mins(Date.now()-s.start)}vsave();V={view:'home'};render()}
 function vend(){const s=VS();const left=s.queue.filter(w=>!s.res[w]);
   $('#main').innerHTML=topbar('🔤 단어 체크',true)+`<div class="card"><h2>아직 안 한 단어가 ${left.length}개 있어요</h2><p class="tip">단어를 모두 쓰고 나면 단어가 끝나요. 그다음 5문장으로 가요.</p>
    <div class="row"><button class="btn big" data-act="vgo" data-i="${s.queue.indexOf(left[0])}">▶ 안 한 단어 하러 가기</button></div></div>`}
@@ -2620,7 +2620,7 @@ function finishBuild(ok,diag){const s=SES(),r=st(rc.id),it=rc.it;
   if(!ok)rc.lastBuilt=rc.built.map(c=>c.w).join(' ')+rc.end;
   rc.phase=ok?'result':'answer';save();render();say(it.en[0])}
 function finishSession(force){const s=SES();const D=dayRec(today());const left=s.queue.filter(q=>q.kind!=='다시'&&!q.res).length;
-  if(left&&!force){V={view:'send'};render();return}
+  if(left&&!force&&!window.HUBTRY){V={view:'send'};render();return}
   if(!D.end||force||D.skipped){D.end=new Date().toISOString();D.actualMin=mins(Date.now()-s.start);D.skipped=left;save()}if((s.qv||0)>=5&&!left)g2Finish();V={view:'done'};render()}
 function send(){const s=SES();const k=s.queue.findIndex(q=>q.kind!=='다시'&&!q.res);const left=s.queue.filter(q=>q.kind!=='다시'&&!q.res).length;
   $('#main').innerHTML=topbar('영어 5문장',true)+`<div class="card"><h2>아직 안 한 문장이 ${left}개 있어요</h2><p class="tip">5문장을 모두 해야 오늘 영어가 끝나요.</p>
@@ -10314,7 +10314,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';ADMS='';render()})}
     else if(a==='asec'){ADMS=t.dataset.s||'';VIEW='admin';render();window.scrollTo(0,0)}
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
-    else if(a==='try'){window.HUBTRY=true;window.TRYDAY=t.dataset.day||'';RET='admin';tryBar();openApp(t.dataset.app)}
+    else if(a==='try'){window.HUBTRY=true;window.__vTryDone=null;window.TRYDAY=t.dataset.day||'';RET='admin';tryBar();openApp(t.dataset.app)}
     else if(a==='report'){location.href='./report.html'}
     else if(a==='treport'){location.href='./report.html#teach'}
     else if(a==='pencal'){penCal()}
