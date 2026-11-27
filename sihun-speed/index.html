@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="17";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="18";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="tree.js?v=4"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=1"></script><script src="talk-gen.js?v=1"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -122,7 +122,18 @@ h1,h2,h3,button{font-family:'Do Hyeon','Gowun Dodum',sans-serif!important;font-w
 body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-adjust:.66}}
 </style>
 <script>/* 📐 화면 따라 크게(엄마 11/26): 태블릿은 화면 폭에 맞춰 최대 1.5배 */(function(){var f=function(){document.documentElement.style.zoom=String(Math.max(1,Math.min(1.5,(window.innerWidth||0)/520)))};f();addEventListener('resize',f)})();</script>
-<style></style>
+<style>/* 스피드영어 드릴(엄마 11/27) */
+.prog{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}.prog b{display:block;height:100%;background:var(--en);border-radius:5px}
+.cnt{font-size:15px;color:var(--sub);white-space:nowrap}
+.tag{display:inline-block;border-radius:999px;padding:2px 10px;font-size:14px;background:var(--chip);color:var(--sub);margin-bottom:4px}
+.tag.re{background:var(--warm-soft);color:#6b3d10}
+.wchips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:6px}
+.wchip{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 11px;font-size:17px;color:var(--ink)}
+.wchip b{color:var(--en);margin-left:6px;font-family:'Noto Sans KR',sans-serif!important;font-weight:800!important}
+.hint{text-align:center;color:var(--sub);font-size:14px;margin-top:6px}
+.stlist{margin:8px 0 0;padding:0;list-style:none;font-size:15px}.stlist li{padding:5px 2px;border-bottom:1px solid var(--line);color:var(--sub)}.stlist li.now{color:var(--en);font-weight:800}.stlist li.ok{color:#1d6e40}
+.err{background:#fdecea;color:#7a2318;border-radius:16px;padding:14px;margin-top:14px;font-size:17px}
+</style>
 </head>
 <body>
 <div id="app"></div>
@@ -134,44 +145,44 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
    🎤 녹음(엄마 11/26): 생각하고 🎤 누르기 → 다 말하면 ⏹ 누르기. 자동으로 끊지 않고, 멈춘 뒤 한 번만 서버(stt, Google 받아쓰기)로 받아 적어요.
    틀리면 한 번 더(두 번째도 틀리면 정답 듣기). 안 들리면 다시 녹음(틀림 아님). 인식이 계속 안 되면 「넘어가기」.
    정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교. */
-const SP=window.SPEED,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
-const PASS_N=9,FAST_MS=5000,REC_MAX=55000,DAY_N=50; // 엄마 11/26 「너무 짧아, 50문장 정도」
-// 🌳 계단영어에서 맞힌 문장만(엄마 11/27 「50개는 무조건, 맞춘 것만 하자」): 계단영어 기록(log/routine map.cells)에서 ok인 문장만.
-//    하루 50문장: 어제 막힌 것 먼저, 나머지는 섞어서, 50개가 안 되면 맞힌 문장을 다시 섞어 반복. 원래 스피드 단계 문장은 안 씀.
-// 틀렸던 단어(vocab/check에서 한 번이라도 틀림)가 문장에 있으면 그 영어 단어를 한글 아래에 작게 보여 줌(엄마 11/27)
-let TREE_IDS=[],TREE_N=[],WRONGW={};
-const TBY={};(window.SPEED_TREE||[]).forEach(L=>L.items.forEach(([k,ko,en])=>TBY['t:'+k]={id:'t:'+k,ko,en,stage:0,leaf:L.n}));
-{const by=SP.byId;SP.byId=id=>String(id).startsWith('t:')?TBY[id]||null:by(id)}
-const isT=id=>String(id).startsWith('t:');
-async function loadTree(){TREE_IDS=[];TREE_N=[];WRONGW={};try{if(!DB)return;const R=await DB.get('log/routine');const C=(R&&R.map&&R.map.cells)||{};
-  Object.keys(C).forEach(k=>{const c=C[k];if(!c||!c.ok)return;const id='t:'+k;if(!TBY[id]){if(!c.en||!c.ko)return;TBY[id]={id,ko:c.ko,en:c.en,stage:0,leaf:''}}TREE_IDS.push(id)});
-  try{const W=await DB.get('vocab/check');const ws=(W&&W.words)||{};Object.keys(ws).forEach(w=>{const x=ws[w];if(x&&(x.wn>0||x.relearn||x.known===false||(x.hist||[]).some(h=>h&&h.known===false)))WRONGW[w.toLowerCase()]=x.ko||''})}catch(e){}}catch(e){}}
-function wrongWords(en){const t=String(en||'').toLowerCase().match(/[a-z']+/g)||[],out=[];t.forEach(x=>{if(WRONGW[x]!=null&&!out.includes(x))out.push(x)});return out}
+const SP=window.SPEED||{STAGES:[],VWORDS:new Set(),byId:()=>null},TK=window.TALK||null,TC=window.TALKCORE||null,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
+/* ⚡ 스피드영어 = 쉬운 문장 꼴 바꾸기 드릴(엄마 11/27)
+   · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 27개 × 단어 바퀴 3개)가 그때그때 만들어요. 한 묶음 = 같은 문장을 긍정·부정·질문·과거로 바꿔 말하기.
+   · 하루 50문장 = 다시(어제까지 틀리거나 늦은 것) 20 + 새 문장 30(지금 단계 20 + 지난 단계). 틀린 문장은 그날 4문장 뒤에 한 번 더.
+   · 통과(스피드연산식): 지금 단계 새 문장을 90% 막힘 없이 말한 날이 2번 → 다음 단계. 이틀 뒤 그 단계 다지기 15문장, 90%가 안 되면 그 단계로 돌아가요.
+   · 막힘 없이 = 처음에 맞게 + 한글이 나오고 5초 안에 🎤 + 문장 듣기를 미리 누르지 않음(낱말 듣기는 괜찮아요). */
+const FAST_MS=5000,REC_MAX=55000,DAY_N=50,AGAIN_N=20,NEW_CUR=20,REV_N=15,PASS_PCT=.9,PASS_DAYS=2,REV_GAP=2,REASK_GAP=4;
+const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','수능 단어'];
+// 문장 찾기: 새 문장 id = 바퀴.꼴.씨앗.묶음(예: 1.b_pos.12345.b_q). 옛 기록 id는 drills.js에서.
+function IT(id){id=String(id||'');if(TK&&id.split('.').length===4){const it=TK.make(id);if(it)return it}return SP.byId(id)}
+const stName=n=>TK&&TK.STAGES[n-1]?TK.STAGES[n-1].t:'';
+const seed=()=>Math.floor(Math.random()*4294967295);
+function dayDiff(a,b){return Math.round((new Date(b+'T12:00')-new Date(a+'T12:00'))/864e5)}
 let DB=null,ST=null,V={view:'home'},RUN=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function today(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function tomorrow(){const d=new Date();d.setDate(d.getDate()+1);return today(d)}
 const fmt=ms=>{const s=Math.round(ms/1000);return s<60?s+'초':Math.floor(s/60)+'분 '+String(s%60).padStart(2,'0')+'초'};
 const sec1=ms=>(ms/1000).toFixed(1)+'초';
 
 // ---------- 저장 ----------
 const LS={get(k,d){try{const v=localStorage.getItem('speed:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('speed:'+k,JSON.stringify(v))}catch(e){}}};
-function blank(){return {stage:1,mode:'base',days:{},again:[],cur:null}}
-// 엄마 11/26 「선택 말고 아이디로 쌓을 거야」: 로그인한 구글 아이디마다 기록을 서버에 따로 쌓아요(speed/u-아이디). 다른 기기에서도 같은 아이디면 이어져요.
-// 같이 하는 사람(다른 아이디)의 오늘 결과는 끝난 뒤 나란히 보여 줘요.
+function blank(){return {v:2,stage:1,lap:1,pd:0,rev:[],days:{},again:[],cur:null}}
+// 옛 기록(계단영어 문장·옛 단계)에서 넘어오면: 날짜 기록은 그대로 두고 단계는 be부터(엄마 11/27 「일단 be부터」)
+function migrate(st){if(st.v===2)return st;return Object.assign(blank(),{days:st.days||{},name:st.name,updated:st.updated})}
+// 엄마 11/26 「선택 말고 아이디로 쌓을 거야」: 로그인한 구글 아이디마다 기록을 서버에 따로 쌓아요(speed/u-아이디).
 let USER=null,WHO='',OTHERS=[];
 const keyOf=email=>'u-'+String(email||'nobody').toLowerCase().replace(/[^a-z0-9]/g,'_');
 const docOf=w=>'speed/'+w,lsOf=w=>'st-'+w;
-async function loadOf(w){let a=LS.get(lsOf(w),null),b=null;if(DB){try{b=await DB.get(docOf(w))}catch(e){}}
-  const pick=(b&&a)?((b.updated||'')>=(a.updated||'')?b:a):(b||a);return Object.assign(blank(),pick||{})}
+let LOADERR=false;
+async function loadOf(w){let a=LS.get(lsOf(w),null),b=null;if(DB){try{b=await DB.get(docOf(w))}catch(e){LOADERR=true}}
+  const pick=(b&&a)?((b.updated||'')>=(a.updated||'')?b:a):(b||a);return migrate(Object.assign(blank(),pick||{}))}
 async function loadOther(){try{let L=[];
   if(DB)L=(await DB.list('speed')).filter(x=>/^u-/.test(x.id)).map(x=>({id:x.id,st:x.data}));
   else for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(/^speed:st-u-/.test(k))L.push({id:k.slice(9),st:LS.get(k.slice(6),null)})}
   OTHERS=L.filter(x=>x.id!==WHO&&x.st&&x.st.days)}catch(e){OTHERS=[]}}
 async function load(){return loadOf(WHO)}
-// 📱 태블릿은 항상 시훈이 기록(엄마 11/26): 누가 로그인해 있든 태블릿(화면 짧은 쪽 600 이상)에서 한 건 시훈이 계정 기록으로.
-// 공개 저장소라 시훈이 계정은 코드에 적지 않고, 저장된 기록 문서 id의 SHA-256 앞 16자리로 찾아요. 못 찾으면 로그인 계정 그대로.
+// 📱 태블릿은 항상 시훈이 기록(엄마 11/26). 공개 저장소라 계정은 코드에 적지 않고 기록 문서 id의 SHA-256 앞 16자리로 찾아요.
 const TABLET=Math.min(screen.width||0,screen.height||0)>=600;
 async function tabletSihun(){if(!TABLET||TRY||!DB)return;try{for(const x of await DB.list('speed')){if(!/^u-/.test(x.id))continue;
   const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x.id)))).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
@@ -180,40 +191,45 @@ let saveT=null;
 function save(){if(TRY)return;const w=WHO,st=ST;st.name=USER.name;st.updated=new Date().toISOString();LS.set(lsOf(w),st);clearTimeout(saveT);saveT=setTimeout(()=>{if(DB)DB.set(docOf(w),st).catch(()=>{})},300)}
 addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set(docOf(WHO),ST).catch(()=>{})}});
 
-// ---------- 오늘 10문장 ----------
+// ---------- 오늘 50문장 ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function lastDay(before){const ks=Object.keys(ST.days).filter(k=>k<before&&ST.days[k].end).sort();return ks.length?Object.assign({date:ks[ks.length-1]},ST.days[ks[ks.length-1]]):null}
-function buildSet(stage){const tr=[];if(!TREE_IDS.length)return tr;
-  (ST.again||[]).forEach(id=>{if(isT(id)&&TREE_IDS.includes(id)&&!tr.includes(id))tr.push(id)});
-  shuffle(TREE_IDS).forEach(id=>{if(!tr.includes(id))tr.push(id)});
-  while(tr.length<DAY_N){const r=shuffle(TREE_IDS.slice());if(r.length>1&&r[0]===tr[tr.length-1])r.push(r.shift());r.forEach(id=>tr.push(id))}
-  return tr.slice(0,DAY_N)}
-function buildSetOld(stage){const st=SP.STAGES[stage-1];const tr=[],ids=[];
-  (ST.again||[]).forEach(id=>{const it=SP.byId(id);if(!isT(id)&&it&&it.stage<=stage&&ids.length<4&&!ids.includes(id))ids.push(id)});
-  const prev=lastDay(today());const used=new Set(prev?prev.items.map(x=>x.id):[]);
-  const pool=shuffle(st.items.map(x=>x.id).filter(id=>!ids.includes(id)));
-  const fresh=pool.filter(id=>!used.has(id)),old=pool.filter(id=>used.has(id));
-  const need=DAY_N-tr.length;fresh.concat(old).forEach(id=>{if(ids.length<need)ids.push(id)});ids.splice(Math.max(0,need));
-  return shuffle(tr.concat(ids))}
+function dueRev(){return (ST.rev||[]).find(r=>dayDiff(r.d,today())>=REV_GAP)||null}
+// 한 묶음(같은 문장을 꼴만 바꿔서): [id,…]
+function blockIds(stage,lap){const st=TK.STAGES[stage-1];const b=TK.block(stage,lap,seed(),Math.floor(Math.random()*st.blk.length));return b.filter(x=>x&&x.en&&x.ko).map(x=>x.id)}
+// 지난 단계: 가까운 단계가 조금 더 자주
+const prevStage=stage=>1+Math.floor((stage-1)*Math.sqrt(Math.random()));
+function buildSet(stage,lap,rev){const units=[],seenId=new Set(),seenEn=new Set();let total=0;
+  const unit=(ids,k)=>{const u=[];ids.forEach(id=>{const it=IT(id);if(!it||!it.en||seenId.has(id)||seenEn.has(it.en))return;seenId.add(id);seenEn.add(it.en);u.push([id,k])});if(u.length){units.push(u);total+=u.length}return u.length};
+  (ST.again||[]).slice(0,AGAIN_N).forEach(id=>unit([id],'a'));
+  if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,rev.l||lap),'v')}
+  {let n=0,g=0;while(n<NEW_CUR&&g++<80)n+=unit(blockIds(stage,lap),'n')}
+  {let g=0;while(total<DAY_N&&g++<200)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
+  // 넘치면 맨 끝(지난 단계) 묶음에서 덜어 내기
+  while(total>DAY_N){const u=units[units.length-1];if(u[0][1]!=='p')break;u.pop();total--;if(!u.length)units.pop()}
+  // 묶음은 붙여 두고 순서만 섞기(다시 문장이 처음에 몰리지 않게)
+  const flat=[].concat(...shuffle(units));return {ids:flat.map(x=>x[0]),kinds:flat.map(x=>x[1])}}
 
 // ---------- 채점(들린 말 ↔ 정답) ----------
-const CONTR=[[/\bi'm\b/g,'i am'],[/\byou're\b/g,'you are'],[/\bwe're\b/g,'we are'],[/\bthey're\b/g,'they are'],[/\bhe's\b/g,'he is'],[/\bshe's\b/g,'she is'],[/\bit's\b/g,'it is'],[/\bthere's\b/g,'there is'],
+const CONTR=[[/\b(he|she|it)'s been\b/g,'$1 has been'],[/\bi've\b/g,'i have'],[/\byou've\b/g,'you have'],[/\bwe've\b/g,'we have'],[/\bthey've\b/g,'they have'],[/\bhasn't\b/g,'has not'],[/\bhaven't\b/g,'have not'],[/\bshouldn't\b/g,'should not'],[/\bwhat's\b/g,'what is'],[/\bwhere's\b/g,'where is'],[/\bwho's\b/g,'who is'],[/\bthat's\b/g,'that is'],[/\bi'm\b/g,'i am'],[/\byou're\b/g,'you are'],[/\bwe're\b/g,'we are'],[/\bthey're\b/g,'they are'],[/\bhe's\b/g,'he is'],[/\bshe's\b/g,'she is'],[/\bit's\b/g,'it is'],[/\bthere's\b/g,'there is'],
   [/\bisn't\b/g,'is not'],[/\baren't\b/g,'are not'],[/\bwasn't\b/g,'was not'],[/\bweren't\b/g,'were not'],[/\bdon't\b/g,'do not'],[/\bdoesn't\b/g,'does not'],[/\bdidn't\b/g,'did not'],
   [/\bcan't\b/g,'can not'],[/\bcannot\b/g,'can not'],[/\bwon't\b/g,'will not'],[/\bi'll\b/g,'i will'],[/\byou'll\b/g,'you will'],[/\bhe'll\b/g,'he will'],[/\bshe'll\b/g,'she will'],[/\bwe'll\b/g,'we will'],[/\bthey'll\b/g,'they will']];
-const NOAP={im:'i am',dont:'do not',doesnt:'does not',didnt:'did not',isnt:'is not',arent:'are not',wasnt:'was not',werent:'were not',cant:'can not',wont:'will not',youre:'you are',theyre:'they are',theres:'there is',hes:'he is',shes:'she is'};
-const NUM={'1':'one','2':'two','3':'three','4':'four','5':'five'};
+const NOAP={im:'i am',dont:'do not',doesnt:'does not',didnt:'did not',isnt:'is not',arent:'are not',wasnt:'was not',werent:'were not',cant:'can not',wont:'will not',youre:'you are',theyre:'they are',theres:'there is',hes:'he is',shes:'she is',ive:'i have',youve:'you have',weve:'we have',theyve:'they have',hasnt:'has not',havent:'have not',shouldnt:'should not',whats:'what is'};
+const NUM={'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','10':'ten','11':'eleven','12':'twelve'};
 const DROP=new Set(['um','uh','uhm','er','erm','hmm','a','an','the','oh','okay','ok']);
 function words(s){s=String(s||'').toLowerCase().replace(/[’‘`]/g,"'");CONTR.forEach(([r,x])=>s=s.replace(r,x));
   const out=[];s.replace(/[^a-z0-9' ]/g,' ').replace(/'/g,'').split(/\s+/).forEach(w=>{if(!w)return;w=NUM[w]||w;(NOAP[w]||w).split(' ').forEach(x=>{if(!DROP.has(x))out.push(x)})});return out}
 const PRON={i:['i','eye','hi','ah','aye','ai'],you:['you','u','ya','yo','yu','your'],he:['he','she','hi','hee','his','e','hey'],she:['she','he','shi','see','sea','c','shee','g'],we:['we','wee','oui','v','with'],they:['they','day','dey','thay','there','then']};
-const STRUCT=new Set('i you he she it we they am is are was were be do does did not can will there what where who'.split(' '));
+const STRUCT=new Set('i you he she it we they am is are was were be do does did not can will there what where who has have had been should must would could than'.split(' '));
 const IRR={ate:'eat',went:'go',has:'have',had:'have',did:'do',does:'do',swam:'swim',ran:'run',drank:'drink',read:'read'};
+const VW=new Set(SP.VWORDS||[]);
+if(TC){Object.keys(TC.IRV).forEach(v=>TC.IRV[v].forEach(x=>{if(x&&x!==v&&!IRR[x])IRR[x]=v}));TC.VP.forEach(p=>{const v=String(p.e||'').split(' ')[0];if(!v)return;[v,TC.EN.s3(v),TC.EN.past(v),TC.EN.ing(v)].forEach(x=>{if(x)VW.add(String(x).split(' ')[0].toLowerCase())})})}
 function stems(w){const r=new Set([w]);if(IRR[w])r.add(IRR[w]);
   if(/ing$/.test(w)){const b=w.slice(0,-3);r.add(b);r.add(b+'e');if(/(.)\1$/.test(b))r.add(b.slice(0,-1))}
   if(/ies$/.test(w))r.add(w.slice(0,-3)+'y');if(/es$/.test(w))r.add(w.slice(0,-2));if(/s$/.test(w))r.add(w.slice(0,-1));
   if(/ed$/.test(w)){r.add(w.slice(0,-2));r.add(w.slice(0,-1))}return r}
 // 동사 모양이 다르면(likes↔like, played↔play, went↔go) 발음 문제가 아니라 문법 → 인정 안 함
-function formErr(t,h){if(t===h)return false;if(!(SP.VWORDS.has(t)||SP.VWORDS.has(h)||IRR[t]||IRR[h]))return false;const a=stems(t),b=stems(h);for(const x of a)if(b.has(x))return true;return false}
+function formErr(t,h){if(t===h)return false;if(!(VW.has(t)||VW.has(h)||IRR[t]||IRR[h]))return false;const a=stems(t),b=stems(h);for(const x of a)if(b.has(x))return true;return false}
 function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
 const near=(a,b)=>a===b||lev(a,b)<=Math.max(1,Math.floor(Math.min(a.length,b.length)/3))||(a.length>3&&b.length>3&&a.slice(0,3)===b.slice(0,3));
 const noun=(t,h)=>h===t+'s'||t===h+'s'||h===t+'es'||t===h+'es';
@@ -227,7 +243,10 @@ function judge(target,heard){const T=words(target),H=words(heard);if(!H.length)r
   // we're 를 were 로 받아 적는 경우
   if(best<0&&/\bwe are\b/.test(T.join(' '))&&H.some((h,k)=>h==='were'&&H[k-1]!=='we'))return judge(target,H.map((h,k)=>h==='were'&&H[k-1]!=='we'?'we are':h).join(' '));
   return best===1?'fuzzy':'wrong'}
-window.__judge=judge;
+// 정답이 여러 가지(I'm / I am, that / who, 뒤로 보낸 if)면 가장 잘 맞는 것으로
+const RANK={exact:3,fuzzy:2,unclear:1,wrong:0};
+function judgeAll(it,heard){let best='wrong';[it.en].concat(it.alt||[]).forEach(t=>{const v=judge(t,heard);if(RANK[v]>RANK[best])best=v});return best}
+window.__judge=judge;window.__judgeAll=judgeAll;
 
 // ---------- 소리 ----------
 let VOICE=null;
@@ -282,7 +301,7 @@ function render(){const a=$('#app');
   else if(V.view==='log')a.innerHTML=logHTML();
   bind()}
 function stageOf(){return TRY&&V.tryStage?V.tryStage:ST.stage}
-function modeOf(){return TRY?(V.tryMode||'base'):(ST.mode||'base')}
+function lapOf(){return TRY&&V.tryLap?V.tryLap:(ST.lap||1)}
 // 📲 앱으로 설치(엄마 11/26 「다운로드되게」): 크롬이 설치를 허락하면 버튼, 아니면 메뉴로 설치하는 방법을 알려 줘요
 let INSTALL=null;const STANDALONE=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(V.view==='home')render()});
@@ -291,34 +310,46 @@ if('serviceWorker' in navigator&&!MOCK)navigator.serviceWorker.register('sw.js')
 function installHTML(){if(STANDALONE)return '';
   return INSTALL?`<button class="light" style="display:block;margin:12px auto 0" data-act="install">📲 앱으로 설치하기</button>`
     :''}
-function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
+function stagesHTML(){let h=`<details style="margin-top:12px"><summary class="sub">전체 단계 보기 (${NS}단계 × 단어 3바퀴)</summary><ul class="stlist">`;
+  TK.STAGES.forEach((x,i)=>{const n=i+1,lap=ST.lap||1,cls=n===ST.stage?'now':(n<ST.stage||lap>1)?'ok':'';h+=`<li class="${cls}">${n<ST.stage||lap>1?'✓ ':n===ST.stage?'▶ ':''}${n}. ${esc(x.t)}</li>`});
+  return h+`</ul></details>`}
+function homeHTML(){const d=ST.days[today()];
   let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1>
-   <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span><button class="link" style="margin:0" data-act="out">다른 아이디로</button></div>`;
-  if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요.</div>`;
+   <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span>${TRY?'':`<button class="link" style="margin:0" data-act="out">다른 아이디로</button>`}</div>`;
+  if(!TK||!NS)return h+`<div class="err">문장을 불러오지 못했어요. 인터넷을 확인하고 앱을 완전히 닫았다가 다시 열어 주세요.</div>`;
+  if(LOADERR&&!TRY)h+=`<div class="err" style="font-size:15px">서버 기록을 못 불러와서 이 기기에 있는 기록으로 열었어요. 인터넷이 되면 다시 열어 주세요.</div>`;
+  if(TRY){h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계와 단어 바퀴를 골라 보세요.</div>
+    <div class="row" style="justify-content:flex-start"><select id="tryStage">${TK.STAGES.map((x,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}. ${esc(x.t)}</option>`).join('')}</select>
+    <select id="tryLap">${[1,2,3].map(l=>`<option value="${l}"${l===lapOf()?' selected':''}>${LAPS[l]}</option>`).join('')}</select></div>`}
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
-  if(!TREE_IDS.length){h+=`<div class="card"><h2 style="font:400 24px 'Jua';margin:4px 0">계단영어에서 맞힌 문장이 아직 없어요</h2></div>`;if(!TRY)h+=`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;return h}
-  h+=`<div class="card"><span class="stage">🌳 맞힌 문장 ${TREE_IDS.length}개</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">오늘 ${DAY_N}문장</h2>
-    <button class="big" data-act="start">${ST.cur&&ST.cur.date===today()&&!TRY?`🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length||DAY_N})`:'🎤 시작'}</button>
-    ${MIME||MOCK?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}</div>`;
-  if(!TRY)h+=`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
+  const n=stageOf(),st=TK.STAGES[n-1],rv=TRY?null:dueRev();
+  h+=`<div class="card"><span class="stage">${n}단계 · ${LAPS[lapOf()]}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>${st.ex?`<div class="ex">${esc(st.ex)}</div>`:''}
+    ${TRY?'':`<p class="sub" style="margin:10px 0 0">통과한 날 <b style="color:var(--ink)">${ST.pd||0} / ${PASS_DAYS}</b> · 이 단계 새 문장을 90% 막힘 없이 말한 날이 ${PASS_DAYS}번이면 다음 단계예요.</p>`}
+    ${rv?`<div class="note">🔁 오늘은 <b>${rv.s}단계 다지기</b> 문장도 나와요. 90% 막힘 없이 말하면 그 단계는 끝!</div>`:''}
+    <button class="big" data-act="start">${ST.cur&&ST.cur.date===today()&&ST.cur.v===2&&!TRY?`🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length})`:`🎤 오늘 ${DAY_N}문장 시작`}</button>
+    ${MIME||MOCK||TRY?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}
+    <p class="hint">모르는 낱말은 말하기 전에 눌러서 들어요. 🔊 문장 듣기는 맨 마지막 방법!</p></div>`;
+  if(!TRY)h+=stagesHTML()+`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
   h+=installHTML();
   return h}
-function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=x.items.map(i=>i.onset).filter(v=>v!=null);return o.length?o.reduce((a,b)=>a+b,0)/o.length:null};
+function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=(x.items||[]).map(i=>i.onset).filter(v=>v!=null);return o.length?o.reduce((a,b)=>a+b,0)/o.length:null};
   const a1=avg(d),a0=prev?avg(prev):null;const diff=prev?prev.ms-d.ms:0;
-  let h=`<div class="card" style="text-align:center"><div style="font-size:54px">${d.passed?'🎉':'✅'}</div><h2 style="font:400 28px 'Jua';margin:4px 0">오늘 ${(d.items||[]).length||10}문장 끝!</h2>
+  let h=`<div class="card" style="text-align:center"><div style="font-size:54px">${d.up?'🎉':'✅'}</div><h2 style="font:400 28px 'Jua';margin:4px 0">오늘 ${(d.items||[]).filter(x=>x.k!=='r').length}문장 끝!</h2>
    <div class="cmp"><div><small>오늘 걸린 시간</small><b>${fmt(d.ms)}</b>${prev?`<small>지난번 ${fmt(prev.ms)}</small>`:''}</div>
    <div><small>생각 시간 (평균)</small><b>${a1!=null?sec1(a1):'-'}</b>${a0!=null?`<small>지난번 ${sec1(a0)}</small>`:''}</div></div>`;
   if(prev&&diff>=1000)h+=`<p class="good" style="font-weight:800;font-size:19px">지난번보다 ${fmt(diff)} 빨라졌어요! ⚡</p>`;
-  h+=`<p style="font-size:18px">막힘 없이 말한 문장 <b>${d.clean} / ${d.n||10}</b>${d.n&&d.n<(d.items||[]).length?` <span class="sub">(안 들려서 넘어간 ${(d.items||[]).length-d.n}개 빼고)</span>`:''}</p>`;
-  const mo=d.mode||'base';
-  h+=!d.passed?`<p style="font-size:18px">내일 ${d.stage}단계${mo==='ko'?'(한글만)':''}를 한 번 더 해요. 더 빨라질 거예요.</p>`
-    :mo==='base'?`<p style="font-size:18px">내일은 ${d.stage}단계를 <b>한글만 보고</b> 해요!</p>`
-    :`<p style="font-size:18px">내일은 <b>${Math.min(d.stage+1,SP.STAGES.length)}단계</b>로 가요!</p>`;
+  if(d.sn!=null)h+=`<p style="font-size:18px">${d.stage}단계 새 문장 막힘 없이 <b>${d.sc} / ${d.sn}</b></p>`;
+  if(d.rn)h+=`<p style="font-size:18px">${d.rs}단계 다지기 <b>${d.rc} / ${d.rn}</b> ${d.back?'':'· 끝! ✓'}</p>`;
+  const nx=d.up?(d.stage<NS?`${d.stage+1}단계`:'다음 바퀴 1단계'):'';
+  h+=d.back?`<p style="font-size:18px">${d.rs}단계가 아직 조금 막혀요. 내일은 <b>${d.rs}단계</b>를 다시 다져요.</p>`
+    :d.up?`<p style="font-size:18px">${d.stage}단계 통과! 내일은 <b>${nx}</b>예요. ${d.stage}단계는 이틀 뒤에 다지기로 한 번 더 나와요.</p>`
+    :d.passed?`<p style="font-size:18px">오늘 통과! 하루 더 통과하면 다음 단계예요.</p>`
+    :`<p style="font-size:18px">내일 ${d.stage}단계를 한 번 더 해요. 틀리거나 늦은 문장은 내일 다시 나와요.</p>`;
   return h+'</div>'}
-// 오늘 두 사람 결과 나란히(엄마 11/26 같이 하기) — 기록 경쟁 화면이 아니라 오늘 한 번 보는 것만
+// 오늘 같이 한 사람 결과 나란히(엄마 11/26)
 function vsHTML(){if(TRY)return '';const me=ST.days[today()];if(!me||!me.end)return '';
-  const avg=x=>{const o=x.items.map(i=>i.onset).filter(v=>v!=null);return o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'};
-  const col=(name,d)=>`<div><small>${esc(name)} · ${d.stage}단계 ${(d.mode||'base')==='ko'?'한글만':'회색'}</small><b>${fmt(d.ms)}</b><small>생각 ${avg(d)} · 막힘 없이 ${d.clean}/${d.n||10}</small></div>`;
+  const avg=x=>{const o=(x.items||[]).map(i=>i.onset).filter(v=>v!=null);return o.length?sec1(o.reduce((a,b)=>a+b,0)/o.length):'-'};
+  const col=(name,d)=>`<div><small>${esc(name)} · ${d.stage}단계</small><b>${fmt(d.ms)}</b><small>생각 ${avg(d)} · 막힘 없이 ${d.clean}/${d.n||(d.items||[]).length}</small></div>`;
   const done=OTHERS.filter(o=>o.st.days[today()]&&o.st.days[today()].end),yet=OTHERS.filter(o=>!done.includes(o));
   if(!OTHERS.length)return '';
   let h=`<div class="card"><b>오늘 같이 한 결과</b>`;
@@ -326,13 +357,14 @@ function vsHTML(){if(TRY)return '';const me=ST.days[today()];if(!me||!me.end)ret
   if(yet.length)h+=`<p class="sub" style="margin:10px 0 0">${yet.map(o=>esc(o.st.name||'같이 하는 사람')).join(', ')}: 오늘 아직 안 했어요.</p>`;
   return h+'</div>'}
 // 📥 기록 내려받기(엑셀에서 열리는 CSV)
-function csv(key){const who=key&&key!==WHO?(OTHERS.find(o=>o.id===key)||{}).st:ST;if(!who)return;const ST_=who;const rows=[['날짜','단계','방식','오늘 걸린 시간(초)','통과','문장','한국어','처음에 맞음','생각 시간(초)','들린 말','넘어감']];
-  Object.keys(ST_.days).sort().forEach(k=>{const d=ST_.days[k];(d.items||[]).forEach(r=>{const it=SP.byId(r.id)||{};
-    rows.push([k,d.stage,(d.mode||'base')==='ko'?'한글만':'회색 문장',Math.round(d.ms/1000),d.passed?'통과':'',it.en||r.id,it.ko||'',r.ok1?'O':'',r.onset!=null?(r.onset/1000).toFixed(1):'',r.heard||'',r.skip==='quiet'?'안 들림':r.skip?'넘어감':''])})});
-  const t='\ufeff'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}).join(',')).join('\r\n');
+const KIND={n:'새 문장',p:'지난 단계',a:'다시',v:'다지기',r:'한 번 더'};
+function csv(key){const who=key&&key!==WHO?(OTHERS.find(o=>o.id===key)||{}).st:ST;if(!who)return;const ST_=who;const rows=[['날짜','단계','단어 바퀴','오늘 걸린 시간(초)','통과','종류','문장','한국어','처음에 맞음','생각 시간(초)','막힘 없이','문장 미리 들음','들린 말','넘어감']];
+  Object.keys(ST_.days).sort().forEach(k=>{const d=ST_.days[k];(d.items||[]).forEach(r=>{const it=r.en?r:(IT(r.id)||{});
+    rows.push([k,d.stage,LAPS[d.lap||1]||'',Math.round(d.ms/1000),d.up?'다음 단계':d.passed?'통과':'',KIND[r.k]||'',it.en||r.id,it.ko||'',r.ok1?'O':'',r.onset!=null?(r.onset/1000).toFixed(1):'',r.clean?'O':'',r.peek?'O':'',r.heard||'',r.skip==='quiet'?'안 들림':r.skip?'넘어감':''])})});
+  const t='﻿'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}).join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=`speed-english_${(key||WHO).replace(/^u-/,'').replace(/_[a-z0-9]+_com$/,'').replace(/[^a-zA-Z0-9_-]/g,'')}_${today()}.csv` /* 한글 파일 이름은 일부 기기에서 'download'로 바뀌어서 영어로 */;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date)+vsHTML();
-  h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.ids.map((id,i)=>{const it=SP.byId(id),r=d.items[i]||{};return `<tr><td>${esc(it.en)}<div class="sub" style="font-size:13px">${esc(it.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`}).join('')}</table></div>
+  h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.res.map((r,i)=>r?`<tr><td>${r.clean?'':'<span class="sub">🔁 </span>'}${esc(r.en)}<div class="sub" style="font-size:13px">${esc(r.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`:'').join('')}</table><p class="sub" style="margin:8px 0 0">🔁 = 내일 다시 나와요</p></div>
   <button class="fin" data-act="home">끝 ✓</button>`;return h}
 // 📊 기록 탭(엄마 11/26 「기록 볼 수 있는 탭 따로」): 아이디마다 지금 단계, 올라가는 기준과 얼마나 왔는지, 날짜별 기록, 엑셀 내려받기
 function tabsHTML(on){return `<div class="tabs"><button class="${on==='home'?'on':''}" data-act="home">⚡ 말하기</button><button class="${on==='log'?'on':''}" data-act="log">📊 기록</button></div>`}
@@ -355,12 +387,12 @@ function calHTML(st,key){const days=st.days||{},base=new Date();base.setDate(1);
   h+=`</div>`;
   const sk=CALSEL[key],d=sk&&days[sk];
   if(d){const o=(d.items||[]).map(i=>i.onset).filter(v=>v!=null),a=o.length?o.reduce((x,y)=>x+y,0)/o.length:null;
-    h+=`<div class="daydet"><b>${sk.slice(5).replace('-','/')} · ${d.stage}단계 ${(d.mode||'base')==='ko'?'한글만':'회색 문장'}${d.passed?' · 🎉 통과':''}</b><div class="sub">걸린 시간 ${fmt(d.ms)} · 생각 시간 평균 ${a!=null?sec1(a):'-'} · 막힘 없이 ${d.clean}/${d.n||10}</div>
-      <table><tr><th>문장</th><th>처음에</th><th>생각</th><th>들린 말</th></tr>${(d.items||[]).map(r=>{const it=SP.byId(r.id)||{};return `<tr><td>${esc(it.en)}</td><td>${r.skip==='quiet'?'안 들림':r.ok1?'맞음':'다시'}</td><td>${r.onset!=null?sec1(r.onset):'-'}</td><td>${esc(r.heard||'')}</td></tr>`}).join('')}</table></div>`}
+    h+=`<div class="daydet"><b>${sk.slice(5).replace('-','/')} · ${d.stage}단계${d.lap?' · '+LAPS[d.lap]:''}${d.up?' · 🎉 다음 단계':d.passed?' · 통과':''}${d.back?' · 되돌아감':''}</b><div class="sub">걸린 시간 ${fmt(d.ms)} · 생각 시간 평균 ${a!=null?sec1(a):'-'} · 막힘 없이 ${d.clean}/${d.n||(d.items||[]).length}</div>
+      <table><tr><th>문장</th><th>처음에</th><th>생각</th><th>들린 말</th></tr>${(d.items||[]).map(r=>{const it=r.en?r:(IT(r.id)||{});return `<tr><td>${esc(it.en||'')}</td><td>${r.skip==='quiet'?'안 들림':r.clean?'막힘 없이':r.ok1?'맞음(늦음)':'다시'}</td><td>${r.onset!=null?sec1(r.onset):'-'}</td><td>${esc(r.heard||'')}</td></tr>`}).join('')}</table></div>`}
   return h}
-function personCard(st,name,key,me){const days=st.days||{},ks=Object.keys(days).filter(k=>days[k].end).sort().reverse(),stage=st.stage||1,mode=st.mode||'base',S=SP.STAGES[stage-1];
-  const last=ks.map(k=>Object.assign({date:k},days[k])).find(d=>d.stage===stage&&(d.mode||'base')===mode);
+function personCard(st,name,key,me){const v2=st.v===2,stage=st.stage||1;
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:20px">👤 ${esc(name)}${me?' <span class="sub">(나)</span>':''}</b>${ADMIN?`<button class="light" style="margin:0" data-act="csv" data-k="${esc(key)}">📥 엑셀</button>`:''}</div>`;
+  if(v2&&TK)h+=`<div class="sub" style="margin-top:6px">지금 <b style="color:var(--ink)">${stage}단계 · ${esc(stName(stage))}</b> · ${LAPS[st.lap||1]} · 통과한 날 ${st.pd||0}/${PASS_DAYS}${(st.rev||[]).length?` · 다지기 기다리는 단계 ${(st.rev||[]).map(x=>x.s).join(', ')}`:''}</div>`;
   h+=calHTML(st,key);
   return h+'</div>'}
 function logHTML(){let h=tabsHTML('log')+`<h1>📊 기록</h1>`;
@@ -372,16 +404,20 @@ function logHTML(){let h=tabsHTML('log')+`<h1>📊 기록</h1>`;
 // 드릴 화면(상태는 RUN.ph)
 // ready: 🎤 누르기 전(생각하는 중) · rec: 녹음 중 · think: 받아 적는 중 · retry: 틀림(한 번 더) · quiet: 안 들림
 // model: 정답 소리 · fready/frec: 따라 말하기 · good: 따라 말하기 맞음
-function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
-  let h=`<div class="top"><div class="dots">${R.ids.map((_,k)=>`<i class="${k<R.i?'done':k===R.i?'now':''}"></i>`).join('')}</div><span class="sub" style="font-size:13px">${esc(USER.name)}</span><button class="x" data-act="quit">그만</button></div>`;
-  h+=R.mode==='base'&&it.base?`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div>`:`<div class="base"><small>${isT(it.id)&&it.leaf?'🌳 '+esc(it.leaf)+' · ':''}한글만 보고 말해요</small>&nbsp;</div>`;
+function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.kinds[R.i];
+  if(!it)return `<div class="err">이 문장을 못 불러왔어요.</div><button class="fin" data-act="skip">다음 ▶</button>`;
+  let h=`<div class="top"><div class="prog"><b style="width:${Math.round(R.i/R.ids.length*100)}%"></b></div><span class="cnt">${R.i+1} / ${R.ids.length}</span><button class="x" data-act="quit">그만</button></div>`;
+  const sn=it.stage||0;
+  h+=`<div class="base">${k==='a'||k==='r'||k==='v'?`<span class="tag re">🔁 ${k==='a'?'다시':k==='v'?'다지기':'한 번 더'}</span>`:''}<small>${sn?sn+'단계 · '+esc(stName(sn)):''}</small></div>`;
   h+=`<div class="ko">${esc(it.ko)}</div>`;
-  {const ww=wrongWords(it.en);if(ww.length)h+=`<div class="sub" style="text-align:center;font-size:16px;margin-top:4px">${ww.map(w=>esc(w)).join(' · ')}</div>`}
+  const pre=ph==='ready'||ph==='retry'||ph==='quiet';
+  if(pre&&(it.w||[]).length)h+=`<div class="wchips">${it.w.map((c,j)=>`<button class="wchip" data-act="word" data-j="${j}">${esc(c[0])}${R.wopen[j]?`<b>${esc(c[1])}</b>`:''}</button>`).join('')}</div>`;
   if(fol||ph==='model'||ph==='good')h+=`<div class="answer">${esc(it.en)}</div>`;
   if(R.msg&&(ph==='ready'||ph==='fready'))h+=`<div class="heard">${R.msg}</div>`;
   const skip=R.fails?`<button class="link" data-act="skip">${fol?'다음 문장으로 →':'넘어가기 →'}</button>`:'';
   if(ph==='ready'||ph==='fready'){
     h+=`<div class="state">${ph==='ready'?'생각이 되면 누르고 말해요':'정답처럼 따라 말해요'}</div><button class="big" data-act="rec" style="max-width:340px;margin:12px auto 0">🎤 ${ph==='ready'?'녹음':'따라 말하기'}</button>`;
+    if(ph==='ready')h+=`<div class="row"><button class="light" data-act="say">🔊 문장 듣기</button></div>`;
     if(fol)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div>`;
     h+=`<div class="row">${skip}</div>`}
   else if(ph==='rec'||ph==='frec'){
@@ -400,31 +436,37 @@ const UI={level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',
   clock(s){const e=$('#clk');if(e)e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}};
 
 function bind(){document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>ACT[b.dataset.act](b));
-  const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()};const m=$('#tryMode');if(m)m.onchange=()=>{V.tryMode=m.value;render()}}
+  const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()};const m=$('#tryLap');if(m)m.onchange=()=>{V.tryLap=+m.value;render()}}
 const ACT={
-  async start(){if(!MIME&&!MOCK&&!TRY)return;
+  async start(){if(!TK||!NS)return;if(!MIME&&!MOCK&&!TRY)return;
     try{if(!MOCK||window.__mockMic)await micOpen()}catch(e){if(!TRY){alert('마이크를 쓸 수 없어요. 주소창 옆 🔒 → 마이크 → 허용으로 바꿔 주세요.');return}}
     warm();try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch(e){}
-    const stage=stageOf(),mode=modeOf();let ids,i=0,res=[],ms=0;
-    if(!TRY&&ST.cur&&ST.cur.date===today()&&ST.cur.stage===stage&&ST.cur.mode===mode){({ids,i,res,ms}=ST.cur)}else{ids=buildSet(stage)}
-    RUN={date:today(),stage,mode,ids,i,res,ms,t:Date.now(),blobs:[],day:null};if(!TRY){ST.cur={date:RUN.date,stage,mode,ids,i,res,ms};save()}
-    V={view:'drill',tryStage:V.tryStage,tryMode:V.tryMode};runItem()},
+    const stage=stageOf(),lap=lapOf();let ids,kinds,i=0,res=[],ms=0,rv=TRY?null:dueRev();
+    const c=ST.cur;if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null}
+    else{({ids,kinds}=buildSet(stage,lap,rv))}
+    if(!ids.length){alert('문장을 만들지 못했어요. 앱을 닫았다가 다시 열어 주세요.');return}
+    RUN={date:today(),stage,lap,rv,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
+    V={view:'drill',tryStage:V.tryStage,tryLap:V.tryLap};runItem()},
   rec(){const R=RUN;if(R.ph!=='ready'&&R.ph!=='fready')return;try{speechSynthesis.cancel()}catch(e){}
     if(R.ph==='ready'&&R.think==null)R.think=Date.now()-R.shown; // 생각 시간 = 한글이 나온 뒤 🎤 누를 때까지(첫 번째만)
     R.ph=R.ph==='ready'?'rec':'frec';render();recStart(UI)},
   async stop(){const R=RUN;if(R.ph!=='rec'&&R.ph!=='frec')return;const fol=R.ph==='frec';R.ph=fol?'fthink':'think';render();
-    const r=await recStop();if(R!==RUN||R.quit)return;const it=SP.byId(R.ids[R.i]);
+    const r=await recStop();if(R!==RUN||R.quit)return;const it=IT(R.ids[R.i]);
     let h='';if(r&&(r.blob||MOCK)){try{h=await stt(r.blob,r.sec,it.en)}catch(e){}}if(R!==RUN||R.quit)return;
-    const v=judge(it.en,h);if(!fol&&r&&r.blob)R.blobs[R.i]=r.blob;judged(v,h,fol)},
-  again(){const it=SP.byId(RUN.ids[RUN.i]);speak(it.en)},
+    const v=judgeAll(it,h);if(!fol&&r&&r.blob)R.blobs[R.i]=r.blob;judged(v,h,fol)},
+  again(){const it=IT(RUN.ids[RUN.i]);speak(it.en)},
+  // 낱말 듣기(엄마 11/27 「단어 따로 문장 따로」): 말하기 전에 눌러 그 영어 낱말 소리 + 조용히 글자. 막힘 없이에는 영향 없음
+  word(b){const R=RUN,it=IT(R.ids[R.i]),c=it&&it.w&&it.w[+b.dataset.j];if(!c)return;R.wopen[+b.dataset.j]=true;R.words=(R.words||0)+1;render();speak(c[1],.8)},
+  // 문장 듣기: 들은 뒤 말하면 맞아도 「막힘 없이」로는 안 셈(내일 다시)
+  say(){const R=RUN,it=IT(R.ids[R.i]);if(!it||R.ph!=='ready')return;R.peek=true;speak(it.en)},
   resay(){RUN.ph='ready';RUN.msg='';render()},
   show(){RUN.ok=false;toModel()},
   nextq(){if(RUN&&RUN.ph==='model')next()},
   tryPrev(){const R=RUN;if(!TRY||!R||!R.i)return;try{speechSynthesis.cancel()}catch(e){}R.i--;runItem()},
   tryNext(){const R=RUN;if(!TRY||!R)return;try{speechSynthesis.cancel()}catch(e){}R.skipped='try';next()},
   skip(){const R=RUN;if(R.ph[0]!=='f')R.skipped=R.tries===0?'quiet':'wrong';next()},
-  quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();micClose();V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
-  home(){V={view:'home',tryStage:V.tryStage,tryMode:V.tryMode};render()},
+  quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();keepCur();micClose();V={view:'home',tryStage:V.tryStage,tryLap:V.tryLap};render()},
+  home(){V={view:'home',tryStage:V.tryStage,tryLap:V.tryLap};render()},
   async log(){V={view:'log'};render();if(!TRY){await loadOther();if(V.view==='log')render()}},
   out(){if(window.__SP.signOut)window.__SP.signOut()},
   csv(b){if(ADMIN)csv(b&&b.dataset.k)},
@@ -436,52 +478,61 @@ const ACT={
   async install(){if(INSTALL){INSTALL.prompt();try{await INSTALL.userChoice}catch(e){}INSTALL=null;render()}},
   try(){location.hash='try';location.reload()},
   mine(b){const bl=RUN.blobs[+b.dataset.i];if(bl){try{const a=new Audio(URL.createObjectURL(bl));a.play()}catch(e){}}},
-  ans(b){speak(SP.byId(RUN.ids[+b.dataset.i]).en)}
+  ans(b){const r=RUN.res[+b.dataset.i];if(r)speak(r.en)}
 };
 function pauseClock(){if(RUN&&RUN.t){RUN.ms+=Date.now()-RUN.t;RUN.t=0}}
 function resumeClock(){if(RUN&&!RUN.t)RUN.t=Date.now()}
 document.addEventListener('visibilitychange',()=>{if(V.view!=='drill')return;if(document.visibilityState==='hidden')pauseClock();else resumeClock()});
 
-function runItem(){const R=RUN;Object.assign(R,{ph:'ready',tries:0,quiet:0,fails:0,ftries:0,ok:false,msg:'',think:null,heard:'',first:null,follow:false,skipped:null,shown:Date.now()});render()}
+function keepCur(){const R=RUN;if(TRY||!R)return;ST.cur={v:2,date:R.date,stage:R.stage,lap:R.lap,rv:R.rv,ids:R.ids,kinds:R.kinds,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
+function runItem(){const R=RUN;if(R.i>=R.ids.length){finishDay();return}Object.assign(R,{ph:'ready',wopen:{},peek:false,words:0,tries:0,quiet:0,fails:0,ftries:0,ok:false,msg:'',think:null,heard:'',first:null,follow:false,skipped:null,shown:Date.now()});render()}
 // 받아 적은 말 판정: 맞음 → 정답 듣고 따라 말하기 / 틀림 → 한 번 더(두 번째도 틀리면 정답 듣기) / 안 들림 → 다시 녹음(틀림 아님)
-async function judged(v,h,fol){const R=RUN,it=SP.byId(R.ids[R.i]);const ok=v==='exact'||v==='fuzzy';
+async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact'||v==='fuzzy';
   if(!fol){
     if(ok){if(R.first==null)R.first=true;R.heard=h;R.ok=true;toModel();return}
     // 엄마 11/27: 틀리면 다시 녹음 없이 바로 정답 소리 → 정답 보고 「다음 ▶」
     R.fails++;if(v==='unclear'){R.quiet++;if(R.first==null)R.skipped='quiet'}
-    if(R.first==null)R.first=false;R.tries++;R.heard=h;
+    if(R.first==null){R.first=false;reask()}R.tries++;R.heard=h;
     R.ok=false;toModel();return}
   if(ok){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
   R.ftries++;R.fails++;
   if(R.ftries<2){R.msg=v==='unclear'?'🙉 잘 안 들렸어요. 한 번 더 들어 보고 따라 말해요.':'한 번 더 들어 보고 따라 말해요.';R.ph='model';render();await speak(it.en);if(R===RUN&&!R.quit){R.ph='fready';render()}return}
   next()}
 // 엄마 11/26 「왜 두 번 녹음하는 거야? / 한 번만 녹음」: 따라 말하기 녹음을 없앰. 맞으면 정답 소리를 듣고 저절로 다음, 틀렸으면 정답을 보고 들은 뒤 「다음 ▶」.
-async function toModel(){const R=RUN,it=SP.byId(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;R.heardModel=false;render();await speak(it.en);if(R!==RUN||R.quit)return;
+// 틀린 문장은 그날 4문장 뒤에 한 번 더(엄마 11/27). 한 번 더 나온 문장은 또 넣지 않아요.
+function reask(){const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
+async function toModel(){const R=RUN,it=IT(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;R.heardModel=false;render();await speak(it.en);if(R!==RUN||R.quit)return;
   if(R.ok){setTimeout(()=>{if(R===RUN&&!R.quit&&R.ph==='model')next()},1200)}else{R.heardModel=true;render()}}
-function next(){const R=RUN;const ok1=R.first===true;
-  R.res[R.i]={id:R.ids[R.i],ok1,onset:R.think,clean:ok1&&R.think!=null&&R.think<=FAST_MS,heard:(R.heard||'').slice(0,80),follow:!!R.follow,skip:R.skipped||undefined};
-  R.i++;if(!TRY){ST.cur={date:R.date,stage:R.stage,mode:R.mode,ids:R.ids,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
+function next(){const R=RUN;const ok1=R.first===true,it=IT(R.ids[R.i])||{};
+  R.res[R.i]={id:R.ids[R.i],k:R.kinds[R.i],en:it.en||'',ko:it.ko||'',ok1,onset:R.think,clean:ok1&&!R.peek&&R.think!=null&&R.think<=FAST_MS,peek:R.peek||undefined,words:R.words||undefined,heard:(R.heard||'').slice(0,80),follow:!!R.follow,skip:R.skipped||undefined};
+  R.i++;keepCur();
   if(R.i<R.ids.length){runItem();return}
   finishDay()}
-// 통과: 막힘 없이 9/10(하나까지 봐줌). 소리가 안 들려서 넘어간 문장은 빼고 셈(안 들림은 틀림 아님). 단, 남은 문장이 7개는 넘어야 함.
-function passCheck(res){const n=res.filter(x=>x.skip!=='quiet').length,clean=res.filter(x=>x.clean).length;
-  // 단계 통과는 단계 문장으로만 셈(잎 문장은 통과와 상관없이 막힌 것만 내일 다시)
-  const S=res.filter(x=>!isT(x.id)&&x.skip!=='quiet'),sc=S.filter(x=>x.clean).length;return {clean,n,sn:S.length,sc,passed:S.length>=7&&sc>=Math.ceil(S.length*PASS_N/10)}}
+// 셈: 안 들려서 넘어간 문장은 빼요(안 들림은 틀림 아님).
+function passCheck(res){const all=res.filter(x=>x&&x.k!=='r'&&x.skip!=='quiet');
+  const N=all.filter(x=>x.k==='n'),sc=N.filter(x=>x.clean).length,VV=all.filter(x=>x.k==='v'),rc=VV.filter(x=>x.clean).length;
+  return {clean:all.filter(x=>x.clean).length,n:all.length,sn:N.length,sc,passed:N.length>=10&&sc>=Math.ceil(N.length*PASS_PCT),rn:VV.length,rc,revOK:VV.length<5?null:rc>=Math.ceil(VV.length*PASS_PCT)}}
 function finishDay(){const R=RUN;pauseClock();micClose();
-  const {clean,n,sn,sc,passed}=passCheck(R.res);
-  const day={stage:R.stage,mode:R.mode,end:new Date().toISOString(),ms:R.ms,items:R.res,clean,n,sn,sc,passed};R.day=day;
+  const P=passCheck(R.res);
+  const day={stage:R.stage,lap:R.lap,end:new Date().toISOString(),ms:R.ms,items:R.res.filter(Boolean),clean:P.clean,n:P.n,sn:P.sn,sc:P.sc,passed:P.passed};
+  if(R.rv&&P.rn){day.rs=R.rv.s;day.rn=P.rn;day.rc=P.rc}R.day=day;
   if(!TRY){ST.days[R.date]=day;ST.cur=null;
-    const miss=R.res.filter(x=>!x.clean).map(x=>x.id),hit=new Set(R.res.filter(x=>x.clean).map(x=>x.id));
-    ST.again=miss.concat((ST.again||[]).filter(id=>!hit.has(id)&&!miss.includes(id))).slice(0,20);
-    // 첫날은 회색 문장 보고 → 통과하면 다음 날 같은 단계를 한글만 보고 → 통과하면 다음 단계
-    if(passed&&ST.stage===R.stage&&(ST.mode||'base')===R.mode){if(R.mode==='base')ST.mode='ko';else if(ST.stage<SP.STAGES.length){ST.stage++;ST.mode='base'}}
+    // 다시: 틀리거나 늦은(또는 문장을 미리 들은) 문장은 내일 다시, 막힘 없이 말하면 빠짐
+    const done=R.res.filter(x=>x&&x.k!=='r'),miss=[],hit=new Set();done.forEach(x=>{if(x.skip==='quiet')return;if(x.clean)hit.add(x.id);else if(!miss.includes(x.id))miss.push(x.id)});
+    ST.again=miss.concat((ST.again||[]).filter(id=>!hit.has(id)&&!miss.includes(id))).slice(0,60);
+    if(ST.stage===R.stage&&(ST.lap||1)===R.lap){
+      if(R.rv&&P.revOK!==null){ST.rev=(ST.rev||[]).filter(x=>!(x.s===R.rv.s&&x.d===R.rv.d));
+        if(!P.revOK){day.back=1;ST.stage=R.rv.s;ST.lap=R.rv.l||ST.lap;ST.pd=0}}
+      if(!day.back&&P.passed){ST.pd=(ST.pd||0)+1;
+        if(ST.pd>=PASS_DAYS){day.up=1;ST.rev=(ST.rev||[]).concat([{s:R.stage,l:R.lap,d:R.date}]);ST.pd=0;
+          if(ST.stage<NS)ST.stage++;else if((ST.lap||1)<3){ST.lap=(ST.lap||1)+1;ST.stage=1}}}}
     save()}
   V={view:'end'};render();if(!TRY)loadOther().then(()=>{if(V.view==='end')render()})}
 
 (async function boot(){$('#app').innerHTML='<p class="sub" style="text-align:center;margin-top:40px">여는 중…</p>';
   if(document.readyState==='loading')await new Promise(r=>addEventListener('DOMContentLoaded',r));
   if(/log/.test(location.hash))V={view:'log'};
-  DB=await window.__SP.ready;USER=window.__SP.user||{email:'',name:'나'};WHO=keyOf(USER.email);await tabletSihun();ST=await load();await loadTree();await loadOther();if(TRY)V.tryStage=ST.stage;render()})();
+  DB=await window.__SP.ready;USER=window.__SP.user||{email:'',name:'나'};WHO=keyOf(USER.email);await tabletSihun();ST=await load();await loadOther();if(TRY){V.tryStage=ST.stage;V.tryLap=ST.lap||1}render()})();
 </script>
 </body>
 </html>
