@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795678407";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795754323";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3154,6 +3154,8 @@ const tst=id=>{const t=S.ts[id]||(S.ts[id]={runs:[],start:null,target:null,grad:
 const lvl=id=>TYPES[id].scaffold?(tst(id).level||0):1;
 /* 어른 계정은 어른 속도 기준: 아이 기준 시간 × adultK (처음 값 0.6) */
 const spdK=()=>PID==="sihun"?1:Math.min(1,Math.max(.3,S.cfg.adultK||.6));
+/* 분수(○의 몇 분의 몇 + 분수 길)는 11/27 sy "기존 연산 문제집만큼 연습을 시키지" → 시중 문제집이 한 가지 꼴에 하루 한 장(20~30문제)을 주는 것에 맞춰 한 단계 3세트(30문제) */
+const FRAC=new Set(["OF",...FRP]),passN=id=>Math.max(1,Math.min(6,FRAC.has(id)?(S.cfg.passF??3):(S.cfg.passN??2)));
 const finalPQ=id=>Math.round(tc(id).sec*(lvl(id)===0?2:1)*spdK()*10)/10;
 const D=()=>DAYS[today()];
 
@@ -3514,7 +3516,7 @@ function vIntro(){
    <div class="card"><h2>${T.name} <span class="small muted">${T.seq?T.seq(st.step||0).list.length:n}문제</span></h2>
      ${lr?`<dl class="kv"><dt>지난번</dt><dd class="tab">${fmt(lr.t)} · 오답 ${lr.w}</dd>${bp?`<dt>내 가장 빠른</dt><dd class="tab">${fmt(bp*n)}</dd>`:""}</dl>`:""}
      ${T.scaffold?`<p class="small"><span class="pill new">${lvl(id)===0?"칸 채우기":"답만"}</span></p>`:""}
-     ${STEPT(T)?`<p><span class="pill new">${stepLabel(T,st.step||0)}</span> 목표 ${fmt(finalPQ(id)*(T.seq?T.seq(st.step||0).list.length:n))}</p>`:tgt?`<p class="small">${tgt}</p>`:""}</div>
+     ${STEPT(T)?`<p><span class="pill new">${stepLabel(T,st.step||0)}</span>${passN(id)>1&&(st.step||0)<stepMax(T)?` <span class="pill">통과 ${st.okS===(st.step||0)?st.okN||0:0}/${passN(id)}</span>`:""} 목표 ${fmt(finalPQ(id)*(T.seq?T.seq(st.step||0).list.length:n))}</p>`:tgt?`<p class="small">${tgt}</p>`:""}</div>
    ${T.link?`<div class="notice" style="text-align:left;font-size:15px">🐾 ${T.link}</div>`:""}
    ${needConcept?`<button class="bigbtn" data-act="concept">처음이니까 보기</button>`:""}
    <button class="bigbtn ${needConcept?"ghost":""}" data-act="start">${needConcept?"바로 시작":"시작!"}</button>
@@ -3714,7 +3716,9 @@ function finishSet(){
     else if(valid&&clean&&pq<=st.target+1e-9){out.pass=true;st.target=Math.max(fin,st.target*.9)}
   }
   rec.pass=out.pass||out.quick;rec.tgt=out.tgtBefore;rec.lv=lvl(id);
-  if(STEPT(T)){rec.step=RUN.rev?RUN.rev.s:(st.step||0);out.near=!RUN.rev&&valid&&w>0&&pq<=fin&&(st.step||0)<stepMax(T)?w:0;if(valid&&clean&&pq<=fin&&(st.step||0)<stepMax(T)){const os=st.step||0;st.step=os+1;out.stepUp=stepLabel(T,st.step);if(!T.seq){st.rev=(st.rev||[]).filter(r=>r.s!==os).concat([{s:os,d:today(),miss:0}]).slice(-6)}}}
+  if(STEPT(T)){rec.step=RUN.rev?RUN.rev.s:(st.step||0);out.near=!RUN.rev&&valid&&w>0&&pq<=fin&&(st.step||0)<stepMax(T)?w:0;if(!RUN.rev&&valid&&clean&&pq<=fin&&(st.step||0)<stepMax(T)){const os=st.step||0;
+      /* 11/27 sy: "통과 너무 빨라, 의무적으로 체화할 게 있지 않나" → 한 단계에서 빠르고 정확한 세트를 passN()번(처음 값 2) 해야 다음 단계 */
+      if(st.okS!==os){st.okS=os;st.okN=0}st.okN=(st.okN||0)+1;if(st.okN<passN(id)){out.okN=st.okN}else{st.okN=0;st.okS=os+1;st.step=os+1;out.stepUp=stepLabel(T,st.step);if(!T.seq){st.rev=(st.rev||[]).filter(r=>r.s!==os).concat([{s:os,d:today(),miss:0}]).slice(-6)}}}}
   /* 다지기: 이틀 이상 지난 통과 단계 문제를 세트에 3개 섞어 확인 */
   if(RUN.rev&&!PREVIEW){const r=(st.rev||[]).find(x=>x.s===RUN.rev.s);const ok=RUN.rev.idx.every(k=>RUN.items[k].ok1)&&pq<=fin;if(r){if(ok){st.rev=st.rev.filter(x=>x!==r);out.revOk=stepLabel(T,r.s)}else if((st.step||0)>r.s){st.step=r.s;st.rev=st.rev.filter(x=>x.s<r.s);out.revBack=stepLabel(T,r.s)}else st.rev=st.rev.filter(x=>x!==r)}}
   if(T.scaffold&&lvl(id)===0&&valid&&(out.pass||out.quick||(st.target==null&&pq<=fin))){out.levelUp=true}
@@ -3735,6 +3739,7 @@ function vResult(){
   if(prevLast){const dl=prevLast.t/prevLast.n*n-rec.t;if(dl>=1)facts.push([1,`지난번보다 ${Math.round(dl)}초 빨라졌다냥!`]);else facts.push([0,`지난번은 ${fmt(prevLast.t/prevLast.n*n)}였다냥.`])}
   if(prevBest!=null&&rec.w<=c.allow&&rec.t/n<prevBest-0.01)facts.push([1,`내 최고 기록이다냥!`]);
   if(out.stepUp)facts.push([1,`통과! 다음은 ${out.stepUp}이다냥.`]);
+  if(out.okN)facts.push([1,`빠르고 정확했다냥. 이 단계 통과 ${out.okN}번째다옹. ${passN(id)-out.okN}번 더 하면 다음 단계로 간다냥.`]);
   if(out.near)facts.push([0,`빠르기는 벌써 통과다냥. 처음에 ${out.near}개만 안 틀리면 다음 단계로 간다옹.`]);
   if(out.revOk)facts.push([1,`며칠 전 단계(${out.revOk})를 다시 봐도 빠르고 정확했다. 진짜 통과다냥!`]);
   if(out.revMiss)facts.push([0,`며칠 전 단계(${out.revMiss}) 문제가 조금 헷갈렸다냥. 이틀 뒤 다시 확인한다옹.`]);
@@ -3949,6 +3954,9 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      </div>
    ${tiredHTML()}
+   <div class="card"><h3>단계 통과 횟수</h3><p class="small muted">한 단계에서 시간 안에 하나도 안 틀린 세트를 이만큼 해야 다음 단계로 가요. 한 번 잘한 것만으로는 몸에 붙었다고 보기 어려워서 처음 값은 2번이에요. 이틀 뒤 다지기 확인은 그대로 있어요.</p><div class="row" style="align-items:center"><span style="flex:1">통과해야 하는 횟수</span><button class="nb" data-act="pasn" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("T12")}번</b><button class="nb" data-act="pasn" data-arg="1">+</button></div>
+     <div class="row" style="align-items:center"><span style="flex:1">분수 유형은</span><button class="nb" data-act="pasf" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("OF")}번</b><button class="nb" data-act="pasf" data-arg="1">+</button></div>
+     <p class="small muted">분수는 시중 연산 문제집이 한 가지 꼴에 하루 한 장(20~30문제)을 주는 것에 맞춰 한 단계 3세트(30문제)예요.</p></div>
    ${PID!=="sihun"?`<div class="card"><h3>어른 통과 기준</h3><p class="small muted">${pname()} 계정은 통과 시간을 아이 기준보다 짧게 잡아요. 초등 3학년은 단순한 계산 속도가 어른의 절반쯤이에요. 다만 폰으로 답을 누르는 시간은 어른도 비슷해서 60%에서 시작해요.</p><div class="row" style="align-items:center"><span>아이 기준의</span><button class="nb" data-act="adk" data-arg="-1">−</button><b>${Math.round(spdK()*100)}%</b><button class="nb" data-act="adk" data-arg="1">+</button><span class="small muted">예: 아이 30초 → ${pname()} ${Math.round(30*spdK())}초</span></div></div>`:""}
    <div class="card"><h3>기록 보관</h3><p class="small">${syncTxt}</p>${fbHTML()}
      <div class="row"><button class="nb pri" data-act="export">기록 파일로 저장</button><button class="nb" data-act="copy">기록 복사</button><button class="nb pri" data-act="sumcopy">Claude에게 보낼 기록 복사</button>${HASCUR?'<a class="nb" href="curriculum.html" target="_blank" rel="noopener" style="text-decoration:none">교과 대조표</a>':""}<button class="nb" data-act="go" data-arg="report">오늘 기록 보기</button><button class="nb pri" data-act="go" data-arg="bank">문제 전체 보기</button></div>
@@ -4137,6 +4145,8 @@ const ACT={
   mclose2:()=>{modal=null;render()},
   preset2:id=>{delete S.ts[id];modal=null;save();render()},
   clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
+  pasn:a=>{S.cfg.passN=Math.max(1,Math.min(6,passN("T12")+ +a));save();render()},
+  pasf:a=>{S.cfg.passF=Math.max(1,Math.min(6,passN("OF")+ +a));save();render()},
   adk:a=>{if(PID==='sihun')return;S.cfg.adultK=Math.round(Math.min(1,Math.max(.3,spdK()+ +a*.1))*10)/10;save();render()},
   calm:a=>{const[y,m]=CALM.split('-').map(Number),d=new Date(y,m-1+ +a,1);CALM=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');CALD=null;render()},
   cald:k=>{CALD=CALD===k?null:k;render()},
