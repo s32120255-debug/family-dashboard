@@ -542,16 +542,17 @@ function zForm(k,f){const B=(ty,c,s,ff)=>bForm({s,ty,c,fe:c,tp:1,tw:0},ff);const
   case 'z_iq':return out(Vv(k.sN,'v_q'));case 'z_heq':return out(Vv(k.s3,'v_q'));
   case 'z_sg':return out(B('job',k.job,k.j1,'b_pos'));case 'z_pl':return out(B('job',k.job,k.j2,'b_pos'));
   case 'z_a':if(k.useH)return out(vForm({s:k.hs,v:k.hv,o:k.h1,th:1,tp:1,tf:1,tw:0},'v_pos'));return out(B('job',k.a1,k.ja,'b_pos'));
+  case 'z_ab':return out(B('job',k.a1,k.ja,'b_pos'));case 'z_anb':return out(B('job',k.a2,k.ja,'b_pos'));
   case 'z_an':if(k.useH)return out(vForm({s:k.hs,v:k.hv,o:k.h2,th:1,tp:1,tf:1,tw:0},'v_pos'));return out(B('job',k.a2,k.ja,'b_pos'));
   default:throw new Error('form '+f)}}
 // 하루마다 섞어 낼 짝 묶음(모든 단계에서): 지금 단계에 맞는 것만
-const ZBLK=[{min:1,b:[['z_sg','z_pl'],['z_pl','z_sg'],['z_a','z_an'],['z_an','z_a']]},{min:4,b:[['z_i','z_he'],['z_he','z_i'],['z_bpos','z_vpos'],['z_vpos','z_bpos']]},
-  {min:5,b:[['z_ineg','z_heneg'],['z_heq','z_iq'],['z_bneg','z_vneg'],['z_vq','z_bq']]},{min:6,b:[['z_bpast','z_vpast'],['z_vpneg','z_bpneg']]}];
-function zBlocks(stage){return ZBLK.filter(x=>stage>=x.min).flatMap(x=>x.b)}
+const ZBLK=[{min:1,max:4,b:[['z_ab','z_anb'],['z_anb','z_ab']]},{min:2,b:[['z_sg','z_pl'],['z_pl','z_sg']]},{min:5,b:[['z_a','z_an'],['z_an','z_a']]},{min:6,b:[['z_i','z_he'],['z_he','z_i']]},{min:7,b:[['z_bpos','z_vpos'],['z_vpos','z_bpos']]},
+  {min:8,b:[['z_ineg','z_heneg'],['z_heq','z_iq'],['z_bneg','z_vneg'],['z_vq','z_bq']]},{min:9,b:[['z_bpast','z_vpast'],['z_vpneg','z_bpneg']]}];
+function zBlocks(stage){return ZBLK.filter(x=>stage>=x.min&&(!x.max||stage<=x.max)).flatMap(x=>x.b)}
 const FAM={z:[zSkel,zForm],b:[bSkel,bForm],v:[(r,l,c)=>vSkel(r,l,c,/^v_(who|what|where|when|whatdoing|hto|dhto|htoq|sh)$/.test(c)?PEOPLE:undefined),vForm],p:[pSkel,pForm],t:[tSkel,tForm],q:[qSkel,qForm],r:[rSkel,rForm],c:[cSkel,cForm],s:[sSkel,sForm],i:[iSkel,iForm],g:[gSkel,gForm],e:[eSkel,eForm],j:[jSkel,jForm],k:[kSkel,kForm],x:[xSkel,xForm],h:[hSkel,hForm],l:[lSkel,lForm]};
 const STAGES=[
  {t:'be동사 · am / is / are',ex:'I am happy. / He is happy. / They are happy.',blk:[['b_pos']]},
- {t:'하나 · 여럿 · a / an / -s',ex:'He is a student. / They are students. / She is an artist.',blk:[['z_sg','z_pl'],['z_pl','z_sg'],['z_a','z_an'],['z_an','z_a']]},
+ {t:'하나 · 여럿 · a / an / -s',ex:'He is a student. / They are students. / She is an artist.',blk:[['z_sg','z_pl'],['z_pl','z_sg'],['z_ab','z_anb'],['z_anb','z_ab']]},
  {t:'be동사 · 아니야 · 질문',ex:"He isn't happy. / Is he happy?",blk:[['b_pos','b_neg','b_q'],['b_neg','b_q']]},
  {t:'be동사 · 과거 was / were',ex:'He was tired yesterday.',blk:[['b_pos','b_ppos','b_pneg'],['b_ppos','b_pq']]},
  {t:'일반동사 · I / you / we / they',ex:'I play soccer. / They eat apples.',blk:[['z_i']]},
