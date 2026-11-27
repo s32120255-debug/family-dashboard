@@ -171,6 +171,7 @@ body.noscroll{overflow:hidden}
 .nbadge{position:absolute;top:-6px;right:-2px;min-width:1.3em;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:.8rem;line-height:1.3em;text-align:center;font-family:var(--body)}
 .x2{border:2px dashed #e0a800;border-radius:12px;padding:6px 10px;font-weight:700;color:#7a5200;background:#fff8d6;margin-bottom:6px;list-style:none}.x2.on{background:#ffc928;border-style:solid;color:#3a2a00}
 .dday{display:block;font-size:.95rem;font-weight:700;color:var(--yellow);margin-top:4px}
+.tsave{list-style:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 10px;margin:0 0 8px;border:2px dashed var(--admin,#b9a6e6);border-radius:12px;font-size:.9rem}.tsave span{flex:1;min-width:150px}
 </style>
 </head>
 <body>
@@ -502,7 +503,9 @@ function bonusLine(t){const l=S.tasks.filter(x=>x.date===t);if(!l.length)return"
 // 순서: 과제 order → 반복 과제 틀 order → 만든 순서. 대분류 순서는 그 안 맨 앞 과제 순서를 따름
 function tplOf(x){return x.tplId&&S.taskTpls.find(y=>y.id===x.tplId)}
 function taskCat(x){const tp=tplOf(x);return String((x.cat!=null?x.cat:tp&&tp.cat)||"").trim()}
-function taskOrd(x){if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
+/* 순서 바꾸기는 바로 저장하지 않고 「저장」을 눌러야 저장 (sy 11/27) */
+let taskDraft=null;
+function taskOrd(x){if(taskDraft&&taskDraft.has(x.id))return taskDraft.get(x.id);if(x.order!=null)return x.order;const tp=tplOf(x);return tp&&tp.order!=null?tp.order:1e15+(x.createdAt||0)}
 // 대분류 없는 과제는 묶지 않고 혼자(엄마 11/26 「대분류 안 정한 건 혼자 나와 있게」): 과제 하나짜리 무리(solo)로 대분류들 사이를 오감
 function taskGroups(l){const g=[];for(const x of l.slice().sort((a,b)=>taskOrd(a)-taskOrd(b))){const c=taskCat(x);if(!c){g.push({cat:"",key:"#"+x.id,solo:true,items:[x]});continue}let o=g.find(y=>y.key===c);if(!o)g.push(o={cat:c,key:c,items:[]});o.items.push(x)}return g}
 function taskMoved(l,id,dir,cat){const g=taskGroups(l);
@@ -512,9 +515,10 @@ function taskMoved(l,id,dir,cat){const g=taskGroups(l);
  return g.flatMap(y=>y.items)}
 async function saveTaskOrder(l){const b=F.writeBatch(fs),tp=new Set();
  l.forEach((x,k)=>{b.update(F.doc(fs,"tasks",x.id),{order:k*10});if(x.tplId&&S.taskTpls.some(y=>y.id===x.tplId)&&!tp.has(x.tplId)){tp.add(x.tplId);b.update(F.doc(fs,"taskTpls",x.tplId),{order:k*10})}});
- try{await b.commit()}catch(e){toast("옮기지 못했어요: "+(e.code||e.message||""))}}
+ try{await b.commit();return true}catch(e){toast("저장하지 못했어요: "+(e.code||e.message||""));return false}}
 const mvBtns=(a,v)=>`<span class="mv"><button class="icon" ${a}="${esc(v)}" data-dir="-1" aria-label="위로">▲</button><button class="icon" ${a}="${esc(v)}" data-dir="1" aria-label="아래로">▼</button></span>`;
-function taskGroupHTML(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
+function taskGroupHTML(l,row,canMove){const bar=canMove&&taskDraft&&l.some(x=>taskDraft.has(x.id))?`<li class="tsave"><span>순서를 바꿨어요. 저장해야 반영돼요.</span><button type="button" class="btn small" data-tcancel="1">취소</button><button type="button" class="btn small primary" data-tsave="1">저장</button></li>`:"";return bar+taskGroupHTML0(l,row,canMove)}
+function taskGroupHTML0(l,row,canMove){const g=taskGroups(l);if(!g.some(y=>y.cat))return g.flatMap(y=>y.items).map(row).join("");
  const f=taskFolds();return g.map(y=>{if(y.solo)return y.items.map(x=>row(x).replace('<li class="item','<li class="item solo')).join("");const shut=f.includes(y.cat),dn=y.items.filter(x=>x.done).length;
   return`<li class="tcat"><button type="button" class="tcatb" data-tfold="${esc(y.cat)}" aria-expanded="${!shut}"><span class="tf">${shut?"▸":"▾"}</span>${esc(y.cat||"기타")}<small>${dn}/${y.items.length}${dn===y.items.length?" ✓":""}</small></button>${canMove&&g.length>1?mvBtns("data-mvcat",y.cat):""}</li>`+(shut?"":y.items.map(x=>row(x).replace('<li class="item','<li class="item ingrp')).join(""))}).join("")}
 // 대분류 접고 펴기(엄마 11/26): 이 기기에만 기억
@@ -977,7 +981,9 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   if(n)await b.commit();toast(`${n}개 지웠어요`)}catch(e){toast("지우지 못했어요: "+(e.code||""))}});return}
  if(d.hb){if(d.hb==="start"||d.hb==="next")hbNext();else hbAnswer(d.hb);return}
  if(d.tfold!==undefined){taskFoldToggle(d.tfold);renderTasks();return}
- if(d.mv!==undefined||d.mvcat!==undefined){if(!mom||!fs)return;const l=taskMoved(todayTasks(today()),d.mv,Number(d.dir),d.mvcat);if(l)saveTaskOrder(l);return}
+ if(d.tcancel){taskDraft=null;renderTasks();return}
+ if(d.tsave){if(!mom||!fs||!taskDraft)return;const dr=taskDraft;const l=S.tasks.filter(x=>dr.has(x.id)).sort((a,b)=>dr.get(a.id)-dr.get(b.id));saveTaskOrder(l).then(ok=>{if(ok){taskDraft=null;renderTasks();toast("순서를 저장했어요")}});return}
+ if(d.mv!==undefined||d.mvcat!==undefined){if(!mom||!fs)return;const l=taskMoved(todayTasks(today()),d.mv,Number(d.dir),d.mvcat);if(l){taskDraft=new Map(l.map((x,k)=>[x.id,k*10]));renderTasks()}return}
  if(d.task){const x=S.tasks.find(y=>y.id===d.task);if(!x||!fs)return;const wasLast=lastOfDay(x);
   F.updateDoc(F.doc(fs,"tasks",x.id),x.done?{done:false,doneDate:null}:{done:true,doneDate:today()}).then(()=>{if(!x.done)toast(wasLast?`오늘 과제 다 했어! 포인트 2배 ⚡`:`잘했어! ⭐${Number(x.points)||0}`)}).catch(err=>toast("저장하지 못했어요: "+(err.code||"")));return}
  if(d.money){openMoney(d.money);return}
@@ -1014,7 +1020,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=88;
+const VERSION=89;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1059,7 +1065,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=88").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=89").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
