@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="18";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="19";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -429,8 +429,8 @@ function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.k
   else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b><br>한 번 더 해 볼까요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
   else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
   else if(ph==='good'){h+=`<div class="okbox">👍</div>`}
-  // 👀 미리 해 보기(엄마 11/27 「그냥 넘겨 볼 수 있게」): 말 안 해도 정답 보고 앞뒤로 넘김. 기록 안 남음
-  if(TRY&&!['rec','frec','think','fthink','good'].includes(ph))h+=`<div class="sub" style="text-align:center;margin-top:14px">정답: <b style="color:var(--ink)">${esc(it.en)}</b></div><div class="row"><button class="light" data-act="tryPrev"${R.i?'':' disabled'}>◀ 이전</button><button class="light" data-act="tryNext">넘기기 ▶</button></div>`;
+  // 👀 미리 해 보기(엄마 11/27 「그냥 넘겨 볼 수 있게」): 말 안 해도 정답 보고 넘김. 기록 안 남음. 엄마 11/27 「넘어간 문장은 다시 못 돌아가게」 → ◀ 이전 없음(앞으로만)
+  if(TRY&&!['rec','frec','think','fthink','good'].includes(ph))h+=`<div class="sub" style="text-align:center;margin-top:14px">정답: <b style="color:var(--ink)">${esc(it.en)}</b></div><div class="row"><button class="light" data-act="tryNext">넘기기 ▶</button></div>`;
   return h}
 const UI={level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',!!talk);m.firstChild.style.width=Math.round(x*100)+'%'},
   clock(s){const e=$('#clk');if(e)e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}};
@@ -462,7 +462,6 @@ const ACT={
   resay(){RUN.ph='ready';RUN.msg='';render()},
   show(){RUN.ok=false;toModel()},
   nextq(){if(RUN&&RUN.ph==='model')next()},
-  tryPrev(){const R=RUN;if(!TRY||!R||!R.i)return;try{speechSynthesis.cancel()}catch(e){}R.i--;runItem()},
   tryNext(){const R=RUN;if(!TRY||!R)return;try{speechSynthesis.cancel()}catch(e){}R.skipped='try';next()},
   skip(){const R=RUN;if(R.ph[0]!=='f')R.skipped=R.tries===0?'quiet':'wrong';next()},
   quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();keepCur();micClose();V={view:'home',tryStage:V.tryStage,tryLap:V.tryLap};render()},
