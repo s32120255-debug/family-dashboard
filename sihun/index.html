@@ -10164,6 +10164,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ${B('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
       ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
       ${B('🧑‍🏫','가르치기 대화','시훈이가 카츄와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
+      ${B('📊','카츄 가르치기 리포트','5단계 점검표 · 자주 건너뛴 단계 · 날마다 대화 (수학)','data-h="treport"')}
       ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
       ${H('👀 직접 해 보기 · 시훈이 화면 그대로')}
       <p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 풀지 않아도 다음 ▶으로 넘기고, 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
@@ -10306,6 +10307,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
     else if(a==='try'){window.HUBTRY=true;window.TRYDAY=t.dataset.day||'';RET='admin';tryBar();openApp(t.dataset.app)}
     else if(a==='report'){location.href='./report.html'}
+    else if(a==='treport'){location.href='./report.html#teach'}
     else if(a==='pencal'){penCal()}
     else if(a==='lock'){try{sessionStorage.removeItem('hub:mom')}catch(e){}location.reload()}
     else if(a==='why'){const w=t.dataset.w;if(w==='none')WHYSEL=WHYSEL.includes('none')?[]:['none'];else{WHYSEL=WHYSEL.filter(x=>x!=='none');WHYSEL=WHYSEL.includes(w)?WHYSEL.filter(x=>x!==w):[...WHYSEL,w]}

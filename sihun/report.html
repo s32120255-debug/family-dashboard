@@ -62,9 +62,9 @@ const CLS={ok:'바로 완성',access:'힌트 보고 고쳐서 완성',unknown:'�
 const KOT={daily:'복습 카드',test:'누적 테스트',wrong:'오답',hw:'숙제',write:'독서 워크지',lit:'문학 개념',fill:'핵심 빈칸',note:'개념 정리'};
 let day=new Date(); let CACHE=null;
 // 📋 과목별 리포트(엄마 11/26): report.html#en · #ko(국어+글쓰기) · #math — 주소 끝이 없으면 전체
-const RSUB=(/^#(en|ko|math)$/.exec(location.hash)||[])[1]||'';
+const RSUB=(/^#(en|ko|math|teach)$/.exec(location.hash)||[])[1]||'';
 const RCARD={'🇺🇸':'en','📖':'ko','✍️':'ko','🔢':'math','🧑‍🏫':'math'};
-const RTITLE={en:'🇺🇸 계단영어',ko:'📖 계단국어 · 계단글쓰기',math:'🔢 계단수학'};
+const RTITLE={en:'🇺🇸 계단영어',ko:'📖 계단국어 · 계단글쓰기',math:'🔢 계단수학',teach:'🧑‍🏫 카츄 가르치기'};
 
 function gate(){
   let ok=false;try{ok=sessionStorage.getItem('hub:mom')==='1'}catch(e){}
@@ -316,11 +316,11 @@ async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) retu
     ${mS.n?`<table class="kot"><tr><td></td><td>이날</td><td>${+k.slice(5,7)}월</td></tr>${Object.keys(AIN).filter(c=>mon[c]).map(c=>`<tr><td>${AIN[c]}</td><td>${day[c]?day[c].n+'번 · '+won(usd(day[c])):'-'}</td><td>${mon[c].n}번 · ${won(usd(mon[c]))}</td></tr>`).join('')}</table>`:''}
     <p class="muted" style="font-size:13px">시훈 공부방 AI만 센 대략 값이에요(1달러 1,450원으로 계산). 정확한 청구액과 한 달 한도는 Claude 콘솔(platform.claude.com)의 Usage·Limits에서 봐요.${nd?` 이번 달 AI 쓴 날 ${nd}일, 하루 평균 ${won(usd(mS)/nd)}.`:' 기록은 서버 업데이트 뒤부터 쌓여요.'}</p>`; }
 // ===== 🧑‍🏫 수학 가르치기 (엄마 11/24): 시훈이가 카츄(AI)에게 1문제 설명 — 대화 전체·건너뛴 단계 =====
-const TEND={done:'✅ 카츄가 이해',max:'✅ 5번 다 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
+const TEND={done:'✅ 끝까지 함',max:'✅ 끝까지 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
 const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
 const TKIND={today:'그날 맞힌 문제',past:'예전에 맞힌 문제',new:'새 문제(풀면서 가르침)'};
 function teachHTML(x){ const p=x.prob||{}, h=x.have||{};
-  return `<div class="kowr"><div><b>${esc((x.ts||'').slice(11,16)?new Date(x.ts).toTimeString().slice(0,5):'')}</b> · ${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 말함 · ${Math.round((x.sec||0)/60)}분 · ${TKIND[p.kind]||''}</div>
+  return `<div class="kowr"><div>${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 말함 · ${TKIND[p.kind]||''}</div>
     <div class="kobox">${esc(p.q)}<br>정답: <b>${esc(p.ans)}</b>${p.strat?` · 🃏 ${esc(p.strat)}`:''}</div>
     <div class="muted">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · <span class="bad">설명한 답이 정답과 달랐어요</span>':''}</div>
     ${(x.skipped||[]).length?`<div><b>🔍 건너뛴 단계</b><ul>${x.skipped.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
@@ -366,7 +366,38 @@ function mapRep(C,k){const M=C.routine&&C.routine.map;const d=M&&M.days&&M.days[
   // 내 이야기
   const W=d.write;if(W&&W.at)L.push(sec('📖 내 이야기',`<div class="tut">${W.ko?esc(W.ko)+'<br>':''}<b>${esc(W.en||'')}</b>${W.wrong?` <span class="muted">(블록 ${W.wrong}번 잘못 누름)</span>`:''}</div>`));
   return `<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px"><b>🗺️ 내 지도 · ${esc(MKT[d.set]||d.set||'')}</b>${d.end?' <span class="ok">끝</span>':' <span class="muted">아직 안 끝남</span>'}${L.join('')}</div>`}
+// 📊 카츄 가르치기 리포트(엄마 11/27 "카츄 가르치기 부분만 리포트 따로, 일단 수학만"): report.html#teach. 시간 표시 없음.
+let TR_RANGE='7';
+async function renderTeach(){
+  M.innerHTML='<div class="muted">불러오는 중…</div>';
+  let L=await getC('m32teach').catch(()=>null);
+  if(!L){ M.innerHTML='<div class="card bad">기록을 못 불러왔어요.</div>'; return; }
+  L=L.filter(x=>x&&x.at&&x.n>0).sort((a,b)=>(a.ts||'')<(b.ts||'')?-1:1);
+  const today=dkey(new Date()), from=TR_RANGE==='1'?today:TR_RANGE==='7'?dkey(new Date(Date.now()-6*864e5)):'0000';
+  const X=L.filter(x=>x.at>=from&&x.at<=today);
+  const days=[...new Set(X.map(x=>x.at))];
+  const ended=X.filter(x=>x.end==='done'||x.end==='max').length, avgN=X.length?(X.reduce((a,x)=>a+(x.n||0),0)/X.length).toFixed(1):'–';
+  // 5단계: 처음부터 / 카츄가 물어서 / 안 나옴 — have(끝 상태) + 처음 카츄 답 전 have는 없으니 order.asked와 skipped로 가늠
+  const KEYS=Object.keys(THAVE);
+  const cell=(x,k)=>{ const h=x.have||{}; if(!h[k]) return '✖'; const asked=(x.order||[]).some(o=>o.asked&&TRK[k].test(o.text))||(x.skipped||[]).some(t=>TRK[k].test(t)); return asked?'🔍':'✅'; };
+  const sk={}; X.forEach(x=>(x.skipped||[]).forEach(t=>{ const g=trGroup(t); sk[g]=(sk[g]||0)+1; }));
+  const top=Object.entries(sk).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const wr=X.map(x=>{ const ts=x.turns||[], i=ts.findIndex(t=>t.state==='wrong'||t.work); if(i<0) return null; const nx=ts.slice(i+1).find(t=>t.who==='me'); return {x,fix:x.have&&x.correct!==false&&nx?true:null,next:nx?nx.text:''}; }).filter(Boolean);
+  let h=`<h1>📊 카츄 가르치기 리포트 <span class="muted" style="font-size:15px">수학</span></h1>
+    <div class="nav">${[['1','오늘'],['7','7일'],['all','전체']].map(([v,l])=>`<button data-tr="${v}" class="${TR_RANGE===v?'btn':''}">${l}</button>`).join('')}<a href="#" style="margin-left:auto">← 하루 리포트</a></div>`;
+  if(!X.length){ M.innerHTML=h+'<div class="card"><p class="muted">이 기간엔 가르치기 기록이 없어요.</p></div>'; trBind(); return; }
+  h+=`<div class="card"><h2>요약</h2><div class="row">${stat(days.length+'일','가르친 날')}${stat(ended+' / '+X.length,'끝까지 한 날')}${stat(avgN+'번','한 번에 설명한 횟수(평균)')}</div></div>`;
+  h+=`<div class="card"><h2>5단계 점검표</h2><p class="muted" style="font-size:14px">✅ 시훈이가 처음부터 말함 · 🔍 카츄가 물어봐서 꺼냄 · ✖ 끝까지 안 나옴</p>
+    <div style="overflow-x:auto"><table class="kot"><tr><th>날</th>${KEYS.map(k=>`<th>${THAVE[k]}</th>`).join('')}</tr>${X.map(x=>`<tr><td>${x.at.slice(5).replace('-','/')}</td>${KEYS.map(k=>`<td style="text-align:center">${cell(x,k)}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
+  h+=`<div class="card"><h2>자주 건너뛴 단계 TOP 3</h2>${top.length?`<ol>${top.map(([g,n])=>`<li>${esc(g)} <b>${n}번</b></li>`).join('')}</ol>`:'<p class="muted">건너뛴 단계 기록이 없어요.</p>'}</div>`;
+  h+=`<div class="card"><h2>카츄의 틀린 풀이</h2>${wr.length?`<ul>${wr.map(w=>`<li>${w.x.at.slice(5).replace('-','/')} · ${w.next?`시훈이 대답: "${esc(w.next.slice(0,80))}"`:'<span class="muted">대답 전에 끝남</span>'}</li>`).join('')}</ul><p class="muted" style="font-size:14px">틀린 곳을 짚었는지는 위 대답과 아래 대화에서 봐 주세요.</p>`:'<p class="muted">이 기간엔 틀린 풀이를 보여 준 적이 없어요.</p>'}</div>`;
+  h+=`<div class="card"><h2>날마다</h2>${X.slice().reverse().map(x=>`<div style="margin-bottom:14px"><b>${x.at.slice(5).replace('-','/')}</b>${teachHTML(x)}</div>`).join('')}</div>`;
+  M.innerHTML=h; trBind(); }
+const TRK={goal:/구하|묻|뭘|무엇/,cond:/조건|문제에|숫자/,method:/방법|식|왜|더하|빼|곱|나누/,steps:/과정|어디서|나왔|건너|중간/,answer:/답|단위/};
+function trGroup(t){ t=String(t||''); if(/어디서|나왔/.test(t)) return '숫자가 어디서 나왔는지 말 안 함'; if(/구하|묻/.test(t)) return '무엇을 구하는지 말 안 함'; if(/조건/.test(t)) return '조건을 빼먹음'; if(/왜|이유/.test(t)) return '왜 그 계산인지 말 안 함'; if(/순서/.test(t)) return '순서가 뒤죽박죽'; if(/단위|답/.test(t)) return '답·단위를 말 안 함'; return t.slice(0,40); }
+function trBind(){ M.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ TR_RANGE=b.dataset.tr; renderTeach(); }); }
 async function render(){
+  if(RSUB==='teach') return renderTeach();
   const k=dkey(day);const C=CACHE;
   const D=await getD('daily/'+k).catch(()=>null)||{subjects:{}};const S=D.subjects||{};
   let h=`<h1>📋 시훈 ${RSUB?RTITLE[RSUB]+' ':'하루 '}리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
@@ -393,7 +424,7 @@ async function render(){
   const MW=MI.filter(x=>x.res==='x'||x.res==='s'||x.fixed||(x.res==='h'&&x.pen)||(x.tutor&&x.tutor.turns&&x.tutor.turns.length)||x.guide);
   const mwl=MW.map(x=>`<li>${x.res==='s'?'⏭':x.res==='h'?'△':x.res==='o'?'⭕':'❌'} ${esc(x.q)} <span class="muted">(정답 ${esc(x.ans)}${x.wrong&&x.wrong.length?` · 쓴 답 ${esc(x.wrong.join(', '))}`:''})</span>${x.pen?`<br><span class="muted">${x.pen.ph?`📷 사진 ${x.pen.ph} · `:''}✍️ 획 ${x.pen.n} · 첫 획 ${x.pen.first}초${x.pen.erase?` · 지우개 ${x.pen.erase}`:''}${x.pen.idle>=20?` · 가장 오래 멈춤 ${x.pen.idle}초`:''}</span><div class="pen" data-pen="${esc(x.pen.id)}"></div>`:'<br><span class="muted">손풀이 없음</span>'}${x.steps?`<div class="muted">${stepsTxt(x.steps)}</div>`:x.solSeen?' · 📖 풀이 봄':''}${x.twin?`<div>🔁 쌍둥이 문제: ${x.twin.res==='o'?'⭕ 혼자 한 번에 맞힘':x.twin.res==='h'?'△ 두 번째에 맞힘':'❌ 못 맞힘'} <span class="muted">(${esc(x.twin.q)} · 정답 ${esc(x.twin.ans)}${x.twin.wrong&&x.twin.wrong.length?` · 쓴 답 ${esc(x.twin.wrong.join(', '))}`:''})</span></div>`:''}${x.strat?`<div class="muted">🃏 ${STRN[x.strat]||x.strat} 전략${x.stratOk==null?'':x.stratOk?' · 길잡이에서 전략 카드 바로 고름':' · 길잡이에서 전략 카드 헤맴'}</div>`:''}${x.guide?`<div class="muted">🧭 길잡이로 풂${x.guideAfterWrong?'(틀린 뒤)':'(처음부터)'} · 작은 질문 ${x.guide}칸 중 스스로 맞힘 ${x.guideOk}</div>`:''}${x.tutor&&x.tutor.turns&&x.tutor.turns.length?`<div class="tut"><b>🧑‍🏫 AI 과외</b> <span class="muted">(${({solved:'스스로 찾음',fixed:'스스로 고침',stopped:'그만함',limit:'횟수 끝',error:'연결 안 됨'})[x.tutor.end]||''})</span>${x.tutor.read?`<div class="muted">읽은 식: ${esc(x.tutor.read)}</div>`:''}${x.tutor.turns.map(t=>`<div>${t.who==='ai'?'🧑‍🏫':'🙋'} ${esc(t.text)}</div>`).join('')}${(x.tutor.mom||[]).length?`<div><b>엄마 메모:</b> ${esc([...new Set(x.tutor.mom)].join(' / '))}</div>`:''}${x.tutor.shorter?`<div>💡 더 간단한 방법: ${esc(x.tutor.shorter)}</div>`:''}${x.learn&&(x.learn.nw||x.learn.use)?`<div>${({new:'💡 처음 알았어요',knew:'🙂 알던 거예요'})[x.learn.nw]||''} · ${({will:'👍 써 볼래요',mine:'✋ 내 방법이 더 편해요'})[x.learn.use]||''}</div>`:''}</div>`:''}${x.fixed?'<div class="muted">✏️ 패드에 쓰다가 스스로 고침</div>':''}${x.cond?`<div class="muted">🔎 조건 ${x.cond.n}개 · ${x.cond.tries<=1?'한 번에 다 찾음':x.cond.tries+'번 만에 다 찾음'}${(x.cond.miss||[]).length&&x.cond.mode==='tap'?` · 처음에 놓친 조건: ${x.cond.miss.map(m=>'「'+esc(m)+'」').join(' ')}`:''}</div>`:''}${x.ts?`<div class="aslot" data-key="${esc(x.ts)}"></div><button class="abtn" data-one="${esc(x.ts)}">🔍 이 문제 AI 분석</button>`:''}</li>`).join('');
   h+=`<div class="card"><h2>🔢 수학</h2>${MI.length?`<div class="row">${stat(MI.length+'문제','푼 문제 (3-2)')}${stat(mo,'맞음')}${stat(mx,'틀림')}${ms?stat(ms,'건너뜀'):''}${mt?stat(Math.round(mt/60)+'분','수학 시간'):''}${(()=>{const c=MI.filter(x=>x.cond);return c.length?stat(c.filter(x=>x.cond.tries<=1).length+'/'+c.length,'조건 한 번에 다 찾음'):''})()}</div>${stratBox(MI,C.m32.filter(d=>d.date<=k).flatMap(d=>d.items||[]).filter(x=>x.mode==='solve'))}${bookBox(C.m32.filter(d=>d.date<=k).flatMap(d=>d.items||[]).filter(x=>x.mode==='solve'))}${pfBox(MA)}<div><button class="abtn" id="aday">🔍 이날 수학 AI 분석</button><button class="abtn" id="aweek">🔍 최근 7일 AI 분석</button><span class="muted" style="font-size:13px"> 1~3분 걸려요</span></div><div id="adayout"></div>${mwl?`<h3 style="font-size:16px;margin:12px 0 4px">✍️ 틀린 문제 · 손풀이 · AI 과외 대화</h3><ul>${mwl}</ul>`:''}`:ma.n?`<div class="row">${stat(ma.n+'문제','푼 문제')}${stat(ma.ok||0,'맞음')}</div>`:'<p class="muted">이날 수학 기록이 없어요.</p>'}</div>`;
-  h+=`<div class="card"><h2>🧑‍🏫 수학 가르치기 (카츄)</h2><div id="tcbody"><p class="muted">불러오는 중…</p></div></div>`;
+  h+=`<div class="card"><h2>🧑‍🏫 수학 가르치기 (카츄) <a href="#teach" style="font-size:14px;font-weight:400">📊 따로 보기</a></h2><div id="tcbody"><p class="muted">불러오는 중…</p></div></div>`;
   h+=`<div class="card"><h2>✍️ 글쓰기 첨삭</h2><div id="wrbody"><p class="muted">불러오는 중…</p></div></div>`;
   // 막힌 이유
   const ws=Object.entries(S).filter(([,v])=>v&&v.why&&v.why.length).map(([s,v])=>`<li><b>${{en:'영어',ko:'국어',math:'수학',sp:'특별',write:'글쓰기'}[s]||s}</b>: ${v.why.map(w=>WHY[w]||w).join(', ')}</li>`).join('');
@@ -415,6 +446,7 @@ async function render(){
   document.getElementById('td').onclick=()=>{day=new Date();render()};
   document.querySelectorAll('[data-exp]').forEach(b=>b.onclick=()=>exportRecs(k,+b.dataset.exp));
 }
+window.addEventListener('hashchange',()=>location.reload()); // #teach ↔ 하루 리포트
 onAuthStateChanged(auth,u=>{
   if(!u){M.innerHTML=`<div class="gate"><h1>엄마 리포트</h1><p><button class="btn" id="li">구글로 로그인</button></p></div>`;document.getElementById('li').onclick=async()=>{const p=new GoogleAuthProvider();p.setCustomParameters({prompt:'select_account'});try{await signInWithPopup(auth,p)}catch(e){alert('로그인이 안 됐어요: '+(e.code||e.message))}};return}
   gate(); // 엄마 11/26: 리포트는 관리자만(엄마 비밀번호)
