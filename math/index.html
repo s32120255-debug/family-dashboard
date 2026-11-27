@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795754323";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795754690";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -259,8 +259,15 @@ const STEPT=T=>!!(T.steps7||T.lv),stepLabel=(T,k)=>T.seq?T.seq(k).label:T.lv[Mat
 const GCD=(a,b)=>b?GCD(b,a%b):a,LCM=(a,b)=>a/GCD(a,b)*b,gwa=v=>BC(v)?"과":"와";
 const decS=n=>{const w=Math.floor(n/100),f=String(n%100).padStart(2,"0").replace(/0+$/,"");return f?w+"."+f:String(w)},decParts=n=>{const w=Math.floor(n/100),f=String(n%100).padStart(2,"0").replace(/0+$/,"");return[String(w),f]};
 const seqOf=p=>{const q=[];let v=p.s,d=p.k;for(let i=0;i<5;i++){q.push(v);if(p.L===0)v+=p.k;else if(p.L===1)v*=p.k;else{v+=d;d++}}return q};
-const barSVG=(n,k)=>{const W=300/n;let r="";for(let i=0;i<n;i++)r+=`<rect x="${2+i*W*0.987}" y="4" width="${W*0.987}" height="40" fill="${i<k?"#f2c94c":"#fff"}" stroke="#333" stroke-width="2"/>`;return `<svg class="wide" viewBox="0 0 300 48" style="width:100%">${r}</svg>`};
-const barsSVG=(w,k,n)=>{const W=296/n;let r="";for(let b=0;b<=w;b++)for(let i=0;i<n;i++)r+=`<rect x="${2+i*W}" y="${4+b*40}" width="${W}" height="32" fill="${b<w||i<k?"#f2c94c":"#fff"}" stroke="#333" stroke-width="2"/>`;return `<svg class="wide" viewBox="0 0 300 ${8+(w+1)*40}" style="width:100%">${r}</svg>`};
+/* 11/27 sy: 막대는 칸 세기가 힘들다 → 칸을 크게, 경계선을 굵게. 피자(원) 그림과 섞어 내고 칸이 많으면 피자를 더 자주 */
+const barSVG=(n,k)=>{const W=296/n;let r="";for(let i=0;i<n;i++)r+=`<rect x="${2+i*W}" y="3" width="${W}" height="58" fill="${i<k?"#f2c94c":"#fff"}" stroke="#222" stroke-width="3"/>`;return `<svg class="wide" viewBox="0 0 300 64" style="width:100%">${r}</svg>`};
+const pieG=(cx,cy,R,n,k)=>{let r=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fff" stroke="#222" stroke-width="3"/>`;const P=i=>{const a=-Math.PI/2+2*Math.PI*i/n;return [(cx+R*Math.cos(a)).toFixed(1),(cy+R*Math.sin(a)).toFixed(1)]};
+  if(k>=n)r=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#f2c94c" stroke="#222" stroke-width="3"/>`;else for(let i=0;i<k;i++){const a=P(i),b=P(i+1);r+=`<path d="M${cx},${cy} L${a[0]},${a[1]} A${R},${R} 0 0 1 ${b[0]},${b[1]} Z" fill="#f2c94c"/>`}
+  if(n>1)for(let i=0;i<n;i++){const a=P(i);r+=`<line x1="${cx}" y1="${cy}" x2="${a[0]}" y2="${a[1]}" stroke="#222" stroke-width="3" stroke-linecap="round"/>`}
+  return r+`<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="#222" stroke-width="3"/>`};
+const pieSVG=(n,k)=>`<svg viewBox="0 0 200 200" style="width:70%;margin:0 auto">${pieG(100,100,92,n,k)}</svg>`;
+const piesSVG=(w,k,n)=>{const m=w+1,R=Math.min(46,(300/m-10)/2),g=300/m;let r="";for(let b=0;b<m;b++)r+=pieG(g*b+g/2,R+4,R,n,b<w?n:k);return `<svg class="wide" viewBox="0 0 300 ${2*R+8}" style="width:100%">${r}</svg>`};
+const barsSVG=(w,k,n)=>{const W=296/n;let r="";for(let b=0;b<=w;b++)for(let i=0;i<n;i++)r+=`<rect x="${2+i*W}" y="${4+b*40}" width="${W}" height="32" fill="${b<w||i<k?"#f2c94c":"#fff"}" stroke="#222" stroke-width="3"/>`;return `<svg class="wide" viewBox="0 0 300 ${8+(w+1)*40}" style="width:100%">${r}</svg>`};
 const fcVal=X=>X.d?((X.w||0)*X.d+X.n)/X.d:X.w,fcN=(X,D)=>X.d?(X.w||0)*X.d+X.n:X.w*D,fcCmp=(A,B)=>{const a=fcVal(A),b=fcVal(B);return Math.abs(a-b)<1e-9?"0":a>b?"1":"2"};
 const fcV=X=>X.d?(X.w?`${X.w} ${fr(X.n,X.d)}`:fr(X.n,X.d)):String(X.w),fcT=X=>X.d?(X.w?X.w+"과":"")+X.n+"/"+X.d:String(X.w);
 const fAns=(N,D)=>{const g=GCD(N,D),n=N/g,d=D/g;if(d===1)return{a:String(n),alts:[]};const W=Math.floor(n/d),r=n%d;return W?{a:`${W}&${r}\\${d}`,alts:[[`${n}\\${d}`]]}:{a:`${n}\\${d}`,alts:[]}};
@@ -557,6 +564,14 @@ const TYPES={
   steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
   pat:(p,g)=>multPat(p.x,p.c,g[0])},
 
+ /* 11/27 sy: 구구단 전체 무작위를 매일 한 세트. 통과로 끝나지 않고 계속 하며 자기 기록만 본다(forever) */
+ GU:{forever:true,n:20,hard:p=>(p.a>=6?.6:0)+(p.b>=6?.6:0),name:"구구단 무작위",code:"0-1",ex:"2~9단 섞어서 20문제 · 매일",sec:2,why:"모든 곱셈과 나눗셈의 바탕이라 날마다 한 번 꺼내 본다냥.",
+  idea:"바로 안 떠오르면 아는 곱에서 한 묶음을 더하거나 뺀다냥.",
+  rand:()=>({a:ri(2,9),b:ri(2,9)}),key:p=>p.a+"x"+p.b,
+  make:({a,b})=>({html:`${a} × ${b} = [[0]]`,a:[String(a*b)],kind:"num",text:`${a}×${b}`}),
+  steps:({a,b})=>({head:`${a} × ${b} = ?`,list:[{h:`${a} × ${b-1} = [[0]]`,a:[String(a*(b-1))],hints:["하나 앞의 곱부터 떠올린다냥."]},{h:`${a*(b-1)} + ${a} = [[0]]`,a:[String(a*b)],hints:[`${a}${a===2||a===4||a===5||a===9?"를":"을"} 한 번 더 더한다냥.`]}]}),
+  pat:(p,g)=>{const v=+g[0],r=p.a*p.b;return Math.abs(v-r)===p.a||Math.abs(v-r)===p.b?"한 묶음 차이":"구구단 "+p.a+"단"}},
+
  T19:{hard:p=>(p.c>=6?1.2:0)+(p.x>=16?.6:0),name:"19단",code:"19단",ex:"17 × 6",sec:3,why:"두 자리 × 한 자리를 머릿속에서 바로 꺼내고, 큰 수 나눗셈을 어림할 때 쓰여요.",
   idea:"17 × 6을 10 × 6과 7 × 6으로 쪼개요.",
   lv:["13단","14단","15단","16단","17단","18단","19단","13~16단","17~19단","전체"],
@@ -658,9 +673,11 @@ const TYPES={
   steps:({x,c})=>({head:`${x} × ${c} = ?`,list:splitSteps(x,c)}),
   pat:(p,g)=>multPat(p.x,p.c,g[0])},
 
- T12:{hard:p=>p.c>=6?1:0,name:"12~19단",code:"0-2",ex:"12단부터 19단까지 · 정순 → 역순 → 랜덤",sec:2.5,steps7:true,nseq:24,
+ T12:{hard:p=>p.c>=6?1:0,name:"12~19단",code:"0-2",ex:"12단부터 19단까지 · 정순 → 역순 → 랜덤 → 전체 무작위",sec:2.5,steps7:true,nseq:25,
   seq:k=>{const R=(a,b)=>{const r=[];if(a<=b)for(let i=a;i<=b;i++)r.push(i);else for(let i=a;i>=b;i--)r.push(i);return r};
-    k=Math.max(0,Math.min(k,23));const dan=12+Math.floor(k/3),S=[["정순",R(1,19)],["역순",R(19,1)],["랜덤",R(1,19).sort(()=>Math.random()-.5)]][k%3];
+    /* 11/27 sy: 단마다 한 뒤에는 12~19단 전체를 무작위로 섞은 단계가 있어야 한다 */
+    if(k>=24){const all=[];for(let x=12;x<=19;x++)for(let c=2;c<=19;c++)all.push({x,c});return{label:"12~19단 전체 무작위",list:all.sort(()=>Math.random()-.5).slice(0,20)}}
+    k=Math.max(0,k);const dan=12+Math.floor(k/3),S=[["정순",R(1,19)],["역순",R(19,1)],["랜덤",R(1,19).sort(()=>Math.random()-.5)]][k%3];
     return{label:dan+"단 "+S[0],list:S[1].map(c=>({x:dan,c}))}},why:"19단과 두 자리 곱셈의 바탕이다냥.",idea:"12 × 7을 10 × 7과 2 × 7로 쪼개요.",
   rand:()=>({x:12,c:ri(1,9)}),key:p=>p.x+"x"+p.c,
   make:({x,c})=>({html:`${x} × ${c} = [[0]]`,a:[String(x*c)],kind:"num",text:`${x}×${c}`}),
@@ -938,24 +955,25 @@ const TYPES={
  /* ───── 분수 길 (수피온 G01~G07 순서, 11/25) ───── */
  FA:{optional:true,name:"분수와 나누기",code:"G01",ex:"똑같이 나눈 것 중 몇",sec:4,why:"분수가 '똑같이 나눈 것 중 몇'이라는 뜻을 몸에 익혀요.",idea:"전체를 똑같이 몇으로 나눴는지가 분모, 그중 몇 개가 분자다냥.",
   lv:["등분 1 (나눈 것 중 1)","등분 2 (나눈 것 중 몇)","등분하여 빼기 (남은 것)","진분수 (1/n이 몇 개)","가분수 (1/n이 몇 개)","대분수 (그림 보고)","혼합"],
-  rand:L=>{if(L>=6)L=ri(0,5);const n=ri(2,L<2?8:9);if(L===0)return{L,n:ri(2,12),k:1};if(L<=3)return{L,n:Math.max(n,3),k:ri(1,Math.max(n,3)-1)};if(L===4)return{L,n,k:ri(n+1,n*3)};return{L,n:ri(2,6),k:ri(1,5),w:ri(1,3)}},
-  key:p=>[p.L,p.n,p.k,p.w||0].join("."),
-  make:p=>{const{L,n,k,w}=p;
-    if(L<=2)return{html:`<span class="sub">${L===2?"색칠 안 한":"색칠한"} 부분은</span><span class="sub">전체의 [[0]]</span>`,fig:barSVG(n,k),a:[L===2?`${n-k}\\${n}`:`${k}\\${n}`],kind:"num",fr:true,cls:"mid stack",text:`${n}등분 중 ${L===2?n-k:k}`};
+  rand:L=>{const o=(()=>{if(L>=6)L=ri(0,5);const n=ri(2,L<2?8:9);if(L===0)return{L,n:ri(2,12),k:1};if(L<=3)return{L,n:Math.max(n,3),k:ri(1,Math.max(n,3)-1)};if(L===4)return{L,n,k:ri(n+1,n*3)};return{L,n:ri(2,6),k:ri(1,5),w:ri(1,3)}})();
+    if(o.L<=2||o.L===5)o.pz=Math.random()<(o.n>=7?.8:.5)?1:0;return o},
+  key:p=>[p.L,p.n,p.k,p.w||0,p.pz||0].join("."),
+  make:p=>{const{L,n,k,w,pz}=p;
+    if(L<=2)return{html:`<span class="sub">${L===2?"색칠 안 한":"색칠한"} 부분은</span><span class="sub">전체의 [[0]]</span>`,fig:(pz?pieSVG:barSVG)(n,k),a:[L===2?`${n-k}\\${n}`:`${k}\\${n}`],kind:"num",fr:true,cls:"mid stack",text:`${n}등분 중 ${L===2?n-k:k}`};
     if(L<=4)return{html:`${fr(1,n)}이 ${k}개 = [[0]]`,a:[`${k}\\${n}`],kind:"num",fr:true,cls:"mid",text:`1/${n}이 ${k}개`};
-    const kk=Math.min(k,n-1);return{html:`<span class="sub">색칠한 부분을</span><span class="sub">대분수로 [[0]]</span>`,fig:barsSVG(w,kk,n),a:[`${w}&${kk}\\${n}`],kind:"num",fr:true,cls:"mid stack",text:`그림 ${w}과 ${kk}/${n}`}},
-  steps:p=>{const{L,n,k,w}=p;
-    if(L<=2)return{head:`${L===2?"색칠 안 한":"색칠한"} 부분은 전체의 몇 분의 몇?`,fig:barSVG(n,k),list:[
-      {h:`전체를 똑같이 [[0]]칸으로 나눴다`,a:[String(n)],hints:["칸을 다 세 봐."]},
-      {h:`${L===2?"색칠 안 한":"색칠한"} 칸은 [[0]]칸`,a:[String(L===2?n-k:k)],hints:["그 칸만 세 봐."]},
-      {h:`그래서 ${fr("[[0]]","[[1]]")}`,a:[String(L===2?n-k:k),String(n)],hints:["위는 고른 칸, 아래는 전체 칸."]}]};
+    const kk=Math.min(k,n-1);return{html:`<span class="sub">색칠한 부분을</span><span class="sub">대분수로 [[0]]</span>`,fig:(pz?piesSVG:barsSVG)(w,kk,n),a:[`${w}&${kk}\\${n}`],kind:"num",fr:true,cls:"mid stack",text:`그림 ${w}과 ${kk}/${n}`}},
+  steps:p=>{const{L,n,k,w,pz}=p,U=pz?"조각":"칸",B=pz?"피자":"막대";
+    if(L<=2)return{head:`${L===2?"색칠 안 한":"색칠한"} 부분은 전체의 몇 분의 몇?`,fig:(pz?pieSVG:barSVG)(n,k),list:[
+      {h:`전체를 똑같이 [[0]]${U}으로 나눴다`,a:[String(n)],hints:[`${U}을 다 세 봐.`]},
+      {h:`${L===2?"색칠 안 한":"색칠한"} ${U}은 [[0]]${U}`,a:[String(L===2?n-k:k)],hints:[`그 ${U}만 세 봐.`]},
+      {h:`그래서 ${fr("[[0]]","[[1]]")}`,a:[String(L===2?n-k:k),String(n)],hints:[`위는 고른 ${U}, 아래는 전체 ${U}.`]}]};
     if(L<=4)return{head:`${fr(1,n)}이 ${k}개`,list:[
       {h:`분모는 그대로 [[0]]`,a:[String(n)],hints:["한 조각 크기는 안 바뀐다냥."]},
       {h:`분자는 조각 수 [[0]]`,a:[String(k)],hints:["몇 개야?"]},
       ...(L===4?[{h:`분자가 분모보다 크거나 같으면 가분수. 가분수야?`,a:["O"],kind:"ox",hints:["위 두 수를 비교해."]}]:[])]};
-    const kk=Math.min(k,n-1);return{head:`색칠한 부분을 대분수로`,fig:barsSVG(w,kk,n),list:[
-      {h:`꽉 찬 막대 [[0]]개`,a:[String(w)],hints:["다 칠한 막대만 세 봐."]},
-      {h:`마지막 막대는 ${n}칸 중 [[0]]칸`,a:[String(kk)],hints:["칠한 칸을 세 봐."]},
+    const kk=Math.min(k,n-1);return{head:`색칠한 부분을 대분수로`,fig:(pz?piesSVG:barsSVG)(w,kk,n),list:[
+      {h:`꽉 찬 ${B} [[0]]개`,a:[String(w)],hints:[`다 칠한 ${B}만 세 봐.`]},
+      {h:`마지막 ${B}는 ${n}${U} 중 [[0]]${U}`,a:[String(kk)],hints:[`칠한 ${U}을 세 봐.`]},
       {h:`그래서 [[0]] ${fr("[[1]]",n)}`,a:[String(w),String(kk)],hints:["꽉 찬 수가 자연수 자리."]}]}},
   pat:()=>"분수 뜻"},
 
@@ -3075,7 +3093,7 @@ const CUR={A1:["3-1","나눗셈"],B4:["3-1","덧셈과 뺄셈"],B5:["3-1","곱�
  HA:["대수","지수함수와 로그함수 (지수)"],HL:["대수","지수함수와 로그함수 (로그)"],HN:["대수","지수함수와 로그함수"],HT:["대수","삼각함수"],HJ:["대수","삼각함수 (사인법칙 · 코사인법칙)"],HU:["대수","수열"],
  HV:["미적분Ⅰ","함수의 극한과 연속"],HY:["미적분Ⅰ","미분"],HZ:["미적분Ⅰ","적분"],
  HW:["확률과 통계","경우의 수"],HB:["확률과 통계","확률"],HST:["확률과 통계","통계"],
- T12:["보충","12~19단"],NL:["보충","수직선 위 분수"],E1:["보충","등식 (중1 방정식 준비)"],E4:["보충","거꾸로 풀기 (중1 방정식 준비)"],PR:["보충","소수 판별 (중1 소인수분해 준비)"]};
+ T12:["보충","12~19단"],GU:["보충","구구단"],NL:["보충","수직선 위 분수"],E1:["보충","등식 (중1 방정식 준비)"],E4:["보충","거꾸로 풀기 (중1 방정식 준비)"],PR:["보충","소수 판별 (중1 소인수분해 준비)"]};
 const SEMS=["3-1","3-2","4-1","4-2","5-1","5-2","6-1","6-2","중1-1","중1-2","중2-1","중2-2","중3-1","중3-2","공통수학1","공통수학2","대수","미적분Ⅰ","확률과 통계","보충"],NOW_SEM="3-2";
 const semName=sem=>sem==="보충"?"보충 (교과 밖)":sem[0]==="중"?`중학교 ${sem[1]}학년 ${sem[3]}학기`:/^\d/.test(sem)?sem.replace("-","학년 ")+"학기":"고등 "+sem;
 /* 잠금: 앞 단계를 통과(졸업 또는 마지막 단계)해야 열림. 이미 풀어 본 유형, 부모님이 세트를 넣은 유형은 안 잠김 */
@@ -3089,15 +3107,15 @@ const PRE={B11:["B9"],B12:["B7","B9"],A7:["A6"],MJ:["A3"],DJ:["A6"],MN:["A3"],CD
  HA:["EX","SQ"],HL:["HA"],HN:["HL"],HT:["TV"],HJ:["HT"],HU:["HA"],HV:["HH","HF"],HY:["HV"],HZ:["HY"],HW:["HK"],HB:["HW","CP"],HST:["HB","SD"]};
 const baseOf=(T,k)=>T.lvBase?T.lvBase[Math.min(k,T.lvBase.length-1)]:k;
 const MMNS=12;/* 수 가르기 암산의 곱셈 묶음(10~12단계)을 지나면 머리셈 곱셈이 열림 */
-const passedT=id=>{const T=TYPES[id],st=S.ts[id];if(!T||!st)return false;return !!st.grad||(STEPT(T)&&(st.step||0)>=stepMax(T))};
+const passedT=id=>{const T=TYPES[id],st=S.ts[id];if(!T||!st||T.forever)return false;return !!st.grad||(STEPT(T)&&(st.step||0)>=stepMax(T))};
 const lockBy=id=>{const st=S.ts[id];if(st&&(st.runs||[]).length||(S.cfg.plan[id]||0)>0)return [];if(id==="MM"){const ns=S.ts.NS;return [passedT("T12")?null:"T12",ns&&(ns.grad||baseOf(TYPES.NS,ns.step||0)>=MMNS)?null:"NS"].filter(Boolean)}return (PRE[id]||[]).filter(x=>TYPES[x]&&!passedT(x))};
 const isLocked=id=>lockBy(id).length>0;
 const lockTxt=id=>id==="MM"?`🔒 ${lockBy(id).map(x=>x==="NS"?"수 가르기 암산의 곱셈 단계":TYPES[x].name).join(", ")} 통과하면 열려요`:`🔒 ${lockBy(id).map(x=>TYPES[x].name).join(", ")} 통과하면 열려요`;
 const FRP=["FA","FN","FU","FV1","FV2","FC","NL","C1","FS","CA","C2","C3","FT","C4","C5","FM","FD"];
 const V20=["BX","UW","PG","CK","GO","GL","GA","GP","GS","GV","GR","DP","ES","MX","DF","FQ","PL","ZX","FE","SC","SV","RF","MD","RZ","FY","QG","TV","IA"];
-const ORDER0=["T12","A1","A3","B5","A6","FR",...V20,"OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5","FX","KN","B13","B14","CB","RO","DM","DD","DV","RT","PP",...ELR,...MID].filter((x,i,a)=>a.indexOf(x)===i);
+const ORDER0=["T12","GU","A1","A3","B5","A6","FR",...V20,"OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5","FX","KN","B13","B14","CB","RO","DM","DD","DV","RT","PP",...ELR,...MID].filter((x,i,a)=>a.indexOf(x)===i);
 /* 하루 20판 (11/25 sy): 12~19단1 몫찾기3 배수1 두자리×한자리2 약수1 분수길1 + 함수 상자2 + 3학년 새 단원 5(들이·무게, 그림그래프, 시계, 원, 평면도형) = 16, 남는 4칸은 대기 줄(지금 학기 3 + 다음 학기 미리 1) */
-const PLAN0={A1:2,A3:1,B5:2,A6:1,T12:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:2,GO:1,GL:1};
+const PLAN0={A1:2,A3:1,B5:2,A6:1,T12:1,GU:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:1,GO:1,GL:1};
 /* 11/26 sy: 수 가르기는 꼭 필요 → 매일 1세트 */
 function migNS(){if(S.cfg.plan.NS==null)S.cfg.plan.NS=1;if(S.cfg.nsPlan)return;S.cfg.nsPlan=true;const o=S.cfg.order.filter(x=>x!=="NS"),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,"NS");S.cfg.order=o}
 function mig20(){if(S.cfg.twenty)return;S.cfg.twenty=true;Object.keys(PLAN0).forEach(k=>{if(!(S.cfg.plan[k]>0))S.cfg.plan[k]=PLAN0[k]});const o=S.cfg.order.filter(x=>!V20.includes(x)),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,...V20);S.cfg.order=o}
@@ -3141,6 +3159,7 @@ function loadFix(){
   if(!S.cfg.uwBase){S.cfg.uwBase=true;const st=S.ts.UW;if(st&&!st.grad){st.step=0;st.stepLab=TYPES.UW.lv[0];st.rev=[]}}
   if(!S.cfg.noCarry){S.cfg.noCarry=true;S.cfg.carryOn=false;try{if(DAYS[today()])DAYS[today()].carry={}}catch(e){}}
   if(!S.cfg.mmOrd){S.cfg.mmOrd=true;const o=S.cfg.order.filter(x=>x!=="MM"),i=o.indexOf("NS");o.splice(i<0?o.length:i+1,0,"MM");S.cfg.order=o}
+  if(!S.cfg.guAdd){S.cfg.guAdd=true;const o=S.cfg.order,i=o.indexOf("GU");if(i>=0)o.splice(i,1);o.splice(o.indexOf("T12")+1,0,"GU");if(!S.cfg.plan.GU){S.cfg.plan.GU=1;if((S.cfg.plan.CK||0)>=2)S.cfg.plan.CK-=1}try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.wkS){S.cfg.wkS=true;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.ckBase){S.cfg.ckBase=true;const st=S.ts.CK;if(st&&!st.grad){st.step=0;st.stepLab=TYPES.CK.lv[0];st.rev=[];st.conceptDone=false}if(S.cfg.plan.A1===3)S.cfg.plan.A1=2;if((S.cfg.plan.CK||0)<=1)S.cfg.plan.CK=2;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.coRef){S.cfg.coRef=true;const st=S.ts.CO;if(st&&st.step)st.step=[0,2,4,6,8,9,10][Math.min(st.step,6)]}
@@ -3301,7 +3320,17 @@ function vDuel(){const cards=PROFILES.filter(p=>p.id!==PID).map(ot=>{const r=duW
   const hist=done.slice(-6).reverse().map(x=>{const w=duWin(x),v=duVs(x);return `<p class="small tab">${x.d.slice(5)} · ${TYPES[x.type].name} · ${v.map(q=>`${duP(q).icon} ${x.res[q].c}개 ${x.res[q].t.toFixed(0)}초`).join(" · ")} → ${w==="tie"?"비김":duP(w).name}</p>`}).join("");
   return `${bar("대결")}<div class="page">${cards}<p class="small muted" style="text-align:center">같은 문제를 둘이 따로 푼다냥. 맞힌 수가 먼저, 같으면 시간이다냥. 기록과 단계에는 안 들어간다냥.</p><button class="nb" style="align-self:center" data-act="durefresh">새로 보기</button>${done.length?`<div class="card"><h3>지난 판</h3>${tally?`<p class="small">이번 주 · ${tally}</p>`:""}${hist}</div>`:""}</div>`}
 /* ───────── 가족 진도: 같은 항목을 각자 해 나감. 시간은 견주지 않고 어디까지 왔는지만 봄 ───────── */
-let FAM={};
+let FAM={},KIDED=false;
+/* 관리자(엄마·아빠 계정)가 시훈이 단계를 바꿈. 쓰기 직전에 최신 기록을 다시 읽고 그 위에 단계만 고친다. at을 찍어 시훈이 기기의 옛 값보다 이 값이 이기게 함 */
+async function kidStep(id,step){const K=famK("sihun"),T=TYPES[id];let core=FAM.sihun&&FAM.sihun.core;
+  if(DB){try{const r=await DB.doc(K[2]).get(),c=r.exists?r.data():null;if(c&&c.ts)core=c}catch(e){}}
+  if(!core||!T){MSG="시훈이 기록을 불러오지 못해서 바꾸지 못했어요.";render();return}
+  const t=core.ts[id]||(core.ts[id]={runs:[],start:null,target:null,grad:false,gradDays:[],conceptDone:false,pool:[]});
+  t.step=Math.max(0,Math.min(step,stepMax(T)));if(T.lv)t.stepLab=T.lv[t.step];t.okN=0;t.okS=t.step;t.rev=(t.rev||[]).filter(r=>r.s<t.step);if(t.step<stepMax(T))t.grad=false;t.at=Date.now();core.savedAt=Date.now();
+  FAM.sihun.core=core;let ok=false;
+  try{if(localStorage.getItem(K[0])){localStorage.setItem(K[0],JSON.stringify(core));ok=true}}catch(e){}
+  if(DB){try{await DB.doc(K[2]).set(clone(core));ok=true}catch(e){ok=false}}
+  MSG=ok?`시훈이 ${T.name} 단계를 바꿨어요. 지금: ${t.step+1}. ${stepLabel(T,t.step)}`:"저장하지 못했어요. 로그인과 인터넷을 확인해 주세요.";render()}
 const famK=id=>id==="sihun"?[KCORE,KDAYS,"app/core","days"]:[KCORE+"-"+id,KDAYS+"-"+id,"core/"+id,"days-"+id];
 async function famLoad(){const t=today();
   for(const p of PROFILES){if(p.id===PID){FAM[p.id]={core:S,day:DAYS[t]};continue}const K=famK(p.id);let core=null,day=null;
@@ -3709,9 +3738,9 @@ function finishSet(){
   const rec={type:id,n,t:Math.round(t*10)/10,w,h1:Math.round(h1*10)/10,h2:Math.round(h2*10)/10,pred:RUN.pred,at:Date.now(),
     items:RUN.items.map((x,k)=>({q:RUN.probs[k].q.text,a:(RUN.probs[k].q.a||RUN.probs[k].q.need).join("|"),g:x.tries,ok1:x.ok1,ok:x.ok,ms:Math.round(x.ms),skip:x.skip,mis:x.mis,pat:x.pat||"",o:RUN.order.indexOf(k)}))};
   const out={quick:false,pass:false,grad:false,tgtBefore:st.target,newStart:false};
-  if(prevRuns.length===0&&valid&&clean&&pq<=fin&&!STEPT(T)){out.quick=true;out.grad=true;st.grad=true;st.target=fin;st.start=pq}
+  if(prevRuns.length===0&&valid&&clean&&pq<=fin&&!STEPT(T)&&!T.forever){out.quick=true;out.grad=true;st.grad=true;st.target=fin;st.start=pq}
   else{
-    if(valid&&clean&&pq<=fin){const d=today();if(!st.gradDays.includes(d))st.gradDays.push(d);if(st.gradDays.length>=2&&!st.grad&&(!STEPT(T)||(st.step||0)>=stepMax(T))){st.grad=true;out.grad=true}}
+    if(valid&&clean&&pq<=fin){const d=today();if(!st.gradDays.includes(d))st.gradDays.push(d);if(st.gradDays.length>=2&&!st.grad&&!T.forever&&(!STEPT(T)||(st.step||0)>=stepMax(T))){st.grad=true;out.grad=true}}
     if(st.target==null){if(prevRuns.length+1>=3){const first=prevRuns.slice(0,2).concat([{t,n}]);st.start=first.reduce((a,b)=>a+b.t/b.n,0)/first.length;st.target=Math.max(fin,st.start*.9);out.newStart=true}}
     else if(valid&&clean&&pq<=st.target+1e-9){out.pass=true;st.target=Math.max(fin,st.target*.9)}
   }
@@ -3954,6 +3983,10 @@ function vParent(){
      <label class="row"><input id="corefirst" type="checkbox" ${S.cfg.coreFirst!==false?"checked":""} data-ch="corefirst"> 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로</label>
      </div>
    ${tiredHTML()}
+   ${PID!=="sihun"?(()=>{const c=KIDED&&FAM.sihun&&FAM.sihun.core,ids=c?(c.cfg&&c.cfg.order||S.cfg.order).filter(id=>TYPES[id]&&STEPT(TYPES[id])&&((c.ts[id]&&(c.ts[id].runs||[]).length)||((c.cfg&&c.cfg.plan||{})[id]||0)>0)):[];
+     return `<div class="card"><h3>시훈이 단계 정하기</h3><p class="small muted">${pname()} 계정에서 시훈이의 지금 단계를 바로 바꿔요. 시훈이 폰에서는 앱을 다시 열면 바뀐 단계로 나와요. 단계를 바꾸면 그 단계의 통과 횟수는 0부터 다시 세요.</p>
+     ${c?ids.map(id=>{const T=TYPES[id],k=Math.min((c.ts[id]||{}).step||0,stepMax(T));return `<label class="small" style="display:flex;flex-direction:column;gap:3px;margin:8px 0"><b>${T.name}</b><select style="width:100%;max-width:100%;font-size:15px;padding:8px" data-ch="kstep" data-arg="${id}">${Array.from({length:stepMax(T)+1},(_,i)=>`<option value="${i}" ${i===k?"selected":""}>${i+1}. ${stepLabel(T,i)}</option>`).join("")}</select></label>`}).join("")||'<p class="small">시훈이 기록이 아직 없어요.</p>':""}
+     <div class="row"><button class="nb" data-act="kidload">${c?"다시 불러오기":"시훈이 단계 불러오기"}</button></div></div>`})():""}
    <div class="card"><h3>단계 통과 횟수</h3><p class="small muted">한 단계에서 시간 안에 하나도 안 틀린 세트를 이만큼 해야 다음 단계로 가요. 한 번 잘한 것만으로는 몸에 붙었다고 보기 어려워서 처음 값은 2번이에요. 이틀 뒤 다지기 확인은 그대로 있어요.</p><div class="row" style="align-items:center"><span style="flex:1">통과해야 하는 횟수</span><button class="nb" data-act="pasn" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("T12")}번</b><button class="nb" data-act="pasn" data-arg="1">+</button></div>
      <div class="row" style="align-items:center"><span style="flex:1">분수 유형은</span><button class="nb" data-act="pasf" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("OF")}번</b><button class="nb" data-act="pasf" data-arg="1">+</button></div>
      <p class="small muted">분수는 시중 연산 문제집이 한 가지 꼴에 하루 한 장(20~30문제)을 주는 것에 맞춰 한 단계 3세트(30문제)예요.</p></div>
@@ -4145,6 +4178,7 @@ const ACT={
   mclose2:()=>{modal=null;render()},
   preset2:id=>{delete S.ts[id];modal=null;save();render()},
   clearcarry:()=>{D().carry={};save(today());MSG="밀린 세트를 지웠어요.";render()},
+  kidload:async()=>{MSG="";await famLoad();KIDED=true;if(!(FAM.sihun&&FAM.sihun.core))MSG="시훈이 기록을 불러오지 못했어요. 로그인과 인터넷을 확인해 주세요.";render()},
   pasn:a=>{S.cfg.passN=Math.max(1,Math.min(6,passN("T12")+ +a));save();render()},
   pasf:a=>{S.cfg.passF=Math.max(1,Math.min(6,passN("OF")+ +a));save();render()},
   adk:a=>{if(PID==='sihun')return;S.cfg.adultK=Math.round(Math.min(1,Math.max(.3,spdK()+ +a*.1))*10)/10;save();render()},
@@ -4185,6 +4219,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
   if(k==="carry"){S.cfg.carryOn=el.checked;save();return}
   if(k==="gwon"){S.cfg.gwOn=el.checked;save();return}
   if(k==="weitem"){const id=el.dataset.arg;let W=S.cfg.weSet?S.cfg.weSet.slice():weList();W=el.checked?[...new Set([...W,id])]:W.filter(x=>x!==id);if(W.length)S.cfg.weSet=W;D().plan=planNow();save(today());render();return}
+  if(k==="kstep"){kidStep(id,+el.value);return}
   if(k==="wksplit"){S.cfg.wkSplit=el.checked;D().plan=planNow();save(today());render();return}
   if(k==="corefirst"){S.cfg.coreFirst=el.checked;save();return}
   if(k==="okkey"){S.cfg.okKey=el.checked;save();return}
