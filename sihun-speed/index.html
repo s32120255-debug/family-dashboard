@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="22";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="23";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=2"></script><script src="talk-gen.js?v=2"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=3"></script><script src="talk-gen.js?v=2"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -201,11 +201,16 @@ function blockIds(stage,lap){const st=TK.STAGES[stage-1];const b=TK.block(stage,
 // 지난 단계: 가까운 단계가 조금 더 자주
 const prevStage=stage=>1+Math.floor((stage-1)*Math.sqrt(Math.random()));
 function buildSet(stage,lap,rev){const units=[],seenId=new Set(),seenEn=new Set();let total=0;
-  const unit=(ids,k)=>{const u=[];ids.forEach(id=>{const it=IT(id);if(!it||!it.en||seenId.has(id)||seenEn.has(it.en))return;seenId.add(id);seenEn.add(it.en);u.push([id,k])});if(u.length){units.push(u);total+=u.length}return u.length};
+  // 엄마 11/27 「우리 고양이 또 나옴」: 하루에 같은 주어는 4문장까지, 동물 문장은 4문장까지(다시 문장은 빼고 셈)
+  const subjN={};let aniN=0;const SUBK=en=>{const t=en.toLowerCase().replace(/[^a-z' ]/g,'').replace(/^(who|what|where|when|why|how)\s+/,'').replace(/^(is|are|am|was|were|do|does|did|can|will|have|has|should)\s+/,'').split(' ');return /^(my|your|the|our|his|her|their)$/.test(t[0])?t.slice(0,2).join(' '):t[0]};
+  const isAni=en=>/\b(cat|cats|dog|dogs|puppy)\b/i.test(en);
+  const unit=(ids,k)=>{const its=ids.map(id=>[id,IT(id)]).filter(([id,it])=>it&&it.en&&!seenId.has(id)&&!seenEn.has(it.en));if(!its.length)return 0;
+    if(k!=='a'){const sk=SUBK(its[0][1].en);if((subjN[sk]||0)>=4)return 0;if(isAni(its[0][1].en)&&aniN>=4)return 0;subjN[sk]=(subjN[sk]||0)+its.length;if(isAni(its[0][1].en))aniN+=its.length}
+    const u=its.map(([id,it])=>{seenId.add(id);seenEn.add(it.en);return [id,k]});units.push(u);total+=u.length;return u.length};
   (ST.again||[]).slice(0,AGAIN_N).forEach(id=>unit([id],'a'));
   if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,rev.l||lap),'v')}
   {let n=0,g=0;while(n<NEW_CUR&&g++<80)n+=unit(blockIds(stage,lap),'n')}
-  {let g=0;while(total<DAY_N&&g++<200)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
+  {let g=0;while(total<DAY_N&&g++<400)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
   // 넘치면 맨 끝(지난 단계) 묶음에서 덜어 내기
   while(total>DAY_N){const u=units[units.length-1];if(u[0][1]!=='p')break;u.pop();total--;if(!u.length)units.pop()}
   // 묶음은 붙여 두고 순서만 섞기(다시 문장이 처음에 몰리지 않게)

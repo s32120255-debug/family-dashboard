@@ -86,7 +86,7 @@ const SUBJ=[
  {en:'my friends',ko:'내 친구들',qen:'your friends',qko:'네 친구들',t:'kid',pl:1,r:'themselves',po:'their',pr:'they'},
  {en:'the students',ko:'그 학생들',t:'kid',pl:1,r:'themselves',po:'their',pr:'they'},
  {en:'the dog',ko:'그 개',t:'ani',s:1,an:'dog'},
- {en:'my cat',ko:'우리 고양이',qen:'your cat',qko:'너희 고양이',t:'ani',s:1,an:'cat'},
+ {en:'the cat',ko:'그 고양이',t:'ani',s:1,an:'cat'},
  {en:'the dogs',ko:'그 개들',t:'ani',pl:1,an:'dog'},
  {en:'my neighbor',ko:'우리 이웃',qen:'your neighbor',qko:'너희 이웃',t:'adult',s:1,lv:2},
  {en:'the doctor',ko:'그 의사',t:'adult',s:1,lv:2},
