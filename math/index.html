@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795757500";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795823223";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -2907,6 +2907,40 @@ EL("MM",{n:"머리셈 곱셈",c:"보충",ex:"23 × 11 = 253,  48 × 25 = 12 × 1
    const [hq,h,how]=[[`${a} × 10 = [[0]]`,a*10,`${a} × 10에 ${a}${eul(a)} 한 번 더 더한다냥.`],[`${a} × 10 = [[0]]`,a*10,`${a} × 10에서 ${a}${eul(a)} 한 번 뺀다냥.`],[`${a} = [[0]] × 4`,a/4,"4 × 25 = 100 짝을 만든다냥."],[`2 × ${b} = [[0]]`,2*b,"짝수에서 2를 떼어 5로 끝나는 수에 곱한다냥."],[`${a+1} × ${b} = [[0]]`,(a+1)*b,`${a+1}묶음으로 곱하고 한 번 뺀다냥.`],[`${t} × ${t+1} = [[0]]`,t*(t+1),"앞 숫자 × 하나 큰 수, 뒤에 25다냥."],[`${a+1} × ${a+1} = [[0]]`,(a+1)*(a+1),"가운데 수의 제곱에서 1을 뺀다냥."],[`${a} × 10 = [[0]]`,a*10,"십몇을 10과 낱개로 가른다냥."]][m];
    return{q:`${a} × ${b} = [[0]]`,a:[a*b],t:`${a} × ${b}`,st:[[hq,h,how],[`그래서 ${a} × ${b} = [[0]]`,a*b,"방금 구한 수로 마무리한다옹."]]}}],
 ]);
+/* 11/28 sy: "연산 과정에 달력이 없다, 기초부터 아주 촘촘히(1월은 며칠까지, 며칠 뒤, 몇 주 뒤)" */
+const MLEN=[31,28,31,30,31,30,31,31,30,31,30,31],DOW="일월화수목금토",DNUM="① 월 ② 화 ③ 수 ④ 목 ⑤ 금 ⑥ 토 ⑦ 일",dno=v=>v===0?7:v;
+const calSVG=(s,nd,marks)=>{let r="";for(let i=0;i<7;i++)r+=`<text x="${20+i*40}" y="16" text-anchor="middle" font-size="14" fill="${i?"#555":"#c0392b"}" ${SVGF}>${DOW[i]}</text>`;
+  for(let d=1;d<=nd;d++){const c=(s+d-1)%7,w=Math.floor((s+d-1)/7),x=20+c*40,y=40+w*27,m=marks&&marks.includes(d);r+=(m?`<circle cx="${x}" cy="${y-5}" r="12" fill="#f2c94c"/>`:"")+`<text x="${x}" y="${y}" text-anchor="middle" font-size="15" fill="${c?"#222":"#c0392b"}" ${SVGF}>${d}</text>`}
+  return `<svg class="wide" viewBox="0 0 280 ${48+Math.floor((s+nd-1)/7)*27}" style="width:100%">${r}</svg>`};
+const clM=({m})=>({q:m===2?[`2월은 [[0]]일까지`,`~(4년에 한 번만 29일)`]:`${m}월은 [[0]]일까지`,a:[MLEN[m-1]],t:`${m}월 날수`,
+  st:[[`주먹을 쥐고 1월부터 센다냥. 솟은 곳은 31일. 31일인 달은 1, 3, 5, 7, 8, 10, [[0]]월`,12,"7월과 8월은 둘 다 솟은 곳이다냥."],[`${m}월은 [[0]]일까지`,MLEN[m-1],m===2?"2월만 28일이다옹.":[1,3,5,7,8,10,12].includes(m)?"솟은 곳이라 31일이다옹.":"들어간 곳이라 30일이다옹."]]});
+const clW=({x,k})=>{const r=k%7,y=(x+r)%7;return{q:[`오늘은 ${DOW[x]}요일`,`${k}일 뒤는 무슨 요일?`,`~① 월 ② 화 ③ 수 ④ 목`,`~⑤ 금 ⑥ 토 ⑦ 일`,`[[0]]번`],a:[dno(y)],t:`${DOW[x]}요일에서 ${k}일 뒤`,
+  st:[...(k>7?[[`${k} ÷ 7의 나머지는 [[0]]`,r,"7일 뒤는 같은 요일이라 버린다냥. 남은 날만 본다옹."]]:[]),[`${DOW[x]}요일에서 ${r}일 뒤는 [[0]]번`,dno(y),`${DNUM}. 하나씩 넘겨 센다냥.`]]}};
+EL("CL",{n:"달력",c:"2-2",ex:"1월은 31일까지,  3주 2일 = 23일,  10일 뒤는 무슨 요일",s:8,w:"날짜와 요일 문장제, 시간 계산에 그대로 쓰인다냥. 7씩 묶는 것은 나머지 있는 나눗셈과 같다옹.",i:"1주일은 7일, 1년은 12개월이다냥. 요일은 7일마다 다시 돌아온다옹."},[
+ ["1주일은 7일",()=>({k:ri(1,5)}),({k})=>({q:`${k}주일 = [[0]]일`,a:[7*k],st:[[`1주일은 월화수목금토일, [[0]]일`,7,"요일을 하나씩 센다냥."],[`7 × ${k} = [[0]]`,7*k,"7단이다옹."]]})],
+ ["1년은 12개월",()=>({k:ri(1,5)}),({k})=>({q:`${k}년 = [[0]]개월`,a:[12*k],st:[[`1년은 1월부터 12월까지 [[0]]개월`,12,"마지막 달이 몇 월이냥?"],[`12 × ${k} = [[0]]`,12*k,"12단이다옹."]]})],
+ ["31일인 달",()=>({m:[1,3,5,7,8,10,12][ri(0,6)]}),clM],
+ ["30일인 달과 2월",()=>({m:[2,4,6,9,11][ri(0,4)]}),clM],
+ ["달의 날수 섞어서",()=>({m:ri(1,12)}),clM],
+ ["며칠 뒤 날짜",()=>{const d=ri(1,18);return{d,k:ri(2,11)}},({d,k})=>({q:[`오늘은 ${d}일`,`${k}일 뒤는 [[0]]일`],a:[d+k],t:`${d}일에서 ${k}일 뒤`,st:[[`뒤는 더한다냥. ${d} + ${k} = [[0]]`,d+k,"날짜가 커진다옹."]]})],
+ ["며칠 전 날짜",()=>{const d=ri(12,30);return{d,k:ri(2,10)}},({d,k})=>({q:[`오늘은 ${d}일`,`${k}일 전은 [[0]]일`],a:[d-k],t:`${d}일에서 ${k}일 전`,st:[[`전은 뺀다냥. ${d} − ${k} = [[0]]`,d-k,"날짜가 작아진다옹."]]})],
+ ["몇 주 뒤 날짜",()=>({s:ri(0,6),d:ri(1,9),k:ri(1,3)}),({s,d,k})=>{const x=DOW[(s+d-1)%7];return{fig:calSVG(s,30,[d]),q:[`${d}일은 ${x}요일`,`${k}주 뒤 ${x}요일은 [[0]]일`],a:[d+7*k],t:`${d}일에서 ${k}주 뒤`,
+   st:[[`같은 요일은 [[0]]일마다 돌아온다`,7,"1주일이 며칠이냥?"],[`${k}주는 7 × ${k} = [[0]]일`,7*k,"7단이다옹."],[`${d} + ${7*k} = [[0]]`,d+7*k,"달력에서 바로 아래 칸이다옹."]]}}],
+ ["몇 주 전 날짜",()=>({s:ri(0,6),d:ri(22,30),k:ri(1,3)}),({s,d,k})=>{const x=DOW[(s+d-1)%7];return{fig:calSVG(s,30,[d]),q:[`${d}일은 ${x}요일`,`${k}주 전 ${x}요일은 [[0]]일`],a:[d-7*k],t:`${d}일에서 ${k}주 전`,
+   st:[[`${k}주는 7 × ${k} = [[0]]일`,7*k,"1주일은 7일이다냥."],[`${d} − ${7*k} = [[0]]`,d-7*k,"달력에서 바로 위 칸이다옹."]]}}],
+ ["주 → 일",()=>({w:ri(2,9),d:ri(1,6)}),({w,d})=>({q:`${w}주 ${d}일 = [[0]]일`,a:[7*w+d],st:[[`${w}주 = 7 × ${w} = [[0]]일`,7*w,"1주일은 7일이다냥."],[`${7*w} + ${d} = [[0]]`,7*w+d,"남은 날을 더한다옹."]]})],
+ ["일 → 주와 일",()=>{let n;do{n=ri(9,62)}while(n%7===0);return{n}},({n})=>({q:`${n}일 = [[0]]주 [[1]]일`,a:[Math.floor(n/7),n%7],st:[[`7 × [[0]] = ${n-n%7}`,Math.floor(n/7),`${n}${eul(n)} 넘지 않는 가장 큰 7단을 찾는다냥.`],[`${n} − ${n-n%7} = [[0]]`,n%7,"남은 날이다옹."],[`그래서 [[0]]주 [[1]]일`,[Math.floor(n/7),n%7],"7일 묶음이 주, 남은 것이 일이다냥."]]})],
+ ["년 → 개월",()=>({y:ri(1,5),m:ri(1,11)}),({y,m})=>({q:`${y}년 ${m}개월 = [[0]]개월`,a:[12*y+m],st:[[`${y}년 = 12 × ${y} = [[0]]개월`,12*y,"1년은 12개월이다냥."],[`${12*y} + ${m} = [[0]]`,12*y+m,"남은 개월을 더한다옹."]]})],
+ ["개월 → 년과 개월",()=>{let n;do{n=ri(13,62)}while(n%12===0);return{n}},({n})=>({q:`${n}개월 = [[0]]년 [[1]]개월`,a:[Math.floor(n/12),n%12],st:[[`12 × [[0]] = ${n-n%12}`,Math.floor(n/12),`${n}${eul(n)} 넘지 않는 가장 큰 12단을 찾는다냥.`],[`${n} − ${n-n%12} = [[0]]`,n%12,"남은 개월이다옹."],[`그래서 [[0]]년 [[1]]개월`,[Math.floor(n/12),n%12],"12개월 묶음이 년이다냥."]]})],
+ ["며칠 뒤 요일 (1주일 안)",()=>({x:ri(0,6),k:ri(1,6)}),clW],
+ ["며칠 뒤 요일 (1주일 넘게)",()=>{let k;do{k=ri(8,30)}while(k%7===0);return{x:ri(0,6),k}},clW],
+ ["날짜로 요일 찾기",()=>{let k;do{k=ri(3,24)}while(k%7===0);return{x:ri(0,6),d:ri(1,6),k}},({x,d,k})=>{const r=k%7,y=(x+r)%7;return{q:[`${d}일은 ${DOW[x]}요일`,`${d+k}일은 무슨 요일?`,`~① 월 ② 화 ③ 수 ④ 목`,`~⑤ 금 ⑥ 토 ⑦ 일`,`[[0]]번`],a:[dno(y)],t:`${d}일 ${DOW[x]}요일, ${d+k}일은`,
+   st:[[`${d+k} − ${d} = [[0]]일 뒤`,k,"며칠 지났는지 먼저 본다냥."],[`${k} ÷ 7의 나머지는 [[0]]`,r,"7일은 같은 요일이라 버린다냥. 7보다 작으면 그대로다옹."],[`${DOW[x]}요일에서 ${r}일 뒤는 [[0]]번`,dno(y),`${DNUM}. 하나씩 넘겨 센다냥.`]]}}],
+ ["달 넘어가기",()=>{const m=ri(1,11),L=MLEN[m-1],d=L-ri(1,6);return{m,d,e:ri(L-d+1,L-d+9)}},({m,d,e})=>{const L=MLEN[m-1],rem=L-d;return{q:[`${m}월 ${d}일에서 ${e}일 뒤는`,`${m+1}월 [[0]]일`],a:[e-rem],t:`${m}월 ${d}일 + ${e}일`,
+   st:[[`${m}월은 [[0]]일까지`,L,m===2?"2월은 28일이다냥.":"1, 3, 5, 7, 8, 10, 12월이 31일이다냥."],[`${m}월 끝까지 ${L} − ${d} = [[0]]일`,rem,"이 달에 남은 날이다옹."],[`${e} − ${rem} = [[0]]`,e-rem,"남은 날만큼 다음 달로 넘어간다냥."]]}}],
+ ["두 달에 걸친 날 수",()=>{const m=ri(1,11),L=MLEN[m-1];return{m,d:L-ri(1,8),e:ri(1,12)}},({m,d,e})=>{const L=MLEN[m-1],rem=L-d;return{q:[`${m}월 ${d}일에서`,`${m+1}월 ${e}일은 [[0]]일 뒤`],a:[rem+e],t:`${m}월 ${d}일 → ${m+1}월 ${e}일`,
+   st:[[`${m}월은 [[0]]일까지`,L,m===2?"2월은 28일이다냥.":"1, 3, 5, 7, 8, 10, 12월이 31일이다냥."],[`${m}월 끝까지 ${L} − ${d} = [[0]]일`,rem,"이 달에 남은 날이다옹."],[`${rem} + ${e} = [[0]]`,rem+e,"다음 달 날짜를 더한다냥."]]}}]]);
+TYPES.CL.conAt=Array.from({length:18},(_,i)=>i);TYPES.CL.optional=false;
 EL("DH",{n:"소수 두 · 세 자리",c:"4-2",ex:"0.01이 347개 = 3.47",s:8,w:"소수의 덧셈·뺄셈·곱셈, 단위 바꾸기에 쓰인다냥.",i:"0.1이 10개면 1, 0.01이 100개면 1이다냥. 10배 하면 소수점이 오른쪽으로 한 칸 간다옹."},[
  ["0.01이 몇 개",()=>({n:dN(101,999)}),({n})=>{const w=Math.floor(n/100);return{q:`${dS(n,2)}${eun(dS(n,2))} 0.01이 [[0]]개`,a:[n],st:[[`1은 0.01이 [[0]]개`,100,"0.01이 100개면 1이다냥."],[`${w}${eun(w)} 0.01이 [[0]]개`,w*100,"100개씩 묶음이다옹."],[`모두 [[0]]개`,n,"소수점을 지운 수와 같다냥."]]}}],
  ["0.01 모으기",()=>({n:dN(101,999)}),({n})=>{const A=dP(n,2);return{q:[`0.01이 ${n}개`,`= [[0]] . [[1]]`],a:A,st:[[`100개 묶음 [[0]]개`,A[0],"0.01이 100개면 1이다냥."],[`남은 0.01은 [[0]]개`,n%100,"묶고 남은 것이다옹."],[`그래서 [[0]] . [[1]]`,A,"남은 수는 두 자리로 쓴다냥. 7개면 07."]]}}],
@@ -3085,7 +3119,7 @@ const CUR={A1:["3-1","나눗셈"],B4:["3-1","덧셈과 뺄셈"],B5:["3-1","곱�
  KN:["4-1","큰 수"],B13:["4-1","곱셈과 나눗셈"],B14:["4-1","곱셈과 나눗셈"],CB:["5-1","분수의 덧셈과 뺄셈"],RO:["5-2","수의 범위와 어림하기"],DM:["5-2","소수의 곱셈"],DD:["6-1","소수의 나눗셈"],RT:["6-1","비와 비율"],DV:["6-2","소수의 나눗셈"],PP:["6-2","비례식과 비례배분"],
  AV:["5-2","평균과 가능성 (중앙값·최빈값은 중1-2)"],AG:["중1-2","평면도형의 성질"],CP:["중2-2","확률"],SR:["중2-2","도형의 닮음"],TR:["중3-2","삼각비"],SD:["중3-2","통계 (산포도)"],QD:["중1-1","좌표평면과 그래프"],LG:["중2-1","일차함수와 그래프"],QM:["중3-1","이차함수와 그래프"],
  NS:["3-1","덧셈과 뺄셈 (수 가르기 암산)"],MM:["보충","머리셈 곱셈 (4-1 곱셈과 나눗셈 · 중1 소인수분해 · 중3 곱셈 공식 준비)"],MF:["6-2","분수의 나눗셈 (분수 · 소수 혼합 계산, 중1 유리수 계산 준비)"],HGV:["공통수학1","방정식과 부등식 (그래프로 바로 보기 · 관점 바꾸기)"],FG:["중2-1","일차함수와 그래프 (함수의 네 뼈대)"],FH:["중3-1","이차함수와 그래프 (함수의 네 뼈대)"],DH:["4-2","소수의 덧셈과 뺄셈 (소수 두·세 자리)"],E5:["4-1","규칙 찾기"],LN:["4-2","꺾은선그래프"],GQ:["4-2","사각형"],CQ:["중2-2","확률"],
- BX:["보충","함수 상자 (5-1 규칙과 대응 · 중1 좌표 준비)"],UW:["3-2","들이와 무게 (3-1 길이 포함)"],PG:["3-2","그림그래프 (4-1 막대그래프 포함)"],CK:["3-1","길이와 시간"],GL:["3-1","평면도형"],GO:["3-2","원"],GA:["4-1","각도"],GP:["5-1","다각형의 둘레와 넓이"],GS:["5-1","다각형의 둘레와 넓이"],GV:["6-1","직육면체의 부피와 겉넓이 (5-2 직육면체 포함)"],GR:["6-2","원의 넓이"],
+ CL:["보충","달력 (2-2 시각과 시간)"],BX:["보충","함수 상자 (5-1 규칙과 대응 · 중1 좌표 준비)"],UW:["3-2","들이와 무게 (3-1 길이 포함)"],PG:["3-2","그림그래프 (4-1 막대그래프 포함)"],CK:["3-1","길이와 시간"],GL:["3-1","평면도형"],GO:["3-2","원"],GA:["4-1","각도"],GP:["5-1","다각형의 둘레와 넓이"],GS:["5-1","다각형의 둘레와 넓이"],GV:["6-1","직육면체의 부피와 겉넓이 (5-2 직육면체 포함)"],GR:["6-2","원의 넓이"],
  DF:["5-2","분수와 소수의 관계"],FQ:["6-2","분수의 나눗셈 (5-2 대분수 곱셈 포함)"],ES:["4-1","곱셈과 나눗셈 (어림하기)"],MX:["5-1","자연수의 혼합 계산"],DP:["4-2","소수의 덧셈과 뺄셈 (소수의 자릿값)"],
  PL:["중1-1","소인수분해"],ZX:["중1-1","정수와 유리수"],FE:["중1-1","일차방정식 (중2-1 연립 포함)"],MD:["중2-1","식의 계산"],RZ:["중3-1","제곱근과 실수"],FY:["중3-1","다항식의 곱셈과 인수분해"],QG:["중3-1","이차방정식"],TV:["중3-2","삼각비"],SC:["중1-2","평면도형의 성질"],SV:["중1-2","입체도형의 성질"],RF:["중1-2","통계"],IA:["중3-2","원의 성질"],
  HP:["공통수학1","다항식"],HR:["공통수학1","다항식 (항등식과 나머지정리)"],HF:["공통수학1","다항식 (인수분해)"],HC:["공통수학1","방정식과 부등식 (복소수)"],HQ:["공통수학1","방정식과 부등식 (이차방정식)"],HM:["공통수학1","방정식과 부등식 (이차방정식과 이차함수)"],HE:["공통수학1","방정식과 부등식 (여러 가지 방정식)"],HI:["공통수학1","방정식과 부등식 (여러 가지 부등식)"],HK:["공통수학1","경우의 수"],HX:["공통수학1","행렬"],
@@ -3115,7 +3149,7 @@ const FRP=["FA","FN","FU","FV1","FV2","FC","NL","C1","FS","CA","C2","C3","FT","C
 const V20=["BX","UW","PG","CK","GO","GL","GA","GP","GS","GV","GR","DP","ES","MX","DF","FQ","PL","ZX","FE","SC","SV","RF","MD","RZ","FY","QG","TV","IA"];
 const ORDER0=["T12","GU","A1","A3","B5","A6","FR",...V20,"OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5","FX","KN","B13","B14","CB","RO","DM","DD","DV","RT","PP",...ELR,...MID].filter((x,i,a)=>a.indexOf(x)===i);
 /* 하루 20판 (11/25 sy): 12~19단1 몫찾기3 배수1 두자리×한자리2 약수1 분수길1 + 함수 상자2 + 3학년 새 단원 5(들이·무게, 그림그래프, 시계, 원, 평면도형) = 16, 남는 4칸은 대기 줄(지금 학기 3 + 다음 학기 미리 1) */
-const PLAN0={A1:2,A3:1,B5:2,A6:1,T12:1,GU:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:1,GO:1,GL:1};
+const PLAN0={A1:2,A3:1,B5:2,A6:1,T12:1,GU:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:1,CL:1,GO:1,GL:1};
 /* 11/26 sy: 수 가르기는 꼭 필요 → 매일 1세트 */
 function migNS(){if(S.cfg.plan.NS==null)S.cfg.plan.NS=1;if(S.cfg.nsPlan)return;S.cfg.nsPlan=true;const o=S.cfg.order.filter(x=>x!=="NS"),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,"NS");S.cfg.order=o}
 function mig20(){if(S.cfg.twenty)return;S.cfg.twenty=true;Object.keys(PLAN0).forEach(k=>{if(!(S.cfg.plan[k]>0))S.cfg.plan[k]=PLAN0[k]});const o=S.cfg.order.filter(x=>!V20.includes(x)),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,...V20);S.cfg.order=o}
@@ -3160,6 +3194,7 @@ function loadFix(){
   if(!S.cfg.noCarry){S.cfg.noCarry=true;S.cfg.carryOn=false;try{if(DAYS[today()])DAYS[today()].carry={}}catch(e){}}
   if(!S.cfg.mmOrd){S.cfg.mmOrd=true;const o=S.cfg.order.filter(x=>x!=="MM"),i=o.indexOf("NS");o.splice(i<0?o.length:i+1,0,"MM");S.cfg.order=o}
   if(!S.cfg.guAdd){S.cfg.guAdd=true;const o=S.cfg.order,i=o.indexOf("GU");if(i>=0)o.splice(i,1);o.splice(o.indexOf("T12")+1,0,"GU");if(!S.cfg.plan.GU){S.cfg.plan.GU=1;if((S.cfg.plan.CK||0)>=2)S.cfg.plan.CK-=1}try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
+  if(!S.cfg.clAdd){S.cfg.clAdd=true;const o=S.cfg.order,i=o.indexOf("CL");if(i>=0)o.splice(i,1);o.splice(o.indexOf("CK")+1,0,"CL");if(!S.cfg.plan.CL)S.cfg.plan.CL=1;if(S.cfg.weSet&&!S.cfg.weSet.includes("CL"))S.cfg.weSet.push("CL")}
   if(!S.cfg.wkS){S.cfg.wkS=true;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.ckBase){S.cfg.ckBase=true;const st=S.ts.CK;if(st&&!st.grad){st.step=0;st.stepLab=TYPES.CK.lv[0];st.rev=[];st.conceptDone=false}if(S.cfg.plan.A1===3)S.cfg.plan.A1=2;if((S.cfg.plan.CK||0)<=1)S.cfg.plan.CK=2;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.coRef){S.cfg.coRef=true;const st=S.ts.CO;if(st&&st.step)st.step=[0,2,4,6,8,9,10][Math.min(st.step,6)]}
@@ -3178,7 +3213,7 @@ const FRAC=new Set(["OF",...FRP]),passN=id=>Math.max(1,Math.min(6,FRAC.has(id)?(
 const finalPQ=id=>Math.round(tc(id).sec*(lvl(id)===0?2:1)*spdK()*10)/10;
 const D=()=>DAYS[today()];
 
-const PLANV="52";/* 하루 계획 만드는 방식이 바뀔 때마다 올린다 */
+const PLANV="54";/* 하루 계획 만드는 방식이 바뀔 때마다 올린다 */
 function ensureToday(){
   if(!S.cfg.ten){S.cfg.ten=true;S.cfg.plan=clone(PLAN0);S.lastDay=null}
   Object.keys(S.ts).forEach(id=>{const T=TYPES[id];if(T&&STEPT(T)&&(S.ts[id].step||0)>stepMax(T))S.ts[id].step=stepMax(T)});
@@ -3462,7 +3497,7 @@ const curTxt=id=>{const c=CUR[id];return c?`${c[0]} ${c[1].split(" (")[0]}`:""};
 const afterOf=id=>{const k=Object.keys(PRE).find(k=>PRE[k].includes(id)&&TYPES[k]&&CUR[k]&&!passedT(k));return k?TYPES[k].name:""};
 const pathTxt=id=>{const c=curTxt(id),n=afterOf(id);return (c||n)?`<span class="path">${c}${c&&n?" · ":""}${n?`통과하면 → ${n}`:""}</span>`:""};
 /* 하루 순서: 힘 있을 때 핵심 계산 먼저, 시계·도형·그래프·단위는 뒤로 (부모 화면에서 끌 수 있음) */
-const LIGHT=new Set(["U2","GL","PG","UW","U1","GO","GA","LN","GQ","GP","GS","GV","GR"]);
+const LIGHT=new Set(["CL","U2","GL","PG","UW","U1","GO","GA","LN","GQ","GP","GS","GV","GR"]);
 const dayOrder=()=>S.cfg.coreFirst===false?S.cfg.order:[...S.cfg.order.filter(id=>!LIGHT.has(id)),...S.cfg.order.filter(id=>LIGHT.has(id))];
 /* 뒤로 갈수록 느려지는지: 세트마다 (문제당 시간 ÷ 그 유형의 전날까지 평소 시간), 앞 절반과 뒤 절반 평균 */
 function tiredOf(k){const d=DAYS[k];if(!d||!(d.sets||[]).length)return null;const prev=Object.keys(DAYS).filter(x=>x<k&&(DAYS[x].sets||[]).length),R=[];
