@@ -57,8 +57,8 @@ const IRV={be:['was','been'],go:['went','gone'],eat:['ate','eaten'],drink:['dran
   sit:['sat','sat'],hear:['heard','heard'],wake:['woke','woken'],feel:['felt','felt'],leave:['left','left'],find:['found','found'],begin:['began','begun'],
   overcome:['overcame','overcome'],understand:['understood','understood'],spend:['spent','spent'],think:['thought','thought'],put:['put','put'],cut:['cut','cut'],
   hurt:['hurt','hurt'],lead:['led','led'],grow:['grew','grown'],throw:['threw','thrown'],choose:['chose','chosen'],keep:['kept','kept'],hold:['held','held'],
-  send:['sent','sent'],pay:['paid','paid'],say:['said','said'],sell:['sold','sold'],stand:['stood','stood'],fall:['fell','fallen'],drive:['drove','driven']};
-const DBL=new Set('stop plan shop jog hop chat drop hug clap swim run sit begin get put cut win forget'.split(' '));
+  send:['sent','sent'],pay:['paid','paid'],say:['said','said'],sell:['sold','sold'],stand:['stood','stood'],fall:['fell','fallen'],drive:['drove','driven'],set:['set','set']};
+const DBL=new Set('stop plan shop jog hop chat drop hug clap swim run sit begin get put cut win forget set skip'.split(' '));
 const head=v=>v.split(' ')[0],tail=v=>{const i=v.indexOf(' ');return i<0?'':v.slice(i)};
 function b3(v){if(v==='have')return 'has';if(v==='do')return 'does';if(v==='go')return 'goes';if(/(s|x|z|ch|sh)$/.test(v))return v+'es';if(/[^aeiou]y$/.test(v))return v.slice(0,-1)+'ies';return v+'s'}
 function bPast(v){if(IRV[v])return IRV[v][0];if(/e$/.test(v))return v+'d';if(/[^aeiou]y$/.test(v))return v.slice(0,-1)+'ied';if(DBL.has(v))return v+v.slice(-1)+'ed';return v+'ed'}
