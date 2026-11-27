@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="20";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="21";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -132,6 +132,7 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
 .wchip b{color:var(--en);margin-left:6px;font-family:'Noto Sans KR',sans-serif!important;font-weight:800!important}
 .hint{text-align:center;color:var(--sub);font-size:14px;margin-top:6px}
 .stlist{margin:8px 0 0;padding:0;list-style:none;font-size:15px}.stlist li{padding:5px 2px;border-bottom:1px solid var(--line);color:var(--sub)}.stlist li.now{color:var(--en);font-weight:800}.stlist li.ok{color:#1d6e40}
+.heard .bad{color:#b23a1d;font-weight:800;text-decoration:underline;text-underline-offset:4px}.heard .miss{display:inline-block;width:1.8em;border-bottom:3px solid #b23a1d;margin:0 2px}.heard .extra{color:#b23a1d;text-decoration:line-through}
 .err{background:#fdecea;color:#7a2318;border-radius:16px;padding:14px;margin-top:14px;font-size:17px}
 </style>
 </head>
@@ -429,8 +430,8 @@ function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.k
   else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`;
     if(!R.ok&&R.heard)h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b></div>`;
     if(!R.ok&&R.heardModel)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div><button class="fin" data-act="nextq">다음 ▶</button>`}
-  else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b><br>한 번 더 해 볼까요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
-  else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
+  else if(ph==='retry'){h+=`<div class="heard" style="font-size:22px">${R.diff}</div><p class="hint">빨간 곳을 고쳐서 다시 말해요 · ${R.tries} / ${TRY_MAX}</p><button class="big" data-act="resay" style="max-width:340px;margin:12px auto 0">🎤 다시 말하기</button>`}
+  else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><button class="big" data-act="resay" style="max-width:340px;margin:12px auto 0">🎤 다시 말하기</button><div class="row">${skip}</div>`}
   else if(ph==='good'){h+=`<div class="okbox">👍</div>`}
   // 👀 미리 해 보기(엄마 11/27 「그냥 넘겨 볼 수 있게」): 말 안 해도 정답 보고 넘김. 기록 안 남음. 엄마 11/27 「넘어간 문장은 다시 못 돌아가게」 → ◀ 이전 없음(앞으로만)
   if(TRY&&!['rec','frec','think','fthink','good'].includes(ph))h+=`<div class="sub" style="text-align:center;margin-top:14px">정답: <b style="color:var(--ink)">${esc(it.en)}</b></div><div class="row"><button class="light" data-act="tryNext">넘기기 ▶</button></div>`;
@@ -462,7 +463,7 @@ const ACT={
   word(b){const R=RUN,it=IT(R.ids[R.i]),c=it&&it.w&&it.w[+b.dataset.j];if(!c)return;R.wopen[+b.dataset.j]=true;R.words=(R.words||0)+1;render();speak(c[1],.8)},
   // 문장 듣기: 들은 뒤 말하면 맞아도 「막힘 없이」로는 안 셈(내일 다시)
   say(){const R=RUN,it=IT(R.ids[R.i]);if(!it||R.ph!=='ready')return;R.peek=true;speak(it.en)},
-  resay(){RUN.ph='ready';RUN.msg='';render()},
+  resay(){const R=RUN;if(R.ph!=='retry'&&R.ph!=='quiet')return;R.ph='ready';R.msg='';ACT.rec()},
   show(){RUN.ok=false;toModel()},
   nextq(){if(RUN&&RUN.ph==='model')next()},
   tryNext(){const R=RUN;if(!TRY||!R)return;try{speechSynthesis.cancel()}catch(e){}R.skipped='try';next()},
@@ -493,9 +494,13 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
   if(!fol){
     if(ok){if(R.first==null)R.first=true;R.heard=h;R.ok=true;toModel();return}
     // 엄마 11/27: 틀리면 다시 녹음 없이 바로 정답 소리 → 정답 보고 「다음 ▶」
-    R.fails++;if(v==='unclear'){R.quiet++;if(R.first==null)R.skipped='quiet'}
-    if(R.first==null){R.first=false;reask()}R.tries++;R.heard=h;
-    R.ok=false;toModel();return}
+    // 엄마 11/27 「잘못 인식되면 넘어가지 말고 다시, 틀린 부분만」: 정답은 안 보여 주고 들린 말에서 틀린 곳만 빨갛게 → 다시 말하기.
+    // 안 들림은 틀림 아님(다시 녹음, 3번 안 들리면 넘어가기). 틀림 3번이면 그때 정답 소리 + 「다음 ▶」.
+    R.heard=h;R.ok=false;
+    if(v==='unclear'){R.quiet++;if(R.first==null&&R.quiet>=3)R.skipped='quiet';R.fails=R.quiet>=3?1:0;R.ph='quiet';render();return}
+    if(R.first==null){R.first=false;reask()}R.tries++;
+    if(R.tries<TRY_MAX){R.diff=diffHTML(it,h);R.ph='retry';render();return}
+    toModel();return}
   if(ok){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
   R.ftries++;R.fails++;
   if(R.ftries<2){R.msg=v==='unclear'?'🙉 잘 안 들렸어요. 한 번 더 들어 보고 따라 말해요.':'한 번 더 들어 보고 따라 말해요.';R.ph='model';render();await speak(it.en);if(R===RUN&&!R.quit){R.ph='fready';render()}return}
@@ -503,6 +508,17 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
 // 엄마 11/26 「왜 두 번 녹음하는 거야? / 한 번만 녹음」: 따라 말하기 녹음을 없앰. 맞으면 정답 소리를 듣고 저절로 다음, 틀렸으면 정답을 보고 들은 뒤 「다음 ▶」.
 // 틀린 문장은 그날 4문장 뒤에 한 번 더(엄마 11/27). 한 번 더 나온 문장은 또 넣지 않아요.
 function reask(){const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
+// 들린 말 ↔ 정답 맞춰 보기(낱말 단위 편집 거리): 맞은 낱말은 그대로, 바뀐 낱말은 빨간 밑줄, 빠진 자리는 빈칸, 더 말한 낱말은 줄 긋기
+const TRY_MAX=3;
+function alignOps(T,H){const m=T.length,n=H.length,D=[];for(let i=0;i<=m;i++){D.push([]);for(let j=0;j<=n;j++)D[i][j]=i===0?j:j===0?i:0}
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=w1(T[i-1],H[j-1])>=0?0:1;D[i][j]=Math.min(D[i-1][j-1]+c,D[i-1][j]+1,D[i][j-1]+1)}
+  const ops=[];let i=m,j=n;while(i>0||j>0){if(i>0&&j>0&&D[i][j]===D[i-1][j-1]+(w1(T[i-1],H[j-1])>=0?0:1)){ops.unshift([w1(T[i-1],H[j-1])>=0?'ok':'sub',H[j-1]]);i--;j--}
+    else if(i>0&&D[i][j]===D[i-1][j]+1){ops.unshift(['miss','']);i--}else{ops.unshift(['extra',H[j-1]]);j--}}
+  return {cost:D[m][n],ops}}
+function diffHTML(it,heard){const H=words(heard);let best=null;[it.en].concat(it.alt||[]).forEach(t=>{const a=alignOps(words(t),H);if(!best||a.cost<best.cost)best=a});
+  // 앞뒤로 더 말한 것(고쳐 말하기 전 말 등)은 줄 긋지 않고 빼요
+  const ops=best.ops.slice();while(ops.length&&ops[0][0]==='extra')ops.shift();while(ops.length&&ops[ops.length-1][0]==='extra')ops.pop();
+  return ops.map(([k,w])=>k==='ok'?esc(w):k==='sub'?`<span class="bad">${esc(w)}</span>`:k==='miss'?'<span class="miss"></span>':`<span class="extra">${esc(w)}</span>`).join(' ')}
 async function toModel(){const R=RUN,it=IT(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;R.heardModel=false;render();await speak(it.en);if(R!==RUN||R.quit)return;
   if(R.ok){setTimeout(()=>{if(R===RUN&&!R.quit&&R.ph==='model')next()},1200)}else{R.heardModel=true;render()}}
 function next(){const R=RUN;const ok1=R.first===true,it=IT(R.ids[R.i])||{};
