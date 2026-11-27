@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=111">
-<link rel="icon" href="icon-192.png?v=111">
-<link rel="apple-touch-icon" href="icon-192.png?v=111">
+<link rel="manifest" href="manifest.json?v=112">
+<link rel="icon" href="icon-192.png?v=112">
+<link rel="apple-touch-icon" href="icon-192.png?v=112">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -164,6 +164,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 @media (max-width:380px){.brand h1{font-size:1.25rem!important}.brand svg{width:38px;height:38px}.brand .date{font-size:.8rem}.hmini .missionbtn{font-size:.8rem;padding:4px 6px}.hbtns{gap:4px}.hbtns .missionbtn{font-size:.78rem;padding:4px 6px}}.missionbtn.mini b{background:#e03131;color:#fff}
 .ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
 @keyframes laddraw{to{stroke-dashoffset:0}}
+.trow{display:grid;grid-template-columns:1fr 1fr;gap:10px}.trow[hidden]{display:none}.tt-ed{padding:2px 8px;font-size:.78rem}
 .wktabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.wktabs .btn{min-width:38px}
 .jmic{justify-self:start;margin-top:-4px}.jmic.on{background:#e03131;border-color:#e03131;color:#fff}
 .jform{display:grid;gap:10px}.jform label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}.jform textarea{min-height:76px;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card);color:var(--fg)}
@@ -266,7 +267,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 111</p></div></div>
+<p style="font-size:.75rem">버전 112</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -276,7 +277,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <div class="adminbar" id="adminbar">
   <b>관리자 모드</b><span class="status">시훈이 일정과 과제를 고칠 수 있어요. 나머지 칸은 누구나 고칠 수 있어요.</span>
   <span style="flex:1"></span>
-  <button class="btn small" id="pinBtn">비밀번호 설정</button>
+  <button class="btn small" id="wkBtn2">📅 요일별 일정 고치기</button><button class="btn small" id="pinBtn">비밀번호 설정</button>
   <button class="btn small" id="adminOff">관리자 모드 끄기</button>
  </div>
 
@@ -295,7 +296,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
   </section>
 
   <section class="card full folded" data-tab="today" id="c-sched">
-   <h2>상세 시훈 오늘 <span class="hb"><span class="adm"><button class="btn small" id="wkBtn">요일별</button><button class="btn small" data-add="schedule">＋</button></span><button class="btn small" data-fold="c-sched" aria-expanded="false">펼치기 ▾</button></span></h2>
+   <h2>상세 시훈 오늘 <span class="hb"><button class="btn small" id="wkBtn">📅 요일별 일정</button><span class="adm"><button class="btn small" data-add="schedule">＋</button></span><button class="btn small" data-fold="c-sched" aria-expanded="false">펼치기 ▾</button></span></h2>
    <div id="heroBox"></div>
    <div class="datenav"><button class="icon" id="sPrev" aria-label="전날">◀</button><b id="sLabel"></b><button class="icon" id="sNext" aria-label="다음날">▶</button><button class="btn small" id="sToday">오늘</button></div>
    <div id="schedList"></div>
@@ -421,8 +422,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=111";
-import {SEED_SCHEDULE} from "./seed.js?v=111";
+import {firebaseConfig} from "./config.js?v=112";
+import {SEED_SCHEDULE} from "./seed.js?v=112";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -448,9 +449,9 @@ const FIELDS={
  taskTpls:{title:"반복 과제",f:[["title","과제","text"],["points","포인트","number"],["days","할 요일","days"]]},
  pantry:{title:"우리집 먹을거리",f:[["name","이름","text"],["place","어디","select",[["fridge","냉장고"],["snack","간식"],["storage","부식창고"]]],["qty","양 (예: 2개, 반 통)","text"],["expiry","유통기한 (선택)","date"]]},
  rewards:{title:"보상으로 포인트 쓰기",f:[["title","무엇에 썼나요","text"],["points","쓴 포인트","number"]]},
- schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["title","일정 이름","text"],["note","메모","text"]]},
+ schedule:{title:"시훈이 일정",f:[["day","요일","select",DAYS],["start","시작","time"],["end","끝 (없으면 비움)","time"],["title","일정 이름","text"],["note","메모","text"]]},
  musts:{title:"오늘 꼭",f:[["title","꼭 챙길 것 (준비물·약속·낼 것)","text"],["who","누구","select",[["시훈","시훈"],["","모두"],["엄마","엄마"],["아빠","아빠"]]],["date","날짜","date"]]},
- events:{title:"달력 일정",f:[["date","날짜 (여러 날이면 시작 날짜)","date"],["endDate","끝 날짜 (여러 날일 때만)","date"],["title","내용","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["time","시작","time"],["end","끝 (모르면 비우기)","time"]]},
+ events:{title:"달력 일정",f:[["date","날짜 (여러 날이면 시작 날짜)","date"],["endDate","끝 날짜 (여러 날일 때만)","date"],["title","내용","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["time","시작","time"],["end","끝 (없으면 비움)","time"]]},
  locations:{title:"물건 위치",f:[["name","물건","text"],["place","있는 곳","text"]]},
  supplies:{title:"소모품",f:[["name","이름","text"],["status","상태","select",[["ok","넉넉"],["low","조금 남음"],["out","다 떨어짐"]]],["note","메모 (예: 사는 곳)","text"]]},
  chores:{title:"살림",f:[["title","할 일","text"]]},
@@ -472,14 +473,17 @@ function openForm(col,doc,preset,defOv,onSave){
   if(type==="catlist")return`<label for="${id}">${label}<input id="${id}" name="${k}" type="text" list="${id}-l" value="${esc(val)}" autocomplete="off"><datalist id="${id}-l">${catOpts().map(c=>`<option value="${esc(c)}">`).join("")}</datalist></label>`;
   if(type==="note")return`<p class="status" style="margin:0">${label}</p>`;
   if(type==="select")return`<label for="${id}">${label}<select id="${id}" name="${k}">${opts.map(([o,l])=>`<option value="${o}"${String(val)===o?" selected":""}>${l}</option>`).join("")}</select></label>`;
-  return`<label for="${id}">${label}<input id="${id}" name="${k}" type="${type}" value="${esc(val)}"></label>`}).join("");
+  if(type==="time")return`<label for="${id}" class="tfield">${label}<input id="${id}" name="${k}" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 14:30" maxlength="5" value="${esc(val)}"></label>`;
+  return`<label for="${id}">${label}<input id="${id}" name="${k}" type="${type}" value="${esc(val)}"></label>`}).join("").replace(/(<label[^>]*class="tfield"[\s\S]*?<\/label>)(<label[^>]*class="tfield"[\s\S]*?<\/label>)/g,'<div class="trow">$1$2</div>');
  $("layer").innerHTML=`<div class="overlay"><form class="modal" id="mform"><h3>${def.title} ${doc&&doc.id?"수정":"추가"}${v._label?" · "+esc(v._label):""}</h3>${fields}<div class="row"><button type="button" class="btn" id="mcancel">취소</button>${def.more?`<button class="btn" id="mmore">${def.more}</button>`:""}<button class="btn primary">저장</button></div></form></div>`;
  $("mcancel").onclick=closeForm;
  dateDays($("mform"));
+ $("mform").querySelectorAll(".tfield input").forEach(i=>i.addEventListener("blur",()=>{const t=normTime(i.value);if(t)i.value=t}));
+ {const ad=$("mform").querySelector('select[name="allDay"]'),tr=$("mform").querySelector(".trow");if(ad&&tr){const sy=()=>{tr.hidden=!!ad.value};ad.addEventListener("change",sy);sy()}}
  $("mform").onsubmit=e=>{e.preventDefault();const more=!!(e.submitter&&e.submitter.id==="mmore");const data={};
   for(const[k,,type]of def.f){if(type==="note")continue;
    if(type==="days"){data[k]=[...e.target.querySelectorAll(`input[name="${k}"]:checked`)].map(x=>x.value);continue}
-   let x=e.target.elements[k].value.trim();data[k]=x===""?null:x;if(type==="number")data[k]=x===""?null:Number(x)}
+   let x=e.target.elements[k].value.trim();if(type==="time"&&x){const t=normTime(x);if(!t){toast("시간은 14:30처럼 적어 주세요");e.target.elements[k].focus();return}x=t;e.target.elements[k].value=t}data[k]=x===""?null:x;if(type==="number")data[k]=x===""?null:Number(x)}
   if(onSave){if(onSave(data,more)!==false)closeForm();return}
   
   if(col==="events"){if(data.endDate&&data.date&&data.endDate<data.date){toast("끝 날짜가 시작 날짜보다 앞이에요");return}if(data.endDate===data.date)data.endDate=null;if(data.allDay){data.time=null;data.end=null}else if(!data.time)data.allDay="1";if(data.time&&data.end&&data.end<=data.time){toast("끝 시간이 시작보다 늦어야 해요");return}}
@@ -493,6 +497,10 @@ function openForm(col,doc,preset,defOv,onSave){
 }
 /* 날짜 칸 옆에 「11월 27일 (금)」 */
 function dateDays(f){const W="일월화수목금토";f.querySelectorAll('input[type=date]').forEach(i=>{const sp=document.createElement("span");sp.className="dday";i.after(sp);const up=()=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(i.value);if(!m){sp.textContent="";return}const d=new Date(+m[1],m[2]-1,+m[3]);sp.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${W[d.getDay()]})`};i.addEventListener("input",up);i.addEventListener("change",up);up()})}
+/* 시간 바로 적기: 1430·930·14·9:5·14:30 → HH:MM (sy 11/27) */
+function normTime(v){v=String(v||"").trim().replace(/[.\s]/g,":");let h,m;const c=/^(\d{1,2}):(\d{1,2})$/.exec(v);
+ if(c){h=+c[1];m=+c[2]}else if(/^\d{1,4}$/.test(v)){if(v.length<=2){h=+v;m=0}else{h=+v.slice(0,v.length-2);m=+v.slice(-2)}}else return null;
+ if(h>23||m>59)return null;return `${pad(h)}:${pad(m)}`}
 function closeForm(){$("layer").innerHTML=""}
 function confirmDel(col,id,name){
  $("layer").innerHTML=`<div class="overlay"><div class="modal"><h3>지울까요?</h3><p style="margin:0">「${esc(name)}」을(를) 지워요. 되돌릴 수 없어요.</p><div class="row"><button class="btn" id="dn">취소</button><button class="btn primary" id="dy">지우기</button></div></div></div>`;
@@ -521,10 +529,13 @@ function renderTop(){const d=new Date();$("today").textContent=`${d.getMonth()+1
 // 기간 일정: schedOverrides{date:시작, until:끝}(baseId 없음) / events{date, endDate} — 그 사이 매일 보임
 const inSpan=(a,b,d)=>!!a&&a<=d&&d<=(b&&b>a?b:a);
 function spanDays(a,b){const o=[];if(!a)return o;let d=a;const e=b&&b>a?b:a;for(let i=0;d<=e&&i<370;i++,d=addDays(d,1))o.push(d);return o}
+/* 휴일 제외 (sy 11/27): 공휴일(대체공휴일 포함). 학교 재량휴업일은 없음 */
+const HOLIDAYS=new Set("2026-01-01 2026-02-16 2026-02-17 2026-02-18 2026-03-01 2026-03-02 2026-05-05 2026-05-24 2026-05-25 2026-06-03 2026-06-06 2026-08-15 2026-08-17 2026-09-24 2026-09-25 2026-09-26 2026-10-03 2026-10-05 2026-10-09 2026-12-25 2027-01-01 2027-02-06 2027-02-07 2027-02-08 2027-02-09 2027-03-01 2027-05-05 2027-05-13 2027-06-06 2027-08-15 2027-08-16 2027-09-14 2027-09-15 2027-09-16 2027-10-03 2027-10-04 2027-10-09 2027-10-11 2027-12-25 2027-12-27".split(" "));
+const isHol=d=>HOLIDAYS.has(d),isOff=d=>{const w=parse(d).getDay();return w===0||w===6||isHol(d)};
 function schedItems(date){
- const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.until&&!o.baseId&&!o.skip?inSpan(o.date,o.until,date):o.date===date);
+ const dk=dayKey(parse(date));const ov=S.schedOverrides.filter(o=>o.until&&!o.baseId&&!o.skip?inSpan(o.date,o.until,date)&&!(o.noHol&&isOff(date)):o.date===date);
  const hidden=new Set(ov.filter(o=>o.baseId).map(o=>o.baseId));
- const base=S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
+ const base=S.schedule.filter(x=>x.day===dk&&(!x.from||x.from<=date)&&(!x.until||date<=x.until)&&!(x.noHol&&isHol(date))).map(x=>({...x,src:"week",skipped:hidden.has(x.id)}));
  const extra=ov.filter(o=>!o.skip).map(o=>({...o,src:"date"}));
  // 달력(DAYS)에서 넣은 일정 = 특별 일정 ★ (고치기·지우기는 달력에서)
  const cal=S.events.filter(e=>inSpan(e.date,e.endDate,date)&&e.title).map(e=>({id:e.id,title:e.title,start:e.allDay?null:e.time||null,end:e.allDay?null:e.end||null,allDay:(e.allDay||!e.time)?"1":"",src:"cal",star:true}));
@@ -638,7 +649,7 @@ function timetable(list,nm){
  const y=m=>{if(m<=pts[0])return 0;for(let i=0;i<segH.length;i++)if(m<=pts[i+1])return cum[i]+(m-pts[i])/(pts[i+1]-pts[i])*segH[i];return cum[cum.length-1]};
  const hm=m=>`${(Math.floor(m/60)%12)||12}:${pad(m%60)}`;
  const abtn=it=>it.src==="cal"?(admin?`<span class="pill info">달력</span>`:""):it.skipped?`<span class="adm"><button class="icon" data-sundo="${it.id}" aria-label="되돌리기">↺</button></span>`
-   :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="icon" data-sedit="${it.id}" data-src="${it.src}" aria-label="수정">✎</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
+   :`<span class="adm">${it.src==="date"&&it.baseId?`<button class="icon" data-sundo="${it.baseId}" aria-label="원래대로">↺</button>`:""}<button class="btn small tt-ed" data-sedit="${it.id}" data-src="${it.src}">수정</button><button class="icon" data-sdel="${it.id}" data-src="${it.src}" aria-label="삭제">✕</button></span>`;
  let rows="";const lt=timed.filter(x=>!x.skipped);
  for(let h=lo;h<hi;h++)for(const half of [0,30]){const m=h*60+half,cov=lt.find(x=>x.s<m+30&&x.e>m),col=cov?schedColor(cov,TTC):"";
   const ty=y(m);
@@ -680,26 +691,36 @@ function dayColors(date){const l=schedItems(date),used=new Set(l.filter(x=>okCol
  const free=SCOLORS.map(c=>c[0]).filter(c=>!used.has(c));const pool=free.length?free:SCOLORS.map(c=>c[0]);
  for(const x of l)m[x.src+":"+x.id]=okColor(x.color)?x.color:pool[k++%pool.length];return m}
 function schedColor(x,m){return okColor(x.color)?x.color:(m&&m[x.src+":"+x.id])||SCOLORS[0][0]}
-function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["start","시작 (모르면 비우기)","time"],["end","끝 (모르면 비우기)","time"],["color","색 (비우면 이름 따라 자동)","select",[["","자동"],...SCOLORS]],["note","메모","text"],...(scopeOpts?[["scope","언제 (오늘만·매주·기간)","select",scopeOpts],["from","매주·기간일 때: 시작 날짜","date"],["until","매주·기간일 때: 끝 날짜","date"]]:[]),]}}
+function schedDef(scopeOpts){return{title:"시훈이 일정",f:[["title","일정 이름","text"],["allDay","종일?","select",[["","시간 정해서"],["1","종일 (하루 내내)"]]],["start","시작","time"],["end","끝 (없으면 비움)","time"],["color","색 (비우면 이름 따라 자동)","select",[["","자동"],...SCOLORS]],["note","메모","text"],...(scopeOpts?[["scope","언제 (오늘만·매주·기간)","select",scopeOpts],["from","매주·기간일 때: 시작 날짜","date"],["until","매주·기간일 때: 끝 날짜","date"],["noHol","휴일","select",[["","휴일에도 넣기"],["1","휴일 제외 (공휴일 빼기, 기간은 주말도 빼기)"]]]]:[]),]}}
 // 매주 일정의 기간(from~until). 이 날만 일정엔 안 씀
 const noRange=({from,until,...f})=>f;
 const badRange=d=>d.scope==="range"&&!d.until?(toast("기간은 끝 날짜를 정해 주세요"),true):(d.scope==="week"||d.scope==="range")&&d.from&&d.until&&d.from>d.until?(toast("끝나는 날짜가 시작 날짜보다 앞이에요"),true):false;
+/* 시간 겹침 확인 (sy 11/27): 겹치면 「중복인지 확인」 물어보고, 취소하면 창 그대로 */
+const tmin=t=>{const m=/^(\d\d):(\d\d)$/.exec(t||"");return m?+m[1]*60+ +m[2]:null};
+function overlapOK(list,f){if(f.allDay||!f.start)return true;const s=tmin(f.start),e=tmin(f.end)??s+1;
+ const hit=list.filter(x=>!x.allDay&&x.start&&!x.skipped).filter(x=>{const a=tmin(x.start),b=tmin(x.end)??a+1;return a<e&&s<b||a===s});
+ if(!hit.length)return true;
+ return confirm(`시간이 겹치는 일정이 있어요. 중복인지 확인해 주세요.\n\n${hit.map(x=>`· ${x.title} (${x.start}${x.end?"~"+x.end:""})`).join("\n")}\n\n그래도 저장할까요?`)}
+const dayList=(date,ex)=>schedItems(date).filter(x=>!ex.includes(x.id));
+const weekList=(dk,ex)=>S.schedule.filter(x=>x.day===dk&&!ex.includes(x.id));
 function openSched(item,src,preset){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)],lab=`${pd.getMonth()+1}월 ${pd.getDate()}일 (${dn})`;
- const pick=d=>({title:d.title,allDay:d.allDay||"",start:d.start,end:d.end,color:d.color||"",note:d.note,from:d.from,until:d.until});
+ const pick=d=>({noHol:d.noHol||"",title:d.title,allDay:d.allDay||"",start:d.start,end:d.end,color:d.color||"",note:d.note,from:d.from,until:d.until});
  if(!item){openForm("schedule",null,{scope:"date",_label:lab,...(preset||{})},{...schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일`],["range","기간 (여러 날 매일, 여행 등)"]]),more:"저장하고 다음 일정"},(data,more)=>{
    if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(badRange(data))return false;const {scope,...f}=data;
    if(f.allDay){f.start=null;f.end=null}
+   if(!overlapOK(scope==="week"?weekList(dayKey(pd),[]):dayList(f.from&&scope==="range"?f.from:schedDate,[]),f))return false;
    if(more)setTimeout(()=>openSched(null,null,{scope,start:f.end||"",color:""}),60);
    if(scope==="week")run(db.collection("schedule").add({...f,day:dayKey(pd),createdAt:Date.now()}),`매주 ${dn}요일에 넣었어요${f.until?` (${+f.until.slice(5,7)}/${+f.until.slice(8)}까지)`:""}`);
    else if(scope==="range"){const a=f.from||schedDate;run(db.collection("schedOverrides").add({...noRange(f),date:a,until:f.until,createdAt:Date.now()}),`${+a.slice(5,7)}/${+a.slice(8)}~${+f.until.slice(5,7)}/${+f.until.slice(8)} 매일 넣었어요`)}
    else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,createdAt:Date.now()}),`${dl}에만 넣었어요`)});return}
- if(src==="date"&&item.until&&!item.baseId){const def=schedDef(null);def.f.push(["from","시작 날짜","date"],["until","끝 날짜","date"]);openForm("schedule",{_label:lab,...pick(item),from:item.date,id:item.id},null,def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(!data.from||!data.until||data.from>data.until){toast("시작·끝 날짜를 확인해 주세요");return false}
-   const {from,...f}=data;run(db.collection("schedOverrides").doc(item.id).update({...f,date:from}),"저장했어요")});return}
+ if(src==="date"&&item.until&&!item.baseId){const def=schedDef(null);def.f.push(["from","시작 날짜","date"],["until","끝 날짜","date"],["noHol","휴일","select",[["","휴일에도 넣기"],["1","휴일 제외 (공휴일 빼기, 기간은 주말도 빼기)"]]]);openForm("schedule",{_label:lab,...pick(item),from:item.date,id:item.id},null,def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(!data.from||!data.until||data.from>data.until){toast("시작·끝 날짜를 확인해 주세요");return false}
+   const {from,...f}=data;if(!overlapOK(dayList(from,[item.id]),f))return false;run(db.collection("schedOverrides").doc(item.id).update({...f,date:from}),"저장했어요")});return}
  if(src==="date"){openForm("schedule",{_label:lab,...noRange(pick(item)),id:item.id},null,schedDef(null),data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}
-   run(db.collection("schedOverrides").doc(item.id).update(data),"저장했어요")});return}
+   if(!overlapOK(dayList(schedDate,[item.id,item.baseId]),data))return false;run(db.collection("schedOverrides").doc(item.id).update(data),"저장했어요")});return}
  openForm("schedule",{_label:lab,...pick(item),id:item.id,scope:"date"},null,schedDef([["date",`이 날만 (${dl})`],["week",`매주 ${dn}요일 모두`]]),data=>{
   if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}if(badRange(data))return false;const {scope,...f}=data;
+  if(!overlapOK(scope==="week"?weekList(dayKey(pd),[item.id]):dayList(schedDate,[item.id]),f))return false;
   if(scope==="week")run(db.collection("schedule").doc(item.id).update(f),"매주 일정을 바꿨어요");
   else run(db.collection("schedOverrides").add({...noRange(f),date:schedDate,baseId:item.id,createdAt:Date.now()}),`${dl}만 바꿨어요`)});
 }
@@ -711,21 +732,23 @@ function openWeek(dk){wkDay=dk||wkDay||dayKey(parse(schedDate));
  const rng=x=>x.from||x.until?` <span class="pill info">${x.from?+x.from.slice(5,7)+"/"+(+x.from.slice(8)):""}~${x.until?+x.until.slice(5,7)+"/"+(+x.until.slice(8)):""}</span>`:"";
  $("layer").innerHTML=`<div class="overlay"><div class="modal" id="wkBox"><h3>요일별 매주 일정</h3>
  <div class="wktabs">${DAYS.map(([k,n])=>`<button class="btn small${k===wkDay?" primary":""}" data-wk="${k}">${n}</button>`).join("")}</div>
- <ul class="list">${l.length?l.map(x=>`<li class="item"><span class="meta" style="min-width:92px">${x.allDay?"하루 종일":x.start?fmtT(x.start)+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${esc(x.title||"")}${rng(x)}</span><span style="display:inline-flex;gap:4px"><button class="icon" data-wkedit="${x.id}" aria-label="수정">✎</button><button class="icon" data-wkdel="${x.id}" aria-label="삭제">✕</button></span></li>`).join(""):`<li class="status">매주 ${DAYNAME[wkDay]}요일 일정이 없어요.</li>`}</ul>
- <div class="row"><button class="btn" id="wkClose">닫기</button><button class="btn primary" id="wkAdd">＋ ${DAYNAME[wkDay]}요일에 넣기</button></div></div></div>`;
+ <ul class="list">${l.length?l.map(x=>`<li class="item"><span class="meta" style="min-width:92px">${x.allDay?"하루 종일":x.start?fmtT(x.start)+(x.end?"~"+fmtT(x.end).replace(/^오[전후] /,""):""):"시간 미정"}</span><span class="t">${esc(x.title||"")}${rng(x)}</span>${admin?`<span style="display:inline-flex;gap:4px"><button class="btn small" data-wkedit="${x.id}">수정</button><button class="btn small" data-wkdel="${x.id}">지우기</button></span>`:""}</li>`).join(""):`<li class="status">매주 ${DAYNAME[wkDay]}요일 일정이 없어요.</li>`}</ul>
+ ${admin?"":`<p class="status" style="margin:4px 0 0">고치려면 관리자 모드를 켜 주세요.</p>`}<div class="row"><button class="btn" id="wkClose">닫기</button>${admin?`<button class="btn primary" id="wkAdd">＋ ${DAYNAME[wkDay]}요일에 넣기</button>`:""}</div></div></div>`;
  $("wkClose").onclick=()=>{wkDay=null;closeForm()};
- $("wkAdd").onclick=()=>wkForm(null);
+ if($("wkAdd"))$("wkAdd").onclick=()=>wkForm(null);
  $("wkBox").onclick=e=>{const b=e.target.closest("button");if(!b)return;const d=b.dataset;
   if(d.wk)openWeek(d.wk);
+  if(!admin&&(d.wkedit||d.wkdel))return;
   if(d.wkedit){const x=S.schedule.find(y=>y.id===d.wkedit);if(x)wkForm(x)}
   if(d.wkdel){const x=S.schedule.find(y=>y.id===d.wkdel);if(x&&confirm(`매주 ${DAYNAME[x.day]}요일 「${x.title}」을(를) 지울까요?`)){run(db.collection("schedule").doc(x.id).delete(),"지웠어요");for(const o of S.schedOverrides.filter(o=>o.baseId===x.id))run(db.collection("schedOverrides").doc(o.id).delete())}}}}
-function wkForm(x){const def=schedDef(null);def.f.unshift(["day","요일","select",DAYS]);def.f.push(["from","언제부터 (비우면 계속)","date"],["until","언제까지 (비우면 계속)","date"]);
- const v=x?{day:x.day,title:x.title,allDay:x.allDay||"",start:x.start,end:x.end,color:x.color||"",note:x.note,from:x.from,until:x.until,id:x.id}:null;
+function wkForm(x){const def=schedDef(null);def.f.unshift(["day","요일","select",DAYS]);def.f.push(["from","언제부터 (비우면 계속)","date"],["until","언제까지 (비우면 계속)","date"],["noHol","휴일","select",[["","휴일에도 넣기"],["1","휴일 제외 (공휴일 빼기, 기간은 주말도 빼기)"]]]);
+ const v=x?{noHol:x.noHol||"",day:x.day,title:x.title,allDay:x.allDay||"",start:x.start,end:x.end,color:x.color||"",note:x.note,from:x.from,until:x.until,id:x.id}:null;
  openForm("schedule",v,x?null:{day:wkDay},def,data=>{if(!data.title){toast("일정 이름을 적어 주세요");return false}if(data.allDay){data.start=null;data.end=null}
   if(data.from&&data.until&&data.from>data.until){toast("끝나는 날짜가 시작 날짜보다 앞이에요");return false}
+  if(!overlapOK(weekList(data.day,x?[x.id]:[]),data))return false;
   if(x)run(db.collection("schedule").doc(x.id).update(data),"저장했어요");else run(db.collection("schedule").add({...data,createdAt:Date.now()}),`매주 ${DAYNAME[data.day]}요일에 넣었어요`);
   wkDay=data.day;setTimeout(()=>openWeek(),60)})}
-$("wkBtn").onclick=()=>openWeek(dayKey(parse(schedDate)));
+$("wkBtn").onclick=$("wkBtn2").onclick=()=>openWeek(dayKey(parse(schedDate)));
 function delSched(item,src){
  const pd=parse(schedDate),dl=`${pd.getMonth()+1}/${pd.getDate()}`,dn=DAYNAME[dayKey(pd)];
  if(src==="date"&&!item.baseId)return confirmDel("schedOverrides",item.id,item.title);
@@ -1308,7 +1331,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=111;
+const VERSION=112;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
