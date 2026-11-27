@@ -59,7 +59,8 @@ button{font-size:17px;color:inherit;cursor:pointer}
 .m{border-radius:14px;padding:9px 12px;margin:8px 0;max-width:90%;white-space:pre-wrap;overflow-wrap:anywhere}
 .m.k{background:var(--k);border:1.5px solid var(--line)}
 .m.me{background:var(--blue-soft);border:1.5px solid #9fb6d8;margin-left:auto}
-.m.k .who{display:block;font-family:'Do Hyeon';font-size:14px;color:var(--blue)}
+.m.k .who{display:flex;align-items:center;gap:6px;font-family:'Do Hyeon';font-size:15px;color:var(--blue);margin-bottom:2px}
+.cat{display:inline-block;vertical-align:middle;flex:none}
 .m.sys{max-width:100%;text-align:center;background:none;color:var(--sub);font-size:14px;padding:2px}
 .m.plan{background:#fff;border:2px solid var(--blue)}
 .chs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px}
@@ -230,6 +231,10 @@ async function seedSesi() {
 /* ---------------- 화면 ---------------- */
 const S = { repo: {}, games: [], pubs: [], use: {}, view: 'home', gid: null, game: null, chat: [], busy: false, choices: [], plan: '', title: '', preview: null, curHtml: '', offGame: null };
 const app = $('#app');
+/* 🐱⚡ 카츄 = 노랑 번개 고양이(엄마 11/27 「앱」의 카츄 모습). 우리만의 픽셀 그림, 움직임 없음. */
+const CAT_ROWS = ['.YY........YY.', '.YOY......YOY.', '.YOOYYYYDYOOY.', 'YYYYYYYDYYYYYY', 'YYYYYYDDDYYYYY', 'YYKKYYYDYYKKYY', 'YYKKYYDYYYKKYY', 'YYYYYYYYYYYYYY', 'YYYYYYPPYYYYYY', '.YYYYKYYKYYYY.', '.YYYYYKKYYYYY.', '..YYYYYYYYYY..', '....YYYYYY....'];
+const CAT_PAL = { Y: '#f2c230', O: '#e8892b', D: '#a8400c', K: '#2a1d14', P: '#e58a8a' };
+const catSvg = (px) => `<svg class="cat" width="${px}" height="${px}" viewBox="-1 -1.5 16 16" shape-rendering="crispEdges" aria-hidden="true">${CAT_ROWS.map((r, y) => [...r].map((c, x) => CAT_PAL[c] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${CAT_PAL[c]}"/>` : '').join('')).join('')}</svg>`;
 const power = () => { const left = Math.max(0, DAY_WON - (+S.use.won || 0)); const pct = Math.round(left / DAY_WON * 100); return `<div class="power" title="오늘 카츄 힘">카츄 힘 <span class="bar"><i style="width:${pct}%"></i></span></div>`; };
 const pubOf = (gid) => S.pubs.find((p) => p.id === gid);
 /* ---------------- 길 5칸: 내가 만들기 → 엄마 확인 → 가족에게 올림 → 엄마랑 고치기 → 가져오기 ----------------
@@ -324,7 +329,7 @@ function renderWork() {
   <div class="top"><button class="btn w s" id="home" aria-label="내 게임 목록">⌂ 내 게임</button><h1 id="gTitle">${esc(g.title || '새 게임')}</h1>${power()}</div>
   <div class="work">
     <div>
-      <div class="stage" id="stage"><div class="empty">${g.ver ? '불러오는 중…' : '카츄랑 설계를 끝내면<br>여기에서 게임이 바로 돌아가요.'}</div></div>
+      <div class="stage" id="stage"><div class="empty">${g.ver ? '불러오는 중…' : `<div>${catSvg(96)}<p>카츄랑 설계를 끝내면<br>여기에서 게임이 바로 돌아가요.</p></div>`}</div></div>
       <div id="viewbar"></div>
       <div class="tools" id="tools"></div>
       <div id="roadW"></div>
@@ -359,7 +364,7 @@ function renderTools() {
 }
 function renderChat() {
   const m = $('#msgs'); if (!m) return;
-  m.innerHTML = S.chat.map((c) => c.who === 'k' ? `<div class="m k${c.plan ? ' plan' : ''}"><span class="who">카츄</span>${c.plan ? `<b>${esc(c.plan)}</b>\n\n` : ''}${esc(c.text)}</div>` : c.who === 'sys' ? `<div class="m sys">${esc(c.text)}</div>` : `<div class="m me">${esc(c.text)}</div>`).join('')
+  m.innerHTML = S.chat.map((c) => c.who === 'k' ? `<div class="m k${c.plan ? ' plan' : ''}"><span class="who">${catSvg(26)}카츄</span>${c.plan ? `<b>${esc(c.plan)}</b>\n\n` : ''}${esc(c.text)}</div>` : c.who === 'sys' ? `<div class="m sys">${esc(c.text)}</div>` : `<div class="m me">${esc(c.text)}</div>`).join('')
     + (S.busy ? `<div class="wait">${S.busy === 'build' ? '카츄가 만드는 중이야. 1~3분쯤 걸려. 기다리는 동안 지금 게임을 해 봐도 돼.' : '카츄가 생각하는 중…'}</div>` : '');
   m.scrollTop = m.scrollHeight;
   const c = $('#chs');
