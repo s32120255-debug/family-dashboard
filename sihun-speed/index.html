@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="19";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="20";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -216,7 +216,8 @@ const CONTR=[[/\b(he|she|it)'s been\b/g,'$1 has been'],[/\bi've\b/g,'i have'],[/
   [/\bcan't\b/g,'can not'],[/\bcannot\b/g,'can not'],[/\bwon't\b/g,'will not'],[/\bi'll\b/g,'i will'],[/\byou'll\b/g,'you will'],[/\bhe'll\b/g,'he will'],[/\bshe'll\b/g,'she will'],[/\bwe'll\b/g,'we will'],[/\bthey'll\b/g,'they will']];
 const NOAP={im:'i am',dont:'do not',doesnt:'does not',didnt:'did not',isnt:'is not',arent:'are not',wasnt:'was not',werent:'were not',cant:'can not',wont:'will not',youre:'you are',theyre:'they are',theres:'there is',hes:'he is',shes:'she is',ive:'i have',youve:'you have',weve:'we have',theyve:'they have',hasnt:'has not',havent:'have not',shouldnt:'should not',whats:'what is'};
 const NUM={'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','10':'ten','11':'eleven','12':'twelve'};
-const DROP=new Set(['um','uh','uhm','er','erm','hmm','a','an','the','oh','okay','ok']);
+// 엄마 11/27 「a 안 했는데 인식 맘대로 돼」: a·an·the도 세요(빠지거나 바뀌면 틀림). a↔an만 발음 흐림으로 봐줌
+const DROP=new Set(['um','uh','uhm','er','erm','hmm','oh','okay','ok']);
 function words(s){s=String(s||'').toLowerCase().replace(/[’‘`]/g,"'");CONTR.forEach(([r,x])=>s=s.replace(r,x));
   const out=[];s.replace(/[^a-z0-9' ]/g,' ').replace(/'/g,'').split(/\s+/).forEach(w=>{if(!w)return;w=NUM[w]||w;(NOAP[w]||w).split(' ').forEach(x=>{if(!DROP.has(x))out.push(x)})});return out}
 const PRON={i:['i','eye','hi','ah','aye','ai'],you:['you','u','ya','yo','yu','your'],he:['he','she','hi','hee','his','e','hey'],she:['she','he','shi','see','sea','c','shee','g'],we:['we','wee','oui','v','with'],they:['they','day','dey','thay','there','then']};
@@ -232,9 +233,11 @@ function stems(w){const r=new Set([w]);if(IRR[w])r.add(IRR[w]);
 function formErr(t,h){if(t===h)return false;if(!(VW.has(t)||VW.has(h)||IRR[t]||IRR[h]))return false;const a=stems(t),b=stems(h);for(const x of a)if(b.has(x))return true;return false}
 function lev(a,b){const m=a.length,n=b.length;let p=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
 const near=(a,b)=>a===b||lev(a,b)<=Math.max(1,Math.floor(Math.min(a.length,b.length)/3))||(a.length>3&&b.length>3&&a.slice(0,3)===b.slice(0,3));
-const noun=(t,h)=>h===t+'s'||t===h+'s'||h===t+'es'||t===h+'es';
+// 끝만 다른 낱말(dog↔dogs, play↔played, run↔running)은 문법 표지가 달라진 것 → 틀림
+const suf=(t,h)=>{const [a,b]=t.length<h.length?[t,h]:[h,t];if(!b.startsWith(a.replace(/e$/,'')))return false;return /^(s|es|ies|ed|d|ied|ing|er|est)$/.test(b.slice(a.length))||/^(s|es|ed|d|ing)$/.test(b.slice(a.replace(/e$/,'').length))};
+const ART=new Set(['a','an','the']);
 // 한 낱말: 0 = 똑같음, 1 = 비슷함(발음 흐림), -1 = 다름
-function w1(t,h){if(t===h)return 0;if(PRON[t])return PRON[t].includes(h)?1:-1;if(STRUCT.has(t)||STRUCT.has(h))return -1;if(formErr(t,h))return -1;if(noun(t,h))return 1;return near(t,h)?1:-1}
+function w1(t,h){if(t===h)return 0;if(ART.has(t)||ART.has(h))return (t==='a'&&h==='an')||(t==='an'&&h==='a')?1:-1;if(PRON[t])return PRON[t].includes(h)?1:-1;if(STRUCT.has(t)||STRUCT.has(h))return -1;if(formErr(t,h))return -1;if(suf(t,h))return -1;return near(t,h)?1:-1}
 function cmpSeq(T,W){if(T.length!==W.length)return -1;let f=0;for(let i=0;i<T.length;i++){const r=w1(T[i],W[i]);if(r<0)return -1;f+=r}return f?1:0}
 // 들린 말 속에 정답 문장이 그대로 들어 있으면 맞음(앞에서 고쳐 말한 것·뒤에 덧붙인 말은 봐줌). 주어 대명사 하나가 안 들려도 봐줌.
 function judge(target,heard){const T=words(target),H=words(heard);if(!H.length)return 'unclear';let best=-1;
