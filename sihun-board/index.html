@@ -92,7 +92,7 @@ textarea{width:100%;resize:vertical;min-height:70px}
 .tt-h small{font-size:.6rem;font-weight:400;color:var(--muted);margin-right:1px}
 .tt-row.half .tt-h{display:none}
 .tt-area{position:absolute;left:54px;right:0;top:0;bottom:0;z-index:1}
-.tt-rest{position:absolute;left:0;right:4px;display:flex;align-items:center;justify-content:flex-end;pointer-events:none;z-index:3}.tt-rest span{font-size:.62rem;color:var(--muted);background:var(--card);padding:0 5px;border-radius:6px;line-height:1.2;white-space:nowrap}
+.tt-rest{position:absolute;left:4px;right:4px;display:flex;align-items:center;justify-content:flex-start;pointer-events:none;z-index:3}.tt-rest span{font-size:.62rem;color:var(--muted);background:var(--card);padding:0 5px;border-radius:6px;line-height:1.2;white-space:nowrap}
 .tt-gap{position:absolute;left:0;right:2px;border:2px dashed #7fd8b0;background:repeating-linear-gradient(-45deg,#16302a 0 8px,#1b3a32 8px 16px);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#a8f0d0;font-size:.95rem;font-weight:700;overflow:visible;z-index:0}
 .tt-gap span{white-space:nowrap;line-height:1;font-variant-numeric:tabular-nums}.tt-gap span small{font-weight:700;margin-left:4px}
 .tt-gap.ask{border:1px solid rgba(185,166,230,.28);background:rgba(185,166,230,.06);color:#a99bcf;font-size:.82rem;font-weight:500}.tt-gap.ask.sm span{background:#2d2247;border-color:#b49be0}
@@ -1014,7 +1014,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=87;
+const VERSION=88;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1059,7 +1059,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=87").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=88").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});

@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=105">
-<link rel="icon" href="icon-192.png?v=105">
-<link rel="apple-touch-icon" href="icon-192.png?v=105">
+<link rel="manifest" href="manifest.json?v=106">
+<link rel="icon" href="icon-192.png?v=106">
+<link rel="apple-touch-icon" href="icon-192.png?v=106">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -129,7 +129,7 @@ body.admin #tplBox{display:grid!important;gap:6px}
 .tt-slot:hover{background:var(--admin-soft)}
 .tt-area{position:absolute;left:64px;right:0;top:0;bottom:0;pointer-events:none}
 .tt-area>*{pointer-events:auto}
-.tt-rest{position:absolute;left:0;right:4px;display:flex;align-items:center;justify-content:flex-end;pointer-events:none;z-index:3}.tt-rest span{font-size:.62rem;color:var(--muted);background:var(--card);padding:0 5px;border-radius:6px;line-height:1.2;white-space:nowrap}
+.tt-rest{position:absolute;left:4px;right:4px;display:flex;align-items:center;justify-content:flex-start;pointer-events:none;z-index:3}.tt-rest span{font-size:.62rem;color:var(--muted);background:var(--card);padding:0 5px;border-radius:6px;line-height:1.2;white-space:nowrap}
 .tt-gap{position:absolute;left:2px;right:2px;border:2px dashed #7fd8b0;background:repeating-linear-gradient(-45deg,#effbf5 0 8px,#ddf5ea 8px 16px);border-radius:10px;display:grid;place-items:center;color:#2b6b34;font-family:var(--display);font-size:1rem;pointer-events:none;overflow:hidden}.tt-gap small{font-family:var(--body);font-size:.85rem;font-weight:700;color:#1f5a2a}.tt-gap span{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}.tt-gap.sm{border-width:1.5px;border-radius:5px;z-index:3;place-items:center start;padding-left:4px;overflow:visible}.tt-gap.sm span{font-family:var(--body);font-size:.66rem;line-height:1.15;gap:3px;background:#effbf5;border:1px solid #7fd8b0;border-radius:999px;padding:0 6px}.tt-gap.sm small{font-size:.66rem}.tt-gap.ask{border-color:#b49be0;background:repeating-linear-gradient(-45deg,#f6f0ff 0 8px,#ece2fb 8px 16px);color:#4b2f86}.tt-gap.ask small{color:#4b2f86}.tt-gap.ask.sm span{background:#f6f0ff;border-color:#b49be0}
 .tt-b{position:absolute;border-radius:10px;border:2px solid #3a2a00;padding:3px 8px;display:flex;gap:4px;align-items:center;overflow:hidden;color:#2b2414;font-size:1rem;line-height:1.2}
 .tt-b b{font-family:var(--display);font-weight:400;line-height:1.1}
@@ -164,6 +164,16 @@ a.missionbtn{text-decoration:none;display:inline-block}
 @media (max-width:380px){.brand h1{font-size:1.25rem!important}.brand svg{width:38px;height:38px}.brand .date{font-size:.8rem}.hmini .missionbtn{font-size:.8rem;padding:4px 6px}.hbtns{gap:4px}.hbtns .missionbtn{font-size:.78rem;padding:4px 6px}}.missionbtn.mini b{background:#e03131;color:#fff}
 .ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
 @keyframes laddraw{to{stroke-dashoffset:0}}
+.jform{display:grid;gap:10px}.jform label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}.jform textarea{min-height:76px;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card);color:var(--fg)}
+.jside{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center}.jside select{width:auto}
+.jcase{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card)}
+.jcase .jt{font-weight:700}.jsay{margin:6px 0;white-space:pre-wrap}.jsay b{color:var(--accent-ink)}
+.jjudge{border:2px solid var(--accent);background:var(--accent-soft);border-radius:12px;padding:10px 12px;margin:10px 0}
+.jjudge h4{margin:0 0 6px;font-family:var(--display);font-size:1.1rem}
+.jdec{font-size:1.1rem;font-weight:700;margin:4px 0 8px}
+.jjudge ul{margin:4px 0 8px;padding-left:20px}.jjudge li{margin:2px 0}
+.jq{margin:8px 0}.jq b{color:var(--info)}
+.jwait{color:var(--muted);font-style:italic}
 .ladin{display:grid;gap:8px}.ladin label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}
 #wishWait:empty{display:none}
 .nbadge{display:inline-block;min-width:18px;height:18px;line-height:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:#e03131;color:#fff;font-family:var(--body);font-size:.72rem;font-weight:700;vertical-align:middle;text-align:center}.nbadge:empty{display:none}
@@ -252,11 +262,11 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 105</p></div></div>
+<p style="font-size:.75rem">버전 106</p></div></div>
 
 <div class="wrap">
  <header class="top">
-  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hmini"><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈기지 열기">🥷 시훈기지</a><button class="missionbtn mini" id="ladderBtn" aria-label="사다리타기" title="사다리타기">🪜<b id="ladderN"></b></button></span><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="dailyBtn" aria-label="매일 살림 열기">🧹 살림 <i class="hg" id="dailyHG"></i></button><button class="missionbtn" id="missionBtn" aria-label="특별 미션 열기">⚡ 미션 <b id="missionN"></b></button><a class="missionbtn" id="studyBtn" href="sihun/" target="_blank" rel="noopener" aria-label="오늘의 공부 열기">📖 오늘의 공부</a><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button></span></div>
+  <div class="brand"><span id="logo"></span><div><h1>우리집 기지</h1><div class="date" id="today"></div></div><span class="hmini"><a class="missionbtn" id="sihunBtn" href="sihun-board/" aria-label="시훈기지 열기">🥷 시훈기지</a><button class="missionbtn mini" id="ladderBtn" aria-label="사다리타기" title="사다리타기">🪜<b id="ladderN"></b></button></span><span class="hbtns"><button class="missionbtn" id="shopBtn" aria-label="상점 열기">🏪 상점<b class="nbadge" id="shopBadge"></b></button><button class="missionbtn" id="dailyBtn" aria-label="매일 살림 열기">🧹 살림 <i class="hg" id="dailyHG"></i></button><button class="missionbtn" id="missionBtn" aria-label="특별 미션 열기">⚡ 미션 <b id="missionN"></b></button><a class="missionbtn" id="studyBtn" href="sihun/" target="_blank" rel="noopener" aria-label="오늘의 공부 열기">📖 오늘의 공부</a><button class="missionbtn" id="buyBtn" aria-label="장보기 열기">🛒 장보기 <b id="buyN"></b></button><button class="missionbtn mini" id="judgeBtn" aria-label="AI 판사님" title="AI 판사님">⚖️<b id="judgeN"></b></button></span></div>
   <div style="display:flex;align-items:flex-end;gap:14px"><div class="clock" id="clock"></div><button class="adminbtn" id="installBtn" hidden>앱 설치</button><button class="adminbtn" id="adminBtn">관리자</button></div>
  </header>
  <div class="adminbar" id="adminbar">
@@ -383,6 +393,10 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <form class="addrow" id="shopForm"><input id="shopInput" placeholder="살 것 적기" aria-label="살 것"><button class="btn primary">추가</button></form>
    <ul class="list" id="shopList"></ul>
  </section>
+ <section class="card sheet" id="c-judge" role="dialog" aria-label="AI 판사님" hidden>
+   <h2>⚖️ AI 판사님 <span style="display:inline-flex;gap:6px"><button class="btn small" id="judgeNew" hidden>새 사건</button><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
+   <div id="judgeBox"></div>
+ </section>
  <section class="card sheet" id="c-ladder" role="dialog" aria-label="사다리타기" hidden>
    <h2>🪜 사다리타기 <span style="display:inline-flex;gap:6px"><span class="adm"><button class="btn small" id="ladderOpen"></button></span><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
    <div id="ladderBox"></div>
@@ -403,8 +417,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=105";
-import {SEED_SCHEDULE} from "./seed.js?v=105";
+import {firebaseConfig} from "./config.js?v=106";
+import {SEED_SCHEDULE} from "./seed.js?v=106";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -419,7 +433,7 @@ const fmtT=t=>{if(!t)return"";let[h,m]=t.split(":").map(Number);const ap=h<12?"�
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const $=id=>document.getElementById(id);
 
-const COLS=["musts","wishes","schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","helpLog","wishfood","notes","pantry","ate","events","shopping","meals","locations","supplies","chores","helpmom","settings"];
+const COLS=["musts","wishes","schedule","schedOverrides","tasks","taskTpls","rewards","choreLog","helpLog","wishfood","notes","pantry","ate","events","shopping","meals","locations","supplies","chores","helpmom","settings","judge"];
 const S=Object.fromEntries(COLS.map(c=>[c,[]]));
 let db=null,admin=false,schedDate=ymd(new Date()),taskDate=ymd(new Date()),loadedCols=new Set(),me=null,calMonth=new Date(),selDate=ymd(new Date());
 calMonth.setDate(1);
@@ -1051,7 +1065,7 @@ function renderLoc(){const q=$("locSearch").value.trim();const l=S.locations.fil
  $("locList").innerHTML=l.length?l.map(x=>`<li class="item"><span class="t"><b>${esc(x.name)}</b></span><span class="meta" style="white-space:normal;text-align:right">${esc(x.place)}</span>${admBtns("locations",x.id,x.name)}</li>`).join(""):`<li class="empty">${q?"찾는 물건이 없어요.":"적어 둔 물건이 아직 없어요."}</li>`}
 
 // 한 칸에서 오류가 나도 나머지 칸(포인트 등)은 계속 새로 그리기
-function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderLadder,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
+function renderAll(){try{autoMe()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc]){try{f()}catch(e){console.error(f.name,e)}}}
 
 /* ---------- events ---------- */
 document.addEventListener("click",e=>{const b=e.target.closest("button,td");if(!b)return;const d=b.dataset;
@@ -1151,9 +1165,64 @@ $("navtabs").addEventListener("click",e=>{const b=e.target.closest("[data-nav]")
 {let t0="today";try{t0=sessionStorage.getItem("tab")||"today"}catch(e){}showTab(t0)}
 if(location.hash==="#shop"){openSheet("c-shop");history.replaceState(null,"",location.pathname+location.search)}
 for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getItem("fold_"+id)}catch(e){}setFold(id,o)}
+
+/* ---------- ⚖️ AI 판사님 (시훈이 아이디어, 11/27) ----------
+ judge/{id}: {at,by,caseId,title,sides:[{who,say}],talk:[{who,text}],createdAt} → 서버 함수 aiJudge가 res를 채움.
+ 한 사건 = 같은 caseId 문서들. 판사님 질문에 대답하거나 다시 이야기하면 그동안의 talk를 담아 새 문서를 씀. */
+let judgeCase=null;
+const jCases=()=>{const m=new Map();for(const d of S.judge||[]){const k=d.caseId||d.id;const l=m.get(k)||[];l.push(d);m.set(k,l)}
+ return[...m.entries()].map(([k,l])=>{l.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return{id:k,docs:l,last:l[l.length-1]}}).sort((a,b)=>(b.last.createdAt||0)-(a.last.createdAt||0))};
+const jWho=(n,v)=>`<select name="${n}">${[...PEOPLE,"서윤","누나","형","친구"].filter((x,i,a)=>a.indexOf(x)===i).map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("")}</select>`;
+function jRes(r){if(!r)return`<p class="jwait">판사님이 이야기를 듣고 있어요… (1분쯤 걸려요)</p>`;
+ if(r.state==="limit"||r.state==="error")return`<div class="jjudge"><h4>⚖️ 판사님</h4><p style="margin:0">${esc(r.say||"지금은 판단하지 못했어요.")}</p></div>`;
+ let h=`<div class="jjudge"><h4>⚖️ 판사님</h4>`;
+ if(r.heard&&r.heard.length)h+=`<p class="meta" style="margin:0 0 4px">이렇게 들었어요</p><ul>${r.heard.map(x=>`<li><b>${esc(x.who)}</b>: ${esc(x.line)}</li>`).join("")}</ul>`;
+ if(r.say)h+=`<p style="margin:4px 0">${esc(r.say)}</p>`;
+ if(r.state==="ask")h+=(r.questions||[]).map(q=>`<p class="jq"><b>${esc(q.to)}에게</b> ${esc(q.q)}</p>`).join("");
+ else{h+=`<p class="meta" style="margin:8px 0 0">판결</p><p class="jdec">${esc(r.decision||"")}</p>`;
+  if(r.reasons&&r.reasons.length)h+=`<p class="meta" style="margin:0">근거</p><ul>${r.reasons.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  if(r.each&&r.each.length)h+=r.each.map(x=>`<p style="margin:4px 0"><b>${esc(x.who)}</b> 잘한 점: ${esc(x.good)}<br><span class="meta">다음엔:</span> ${esc(x.try)}</p>`).join("");
+  if(r.next)h+=`<p style="margin:8px 0 0"><b>오늘 이렇게 해 봐요</b> ${esc(r.next)}</p>`}
+ return h+`</div>`}
+function renderJudge(){const box=$("judgeBox");if(!box)return;const cs=jCases();
+ const pend=cs.filter(c=>c.last.res&&c.last.res.state==="ask").length;$("judgeN").textContent=pend?String(pend):"";
+ const c=judgeCase&&cs.find(x=>x.id===judgeCase);$("judgeNew").hidden=!c;
+ if(!c){const a=document.activeElement;if(box.contains(a)&&/TEXTAREA|INPUT|SELECT/.test(a.tagName)&&box.querySelector("#jForm"))return;
+  box.innerHTML=`<p class="status" style="margin:0 0 8px">의견이 부딪힐 때, 두 사람이 각자 이야기를 적으면 판사님이 듣고 공정하게 판단해 줘요.</p>
+  <form class="jform" id="jForm"><label>무슨 일이에요?<input name="title" maxlength="80" placeholder="예: 게임 시간 정하기" autocomplete="off"></label>
+  <div class="jside">${jWho("w1",me||"시훈")}<span class="meta">의 이야기</span></div><textarea name="s1" maxlength="1500" aria-label="첫째 사람 이야기" placeholder="내 생각과 이유"></textarea>
+  <div class="jside">${jWho("w2",(me||"시훈")==="엄마"?"시훈":"엄마")}<span class="meta">의 이야기</span></div><textarea name="s2" maxlength="1500" aria-label="둘째 사람 이야기" placeholder="상대 생각과 이유"></textarea>
+  <button class="btn primary">판사님께 맡기기</button></form>`+
+  (cs.length?`<h3 style="margin:16px 0 4px;font-size:1rem">지난 사건</h3>`+cs.slice(0,12).map(x=>{const r=x.last.res;const st=!r?"듣는 중":r.state==="ask"?"질문 있음":r.state==="verdict"?"판결":"멈춤";
+   return`<div class="jcase"><button class="btn small" data-jopen="${x.id}" style="float:right">보기</button><span class="jt">${esc(x.last.title||"사건")}</span> <span class="pill ${st==="질문 있음"?"warn":"info"}">${st}</span><br><span class="meta">${esc(x.last.sides.map(s=>s.who).join(" vs "))} · ${esc(String(x.last.at||""))}</span>${admin?` <button class="btn small" data-jdel="${x.id}">지우기</button>`:""}</div>`}).join(""):"");
+  return}
+ const L=c.last,talk=L.talk||[];
+ let h=`<div class="jcase"><span class="jt">${esc(L.title||"사건")}</span> <span class="meta">${esc(String(L.at||""))}</span>${L.sides.map(s=>`<p class="jsay"><b>${esc(s.who)}</b> ${esc(s.say)}</p>`).join("")}</div>`;
+ // 지난 차례들: 문서마다 그 문서의 res, 그리고 다음 문서가 더한 대답
+ c.docs.forEach((d,i)=>{h+=jRes(d.res);const nx=c.docs[i+1];if(nx){const add=(nx.talk||[]).slice((d.talk||[]).length).filter(t=>t.who!=="judge");if(add.length)h+=`<div class="jcase">${add.map(t=>`<p class="jsay"><b>${esc(t.who)}</b> ${esc(t.text)}</p>`).join("")}</div>`}});
+ const r=L.res;
+ if(r&&r.state==="ask")h+=`<form class="jform" id="jAns">${(r.questions||[]).map((q,i)=>`<label>${esc(q.to)}의 대답 · ${esc(q.q)}<textarea name="a${i}" maxlength="1500"></textarea></label>`).join("")}<button class="btn primary">대답 보내기</button></form>`;
+ else if(r&&r.state==="verdict")h+=`<details style="margin-top:10px"><summary class="meta">판결에 할 말이 있어요 (다시 이야기하기)</summary><form class="jform" id="jMore" style="margin-top:8px"><div class="jside">${jWho("w",me||"시훈")}<span class="meta">의 이야기</span></div><textarea name="t" maxlength="1500"></textarea><button class="btn">판사님께 다시 말하기</button></form></details>`;
+ const a=document.activeElement;if(box.contains(a)&&/TEXTAREA|INPUT|SELECT/.test(a.tagName))return;
+ box.innerHTML=h}
+function jSend(base,talk){const d={at:today(),by:me||null,caseId:base.caseId,title:base.title,sides:base.sides,talk,createdAt:Date.now()};
+ judgeCase=base.caseId;return run(db.collection("judge").add(d),"판사님께 보냈어요")}
+function jResText(r){return r.state==="ask"?[r.say,...(r.questions||[]).map(q=>`(${q.to}에게) ${q.q}`)].filter(Boolean).join(" "):`판결: ${r.decision||""} / 해결: ${r.next||""}`}
+$("judgeNew").onclick=()=>{judgeCase=null;renderJudge()};
+$("judgeBox").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.jopen){judgeCase=b.dataset.jopen;renderJudge();$("c-judge").scrollTop=0}
+ if(b.dataset.jdel&&admin){const ids=(S.judge||[]).filter(d=>(d.caseId||d.id)===b.dataset.jdel).map(d=>d.id);if(confirm("이 사건을 지울까요?"))ids.forEach(id=>run(db.collection("judge").doc(id).delete()))}});
+$("judgeBox").addEventListener("submit",e=>{e.preventDefault();const f=e.target,v=n=>(f.elements[n]&&f.elements[n].value||"").trim();
+ if(f.id==="jForm"){const s1=v("s1"),s2=v("s2");if(!s1&&!s2){toast("한 사람 이야기는 적어 주세요");return}
+  const sides=[[v("w1"),s1],[v("w2"),s2]].filter(x=>x[1]).map(([who,say])=>({who,say}));const id="c"+Date.now().toString(36),title=v("title");
+  f.reset();document.activeElement&&document.activeElement.blur();jSend({caseId:id,title,sides},[]).then(renderJudge);return}
+ const c=jCases().find(x=>x.id===judgeCase);if(!c)return;const L=c.last,talk=[...(L.talk||[]),{who:"judge",text:jResText(L.res)}];
+ if(f.id==="jAns"){const qs=L.res.questions||[];const ans=qs.map((q,i)=>({who:q.to,text:v("a"+i)})).filter(x=>x.text);if(!ans.length){toast("대답을 적어 주세요");return}
+  document.activeElement&&document.activeElement.blur();jSend(L,[...talk,...ans]).then(renderJudge);return}
+ if(f.id==="jMore"){const t=v("t");if(!t){toast("할 말을 적어 주세요");return}document.activeElement&&document.activeElement.blur();jSend(L,[...talk,{who:v("w"),text:t}]).then(renderJudge)}});
 let sheetId=null;
-function openSheet(id){for(const x of ["c-help","c-shop","c-buy","c-ladder"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
-$("missionBtn").onclick=()=>{helpMode="once";renderHelp();openSheet("c-help")};$("dailyBtn").onclick=()=>{helpMode="daily";renderHelp();openSheet("c-help")};$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
+function openSheet(id){for(const x of ["c-help","c-shop","c-buy","c-ladder","c-judge"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
+$("missionBtn").onclick=()=>{helpMode="once";renderHelp();openSheet("c-help")};$("dailyBtn").onclick=()=>{helpMode="daily";renderHelp();openSheet("c-help")};$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("judgeBtn").onclick=()=>{renderJudge();openSheet("c-judge")};$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
 document.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>openSheet(null));
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&sheetId&&!document.querySelector(".overlay"))openSheet(null)});
 $("helpSpend").onclick=()=>{if(!db)return toast("저장소에 연결되지 않았어요");const hb=helpBal();
@@ -1189,7 +1258,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=105;
+const VERSION=106;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}

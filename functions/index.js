@@ -999,3 +999,75 @@ exports.enTeach = onDocumentCreated(
     }
   }
 );
+
+// ===================================================================================
+// 우리집 기지 「⚖️ AI 판사님」(시훈이 아이디어, 11/27): 식구끼리 의견이 부딪힐 때 양쪽 이야기를 듣고 판단.
+// 앱이 judge/{id} 에 {at, by, title, sides:[{who,say}], talk:[{who,text}]} 를 쓰면 같은 문서에 res를 채워요.
+// 판사님이 더 들어야 하면 state "ask"(질문), 충분하면 state "verdict"(판결). 가장 좋은 모델(TUTOR_MODEL).
+// ===================================================================================
+const JUDGE_LIMIT = 40; // 하루 상한
+const JUDGE_SYSTEM = `너는 우리 집 「AI 판사님」이야. 식구(엄마, 아빠, 시훈, 그 밖의 식구)끼리 의견이 부딪힐 때 양쪽 이야기를 차분히 듣고 공정하게 판단해 줘.
+시훈이는 초등학교 3학년이야. 시훈이도 읽으니까 쉬운 말로, 존댓말(해요체)로 써. 판사님답게 침착하고 단정하게. 이모지는 쓰지 마.
+판단 원칙:
+- 나이나 어른/아이 여부로 편들지 마. 각자의 말 속 사실, 약속, 규칙, 마음을 따로 나눠서 봐.
+- 먼저 각자의 이야기를 그 사람 입장에서 한 문장으로 정확히 되짚어 줘(듣고 있다는 걸 보여 주기).
+- 사실이 엇갈리거나 중요한 정보가 빠졌으면 판결하지 말고 state "ask"로 꼭 필요한 질문을 1~3개만, 누구에게 묻는지(to) 밝혀서 해. 같은 질문 반복 금지. 이미 질문을 두 번 했으면 있는 정보로 판결해.
+- 충분하면 state "verdict": 누가 맞고 틀렸는지보다 "무엇이 공정한지"를 밝혀. 한쪽이 더 옳으면 분명히 말하되, 상대의 마음도 인정해.
+- 판결에는 근거(reasons, 2~4개), 각자에게 잘한 점과 다음에 해 볼 것, 그리고 오늘 바로 할 수 있는 구체적인 해결(next: 순서·시간·나누는 법 등)을 넣어.
+- 놀리거나 망신 주는 말, 벌을 새로 만들어 내는 것 금지. 집의 규칙은 엄마·아빠가 정한다는 점을 존중해.
+- 누가 다치거나 위험하거나, 때리거나 무서운 일이 있었다는 이야기면 판결 대신 그 사람을 걱정하고 믿을 수 있는 어른에게 바로 이야기하라고 안내해(state "verdict", decision에 그 안내).
+출력 필드:
+- heard: 각자 이야기를 되짚은 것 [{who, line}]
+- say: 판사님이 지금 하는 말 1~3문장(질문일 땐 왜 묻는지, 판결일 땐 한 줄 요약)
+- questions: state가 ask일 때만 [{to, q}], 아니면 빈 배열
+- decision: 판결 한두 문장(ask면 빈 문자열)
+- reasons: 근거 목록(ask면 빈 배열)
+- each: 사람마다 {who, good(잘한 점), try(다음에 해 볼 것)} (ask면 빈 배열)
+- next: 오늘 바로 할 해결 방법 한두 문장(ask면 빈 문자열)`;
+const JUDGE_SCHEMA = {
+  type: "object", additionalProperties: false,
+  required: ["state", "heard", "say", "questions", "decision", "reasons", "each", "next"],
+  properties: {
+    state: { type: "string", enum: ["ask", "verdict"] },
+    heard: { type: "array", items: { type: "object", additionalProperties: false, required: ["who", "line"], properties: { who: { type: "string" }, line: { type: "string" } } } },
+    say: { type: "string" },
+    questions: { type: "array", items: { type: "object", additionalProperties: false, required: ["to", "q"], properties: { to: { type: "string" }, q: { type: "string" } } } },
+    decision: { type: "string" },
+    reasons: { type: "array", items: { type: "string" } },
+    each: { type: "array", items: { type: "object", additionalProperties: false, required: ["who", "good", "try"], properties: { who: { type: "string" }, good: { type: "string" }, try: { type: "string" } } } },
+    next: { type: "string" },
+  },
+};
+exports.aiJudge = onDocumentCreated(
+  { document: "judge/{id}", region: "asia-northeast3", secrets: [ANTHROPIC_API_KEY], timeoutSeconds: 180, maxInstances: 2 },
+  async (event) => {
+    const snap = event.data;
+    const req = snap && snap.data();
+    if (!req || req.res || !Array.isArray(req.sides) || !req.sides.length) return;
+    const done = (res) => snap.ref.update({ res: { ...res, atRes: Date.now() } });
+    const at = /^\d{4}-\d{2}-\d{2}$/.test(String(req.at || "")) ? req.at : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+    const n = (await getFirestore().collection("judge").where("at", "==", at).get()).size;
+    if (n > JUDGE_LIMIT) return done({ state: "limit", say: "오늘은 판사님이 쉬어요. 내일 다시 와 주세요." });
+    const cut = (s, k) => String(s || "").slice(0, k);
+    const lines = [`사건: ${cut(req.title, 200) || "(제목 없음)"}`, "", "양쪽 이야기:"];
+    req.sides.slice(0, 6).forEach((s) => lines.push(`- ${cut(s.who, 20) || "식구"}: ${cut(s.say, 1500)}`));
+    if (Array.isArray(req.talk) && req.talk.length) {
+      lines.push("", "그다음 오간 이야기(판사님 질문과 식구 대답):");
+      req.talk.slice(-20).forEach((t) => lines.push(`${t.who === "judge" ? "판사님" : cut(t.who, 20)}: ${cut(t.text, 1500)}`));
+    }
+    const asked = (req.talk || []).filter((t) => t.who === "judge").length;
+    lines.push("", asked >= 2 ? "질문은 이미 두 번 했어요. 이제 판결해 주세요." : "필요하면 질문하고, 충분하면 판결해 주세요.");
+    try {
+      const r = await callJson(JUDGE_SYSTEM, [{ type: "text", text: lines.join("\n") }], JUDGE_SCHEMA, { tag: "aiJudge", max: 12000, effort: "high", think: true });
+      if (r.refusal) return done({ state: "error", err: "refusal", say: "이 이야기는 판사님이 판단하기 어려워요. 엄마·아빠와 직접 이야기해 보세요.", model: r.model, usage: r.usage });
+      const u = r.usage || {};
+      await getFirestore().doc("sihun/data/aiuse/" + at.slice(0, 7)).set(
+        { days: { [at]: { judge: { n: FieldValue.increment(1), in: FieldValue.increment(+u.in || 0), out: FieldValue.increment(+u.out || 0) } } } }, { merge: true }
+      ).catch(() => {});
+      return done({ ...r.out, model: r.model, usage: r.usage });
+    } catch (e) {
+      console.error("aiJudge", e && e.status, e && e.message);
+      return done({ state: "error", err: String((e && e.status) || (e && e.message) || "error"), say: "판사님이 잠깐 자리를 비웠어요. 조금 뒤에 다시 해 주세요." });
+    }
+  }
+);
