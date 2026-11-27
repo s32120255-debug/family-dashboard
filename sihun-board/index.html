@@ -170,6 +170,7 @@ body.noscroll{overflow:hidden}
 .mail .b{font-size:1.15rem;white-space:pre-wrap;overflow-wrap:anywhere}
 .nbadge{position:absolute;top:-6px;right:-2px;min-width:1.3em;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:.8rem;line-height:1.3em;text-align:center;font-family:var(--body)}
 .x2{border:2px dashed #e0a800;border-radius:12px;padding:6px 10px;font-weight:700;color:#7a5200;background:#fff8d6;margin-bottom:6px;list-style:none}.x2.on{background:#ffc928;border-style:solid;color:#3a2a00}
+.dday{display:block;font-size:.95rem;font-weight:700;color:var(--yellow);margin-top:4px}
 </style>
 </head>
 <body>
@@ -769,6 +770,7 @@ function form(title,fields,pre,onSave){
  $("layer").innerHTML=`<div class="layer"><form id="mf"><h3>${esc(title)}</h3>${fields.map(([k,l,t,opt])=>t==="textarea"?`<label>${l}<textarea name="${k}">${esc(pre[k]??"")}</textarea></label>`:t==="select"?`<label>${l}<select name="${k}">${opt.map(([v,n])=>`<option value="${v}" ${pre[k]===v?"selected":""}>${n}</option>`).join("")}</select></label>`:`<label>${l}<input type="${t}" name="${k}" value="${esc(pre[k]??"")}" ${t==="number"?'inputmode="numeric" min="0" step="1"':""}></label>`).join("")}
  <div class="row" style="justify-content:flex-end"><button type="button" class="btn" id="mc">취소</button><button class="btn primary">저장</button></div></form></div>`;
  $("mc").onclick=()=>$("layer").innerHTML="";
+ {const W="일월화수목금토";$("mf").querySelectorAll('input[type=date]').forEach(i=>{const sp=document.createElement("span");sp.className="dday";i.after(sp);const up=()=>{const m=/^(\d{4})-(\d\d)-(\d\d)$/.exec(i.value);if(!m){sp.textContent="";return}const d=new Date(+m[1],m[2]-1,+m[3]);sp.textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${W[d.getDay()]})`};i.addEventListener("input",up);i.addEventListener("change",up);up()})}
  const first=$("mf").querySelector("input:not([type=date]),textarea");if(first)first.focus();
  $("mf").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const data={};for(const[k,,t]of fields){let v=String(fd.get(k)??"").trim();if(t==="number")v=v===""?null:Number(v);data[k]=v}
   const r=await onSave(data);if(r!==false)$("layer").innerHTML=""};
@@ -1012,7 +1014,7 @@ $("playForm").onsubmit=async e=>{e.preventDefault();let v=$("playInput").value.t
 $("playNew").onclick=()=>{playSid="p"+Date.now();renderPlay();toast("새 이야기를 시작해요")};
 
 /* ---------- 새 버전 자동 새로고침 ---------- */
-const VERSION=86;
+const VERSION=87;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="sbReloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
@@ -1057,7 +1059,7 @@ const inApp=/KAKAOTALK|NAVER|Instagram|FBAN|FBAV|Line\//i.test(navigator.userAge
 })().catch(()=>gate("불러오지 못했어요. 인터넷을 확인해 주세요.",false,false));
 try{wcRestore()}catch(e){}
 renderAll();
-import("./chess-ui.js?v=86").then(m=>{chessApi=m.mountChess($("chessBox"),{
+import("./chess-ui.js?v=87").then(m=>{chessApi=m.mountChess($("chessBox"),{
  gate:()=>({lock:funLock(),used:S.chess.filter(x=>x.date===today()).length,limit:chessLimit()}),
  pay:async()=>{const ok=await payPlay("chess");if(ok){toast("한 판 시작! ♟");renderShop()}return ok}, payInfo:()=>{const n=chessCoupons().length;return n?{label:`🎟 체스권 쓰고 시작 (${n}장)`,note:"사 둔 체스권이 있어요."}:{label:"⭐1점 내고 한 판 시작",note:`과제 포인트 1점으로 한 판 (남은 ⭐${ptBalance("task")}).`}},
  onEnd:r=>{if(!fs)return;S.chess.push({...r,date:today(),createdAt:Date.now()});F.addDoc(sub("chess"),{...r,date:today(),createdAt:Date.now(),by:myName()}).catch(()=>{});if(r.result!=="quit")toast(r.result==="win"?"이겼다! 대단해":r.result==="draw"?"비겼어":"아깝다! 다음에 또 해 보자")}})}).catch(()=>{$("chessBox").innerHTML=`<p class="empty">체스를 불러오지 못했어요.</p>`});
