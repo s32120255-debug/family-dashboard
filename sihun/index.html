@@ -1686,15 +1686,24 @@ let LTOPEN=null;
 // 🌳 나무 그림(엄마 11/26 「나무 모양으로, 아예 나무」): 줄기 가운데, 가지 8품사(왼쪽 명사·대명사·형용사·전치사 / 오른쪽 동사·부사·접속사·감탄사), 가지 끝에 잎, 땅 아래 뿌리 = 문장 만들기.
 // 잎: ✓ 초록 = 채운 잎(누르면 정리) · 파란 테 = 오늘 잎 · 점선 = 아직 · 🔒 = 나중에. 반짝임 없음.
 const LSN={N1:'이름 = 명사',N2:'꼬리 -ness',N3:'하나·여럿 a, -s',P1:'주어 I·he',P2:'동사 뒤 me·him',P3:'~의 my·his',P4:'~의 것 mine',V1:'be동사',V2:'동사 + -s',V3:'can·will·must',V4:'자동사·타동사',V5:'시제·수동태',A1:'명사 꾸미기',A2:'be 뒤',A3:'look·taste 뒤',A4:'비교급',D1:'-ly 부사',D2:'always·never',D3:'Sadly, (문장)',R1:'전치사 + 명사',R2:'at·on·in',R3:'with me·him',J1:'and·but·so',J2:'when·if',J3:'because (of)',I1:'Oh·Wow·Ouch'};
+// 🌳 나무 = HIGHEND 「The Grammar Tree」 모양(엄마 11/27 「이렇게 가자, 가지로 연결」): 가지 8품사 · 잎 = 자료의 문법 이름. 지금 잎(칸)들은 자료 잎 아래로 묶어 보여 줌, 아직 없는 잎은 🔒
+const LFORD={'명사':['종류','셀 수 있나 · a/-s','수와 격','명사구·명사절'],'대명사':['인칭·재귀','지시·부정','의문대명사','비인칭 it'],'동사':['자동사·타동사','시제·조동사','능동·수동','명령문','준동사'],
+  '형용사':['꾸미기·보어','관사·수량','비교급·최상급','분사·관계사절'],'부사':['꾸미기','-ly · 빈도','부사구·부사절'],'전치사':['전치사 + 명사','시간·장소·방향','형용사구·부사구'],'접속사':['등위','상관','종속'],'감탄사':['oh · wow','감탄문'],
+  '뿌리':['문장 성분','5형식','문장의 종류']};
+const LFOF={N1:'종류',N2:'종류',N3:'셀 수 있나 · a/-s',P1:'인칭·재귀',P2:'인칭·재귀',P3:'인칭·재귀',P4:'인칭·재귀',V1:'시제·조동사',V2:'시제·조동사',V3:'시제·조동사',V4:'자동사·타동사',
+  A1:'꾸미기·보어',A2:'꾸미기·보어',A3:'꾸미기·보어',D1:'-ly · 빈도',D2:'-ly · 빈도',D3:'꾸미기',R1:'전치사 + 명사',R2:'시간·장소·방향',R3:'전치사 + 명사',J1:'등위',J2:'종속',J3:'종속',I1:'oh · wow',
+  X1:'문장 성분',X2:'문장 성분',X3:'문장 성분',X4:'문장 성분',X10:'문장 성분',X5:'5형식',X6:'5형식',X7:'5형식',X8:'5형식',X9:'5형식'};
+function lfOf(L){return L.lf||LFOF[L.k]||L.n}
+function lfGroups(br){return (LFORD[br]||[]).map(n=>{const ks=MAPLEAF.filter(L=>L.br===br&&!L.lock&&lfOf(L)===n).map(L=>L.k);return {k:'lf:'+br+'|'+n,n,br,ks,lock:!ks.length}})}
 function mapTw(s,f){let w=0;for(const ch of s)w+=/[가-힣]/.test(ch)?f:/[✓🔒🍃]/.test(ch)?f*1.1:/[ .·,]/.test(ch)?f*.36:f*.64;return w}
 function mapLeafView(cur){const M=mapS(),W=760,TX=380,F=17,LH=38;
-  const st=L=>L.lock?'lock':L.k===cur?'now':mapLeafDone(M,L.k)?'done':'todo';
+  const st=L=>L.lock?'lock':L.ks.includes(cur)?'now':L.ks.every(k=>mapLeafDone(M,k))?'done':'todo';
   const SKIN={done:['#d6efdc','#2a9d5c','solid','✓ '],now:['#eef3ff','#2f5fa3','solid','🍃 '],todo:['#ffffff','#9fb0cc','dash',''],lock:['#f4f4f2','#9a9ea8','dot','🔒 ']};
-  const by=b=>MAPLEAF.filter(L=>L.br===b),PAIR=[['명사','동사'],['대명사','부사'],['형용사','접속사'],['전치사','감탄사']];
+  const by=b=>lfGroups(b),PAIR=[['명사','동사'],['대명사','부사'],['형용사','접속사'],['전치사','감탄사']];
   let y=78;const rows=PAIR.map(([a,b])=>{const la=by(a),lb=by(b),h=Math.max(la.length,lb.length)*LH+26,r={a,b,la,lb,y:y+h/2};y+=h;return r});
   const top=40,bot=y+10,gy=bot+50;let g='',leaves='',br='';
   // 잎 하나(알약 모양 + 작은 잎사귀)
-  const leaf=(L,x,ly,side)=>{const s=st(L),K=SKIN[s],t=K[3]+(LSN[L.k]||L.n),w=mapTw(t,F)+34,x0=side<0?x-w:x,dn=s==='done';
+  const leaf=(L,x,ly,side)=>{const s=st(L),K=SKIN[s],nd=L.ks.filter(k=>mapLeafDone(M,k)).length,t=K[3]+L.n+(L.ks.length>1&&s!=='done'?` ${nd}/${L.ks.length}`:''),w=mapTw(t,F)+34,x0=side<0?x-w:x,dn=nd>0;
     const tw=side<0?`M${x+30} ${ly} q-14 0 -30 0`:`M${x-30} ${ly} q14 0 30 0`;
     return `<path d="${tw}" stroke="#7a5230" stroke-width="3" fill="none"/><ellipse cx="${side<0?x+8:x-8}" cy="${ly-7}" rx="9" ry="4.5" fill="#6fb27f" transform="rotate(${side<0?-30:30} ${side<0?x+8:x-8} ${ly-7})"/>
       <g ${dn?`data-act="mapLfOpen" data-k="${L.k}" style="cursor:pointer"`:''}><rect x="${x0}" y="${ly-15}" width="${w}" height="30" rx="15" fill="${K[0]}" stroke="${K[1]}" stroke-width="${s==='now'?3:2}" ${K[2]==='dash'?'stroke-dasharray="6 4"':K[2]==='dot'?'stroke-dasharray="2 4"':''}/>
@@ -1709,17 +1718,17 @@ function mapLeafView(cur){const M=mapS(),W=760,TX=380,F=17,LH=38;
   for(let i=0;i<18;i++){const a=i/18*Math.PI*2;g+=`<circle cx="${TX+Math.cos(a)*330}" cy="${cy+Math.sin(a)*(ry-30)}" r="62" fill="#e7f2df"/>`}
   g+=`<path d="M${TX-34} ${gy} C ${TX-20} ${gy-60}, ${TX-14} ${top+120}, ${TX-12} ${top+60} L ${TX+12} ${top+60} C ${TX+14} ${top+120}, ${TX+20} ${gy-60}, ${TX+34} ${gy} Z" fill="#8a5a33"/>`;
   // 땅 · 뿌리(문장 만들기)
-  const RG=[];MAPLEAF.filter(L=>L.br==='뿌리').forEach(L=>{let x=RG.find(z=>z.g===L.g);if(!x)RG.push(x={g:L.g,ls:[]});x.ls.push(L)});
+  const RG=lfGroups('뿌리').map(G=>({g:G.n,k:G.k,ls:G.ks.map(k=>LEAFBY[k]),lock:G.lock}));
   const brDone=MAPLEAF.filter(L=>L.br!=='뿌리'&&!L.lock).every(L=>mapLeafDone(M,L.k));
   let rt=`<rect x="0" y="${gy}" width="${W}" height="10" rx="5" fill="#c9b48a"/>`,rp='';
-  const per=[4,3];let k=0,yy=gy+86;per.forEach(n=>{const part=RG.slice(k,k+n);k+=n;const gap=W/(part.length+1);part.forEach((z,i)=>{const x=gap*(i+1),dn=z.ls.every(L=>mapLeafDone(M,L.k)),now=z.ls.some(L=>L.k===cur),s=now?'now':dn?'done':'todo',K=SKIN[s],t=K[3]+(z.g==='자리가 품사를 정해요'?'자리 = 품사':z.g),w=mapTw(t,16)+24;
+  const per=RG.length>4?[4,RG.length-4]:[RG.length];let k=0,yy=gy+86;per.forEach(n=>{const part=RG.slice(k,k+n);k+=n;const gap=W/(part.length+1);part.forEach((z,i)=>{const x=gap*(i+1),nd=z.ls.filter(L=>mapLeafDone(M,L.k)).length,dn=!z.lock&&nd===z.ls.length,now=z.ls.some(L=>L.k===cur),s=z.lock?'lock':now?'now':dn?'done':'todo',K=SKIN[s],t=K[3]+z.g+(z.ls.length>1&&!dn?` ${nd}/${z.ls.length}`:''),w=mapTw(t,16)+24;
       rp+=`<path d="M${TX} ${gy+4} C ${TX} ${yy-30}, ${x} ${gy+30}, ${x} ${yy-15}" stroke="#a07a4e" stroke-width="4" fill="none"/>`;
-      rt+=`<g ${dn?`data-act="mapLfOpen" data-k="g:${esc(z.g)}" style="cursor:pointer"`:''}><rect x="${x-w/2}" y="${yy-15}" width="${w}" height="30" rx="8" fill="${K[0]}" stroke="${K[1]}" stroke-width="2" ${s==='todo'?'stroke-dasharray="6 4"':''}/><text x="${x}" y="${yy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2330">${esc(t)}</text></g>`});yy+=52});
+      rt+=`<g ${nd?`data-act="mapLfOpen" data-k="${esc(z.k)}" style="cursor:pointer"`:''}><rect x="${x-w/2}" y="${yy-15}" width="${w}" height="30" rx="8" fill="${K[0]}" stroke="${K[1]}" stroke-width="2" ${s==='todo'?'stroke-dasharray="6 4"':s==='lock'?'stroke-dasharray="2 4"':''}/><text x="${x}" y="${yy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2330">${esc(t)}</text></g>`});yy+=52});
   rt=rp+rt+`<text x="${TX}" y="${yy+4}" text-anchor="middle" font-size="18" font-weight="800" fill="#5d4a1f">🌱 뿌리 · 문장 만들기${brDone?'':' (가지를 다 채우면 열려요)'}</text>`;
   const H=yy+20;
   let h=`<div style="overflow-x:auto;margin:8px 0;-webkit-overflow-scrolling:touch"><svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;font-family:'Noto Sans KR',sans-serif;font-size-adjust:none!important" role="img" aria-label="문법 나무">${g}${br}${leaves}${rt}</svg></div>`;
-  if(LTOPEN){const ks=LTOPEN.startsWith('g:')?MAPLEAF.filter(L=>L.g===LTOPEN.slice(2)).map(L=>L.k):[LTOPEN];const L0=LEAFBY[ks[0]];
-    if(L0)h+=`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5"><b>${esc(L0.br==='뿌리'?L0.g:L0.br+' · '+L0.n)}</b>${ks.flatMap(k=>MAPLT[k]||[]).map(r=>`<div style="margin-top:4px">• ${esc(r.sum)}${r.ex?` <b>${esc(r.ex)}</b>`:''}</div>`).join('')}</div>`}
+  if(LTOPEN){const lfk=LTOPEN.startsWith('lf:')?LTOPEN.slice(3).split('|'):null,ks=lfk?MAPLEAF.filter(L=>L.br===lfk[0]&&!L.lock&&lfOf(L)===lfk[1]&&mapLeafDone(M,L.k)).map(L=>L.k):LTOPEN.startsWith('g:')?MAPLEAF.filter(L=>L.g===LTOPEN.slice(2)).map(L=>L.k):[LTOPEN];const L0=LEAFBY[ks[0]];
+    if(L0)h+=`<div style="margin-top:8px;background:#fffbe8;border-radius:10px;padding:8px 10px;font-size:16px;color:#1f2330;line-height:1.5"><b>${esc(lfk?(lfk[0]==='뿌리'?'뿌리':lfk[0])+' · '+lfk[1]:L0.br==='뿌리'?L0.g:L0.br+' · '+L0.n)}</b>${ks.flatMap(k=>MAPLT[k]||[]).map(r=>`<div style="margin-top:4px">• ${esc(r.sum)}${r.ex?` <b>${esc(r.ex)}</b>`:''}</div>`).join('')}</div>`}
   return h}
 // 하루 끝 빈 나무: 오늘 잎 줄 전부 + 지난 잎 2개에서 한 줄씩(전에 틀린 줄 먼저)
 function mapLeafT(d){if(!d.trK){const M=mapS(),wr={};Object.keys(M.days).forEach(x=>{const y=M.days[x];if(x.startsWith('try')||!y.tree||!y.tree.wrong)return;Object.keys(y.tree.wrong).forEach(l=>wr[l]=(wr[l]||0)+1)});
