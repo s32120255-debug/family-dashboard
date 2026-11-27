@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="16";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="17";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,7 +266,9 @@ function recStart(ui){if(REC)return;const R={chunks:[],t0:Date.now(),timer:null,
   if(MIC){let mr;try{mr=new MediaRecorder(MIC.stream,{mimeType:MIME,audioBitsPerSecond:32000})}catch(e){try{mr=new MediaRecorder(MIC.stream)}catch(e2){mr=null}}
     if(mr){mr.ondataavailable=e=>{if(e.data&&e.data.size)R.chunks.push(e.data)};mr.start(200);R.mr=mr}}
   R.timer=setInterval(()=>{const r=rms(),thr=Math.max(0.012,(MIC?MIC.floor:0.004)*3.5);if(MIC&&r<thr*0.8)MIC.floor=MIC.floor*0.97+r*0.03;
-    ui.level(Math.min(1,r/(thr*4)),r>thr);const s=Math.floor((Date.now()-R.t0)/1000);ui.clock(s);if(Date.now()-R.t0>REC_MAX)ACT.stop()},60)}
+    ui.level(Math.min(1,r/(thr*4)),r>thr);const s=Math.floor((Date.now()-R.t0)/1000);ui.clock(s);if(Date.now()-R.t0>REC_MAX){ACT.stop();return}
+    // 엄마 11/27 「녹음 시작만 누르기」: 말을 시작한 뒤 1.3초 조용하면 저절로 끝(⏹ 안 눌러도 됨)
+    const now=Date.now();if(r>thr){if(!R.loud)R.loud=0;R.loud++;if(R.loud>=3)R.spoke=true;R.last=now}else if(R.spoke&&now-R.last>1300&&now-R.t0>900){ACT.stop()}},60)}
 function recStop(){const R=REC;REC=null;if(!R)return Promise.resolve(null);clearInterval(R.timer);
   return new Promise(res=>{const done=()=>res({blob:R.chunks.length?new Blob(R.chunks,{type:MIME||'audio/webm'}):null,sec:Math.round((Date.now()-R.t0)/1000)});
     if(R.mr&&R.mr.state!=='inactive'){R.mr.onstop=done;try{R.mr.stop()}catch(e){done()}}else done()})}
@@ -383,9 +385,10 @@ function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
     if(fol)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div>`;
     h+=`<div class="row">${skip}</div>`}
   else if(ph==='rec'||ph==='frec'){
-    h+=`<div class="state">🔴 녹음 중 <span id="clk">0:00</span></div><div class="meter" id="mt"><b></b></div><button class="fin" data-act="stop">다 말했어 ⏹</button>`}
+    h+=`<div class="state">🔴 듣고 있어요 <span id="clk">0:00</span></div><div class="meter" id="mt"><b></b></div><button class="fin" data-act="stop">다 말했어 ⏹</button>`}
   else if(ph==='think'||ph==='fthink'){h+=`<div class="state"><span class="spin">⏳</span> 듣고 있어요…</div>`}
   else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`;
+    if(!R.ok&&R.heard)h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b></div>`;
     if(!R.ok&&R.heardModel)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div><button class="fin" data-act="nextq">다음 ▶</button>`}
   else if(ph==='retry'){h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b><br>한 번 더 해 볼까요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
   else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><div class="row"><button class="light" data-act="resay">🎤 다시 녹음</button><button class="light" data-act="show">정답 듣기</button></div><div class="row">${skip}</div>`}
@@ -444,10 +447,9 @@ function runItem(){const R=RUN;Object.assign(R,{ph:'ready',tries:0,quiet:0,fails
 async function judged(v,h,fol){const R=RUN,it=SP.byId(R.ids[R.i]);const ok=v==='exact'||v==='fuzzy';
   if(!fol){
     if(ok){if(R.first==null)R.first=true;R.heard=h;R.ok=true;toModel();return}
-    R.fails++;
-    if(v==='unclear'){R.quiet++;R.ph='quiet';render();return}
+    // 엄마 11/27: 틀리면 다시 녹음 없이 바로 정답 소리 → 정답 보고 「다음 ▶」
+    R.fails++;if(v==='unclear'){R.quiet++;if(R.first==null)R.skipped='quiet'}
     if(R.first==null)R.first=false;R.tries++;R.heard=h;
-    if(R.tries<2){R.ph='retry';render();return}
     R.ok=false;toModel();return}
   if(ok){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
   R.ftries++;R.fails++;
