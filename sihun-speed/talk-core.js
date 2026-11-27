@@ -11,7 +11,7 @@ const jong=w=>{const d=dec(String(w).slice(-1));return d?d[2]:-1};
 // 조사: 받침 있으면 앞, 없으면 뒤 (영어·숫자로 끝나면 받침 없는 쪽)
 function josa(w,pair){const [a,b]=pair.split('/'),j=jong(w);if(a==='으로')return (j>0&&j!==8)?w+'으로':w+'로';return w+(j>0?a:b)}
 // 불규칙: ㅂ(돕다·춥다…), ㄷ(듣다·걷다), ㅅ(짓다·낫다). 르는 저절로.
-const IB=new Set('돕 곱 눕 춥 덥 무섭 어렵 쉽 귀엽 반갑 가볍 무겁 놀랍 즐겁 아름답 더럽 맵 시끄럽 부럽 고맙 외롭 너그럽 가깝 차갑 뜨겁 부끄럽 두껍 날카롭 새롭 흥미롭 지혜롭 평화롭 부드럽'.split(' '));
+const IB=new Set('돕 곱 눕 춥 덥 무섭 어렵 쉽 귀엽 반갑 가볍 무겁 놀랍 즐겁 아름답 더럽 맵 시끄럽 부럽 고맙 외롭 너그럽 가깝 차갑 뜨겁 부끄럽 두껍 날카롭 새롭 흥미롭 지혜롭 평화롭 부드럽 어둡 굽 줍 밉 싱겁 그립 아깝 간지럽 미끄럽 깁'.split(' '));
 const ID=new Set('듣 걷 묻 싣'.split(' '));
 const IS=new Set('짓 낫 붓 잇'.split(' '));
 const isB=s=>IB.has(s)||/스럽$|롭$/.test(s);
@@ -57,7 +57,7 @@ const IRV={be:['was','been'],go:['went','gone'],eat:['ate','eaten'],drink:['dran
   sit:['sat','sat'],hear:['heard','heard'],wake:['woke','woken'],feel:['felt','felt'],leave:['left','left'],find:['found','found'],begin:['began','begun'],
   overcome:['overcame','overcome'],understand:['understood','understood'],spend:['spent','spent'],think:['thought','thought'],put:['put','put'],cut:['cut','cut'],
   hurt:['hurt','hurt'],lead:['led','led'],grow:['grew','grown'],throw:['threw','thrown'],choose:['chose','chosen'],keep:['kept','kept'],hold:['held','held'],
-  send:['sent','sent'],pay:['paid','paid'],say:['said','said'],sell:['sold','sold'],stand:['stood','stood'],fall:['fell','fallen'],drive:['drove','driven'],set:['set','set']};
+  send:['sent','sent'],pay:['paid','paid'],say:['said','said'],sell:['sold','sold'],stand:['stood','stood'],fall:['fell','fallen'],drive:['drove','driven'],set:['set','set'],hide:['hid','hidden']};
 const DBL=new Set('stop plan shop jog hop chat drop hug clap swim run sit begin get put cut win forget set skip'.split(' '));
 const head=v=>v.split(' ')[0],tail=v=>{const i=v.indexOf(' ');return i<0?'':v.slice(i)};
 function b3(v){if(v==='have')return 'has';if(v==='do')return 'does';if(v==='go')return 'goes';if(/(s|x|z|ch|sh)$/.test(v))return v+'es';if(/[^aeiou]y$/.test(v))return v.slice(0,-1)+'ies';return v+'s'}
@@ -77,10 +77,10 @@ const SUBJ=[
  {en:'she',ko:'그녀',t:'pron',s:1,r:'herself',po:'her',pr:'she'},
  {en:'we',ko:'우리',t:'pron',pl:1,r:'ourselves',po:'our',pr:'we'},
  {en:'they',ko:'그들',t:'pron',pl:1,r:'themselves',po:'their',pr:'they'},
- {en:'my mom',ko:'우리 엄마',qen:'your mom',qko:'너희 엄마',t:'adult',s:1,r:'herself',po:'her',pr:'she'},
- {en:'my dad',ko:'우리 아빠',qen:'your dad',qko:'너희 아빠',t:'adult',s:1,r:'himself',po:'his',pr:'he'},
- {en:'my grandma',ko:'우리 할머니',qen:'your grandma',qko:'너희 할머니',t:'old',s:1,r:'herself',po:'her',pr:'she'},
- {en:'my grandpa',ko:'우리 할아버지',qen:'your grandpa',qko:'너희 할아버지',t:'old',s:1,r:'himself',po:'his',pr:'he'},
+ {en:'the librarian',ko:'그 사서',t:'adult',s:1,r:'herself',po:'her',pr:'she'},
+ {en:'the bus driver',ko:'그 버스 기사',t:'adult',s:1,r:'himself',po:'his',pr:'he'},
+ {en:'the old lady',ko:'그 할머니',t:'old',s:1,r:'herself',po:'her',pr:'she'},
+ {en:'the old man',ko:'그 할아버지',t:'old',s:1,r:'himself',po:'his',pr:'he'},
  {en:'my friend',ko:'내 친구',qen:'your friend',qko:'네 친구',t:'kid',s:1},
  {en:'the teacher',ko:'선생님',t:'adult',s:1},
  {en:'my friends',ko:'내 친구들',qen:'your friends',qko:'네 친구들',t:'kid',pl:1,r:'themselves',po:'their',pr:'they'},
@@ -93,20 +93,22 @@ const SUBJ=[
  {en:'the scientists',ko:'그 과학자들',t:'adult',pl:1,lv:3,r:'themselves',po:'their',pr:'they'},
  {en:'the professor',ko:'그 교수님',t:'adult',s:1,lv:3},
  {en:'my classmate',ko:'우리 반 친구',qen:'your classmate',qko:'너희 반 친구',t:'kid',s:1},
- {en:'my cousin',ko:'내 사촌',qen:'your cousin',qko:'네 사촌',t:'kid',s:1},
+ {en:'my teammate',ko:'우리 팀 친구',qen:'your teammate',qko:'너희 팀 친구',t:'kid',s:1},
  {en:'the boy',ko:'그 남자아이',t:'kid',s:1,r:'himself',po:'his',pr:'he'},
  {en:'the girl',ko:'그 여자아이',t:'kid',s:1,r:'herself',po:'her',pr:'she'},
  {en:'the children',ko:'그 아이들',t:'kid',pl:1,r:'themselves',po:'their',pr:'they'},
  {en:'my classmates',ko:'우리 반 친구들',qen:'your classmates',qko:'너희 반 친구들',t:'kid',pl:1,lv:2,r:'themselves',po:'their',pr:'they'},
  {en:'my teacher',ko:'우리 선생님',qen:'your teacher',qko:'너희 선생님',t:'adult',s:1,nj:1},
- {en:'my parents',ko:'우리 부모님',qen:'your parents',qko:'너희 부모님',t:'adult',pl:1,r:'themselves',po:'their',pr:'they'},
+ {en:'my neighbors',ko:'우리 이웃들',qen:'your neighbors',qko:'너희 이웃들',t:'adult',pl:1,r:'themselves',po:'their',pr:'they'},
  {en:'the farmer',ko:'그 농부',t:'adult',s:1,lv:2},
  {en:'the nurse',ko:'그 간호사',t:'adult',s:1,lv:2},
  {en:'my coach',ko:'우리 코치님',qen:'your coach',qko:'너희 코치님',t:'adult',s:1,lv:2,nj:1},
  {en:'the police officer',ko:'그 경찰관',t:'adult',s:1,lv:2},
  {en:'the artist',ko:'그 화가',t:'adult',s:1,lv:3},
  {en:'the engineers',ko:'그 엔지니어들',t:'adult',pl:1,lv:3,r:'themselves',po:'their',pr:'they'},
- {en:'the puppy',ko:'그 강아지',t:'ani',s:1,an:'dog'}
+ {en:'the puppy',ko:'그 강아지',t:'ani',s:1,an:'dog'},
+ {en:'Tom',ko:'톰',t:'kid',s:1,r:'himself',po:'his',pr:'he',nm:1},{en:'Mina',ko:'미나',t:'kid',s:1,r:'herself',po:'her',pr:'she',nm:1},
+ {en:'Jake',ko:'제이크',t:'kid',s:1,r:'himself',po:'his',pr:'he',nm:1},{en:'Yuna',ko:'유나',t:'kid',s:1,r:'herself',po:'her',pr:'she',nm:1}
 ];
 SUBJ.forEach((x,i)=>{x.i=i;x.lv=x.lv||1;x.nom=x.nom||josa(x.ko,'이/가');x.top=josa(x.ko,'은/는');
   x.be=x.s?'is':x.t==='me'?'am':'are';x.was=x.s||x.t==='me'?'was':'were';x.do=x.s?'does':'do'});
@@ -190,7 +192,7 @@ const VP=[
  V('jump rope','줄넘기하다',null,null,{h:1,sk:1}),
  V('whistle','휘파람을 불다',null,null,{h:1,sk:1,lv:2}),
  V('fix','고치다','을',[['bikes','자전거'],['computers','컴퓨터',2],['the roof','지붕',3,'xK']],{h:1,sk:1}),
- V('build','만들다','을',[['sandcastles','모래성'],['robots','로봇',2],['websites','웹사이트',3]],{h:1,sk:1}),
+ V('build','쌓다','을',[['sandcastles','모래성'],['towers with blocks','블록으로 탑',1]],{h:1,sk:1}),V('build','조립하다','을',[['robots','로봇',2],['model cars','모형 자동차',2]],{h:1,sk:1}),V('build','개발하다','을',[['websites','웹사이트',3],['apps','앱',3]],{h:1,sk:1}),
  V('feed','먹이를 주다','에게',[['the dog','개'],['the fish','물고기'],['the chickens','닭',2]],{h:1}),
  V('wear','쓰다','을',[['a helmet','헬멧'],['a mask','마스크'],['a hat','모자']],{h:1}),
  V('wash','씻다','을',[['{po} hands','손']],{h:1,po:1}),
@@ -206,7 +208,7 @@ const ADJ=[
  AD('sleepy','졸리다',1,'a fe'),AD('busy','바쁘다',1,'fe'),AD('sick','아프다',1,'a fe'),AD('cold','춥다',1,'a fe'),AD('hot','덥다',1,'a fe'),AD('thirsty','목이 마르다',1,'a fe'),
  AD('bored','심심하다',1,'fe'),AD('kind','친절하다',1,'tr'),AD('funny','웃기다',1,'tr'),AD('cute','귀엽다',1,'a tr'),AD('smart','똑똑하다',1,'a tr'),AD('tall','키가 크다',1,'tr'),
  AD('strong','힘이 세다',1,'tr'),AD('fast','빠르다',1,'a tr'),AD('quiet','조용하다',1,'a'),
- AD('angry','화가 나다',1,'a fe'),AD('scared','무섭다',1,'a fe'),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',1,'a tr'),
+ AD('angry','화가 나다',1,'a fe'),AD('scared','무섭다',1,'a fe'),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',9,'a tr'),
  AD('shy','수줍음이 많다',1,'a tr'),AD('slow','느리다',1,'a tr'),AD('weak','힘이 약하다',1,'tr'),AD('young','어리다',1,'a tr'),
  AD('lonely','외롭다',2,'a fe'),AD('healthy','건강하다',2,'a'),AD('honest','정직하다',2,'tr'),AD('brave','용감하다',2,'a tr'),AD('lazy','게으르다',2,'a tr'),AD('famous','유명하다',2,'tr'),
  AD('curious','호기심이 많다',2,'a tr'),AD('upset','속상하다',2,'fe'),AD('calm','침착하다',2,'tr'),AD('polite','예의 바르다',2,'tr'),AD('popular','인기가 많다',2,'tr'),AD('nervous','긴장되다',2,'fe'),
