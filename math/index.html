@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795754690";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795755044";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -3178,15 +3178,17 @@ const FRAC=new Set(["OF",...FRP]),passN=id=>Math.max(1,Math.min(6,FRAC.has(id)?(
 const finalPQ=id=>Math.round(tc(id).sec*(lvl(id)===0?2:1)*spdK()*10)/10;
 const D=()=>DAYS[today()];
 
+const PLANV="52";/* 하루 계획 만드는 방식이 바뀔 때마다 올린다 */
 function ensureToday(){
   if(!S.cfg.ten){S.cfg.ten=true;S.cfg.plan=clone(PLAN0);S.lastDay=null}
   Object.keys(S.ts).forEach(id=>{const T=TYPES[id];if(T&&STEPT(T)&&(S.ts[id].step||0)>stepMax(T))S.ts[id].step=stepMax(T)});
-  const t=today();if(S.lastDay===t&&DAYS[t])return;
+  /* 계획을 만드는 방식이 바뀐 날에는 오늘 계획도 다시 만든다. 다른 기기나 저장소에서 온 옛 계획이 덮어써도 여기서 다시 맞춰짐 (구구단이 안 뜨던 문제) */
+  const t=today();if(S.lastDay===t&&DAYS[t]){if(DAYS[t].pv!==PLANV){DAYS[t].plan=planNow();DAYS[t].pv=PLANV;save(t);try{if(view==="home")setTimeout(render,0)}catch(e){}}return}
   let carry={};
   if(S.cfg.carryOn&&S.lastDay&&DAYS[S.lastDay]){const L=DAYS[S.lastDay];
     Object.keys({...L.plan,...L.carry}).forEach(id=>{const owe=(L.plan[id]||0)+(L.carry[id]||0)-(L.done[id]||0);if(owe>0&&!tc(id).home&&(S.cfg.plan[id]||0)>0)carry[id]=Math.min(owe,(S.cfg.plan[id]||1)*3)})}
   if(!DAYS[t])DAYS[t]={plan:{},carry,done:{},sets:[],savedAt:0};
-  DAYS[t].plan=planNow();S.lastDay=t;{const sa=S.savedAt||0,hadSets=(DAYS[t].sets||[]).length;save(t);S.savedAt=sa;if(!hadSets)DAYS[t].savedAt=0;persistLocal()}
+  DAYS[t].plan=planNow();DAYS[t].pv=PLANV;S.lastDay=t;{const sa=S.savedAt||0,hadSets=(DAYS[t].sets||[]).length;save(t);S.savedAt=sa;if(!hadSets)DAYS[t].savedAt=0;persistLocal()}
 }
 /* 대기 줄: 지금 학기 → 지난 학기(가까운 것부터) → 다음 학기. 잠긴 것·통과한 것은 빠짐 */
 const semIx=id=>SEMS.indexOf((CUR[id]||["보충"])[0]);
@@ -3203,7 +3205,7 @@ function weList(){const ok=id=>TYPES[id]&&!tc(id).home&&!passedT(id);if(S.cfg.we
   if(L.length<5)L=L.concat(queueList().filter(id=>LIGHT.has(id)&&!L.includes(id)&&ok(id)&&!isLocked(id)).slice(0,5-L.length));return L}
 function planNow(){const wk=wkOn();
   if(wk&&isWE()){const L=weList();if(L.length){const p={},T=weT();for(let k=0;k<T;k++){const id=L[k%L.length];p[id]=(p[id]||0)+1}return p}}
-  return planBase(wk)}
+  const p=planBase(wk);try{weakBoost(p)}catch(e){}return p}
 function planBase(wk){const p={},fp=fracNow();let tot=0;
   S.cfg.order.forEach(id=>{const n=S.cfg.plan[id]||0;if(n<=0)return;if(wk&&isWeT(id))return;if(id==="FR"){if(fp&&!p[fp]){p[fp]=1;tot++}return}if(tc(id).home||p[id]||passedT(id))return;p[id]=n;tot+=n});
   if(TYPES.MM&&S.cfg.plan.MM==null&&!p.MM&&!isLocked("MM")&&!passedT("MM")&&!tc("MM").home){p.MM=1;tot++}
@@ -3429,7 +3431,7 @@ let view="who",RUN=null,CON=null,LAST=null,parentOpen={},modal=null,tick=null;
 function go(v){view=v;modal=null;stopTick();render()}
 function render(){
   ensureToday();
-  const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam,famcal:vFamCal}[view]||vHome;
+  const f={bank:vBank,who:vWho,mine:vMine,cal:vCal,home:vHome,intro:vIntro,play:vPlay,concept:vConcept,result:vResult,report:vReport,parent:vParent,word:vWord,graph:vGraph,gprint:vGprint,duel:vDuel,fam:vFam,famcal:vFamCal,weak:vWeak}[view]||vHome;
   app.innerHTML=f()+(TABV[view]&&!PREVIEW&&!(view==="home"&&f!==vHome)?tabs():"")+(modal?modal():"");
   if(view==="play")startTick();
   if(view==="parent")foldParent();
@@ -3850,6 +3852,45 @@ function advanceStep(){
 }
 
 /* 오늘 기록 */
+/* ───────── 시훈이 약점 리포트 (11/27 sy: "리포트를 만들어서 약한 부분을 채워 주자, 시훈이 것만") ─────────
+   최근 기록 14일을 유형별로 본다. 시간은 자기 기록끼리만 견준다. 막힌 이유는 기록이 5일 넘게 쌓인 뒤에만 말한다. */
+function weakAn(days,core){const ks=Object.keys(days||{}).filter(k=>(days[k].sets||[]).length).sort(),use=ks.slice(-14),by={};
+  use.forEach(k=>days[k].sets.forEach(x=>{if(TYPES[x.type]&&x.n)(by[x.type]=by[x.type]||[]).push(x)}));
+  const rows=Object.keys(by).map(id=>{const T=TYPES[id],ss=by[id],n=ss.reduce((a,x)=>a+x.n,0),w=ss.reduce((a,x)=>a+(x.w||0),0),wr=n?w/n:0,st=((core||{}).ts||{})[id]||{},step=st.step||0;
+    const pq=ss.map(x=>x.t/x.n),h=Math.floor(pq.length/2),av=a=>a.reduce((x,y)=>x+y,0)/a.length,p1=pq.length>=4?av(pq.slice(0,h)):null,p2=pq.length>=4?av(pq.slice(h)):null,dp=p1?(p2-p1)/p1:0;
+    let same=0;if(STEPT(T))for(let i=ss.length-1;i>=0&&ss[i].step===step&&!ss[i].up;i--)same++;
+    const sg=sigOf(ss),pats=Object.entries(sg.pats).sort((a,b)=>b[1]-a[1]),clean=ss.filter(x=>!x.w).length;
+    const score=ss.length<3?0:(wr>=.15?wr*10:wr>=.08?wr*5:0)+(same>=6?1:0)+(dp>=.15?1:0);
+    const why=[];if(ks.length>=5&&ss.length>=3){
+      if(wr>=.2&&pats.length&&pats[0][1]>=3)why.push(["이해 부족",`같은 모양(${pats[0][0]})으로 ${pats[0][1]}번 틀렸어요. 예시와 방법 찾기를 다시 보는 게 좋아요.`]);
+      if(sg.stall>=3)why.push(["꺼내기 막힘",`오래 멈췄다가 맞힌 문제가 ${sg.stall}개예요. 알고는 있는데 바로 안 나와요. 짧게 자주가 맞아요.`]);
+      if(wr<.2&&(sg.first3>=2||sg.fixed>=3))why.push(["주의",`처음 3문제에서 ${sg.first3}번 틀리고, 고쳐서 맞힌 게 ${sg.fixed}번이에요. 몰라서가 아니라 시작할 때 흐트러져요.`]);
+      if(sg.lateAvg>=1)why.push(["후반 집중 저하",`세트 뒤쪽이 앞쪽보다 문제당 ${sg.lateAvg.toFixed(1)}초 느려요.`]);
+      if(wr<.08&&same>=6)why.push(["처리속도·컨디션",`거의 안 틀리는데 같은 단계에서 ${same}세트째예요. 정확하지만 시간이 모자라요. 기준 시간을 보거나 기다려 주세요.`])}
+    const F=st.facts||{},bad=Object.values(F).filter(f=>f.p&&(f.w>=2||(f.slow&&f.n>=2&&!f.r))).sort((a,b)=>b.w-a.w).slice(0,6).map(f=>{try{return T.make(f.p).text}catch(e){return ""}}).filter(Boolean);
+    return{id,T,ss,n,w,wr,clean,p1,p2,dp,same,step,sg,pats,score,why,bad}});
+  return{nDays:ks.length,use,rows:rows.sort((a,b)=>b.score-a.score||b.ss.length-a.ss.length)}}
+/* 약한 유형 최대 2개에 하루 한 세트씩 더 주고, 그만큼 잘 되는 2세트짜리 유형에서 한 세트씩 덜어 온다(하루 세트 수는 그대로). 시훈이 계정, 기록 5일 뒤부터 */
+function weakBoost(p){if(PID!=="sihun"||S.cfg.weakFill===false)return null;let A;try{A=weakAn(DAYS,S)}catch(e){return null}if(A.nDays<5)return null;
+  const weak=A.rows.filter(r=>r.score>0&&p[r.id]&&!TYPES[r.id].forever).slice(0,2),R=id=>A.rows.find(r=>r.id===id);
+  const don=Object.keys(p).filter(id=>p[id]>=2&&!weak.some(r=>r.id===id)).filter(id=>{const r=R(id);return r&&r.ss.length>=3&&r.wr<.05}).sort((a,b)=>R(a).wr-R(b).wr);
+  const out=[];weak.forEach(r=>{const d=don.shift();if(!d)return;p[d]--;p[r.id]++;out.push([r.id,d])});return out.length?out:null}
+function vWeak(){const kid=PID==="sihun",days=kid?DAYS:(FDAYS.sihun||{}),core=kid?S:((FAM.sihun||{}).core||{}),A=weakAn(days,core),on=(core.cfg||{}).weakFill!==false;
+  const pct=x=>Math.round(x*100)+"%",weak=A.rows.filter(r=>r.score>0),rest=A.rows.filter(r=>r.score<=0);
+  const row=r=>`<div class="card"><div class="row" style="justify-content:space-between"><h3>${r.T.name}</h3><span class="pill ${r.score>0?"warm":"ok"}">${r.score>0?"약함":"괜찮음"}</span></div>
+    <dl class="kv"><dt>한 양</dt><dd>${r.ss.length}세트 · ${r.n}문제</dd><dt>처음에 맞힌 비율</dt><dd>${pct(1-r.wr)} · 하나도 안 틀린 세트 ${r.clean}/${r.ss.length}</dd>
+    ${r.p1!=null?`<dt>빠르기 (자기 기록)</dt><dd>문제당 ${r.p1.toFixed(1)}초 → ${r.p2.toFixed(1)}초 ${Math.abs(r.dp)<.05?"(비슷)":r.dp<0?`(${pct(-r.dp)} 빨라짐)`:`(${pct(r.dp)} 느려짐)`}</dd>`:""}
+    ${STEPT(r.T)?`<dt>지금 단계</dt><dd>${r.step+1}/${stepMax(r.T)+1} ${esc(stepLabel(r.T,r.step))}${r.same>=3?` · 이 단계에서 ${r.same}세트째`:""}</dd>`:""}
+    ${r.pats.length?`<dt>틀린 모양</dt><dd>${r.pats.slice(0,3).map(([k,v])=>`${esc(k)} ${v}번`).join(", ")}</dd>`:""}
+    ${r.bad.length?`<dt>자주 걸리는 문제</dt><dd>${r.bad.map(esc).join(", ")}</dd>`:""}</dl>
+    ${r.why.map(([k,t])=>`<p class="small"><b>${k}</b> · ${t}</p>`).join("")}</div>`;
+  return `${bar("약점 리포트",`<button class="nb" data-act="go" data-arg="parent">관리자</button>`)}<div class="page">
+   <p class="small muted">시훈이 최근 기록 ${A.use.length}일치를 유형별로 봤어요. 시간은 시훈이 자기 기록끼리만 견줘요.${FCLOAD?" 불러오는 중…":""}</p>
+   ${A.nDays<5?`<div class="notice warm small">지금 ${A.nDays}일치 기록이에요. 막힌 이유와 약한 유형 판단은 5일치가 쌓인 뒤에 해요. 그 전에는 숫자만 보여 줘요.</div>`:""}
+   ${A.rows.length?"":'<div class="notice">아직 시훈이 기록이 없어요.</div>'}
+   ${A.nDays>=5?`<div class="notice small" style="text-align:left"><b>채워 주는 방법 (${on?"켜짐":"꺼짐"})</b><br>1. 틀렸거나 느렸던 문제는 같은 유형의 다음 세트에 먼저 다시 나와요. 빠르고 정확하게 2번 맞히면 빠져요.<br>2. 약한 유형은 2개까지 하루 한 세트씩 더 나오고, 잘 되는 2세트짜리 유형에서 그만큼 줄어요. 하루 세트 수는 그대로예요.${weak.length?"":"<br>지금은 약함으로 잡힌 유형이 없어요."}</div>`:""}
+   ${(A.nDays>=5?weak:[]).map(row).join("")}${(A.nDays>=5?rest:A.rows).map(row).join("")}
+   <button class="nb" style="align-self:center" data-act="weak">새로 보기</button></div>`}
 function sigOf(sets){
   const items=sets.flatMap(s=>(s.items||[]).map(x=>({...x})));
   const first3=sets.reduce((a,s)=>a+(s.items||[]).filter(x=>x.o<3&&!x.ok1).length,0);
@@ -3967,6 +4008,7 @@ function vParent(){
    ${MSG?`<div class="notice good">${esc(MSG)}</div>`:""}
    <button class="bigbtn" data-act="go" data-arg="bank">문제 전체 보기 <span class="small" style="display:block;font-weight:400">${nT}유형 · ${nLv.toLocaleString()}단계</span></button>
    <button class="bigbtn ghost" data-act="famcal">세 사람 기록 달력 · 밀림 정리</button>
+   <button class="bigbtn ghost" data-act="weak">시훈이 약점 리포트</button>
    ${gwParentHTML()}
    <div class="card"><h3>${pname()} 하루 계획 · ${total}세트</h3><p class="small muted">+/− 세트 수 · 미리 보기는 기록 안 남음</p>${rows}</div>
    ${(()=>{const on=wkOn(),L=on?weList():[],C=S.cfg.order.filter(id=>TYPES[id]&&(LIGHT.has(id)||(S.cfg.weSet||[]).includes(id))),stp=(lab,v,act)=>`<div class="row" style="align-items:center"><span style="flex:1">${lab}</span><button class="nb" data-act="${act}" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${v}</b><button class="nb" data-act="${act}" data-arg="1">+</button></div>`;
@@ -4131,7 +4173,7 @@ function gwParentHTML(){const g=gwS(),s=GWL[g.i],days=Object.keys(g.log).length,
 const ACT={
   bakre:d=>{modal=()=>`<div class="veil"><div class="sheet"><h3>${d} 저장본으로 되돌릴까요?</h3><p class="small muted">지금 단계와 목표가 그날 것으로 바뀌어요. 날짜별로 푼 기록은 그대로 남아요.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose2">그대로 둘래요</button><button class="bigbtn" style="flex:1" data-act="bakdo" data-arg="${d}">되돌리기</button></div></div></div>`;render()},
   bakdo:d=>{try{const B=JSON.parse(localStorage.getItem(kCore()+"-bak")||"{}");if(B[d]&&B[d].core&&B[d].core.cfg){{const rs=S.rs;S=clone(B[d].core);if(rs)S.rs=Date.now()}loadFix();modal=null;MSG=d+" 저장본으로 되돌렸어요.";save(today())}}catch(e){}modal=null;render()},
-  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},famcal:()=>{if(view!=="famcal"){CALM=null;FCD=today();go("famcal")}famLoad();famDays()},fcd:a=>{FCD=a;render()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
+  gw:a=>gwAct(a),gwpt:a=>gwTap(a),fam:()=>{if(view!=="fam")go("fam");famLoad()},weak:()=>{if(view!=="weak")go("weak");if(PID!=="sihun"){famLoad().then(()=>{if(view==="weak")render()});famDays().then(()=>{if(view==="weak")render()})}},famcal:()=>{if(view!=="famcal"){CALM=null;FCD=today();go("famcal")}famLoad();famDays()},fcd:a=>{FCD=a;render()},fbin:()=>fbLogin(),fbout:()=>fbLogout(),fbwho:p=>fbWho(p),fbre:()=>{FBASK=true;render()},duel:()=>{duLoad();go("duel");duSync()},dunew:async o=>{const r=await duNew(o);if(r&&!r.res[PID])duStart(r.k);else render()},dustart:k=>duStart(k),durefresh:()=>{duSync().then(()=>render())},
   banktab:a=>{BANK.tab=a;render()},bankre:()=>{const op=[...document.querySelectorAll("details[open] summary b")].map(x=>x.textContent);render();document.querySelectorAll("details").forEach(d=>{const b=d.querySelector("summary b");if(b&&op.includes(b.textContent))d.open=true})},
   home:()=>{if(PREVIEW){if(view==="intro"){ACT.pvexit();return}RUN={type:(RUN||CON||{}).type||(LAST||{}).id};CON=null;stopTick();if(!RUN.type){ACT.pvexit();return}go("intro");return}
     if(view==="play"&&RUN){modal=()=>`<div class="veil"><div class="sheet"><h3>그만할 거냥?</h3><p class="muted small">이 판은 기록에 안 남는다냥.</p><div class="row"><button class="bigbtn ghost" style="flex:1" data-act="mclose">계속할래</button><button class="bigbtn" style="flex:1" data-act="quit">그만할래</button></div></div></div>`;stopClock();render();return}
