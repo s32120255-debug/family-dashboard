@@ -116,7 +116,8 @@ function bSkel(r,lap){for(let g=0;g<200;g++){const s=pick(r,subjsFor(lap,PEOPLE.
     if(!c)continue;const fe=lvPick(r,ADJ.filter(a=>/fe/.test(a.f)&&(s.t!=='ani'||/\ba\b/.test(a.f))),lap);return {s,ty,c,fe,tp:r(),tw:r()}}throw new Error('no be')}
 function bForm(k,f){let s=k.s;const Q=/q$|why$/.test(f);if(Q)s=qS(s);let {ty,c}=k;if(f==='b_why'){if(!(ty==='adj'&&/fe/.test(c.f)))c=k.fe;ty='adj'}
   const isC=ty==='job'||/\bc\b/.test(c.f);const nk=isC?null:(c.n||null);
-  const cE=ty==='job'?(s.pl?c.pl:AN(c.en)+' '+c.en):c.en;const cK=c.ko;
+  // 엄마 11/27 「한국어 복수 표시 넣어(선생님들)」: 여럿이면 한국어에도 -들
+  const cE=ty==='job'?(s.pl?c.pl:AN(c.en)+' '+c.en):c.en;const cK=ty==='job'&&s.pl?c.ko+'들':c.ko;
   const past=/^b_p/.test(f),tOk=past&&(ty==='place'||/fe/.test(c.f))&&k.tp<.4,t=tOk?TIME.past[Math.floor(k.tw*TIME.past.length)]:null;
   const pres=/^b_(pos|neg|q)$/.test(f),nt=pres&&(ty==='place'||/fe/.test(c.f))&&k.tp<.35?(ty==='place'?(k.tw<.5?['now','지금']:['today','오늘']):['today','오늘']):null;
   const kpos=()=>isC?COP.pos(cK):KO.A(cK),kneg=()=>isC?COP.neg(cK):nk?KO.A(nk):KO.S(cK)+'지 않아',kpast=()=>isC?COP.past(cK):KO.P(cK),kpneg=()=>isC?COP.pneg(cK):nk?KO.P(nk):KO.S(cK)+'지 않았어';
@@ -448,7 +449,7 @@ const PFACT=[['Hangeul was created by King Sejong.','한글은 세종대왕이 �
   ['Coffee is grown in Brazil.','커피는 브라질에서 재배돼.',3],['Penicillin was discovered by Alexander Fleming.','페니실린은 알렉산더 플레밍이 발견했어.',3]];
 function xSkel(r,lap){const T=lvPick(r,PAS,lap);const ag=pick(r,subjsFor(lap,T.ag.includes('a')?['me','you','kid','adult','old','pron','ani']:['me','you','kid','adult','old','pron']));
   return {T,ag,fa:lvPick(r,PFACT.map(x=>({x,lv:x[2]})),lap).x}}
-function xForm(k,f){const T=k.T;let ag=k.ag;if(f==='x_q')ag=qS(ag,1);const by=OBJP[ag.en]||ag.en,be=T.pl?'were':'was',tk=josa('그 '+T.ko,'은/는');let en,ko,alt;
+function xForm(k,f){const T=k.T;let ag=k.ag;if(f==='x_q')ag=qS(ag,1);const by=OBJP[ag.en]||ag.en,be=T.pl?'were':'was',tk=josa('그 '+T.ko+(T.pl?'들':''),'은/는');let en,ko,alt;
   const w=[chip(T.ko,bare(T.en)),chip(T.kv,T.v)];
   switch(f){case 'x_pos':en=SEN([T.en,be,EN.pp(T.v),'by',by]);ko=KSEN([tk,ag.nom,KO.P(T.kv)]);break;
   case 'x_neg':en=SEN([T.en,T.pl?"weren't":"wasn't",EN.pp(T.v),'by',by]);ko=KSEN([tk,ag.nom,KO.N(T.kv),'게 아니야']);break;
@@ -507,14 +508,58 @@ function lForm(k,f){let en,ko,alt;const s=k.s;
 
 // ───────── 단계 ─────────
 // blk: 한 묶음(같은 씨앗) 안에서 나오는 꼴들. 앞 단계 꼴이 섞여 있으면 「기준 문장」 역할(그 꼴의 단계로 셈).
-const FAM={b:[bSkel,bForm],v:[(r,l,c)=>vSkel(r,l,c,/^v_(who|what|where|when|whatdoing|hto|dhto|htoq|sh)$/.test(c)?PEOPLE:undefined),vForm],p:[pSkel,pForm],t:[tSkel,tForm],q:[qSkel,qForm],r:[rSkel,rForm],c:[cSkel,cForm],s:[sSkel,sForm],i:[iSkel,iForm],g:[gSkel,gForm],e:[eSkel,eForm],j:[jSkel,jForm],k:[kSkel,kForm],x:[xSkel,xForm],h:[hSkel,hForm],l:[lSkel,lForm]};
+// ───────── 짝 묶음(엄마 11/27 「엄청 많이 연습」): be↔do · 하나↔여럿 · a↔an · I eat↔He eats ─────────
+const ESV=new Set(['go','watch','fix','study','fly','have','do','wash','brush','teach','tidy up','finish','catch','kiss','mix','relax']);
+const VOW=w=>/^[aeiou]/i.test(w)&&!/^(uni|use|one)/i.test(w);
+function zSkel(r,lap){for(let g=0;g<300;g++){
+    // 3인칭 동사 변화 골고루(엄마 11/27): 절반쯤은 -es · -ies · has · does 로 바뀌는 동사
+    const kv=vSkel(r,lap,'v_pos',PEOPLE,r()<.5?ESV:undefined);const s=kv.s;if(kv.v.po&&!s.po)continue;
+    const adj=lvPick(r,ADJ.filter(a=>/fe|tr/.test(a.f)&&!/\bc\b/.test(a.f)),lap);
+    // I eat ↔ He eats: 같은 동사·목적어, 주어만 하나(3인칭)↔여럿/나/너
+    const okS=x=>!(kv.o&&(kv.o.en===x.en||kv.o.en.replace(/^(the|my|a) /,'')===x.en.replace(/^(the|my|a) /,'')))&&vpOk(x,kv.v)&&objOk(x,kv.v,kv.o)&&!(kv.v.po&&!x.po)&&!(kv.o&&/friends/.test(kv.o.en)&&/friend/.test(x.en));
+    const s3=pick(r,subjsFor(lap,PEOPLE,x=>x.s&&okS(x))),sN=pick(r,subjsFor(lap,PEOPLE,x=>!x.s&&okS(x)));if(!s3||!sN)continue;
+    // 하나 ↔ 여럿(직업): 학생이면 아이들, 아니면 어른들
+    const job=lvPick(r,JOB,lap);const stu=job.en==='student';
+    const j1=pick(r,subjsFor(lap,PEOPLE,x=>x.s&&(stu?(x.t==='kid'||x.t==='pron'):(x.t==='adult'||x.t==='pron'))&&!/^the /.test(x.en)&&!x.nj));
+    const j2=pick(r,subjsFor(lap,PEOPLE,x=>x.pl&&(stu?(x.t==='kid'||x.t==='pron'):(x.t==='adult'||x.t==='pron'||x.t==='you'))&&!x.nj&&!(x.en==='my parents'&&stu)));if(!j1||!j2)continue;
+    // a ↔ an: 같은 주어(어른·그·그녀), 자음 직업 하나 + 모음 직업 하나 / 또는 have a ~ ↔ have an ~
+    const aj=JOB.filter(x=>x.lv<=lap&&x.en!=='student'&&!VOW(x.en)),vj=JOB.filter(x=>x.lv<=lap&&VOW(x.en));
+    const ja=pick(r,subjsFor(lap,PEOPLE,x=>x.s&&(x.t==='adult'||x.t==='pron')&&!/^the /.test(x.en)&&!x.nj));
+    const hv=VP.find(v=>v.have),ho=hv.o.filter(o=>o.lv<=lap&&/^an? /.test(o.en)),hoA=ho.filter(o=>/^a /.test(o.en)),hoN=ho.filter(o=>/^an /.test(o.en));
+    if(!ja||!aj.length||!vj.length||!hoA.length||!hoN.length)continue;
+    return {kv,s,adj,s3,sN,job,j1,j2,ja,a1:pick(r,aj),a2:pick(r,vj),hs:pick(r,subjsFor(lap,PEOPLE,x=>vpOk(x,hv))),hv,h1:pick(r,hoA),h2:pick(r,hoN),useH:r()<.4,tp:r(),tw:r(),th:r()}}
+  throw new Error('no z')}
+function zForm(k,f){const B=(ty,c,s,ff)=>bForm({s,ty,c,fe:c,tp:1,tw:0},ff);const Vv=(s,ff)=>{const K=Object.assign({},k.kv,{s});return vForm(K,ff)};
+  const out=x=>Object.assign({},x,{alt:x.alt||[]});
+  switch(f){
+  case 'z_bpos':return out(B('adj',k.adj,k.s,'b_pos'));case 'z_vpos':return out(Vv(k.s,'v_pos'));
+  case 'z_bneg':return out(B('adj',k.adj,k.s,'b_neg'));case 'z_vneg':return out(Vv(k.s,'v_neg'));
+  case 'z_bq':return out(B('adj',k.adj,k.s,'b_q'));case 'z_vq':return out(Vv(k.s,'v_q'));
+  case 'z_bpast':return out(B('adj',k.adj,k.s,'b_ppos'));case 'z_vpast':return out(Vv(k.s,'v_ppos'));
+  case 'z_bpneg':return out(B('adj',k.adj,k.s,'b_pneg'));case 'z_vpneg':return out(Vv(k.s,'v_pneg'));
+  case 'z_i':return out(Vv(k.sN,'v_pos'));case 'z_he':return out(Vv(k.s3,'v_pos'));
+  case 'z_ineg':return out(Vv(k.sN,'v_neg'));case 'z_heneg':return out(Vv(k.s3,'v_neg'));
+  case 'z_iq':return out(Vv(k.sN,'v_q'));case 'z_heq':return out(Vv(k.s3,'v_q'));
+  case 'z_sg':return out(B('job',k.job,k.j1,'b_pos'));case 'z_pl':return out(B('job',k.job,k.j2,'b_pos'));
+  case 'z_a':if(k.useH)return out(vForm({s:k.hs,v:k.hv,o:k.h1,th:1,tp:1,tf:1,tw:0},'v_pos'));return out(B('job',k.a1,k.ja,'b_pos'));
+  case 'z_an':if(k.useH)return out(vForm({s:k.hs,v:k.hv,o:k.h2,th:1,tp:1,tf:1,tw:0},'v_pos'));return out(B('job',k.a2,k.ja,'b_pos'));
+  default:throw new Error('form '+f)}}
+// 하루마다 섞어 낼 짝 묶음(모든 단계에서): 지금 단계에 맞는 것만
+const ZBLK=[{min:1,b:[['z_sg','z_pl'],['z_pl','z_sg'],['z_a','z_an'],['z_an','z_a']]},{min:4,b:[['z_i','z_he'],['z_he','z_i'],['z_bpos','z_vpos'],['z_vpos','z_bpos']]},
+  {min:5,b:[['z_ineg','z_heneg'],['z_heq','z_iq'],['z_bneg','z_vneg'],['z_vq','z_bq']]},{min:6,b:[['z_bpast','z_vpast'],['z_vpneg','z_bpneg']]}];
+function zBlocks(stage){return ZBLK.filter(x=>stage>=x.min).flatMap(x=>x.b)}
+const FAM={z:[zSkel,zForm],b:[bSkel,bForm],v:[(r,l,c)=>vSkel(r,l,c,/^v_(who|what|where|when|whatdoing|hto|dhto|htoq|sh)$/.test(c)?PEOPLE:undefined),vForm],p:[pSkel,pForm],t:[tSkel,tForm],q:[qSkel,qForm],r:[rSkel,rForm],c:[cSkel,cForm],s:[sSkel,sForm],i:[iSkel,iForm],g:[gSkel,gForm],e:[eSkel,eForm],j:[jSkel,jForm],k:[kSkel,kForm],x:[xSkel,xForm],h:[hSkel,hForm],l:[lSkel,lForm]};
 const STAGES=[
- {t:'be동사 · am / is / are',ex:'He is happy.',blk:[['b_pos']]},
+ {t:'be동사 · am / is / are',ex:'I am happy. / He is happy. / They are happy.',blk:[['b_pos']]},
+ {t:'하나 · 여럿 · a / an / -s',ex:'He is a student. / They are students. / She is an artist.',blk:[['z_sg','z_pl'],['z_pl','z_sg'],['z_a','z_an'],['z_an','z_a']]},
  {t:'be동사 · 아니야 · 질문',ex:"He isn't happy. / Is he happy?",blk:[['b_pos','b_neg','b_q'],['b_neg','b_q']]},
  {t:'be동사 · 과거 was / were',ex:'He was tired yesterday.',blk:[['b_pos','b_ppos','b_pneg'],['b_ppos','b_pq']]},
- {t:'일반동사 · 지금 (he는 -s)',ex:'He plays soccer.',blk:[['v_pos']]},
- {t:"일반동사 · don't / Do ~?",ex:"He doesn't play soccer. / Does he play soccer?",blk:[['v_pos','v_neg','v_q'],['v_neg','v_q']]},
- {t:'일반동사 · 과거 -ed · 불규칙 · did',ex:"He played soccer. / He didn't play. / Did he play?",blk:[['v_pos','v_ppos','v_pneg'],['v_ppos','v_pq']]},
+ {t:'일반동사 · I / you / we / they',ex:'I play soccer. / They eat apples.',blk:[['z_i']]},
+ {t:'일반동사 · he / she 는 -s',ex:'I play soccer. / He plays soccer.',blk:[['z_he'],['z_i','z_he'],['z_he','z_i']]},
+ {t:'be 문장 · do 문장 구분',ex:'He is hungry. / He eats bread.',blk:[['z_bpos','z_vpos'],['z_vpos','z_bpos'],['z_i','z_he']]},
+ {t:"일반동사 · don't / doesn't · Do / Does ~?",ex:"He doesn't play soccer. / Does he play soccer?",blk:[['v_pos','v_neg','v_q'],['v_neg','v_q'],['z_ineg','z_heneg'],['z_heq','z_iq'],['z_bneg','z_vneg'],['z_vq','z_bq']]},
+ {t:'일반동사 · 과거 -ed · 불규칙 · did',ex:"He played soccer. / He didn't play. / Did he play?",blk:[['v_pos','v_ppos','v_pneg'],['v_ppos','v_pq'],['z_bpast','z_vpast'],['z_vpneg','z_bpneg']]},
+ {t:'be · do 섞기 총정리',ex:"He isn't hungry. / He doesn't eat bread. / Was he tired? / Did he sleep?",blk:[['z_bpos','z_vpos'],['z_vneg','z_bneg'],['z_bq','z_vq'],['z_vpast','z_bpast'],['z_bpneg','z_vpneg'],['z_he','z_ineg'],['z_sg','z_pl'],['z_an','z_a'],['b_q','v_q'],['b_neg','v_neg']]},
  {t:'의문사 · what / where / when / who / why',ex:'What does he eat? / Where did he go?',blk:[['v_pos','v_what'],['v_ppos','v_where'],['v_pos','v_when'],['v_ppos','v_who'],['b_pos','b_why']]},
  {t:'전치사 · 어디에 (in / on / under …)',ex:'The cat is under the table.',blk:[['p_pos','p_q'],['p_pos','p_neg'],['p_ppos','p_where']]},
  {t:'전치사 · 때와 방향 (at / on / in / from)',ex:'I get up at seven. / We swim on Sundays.',blk:[['t_at'],['t_on'],['t_in'],['t_bday','t_bdayq'],['t_from']]},
@@ -547,5 +592,7 @@ function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=S
   if(CACHE.size>3000)CACHE.clear();CACHE.set(id,it);return it}
 // 한 묶음: 같은 씨앗으로 묶음의 꼴들
 function block(stage,lap,seed,bi){const st=STAGES[stage-1];const B=st.blk[bi==null?seed%st.blk.length:bi];const ctx=B[B.length-1];return B.map(f=>make([lap,f,seed,ctx].join('.'))).filter(Boolean)}
-window.TALK={STAGES,make,block,F2S,rng};
+// 짝 묶음 하나(꼴 목록을 직접): 하루 짝 연습용
+function blockOf(forms,lap,seed){const ctx=forms[forms.length-1];return forms.map(f=>make([lap,f,seed,ctx].join('.'))).filter(Boolean)}
+window.TALK={STAGES,make,block,blockOf,zBlocks,F2S,rng};
 })();
