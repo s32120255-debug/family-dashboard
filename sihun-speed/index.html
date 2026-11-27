@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="26";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="27";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=4"></script><script src="talk-gen.js?v=4"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=4"></script><script src="talk-gen.js?v=5"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -227,7 +227,7 @@ const NUM={'1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'
 // 엄마 11/27 「a 안 했는데 인식 맘대로 돼」: a·an·the도 세요(빠지거나 바뀌면 틀림). a↔an만 발음 흐림으로 봐줌
 const DROP=new Set(['um','uh','uhm','er','erm','hmm','oh','okay','ok']);
 function words(s){s=String(s||'').toLowerCase().replace(/[’‘`]/g,"'");CONTR.forEach(([r,x])=>s=s.replace(r,x));
-  const out=[];s.replace(/[^a-z0-9' ]/g,' ').replace(/'/g,'').split(/\s+/).forEach(w=>{if(!w)return;w=NUM[w]||w;(NOAP[w]||w).split(' ').forEach(x=>{if(!DROP.has(x))out.push(x)})});return out}
+  const out=[];s.replace(/[^a-z0-9' ]/g,' ').replace(/'/g,'').split(/\s+/).forEach(w=>{if(!w||w==='00')return;w=NUM[w]||w;(NOAP[w]||w).split(' ').forEach(x=>{if(!DROP.has(x))out.push(x)})});return out}
 const PRON={i:['i','eye','hi','ah','aye','ai'],you:['you','u','ya','yo','yu','your'],he:['he','she','hi','hee','his','e','hey'],she:['she','he','shi','see','sea','c','shee','g'],we:['we','wee','oui','v','with'],they:['they','day','dey','thay','there','then']};
 const STRUCT=new Set('i you he she it we they am is are was were be do does did not can will there what where who has have had been should must would could than'.split(' '));
 const IRR={ate:'eat',went:'go',has:'have',had:'have',did:'do',does:'do',swam:'swim',ran:'run',drank:'drink',read:'read'};
@@ -524,6 +524,7 @@ function pastBases(en){const out=[];String(en||'').toLowerCase().replace(/[^a-z'
 const TRY_MAX=3;let R0TIP='';
 // 엄마 11/27 「be·do, a·an, 복수, 3인칭 -s 엄청 중요」: 틀린 곳에 맞는 한 마디(정답은 안 알려 줌)
 const BEW=new Set(['am','is','are','was','were']),DOW=new Set(['do','does','did']);
+const OBJW=new Set(['me','him','her','us','them']),SUBW=new Set(['i','he','she','we','they']),MINEW=new Set(['mine','yours','hers','ours','theirs']),POSW=new Set(['my','your','our','their']);
 function hintOf(ops){const bad=ops.filter(o=>o[0]!=='ok');const T=new Set(bad.map(o=>o[2]).filter(Boolean)),H=new Set(bad.map(o=>o[1]).filter(Boolean));
   const hasT=a=>[...T].some(x=>a.has(x)),hasH=a=>[...H].some(x=>a.has(x));
   if(hasT(BEW)&&hasH(DOW))return '이건 be 문장이에요. 상태·누구·어디는 am · is · are (과거 was · were)';
@@ -537,6 +538,10 @@ function hintOf(ops){const bad=ops.filter(o=>o[0]!=='ok');const T=new Set(bad.ma
     if(t==='has'&&h==='have')return '그 · 그녀 · 한 사람이면 have → has';if(t==='have'&&h==='has')return 'I · you · we · they · 여럿이면 have';
     if(t==='does'&&h==='do')return '그 · 그녀 · 한 사람이면 does';if(t==='do'&&h==='does')return 'I · you · we · they · 여럿이면 do';
     if(t==='is'&&h==='are')return '하나면 is';if(t==='are'&&(h==='is'||h==='am'))return '여럿 · you면 are';if(t==='am'&&h!=='am'&&BEW.has(h))return 'I는 am';
+    if((t==='these'&&h==='this')||(t==='those'&&h==='that'))return '여럿이면 these · those';if((t==='this'&&h==='these')||(t==='that'&&h==='those'))return '하나면 this · that';
+    if(OBJW.has(t)&&SUBW.has(h))return '동사 뒤(~을 · ~에게)에는 me · him · her · us · them';if(SUBW.has(t)&&OBJW.has(h))return '맨 앞(~은 · ~는)에는 I · he · she · we · they';
+    if(MINEW.has(t)&&POSW.has(h))return '뒤에 물건 이름이 없으면 mine · yours · hers · ours';if(POSW.has(t)&&MINEW.has(h))return '뒤에 물건 이름이 오면 my · your · her · our';
+    if(t==='many'&&h==='much')return '셀 수 있는 것(책 · 사과)은 many';if(t==='much'&&h==='many')return '셀 수 없는 것(우유 · 돈 · 시간)은 much';
     if(t==='was'&&h==='were')return '하나 · I면 was';if(t==='were'&&h==='was')return '여럿 · you면 were';
     if(t&&h&&t===h+'s'||t===h+'es'||(t.endsWith('ies')&&h===t.slice(0,-3)+'y'))return VW.has(t)?'그 · 그녀 · 한 사람이면 동사에 -s (go → goes, watch → watches, study → studies)':'여럿이면 -s';
     if(t&&h&&(h===t+'s'||h===t+'es'))return VW.has(h)?'I · you · we · they · 여럿이면 동사에 -s 없이':'하나면 -s 없이'}
