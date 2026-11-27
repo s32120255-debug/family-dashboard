@@ -62,9 +62,14 @@ const CLS={ok:'바로 완성',access:'힌트 보고 고쳐서 완성',unknown:'�
 const KOT={daily:'복습 카드',test:'누적 테스트',wrong:'오답',hw:'숙제',write:'독서 워크지',lit:'문학 개념',fill:'핵심 빈칸',note:'개념 정리'};
 let day=new Date(); let CACHE=null;
 // 📋 과목별 리포트(엄마 11/26): report.html#en · #ko(국어+글쓰기) · #math — 주소 끝이 없으면 전체
-const RSUB=(/^#(en|ko|math|teach)$/.exec(location.hash)||[])[1]||'';
+const RSUB=(/^#(en|ko|math|teach|export)$/.exec(location.hash)||[])[1]||'';
 const RCARD={'🇺🇸':'en','📖':'ko','✍️':'ko','🔢':'math','🧑‍🏫':'math'};
-const RTITLE={en:'🇺🇸 계단영어',ko:'📖 계단국어 · 계단글쓰기',math:'🔢 계단수학',teach:'🧑‍🏫 카츄 가르치기'};
+// 엄마 11/27 "리포트가 너무 흩어져 있다, 못 찾겠어": 리포트는 이 화면 하나, 위 탭으로 고르기
+const RTABS=[['','📋 하루 전체'],['en','🇺🇸 영어'],['ko','📖 국어·글쓰기'],['math','🔢 수학'],['teach','🧑‍🏫 카츄 가르치기'],['export','📦 기록 내보내기']];
+const RMORE={en:[['en:report','🇺🇸 영어 기록 (날짜별 문장·단어)']],ko:[['ko:prev','📖 국어 엄마 보기 (성적·오답·숙제 답)']],math:[['m32:rec','🔢 수학 3-2 기록 (단계·최근 문제)']],teach:[['m32:teach','🧑‍🏫 가르치기 대화 · 직접 해 보기']]};
+const tabsHTML=()=>`<div style="display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px">${RTABS.map(([k,l])=>`<a href="#${k}" style="text-decoration:none;padding:8px 12px;border-radius:12px;border:1.5px solid var(--line);font-weight:700;${k===RSUB?'background:var(--ink);color:var(--card)':'color:var(--ink);background:var(--card)'}">${l}</a>`).join('')}</div>`;
+const moreHTML=()=>(RMORE[RSUB]||[]).length?`<div class="card"><h2>🔎 더 자세히</h2>${RMORE[RSUB].map(([q,l])=>`<p><a href="./?adm=${q}">${l} ▶</a></p>`).join('')}</div>`:'';
+const RTITLE={en:'🇺🇸 계단영어',ko:'📖 계단국어 · 계단글쓰기',math:'🔢 계단수학',teach:'🧑‍🏫 카츄 가르치기',export:'📦 기록 내보내기'};
 
 function gate(){
   let ok=false;try{ok=sessionStorage.getItem('hub:mom')==='1'}catch(e){}
@@ -405,15 +410,15 @@ async function renderTeach(){
   const cell=(x,k)=>{ const S=teachSplit(x),n=THAVE[k]; return S.no.includes(n)?'✖':S.ask.includes(n)?'🔍':'✅'; };
   const sk={}; X.forEach(x=>(x.skipped||[]).forEach(t=>{ const g=trGroup(t); sk[g]=(sk[g]||0)+1; }));
   const top=Object.entries(sk).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  let h=`<h1>📊 카츄 가르치기 리포트 <span class="muted" style="font-size:15px">수학</span></h1>
-    <div class="nav">${[['1','오늘'],['7','7일'],['all','전체']].map(([v,l])=>`<button data-tr="${v}" class="${TR_RANGE===v?'btn':''}">${l}</button>`).join('')}<a href="#" style="margin-left:auto">← 하루 리포트</a></div>`;
-  if(!X.length){ M.innerHTML=h+'<div class="card"><p class="muted">이 기간엔 가르치기 기록이 없어요.</p></div>'; trBind(); return; }
+  let h=tabsHTML()+`<h1>📊 카츄 가르치기 리포트 <span class="muted" style="font-size:15px">수학</span></h1>
+    <div class="nav">${[['1','오늘'],['7','7일'],['all','전체']].map(([v,l])=>`<button data-tr="${v}" class="${TR_RANGE===v?'btn':''}">${l}</button>`).join('')}</div>`;
+  if(!X.length){ M.innerHTML=h+'<div class="card"><p class="muted">이 기간엔 가르치기 기록이 없어요.</p></div>'+moreHTML(); trBind(); return; }
   h+=`<div class="card"><h2>요약</h2><div class="row">${stat(days.length+'일','가르친 날')}${stat(ended+' / '+X.length,'끝까지 한 날')}${stat(avgN+'번','한 번에 설명한 횟수(평균)')}</div></div>`;
   h+=`<div class="card"><h2>5단계 점검표</h2><p class="muted" style="font-size:14px">✅ 시훈이가 처음부터 말함 · 🔍 카츄가 물어봐서 꺼냄 · ✖ 끝까지 안 나옴</p>
     <div style="overflow-x:auto"><table class="kot"><tr><th>날</th>${KEYS.map(k=>`<th>${THAVE[k]}</th>`).join('')}</tr>${X.map(x=>`<tr><td>${x.at.slice(5).replace('-','/')}</td>${KEYS.map(k=>`<td style="text-align:center">${cell(x,k)}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
   h+=`<div class="card"><h2>자주 건너뛴 단계 TOP 3</h2>${top.length?`<ol>${top.map(([g,n])=>`<li>${esc(g)} <b>${n}번</b></li>`).join('')}</ol>`:'<p class="muted">건너뛴 단계 기록이 없어요.</p>'}</div>`;
   h+=`<div class="card"><h2>날마다</h2>${X.slice().reverse().map(x=>`<div style="margin-bottom:14px"><b>${x.at.slice(5).replace('-','/')}</b>${teachHTML(x)}</div>`).join('')}</div>`;
-  M.innerHTML=h; trBind(); }
+  M.innerHTML=h+moreHTML(); trBind(); }
 const TRK={goal:/구하|묻|뭘|무엇/,cond:/조건|문제에|숫자/,method:/방법|식|왜|더하|빼|곱|나누/,steps:/과정|어디서|나왔|건너|중간/,answer:/답|단위/};
 function trGroup(t){ t=String(t||''); if(/어디서|나왔/.test(t)) return '숫자가 어디서 나왔는지 말 안 함'; if(/구하|묻/.test(t)) return '무엇을 구하는지 말 안 함'; if(/조건/.test(t)) return '조건을 빼먹음'; if(/왜|이유/.test(t)) return '왜 그 계산인지 말 안 함'; if(/순서/.test(t)) return '순서가 뒤죽박죽'; if(/단위|답/.test(t)) return '답·단위를 말 안 함'; return t.slice(0,40); }
 function trBind(){ M.querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{ TR_RANGE=b.dataset.tr; renderTeach(); }); }
@@ -421,7 +426,7 @@ async function render(){
   if(RSUB==='teach') return renderTeach();
   const k=dkey(day);const C=CACHE;
   const D=await getD('daily/'+k).catch(()=>null)||{subjects:{}};const S=D.subjects||{};
-  let h=`<h1>📋 시훈 ${RSUB?RTITLE[RSUB]+' ':'하루 '}리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
+  let h=tabsHTML()+`<h1>📋 시훈 ${RSUB?RTITLE[RSUB]+' ':'하루 '}리포트</h1><div class="nav"><button id="pv">◀</button><div class="d">${day.getMonth()+1}월 ${day.getDate()}일 (${'일월화수목금토'[day.getDay()]})</div><button id="nx">▶</button><button id="td">오늘</button></div>`;
   // 영어
   const en=(S.en&&S.en.actual)||{};const R=(C.routine&&C.routine.days&&C.routine.days[k])||{};const V=(C.vcheck&&C.vcheck.days&&C.vcheck.days[k])||{};
   const vn=(en.vocab&&en.vocab.n)||V.n||0, vk=(en.vocab&&en.vocab.known)||V.known||0;
@@ -457,7 +462,8 @@ async function render(){
   h+=`<div class="card"><h2>📦 기록 내보내기</h2><p class="muted" style="font-size:14px">파일로 받아서 Claude에게 올리면 손풀이·대화까지 보고 가르치는 방법을 다듬어요.</p><div><button class="abtn" data-exp="1">이날</button><button class="abtn" data-exp="7">최근 7일</button><button class="abtn" data-exp="30">최근 30일</button></div><div id="expout" class="muted" style="font-size:14px"></div></div>`;
   h+=`<p class="muted"><a href="./">← 시훈 공부방</a> · 더 자세한 기록은 각 과목의 엄마 보기에서 볼 수 있어요.</p>`;
   M.innerHTML=h;
-  if(RSUB)M.querySelectorAll('.card').forEach(c=>{const t=(c.querySelector('h2')||{}).textContent||'';const k=Object.keys(RCARD).find(e=>t.startsWith(e));if(k&&RCARD[k]!==RSUB)c.style.display='none'});
+  if(RSUB)M.querySelectorAll('.card').forEach(c=>{const t=(c.querySelector('h2')||{}).textContent||'';if(RSUB==='export'){if(!t.startsWith('📦'))c.style.display='none';return}if(t.startsWith('📦')){c.style.display='none';return}const k=Object.keys(RCARD).find(e=>t.startsWith(e));if(k&&RCARD[k]!==RSUB)c.style.display='none'});
+  if(RSUB&&RSUB!=='export')M.insertAdjacentHTML('beforeend',moreHTML());
   document.querySelectorAll('.pen[data-pen]').forEach(async el=>{const d=await getD('m32pen/'+el.dataset.pen).catch(()=>null);if(d&&(d.img||(d.ph||[]).length)){el.innerHTML=d.img?`<img src="${d.img}" alt="손풀이">`:'';for(const q of (d.ph||[])){const pd=await getD('m32pen/'+q).catch(()=>null);if(pd&&pd.img)el.insertAdjacentHTML('beforeend',`<div class="muted">📷 종이 풀이 사진</div><img src="${pd.img}" alt="사진">`)}}else el.innerHTML='<span class="muted">손풀이를 못 불러왔어요</span>'});
   if(MI.length) mountAna(k,MI);
   if(KR.length) koFill(KR).then(()=>koExtra(k));

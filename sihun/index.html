@@ -10153,18 +10153,17 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     const row=(ic,n,h)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><span style="min-width:92px"><b>${ic} ${n}</b></span>${h}</div>`;
     $h('#hub').innerHTML=`<div class="hh"><h1>👩 관리자 모드</h1><div class="d">${dateLabel()}</div></div>
       <div class="nav"><button data-h="home">◀ 첫 화면</button><span></span><button data-h="lock">🔒 잠그기</button></div>
+      <button class="go" data-h="report" style="display:block;width:100%;font-size:22px;padding:16px;margin:0 0 12px">📊 리포트 <span style="display:block;font-size:15px;font-weight:400">하루 전체 · 과목별 · 카츄 가르치기 · 기록 내보내기</span></button>
       <div class="panel" style="text-align:left">
       ${H('💰 AI 비용')}<div id="admAI"><p class="note" style="margin:0">불러오는 중…</p></div>
       ${H('📅 오늘 시훈이')}
       ${row('🇺🇸','영어',status('en'))}${row('📖','국어',status('ko'))}${row('🔢','수학',status('math'))}
       ${M32()?row('🖼','그림 복습',`<span class="st ${ms.pf?'done':''}">${ms.pf?'오늘 1문제 했어요 ✅':'오늘은 아직(헤맨 5단계 문제가 있을 때만 나와요)'}</span>`):''}
       ${row('✍️','글쓰기',status('write'))}
-      ${H('📋 기록 보기')}
-      ${B('📋','하루 리포트','과목별 기록 · 틀린 문제 · 🔍 AI 분석 · 기록 내보내기','data-h="report"')}
+      ${H('🔎 더 자세한 기록')}
       ${B('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
       ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
       ${B('🧑‍🏫','가르치기 대화','시훈이가 카츄와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
-      ${B('📊','카츄 가르치기 리포트','5단계 점검표 · 자주 건너뛴 단계 · 날마다 대화 (수학)','data-h="treport"')}
       ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
       ${H('👀 직접 해 보기 · 시훈이 화면 그대로')}
       <p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 풀지 않아도 다음 ▶으로 넘기고, 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
@@ -10317,6 +10316,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='allhub'){try{sessionStorage.removeItem('hub:room')}catch(e){}location.replace('./')}
   });
   render();
+  // 엄마 11/27 리포트 한 곳으로: 리포트 탭의 「더 자세히」 → ./?adm=앱:화면 (엄마 비밀번호 연 상태일 때만)
+  try{const q=new URLSearchParams(location.search).get('adm');if(q&&sessionStorage.getItem('hub:mom')==='1'){const [ap,v]=q.split(':');history.replaceState(null,'',location.pathname+location.hash);RET='admin';setTimeout(()=>openApp(ap,v),0)}}catch(e){}
   setTimeout(()=>{if(VIEW==='home'&&!document.getElementById('hub').hidden)render()},2500);
 })();
 
