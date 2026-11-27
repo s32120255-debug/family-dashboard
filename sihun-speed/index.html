@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="15";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="16";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -136,13 +136,17 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
    정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교. */
 const SP=window.SPEED,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
 const PASS_N=9,FAST_MS=5000,REC_MAX=55000,DAY_N=50; // 엄마 11/26 「너무 짧아, 50문장 정도」
-// 🌳 계단영어에서 채운 잎 문장(엄마 11/26): 잎 문장을 먼저 다 넣고, 50문장이 안 되면 지금 단계 문장으로 채움
-let TREE_IDS=[],TREE_N=[];
+// 🌳 계단영어에서 맞힌 문장만(엄마 11/27 「50개는 무조건, 맞춘 것만 하자」): 계단영어 기록(log/routine map.cells)에서 ok인 문장만.
+//    하루 50문장: 어제 막힌 것 먼저, 나머지는 섞어서, 50개가 안 되면 맞힌 문장을 다시 섞어 반복. 원래 스피드 단계 문장은 안 씀.
+// 틀렸던 단어(vocab/check에서 한 번이라도 틀림)가 문장에 있으면 그 영어 단어를 한글 아래에 작게 보여 줌(엄마 11/27)
+let TREE_IDS=[],TREE_N=[],WRONGW={};
 const TBY={};(window.SPEED_TREE||[]).forEach(L=>L.items.forEach(([k,ko,en])=>TBY['t:'+k]={id:'t:'+k,ko,en,stage:0,leaf:L.n}));
 {const by=SP.byId;SP.byId=id=>String(id).startsWith('t:')?TBY[id]||null:by(id)}
 const isT=id=>String(id).startsWith('t:');
-async function loadTree(){TREE_IDS=[];TREE_N=[];try{if(!DB)return;const R=await DB.get('log/routine');const D=(R&&R.map&&R.map.done)||{};
-  (window.SPEED_TREE||[]).forEach(L=>{if(D[L.k]||(L.u&&D[L.u])){TREE_N.push(L.n);L.items.forEach(x=>TREE_IDS.push('t:'+x[0]))}})}catch(e){}}
+async function loadTree(){TREE_IDS=[];TREE_N=[];WRONGW={};try{if(!DB)return;const R=await DB.get('log/routine');const C=(R&&R.map&&R.map.cells)||{};
+  Object.keys(C).forEach(k=>{const c=C[k];if(!c||!c.ok)return;const id='t:'+k;if(!TBY[id]){if(!c.en||!c.ko)return;TBY[id]={id,ko:c.ko,en:c.en,stage:0,leaf:''}}TREE_IDS.push(id)});
+  try{const W=await DB.get('vocab/check');const ws=(W&&W.words)||{};Object.keys(ws).forEach(w=>{const x=ws[w];if(x&&(x.wn>0||x.relearn||x.known===false||(x.hist||[]).some(h=>h&&h.known===false)))WRONGW[w.toLowerCase()]=x.ko||''})}catch(e){}}catch(e){}}
+function wrongWords(en){const t=String(en||'').toLowerCase().match(/[a-z']+/g)||[],out=[];t.forEach(x=>{if(WRONGW[x]!=null&&!out.includes(x))out.push(x)});return out}
 let DB=null,ST=null,V={view:'home'},RUN=null;
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -179,10 +183,12 @@ addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set(doc
 // ---------- 오늘 10문장 ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function lastDay(before){const ks=Object.keys(ST.days).filter(k=>k<before&&ST.days[k].end).sort();return ks.length?Object.assign({date:ks[ks.length-1]},ST.days[ks[ks.length-1]]):null}
-function buildSet(stage){const st=SP.STAGES[stage-1];const tr=[],ids=[];
-  // 잎 문장: 어제 막힌 것 먼저, 나머지는 섞어서(50개 넘으면 50개까지)
+function buildSet(stage){const tr=[];if(!TREE_IDS.length)return tr;
   (ST.again||[]).forEach(id=>{if(isT(id)&&TREE_IDS.includes(id)&&!tr.includes(id))tr.push(id)});
-  shuffle(TREE_IDS).forEach(id=>{if(!tr.includes(id))tr.push(id)});tr.splice(DAY_N);
+  shuffle(TREE_IDS).forEach(id=>{if(!tr.includes(id))tr.push(id)});
+  while(tr.length<DAY_N){const r=shuffle(TREE_IDS.slice());if(r.length>1&&r[0]===tr[tr.length-1])r.push(r.shift());r.forEach(id=>tr.push(id))}
+  return tr.slice(0,DAY_N)}
+function buildSetOld(stage){const st=SP.STAGES[stage-1];const tr=[],ids=[];
   (ST.again||[]).forEach(id=>{const it=SP.byId(id);if(!isT(id)&&it&&it.stage<=stage&&ids.length<4&&!ids.includes(id))ids.push(id)});
   const prev=lastDay(today());const used=new Set(prev?prev.items.map(x=>x.id):[]);
   const pool=shuffle(st.items.map(x=>x.id).filter(id=>!ids.includes(id)));
@@ -286,9 +292,10 @@ function installHTML(){if(STANDALONE)return '';
 function homeHTML(){const d=ST.days[today()],st=SP.STAGES[stageOf()-1],prev=lastDay(today());
   let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1>
    <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span><button class="link" style="margin:0" data-act="out">다른 아이디로</button></div>`;
-  if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계 <select id="tryStage">${SP.STAGES.map((s,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}단계 · ${esc(s.t)}</option>`).join('')}</select> <select id="tryMode"><option value="base"${modeOf()==='base'?' selected':''}>첫날: 회색 문장 보고</option><option value="ko"${modeOf()==='ko'?' selected':''}>둘째 날: 한글만</option></select></div>`;
+  if(TRY)h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요.</div>`;
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
-  h+=`<div class="card"><span class="stage">${stageOf()}단계 · ${modeOf()==='base'?'첫날':'둘째 날'}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>
+  if(!TREE_IDS.length){h+=`<div class="card"><h2 style="font:400 24px 'Jua';margin:4px 0">계단영어에서 맞힌 문장이 아직 없어요</h2></div>`;if(!TRY)h+=`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;return h}
+  h+=`<div class="card"><span class="stage">🌳 맞힌 문장 ${TREE_IDS.length}개</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">오늘 ${DAY_N}문장</h2>
     <button class="big" data-act="start">${ST.cur&&ST.cur.date===today()&&!TRY?`🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length||DAY_N})`:'🎤 시작'}</button>
     ${MIME||MOCK?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}</div>`;
   if(!TRY)h+=`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
@@ -365,8 +372,9 @@ function logHTML(){let h=tabsHTML('log')+`<h1>📊 기록</h1>`;
 // model: 정답 소리 · fready/frec: 따라 말하기 · good: 따라 말하기 맞음
 function drillHTML(){const R=RUN,it=SP.byId(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f';
   let h=`<div class="top"><div class="dots">${R.ids.map((_,k)=>`<i class="${k<R.i?'done':k===R.i?'now':''}"></i>`).join('')}</div><span class="sub" style="font-size:13px">${esc(USER.name)}</span><button class="x" data-act="quit">그만</button></div>`;
-  h+=R.mode==='base'&&it.base?`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div>`:`<div class="base"><small>${isT(it.id)?'🌳 '+esc(it.leaf)+' · ':''}한글만 보고 말해요</small>&nbsp;</div>`;
+  h+=R.mode==='base'&&it.base?`<div class="base"><small>이 문장을 바꿔요</small>${esc(it.base)}</div>`:`<div class="base"><small>${isT(it.id)&&it.leaf?'🌳 '+esc(it.leaf)+' · ':''}한글만 보고 말해요</small>&nbsp;</div>`;
   h+=`<div class="ko">${esc(it.ko)}</div>`;
+  {const ww=wrongWords(it.en);if(ww.length)h+=`<div class="sub" style="text-align:center;font-size:16px;margin-top:4px">${ww.map(w=>esc(w)).join(' · ')}</div>`}
   if(fol||ph==='model'||ph==='good')h+=`<div class="answer">${esc(it.en)}</div>`;
   if(R.msg&&(ph==='ready'||ph==='fready'))h+=`<div class="heard">${R.msg}</div>`;
   const skip=R.fails?`<button class="link" data-act="skip">${fol?'다음 문장으로 →':'넘어가기 →'}</button>`:'';
