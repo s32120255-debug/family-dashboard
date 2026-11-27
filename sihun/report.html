@@ -319,15 +319,27 @@ async function aiUse(k){ const el=document.getElementById('aiuse'); if(!el) retu
 const TEND={done:'✅ 끝까지 함',max:'✅ 끝까지 함',stopped:'⏸ 중간에 그만',error:'⚠️ 연결 안 됨'};
 const THAVE={goal:'구하는 것',cond:'조건',method:'방법·식',steps:'중간 과정',answer:'답·단위'};
 const TKIND={today:'그날 맞힌 문제',past:'예전에 맞힌 문제',new:'새 문제(풀면서 가르침)'};
-function teachHTML(x){ const p=x.prob||{}, h=x.have||{};
-  return `<div class="kowr"><div>${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 말함 · ${TKIND[p.kind]||''}</div>
-    <div class="kobox">${esc(p.q)}<br>정답: <b>${esc(p.ans)}</b>${p.strat?` · 🃏 ${esc(p.strat)}`:''}</div>
-    <div class="muted">말로 나온 것: ${Object.keys(THAVE).map(k=>`${h[k]?'✅':'⬜'} ${THAVE[k]}`).join(' · ')}${x.correct===false?' · <span class="bad">설명한 답이 정답과 달랐어요</span>':''}</div>
-    ${(x.skipped||[]).length?`<div><b>🔍 건너뛴 단계</b><ul>${x.skipped.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
-    <details><summary>대화 전체 (${(x.turns||[]).length})</summary>${(x.turns||[]).map(t=>`<div class="tut">${t.who==='ai'?'<img src="icons/cat-study.svg?v=1" alt="" style="width:24px;height:24px;border-radius:6px;vertical-align:middle"> ⚡ 카츄':'🙋 시훈'}: ${esc(t.text)}${t.work?`<br><span class="muted">카츄 틀린 풀이:</span> ${esc(t.work).replace(/\n/g,'<br>')}`:''}</div>`).join('')}</details>
-    ${(x.order||[]).length?`<div><b>📝 시훈이가 가르친 순서</b><ol>${x.order.map(o=>`<li>${esc(o.text)}${o.asked?' <span class="muted">(🔍 카츄가 물어봐서 나옴)</span>':''}</li>`).join('')}</ol></div>`:''}
-    ${(x.mom||[]).length?`<div class="ana"><b>👩 메모</b><ul>${x.mom.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:''}
-    ${x.img?`<div class="pen"><div class="muted">✍️ 패드에 쓴 것</div><img src="${x.img}" alt="패드"></div>`:''}</div>`; }
+// 엄마 11/27 "수학을 못해서 뭘 틀렸는지 눈에 안 들어와, 글이 길어": 맨 위 쉬운 말 3줄 + 카츄 메모 한 줄, 나머지는 「자세히 보기」에 접기
+function teachSplit(x){ const h=x.have||{}, ok=[], ask=[], no=[];
+  Object.keys(THAVE).forEach(k=>{ if(!h[k]) no.push(THAVE[k]); else { const asked=(x.order||[]).some(o=>o.asked&&TRK[k].test(o.text))||(x.skipped||[]).some(t=>TRK[k].test(t)); (asked?ask:ok).push(THAVE[k]); } });
+  return {ok,ask,no}; }
+function teachHTML(x){ const p=x.prob||{}, S=teachSplit(x), moms=x.mom||[];
+  const bad=x.correct===false?`설명한 답이 틀렸어요 (정답 ${esc(p.ans)})`:'';
+  const line=(ic,t,v,cls)=>`<div style="font-size:17px;margin:4px 0">${ic} <b>${t}</b>: <span class="${cls||''}">${v}</span></div>`;
+  return `<div class="kowr"><div class="muted">${TEND[x.end]||'진행 중'} · 시훈 ${x.n||0}번 말함 · ${TKIND[p.kind]||''}</div>
+    <div class="kobox">${esc(p.q)}</div>
+    ${line('👍','혼자 잘 말한 것',S.ok.length?S.ok.join(', '):'없음','ok')}
+    ${line('🔍','카츄가 물어봐야 나온 것',S.ask.length?S.ask.join(', '):'없음')}
+    ${line('❌','끝까지 안 나온 것',[S.no.join(', '),bad].filter(Boolean).join(' · ')||'없음','bad')}
+    ${moms.length?`<div class="ana" style="margin-top:6px">👩 ${esc(moms[moms.length-1])}</div>`:''}
+    <details style="margin-top:6px"><summary>자세히 보기</summary>
+      <div class="kobox">정답: <b>${esc(p.ans)}</b>${p.strat?` · 🃏 ${esc(p.strat)}`:''}</div>
+      ${(x.skipped||[]).length?`<div><b>🔍 건너뛴 단계</b><ul>${x.skipped.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
+      ${(x.order||[]).length?`<div><b>📝 시훈이가 가르친 순서</b><ol>${x.order.map(o=>`<li>${esc(o.text)}${o.asked?' <span class="muted">(🔍 카츄가 물어봐서 나옴)</span>':''}</li>`).join('')}</ol></div>`:''}
+      <div><b>💬 대화 전체</b>${(x.turns||[]).map(t=>`<div class="tut">${t.who==='ai'?'<img src="icons/cat-study.svg?v=1" alt="" style="width:24px;height:24px;border-radius:6px;vertical-align:middle"> ⚡ 카츄':'🙋 시훈'}: ${esc(t.text)}${t.work?`<br><span class="muted">카츄가 일부러 틀린 풀이:</span> ${esc(t.work).replace(/\n/g,'<br>')}`:''}</div>`).join('')}</div>
+      ${moms.length>1?`<div class="ana"><b>👩 메모 전체</b><ul>${moms.map(m=>`<li>${esc(m)}</li>`).join('')}</ul></div>`:''}
+      ${x.img?`<div class="pen"><div class="muted">✍️ 패드에 쓴 것</div><img src="${x.img}" alt="패드"></div>`:''}
+    </details></div>`; }
 async function teachFill(k){ const el=document.getElementById('tcbody'); if(!el) return;
   const L=(await getC('m32teach',where('at','==',k)).catch(()=>null));
   if(!L){ el.innerHTML='<p class="muted">기록을 못 불러왔어요.</p>'; return; }
@@ -379,10 +391,9 @@ async function renderTeach(){
   const ended=X.filter(x=>x.end==='done'||x.end==='max').length, avgN=X.length?(X.reduce((a,x)=>a+(x.n||0),0)/X.length).toFixed(1):'–';
   // 5단계: 처음부터 / 카츄가 물어서 / 안 나옴 — have(끝 상태) + 처음 카츄 답 전 have는 없으니 order.asked와 skipped로 가늠
   const KEYS=Object.keys(THAVE);
-  const cell=(x,k)=>{ const h=x.have||{}; if(!h[k]) return '✖'; const asked=(x.order||[]).some(o=>o.asked&&TRK[k].test(o.text))||(x.skipped||[]).some(t=>TRK[k].test(t)); return asked?'🔍':'✅'; };
+  const cell=(x,k)=>{ const S=teachSplit(x),n=THAVE[k]; return S.no.includes(n)?'✖':S.ask.includes(n)?'🔍':'✅'; };
   const sk={}; X.forEach(x=>(x.skipped||[]).forEach(t=>{ const g=trGroup(t); sk[g]=(sk[g]||0)+1; }));
   const top=Object.entries(sk).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const wr=X.map(x=>{ const ts=x.turns||[], i=ts.findIndex(t=>t.state==='wrong'||t.work); if(i<0) return null; const nx=ts.slice(i+1).find(t=>t.who==='me'); return {x,fix:x.have&&x.correct!==false&&nx?true:null,next:nx?nx.text:''}; }).filter(Boolean);
   let h=`<h1>📊 카츄 가르치기 리포트 <span class="muted" style="font-size:15px">수학</span></h1>
     <div class="nav">${[['1','오늘'],['7','7일'],['all','전체']].map(([v,l])=>`<button data-tr="${v}" class="${TR_RANGE===v?'btn':''}">${l}</button>`).join('')}<a href="#" style="margin-left:auto">← 하루 리포트</a></div>`;
   if(!X.length){ M.innerHTML=h+'<div class="card"><p class="muted">이 기간엔 가르치기 기록이 없어요.</p></div>'; trBind(); return; }
@@ -390,7 +401,6 @@ async function renderTeach(){
   h+=`<div class="card"><h2>5단계 점검표</h2><p class="muted" style="font-size:14px">✅ 시훈이가 처음부터 말함 · 🔍 카츄가 물어봐서 꺼냄 · ✖ 끝까지 안 나옴</p>
     <div style="overflow-x:auto"><table class="kot"><tr><th>날</th>${KEYS.map(k=>`<th>${THAVE[k]}</th>`).join('')}</tr>${X.map(x=>`<tr><td>${x.at.slice(5).replace('-','/')}</td>${KEYS.map(k=>`<td style="text-align:center">${cell(x,k)}</td>`).join('')}</tr>`).join('')}</table></div></div>`;
   h+=`<div class="card"><h2>자주 건너뛴 단계 TOP 3</h2>${top.length?`<ol>${top.map(([g,n])=>`<li>${esc(g)} <b>${n}번</b></li>`).join('')}</ol>`:'<p class="muted">건너뛴 단계 기록이 없어요.</p>'}</div>`;
-  h+=`<div class="card"><h2>카츄의 틀린 풀이</h2>${wr.length?`<ul>${wr.map(w=>`<li>${w.x.at.slice(5).replace('-','/')} · ${w.next?`시훈이 대답: "${esc(w.next.slice(0,80))}"`:'<span class="muted">대답 전에 끝남</span>'}</li>`).join('')}</ul><p class="muted" style="font-size:14px">틀린 곳을 짚었는지는 위 대답과 아래 대화에서 봐 주세요.</p>`:'<p class="muted">이 기간엔 틀린 풀이를 보여 준 적이 없어요.</p>'}</div>`;
   h+=`<div class="card"><h2>날마다</h2>${X.slice().reverse().map(x=>`<div style="margin-bottom:14px"><b>${x.at.slice(5).replace('-','/')}</b>${teachHTML(x)}</div>`).join('')}</div>`;
   M.innerHTML=h; trBind(); }
 const TRK={goal:/구하|묻|뭘|무엇/,cond:/조건|문제에|숫자/,method:/방법|식|왜|더하|빼|곱|나누/,steps:/과정|어디서|나왔|건너|중간/,answer:/답|단위/};
