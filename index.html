@@ -5,9 +5,9 @@
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>우리집 기지</title>
-<link rel="manifest" href="manifest.json?v=109">
-<link rel="icon" href="icon-192.png?v=109">
-<link rel="apple-touch-icon" href="icon-192.png?v=109">
+<link rel="manifest" href="manifest.json?v=111">
+<link rel="icon" href="icon-192.png?v=111">
+<link rel="apple-touch-icon" href="icon-192.png?v=111">
 <meta name="theme-color" content="#ffc928">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -165,6 +165,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
 .ladsvg{width:100%;max-height:46vh;height:auto;display:block;margin:0 auto}.ladsvg .path{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:3000;stroke-dashoffset:3000;animation:laddraw 2.4s ease-in-out forwards}
 @keyframes laddraw{to{stroke-dashoffset:0}}
 .wktabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.wktabs .btn{min-width:38px}
+.jmic{justify-self:start;margin-top:-4px}.jmic.on{background:#e03131;border-color:#e03131;color:#fff}
 .jform{display:grid;gap:10px}.jform label{display:grid;gap:4px;font-size:.9rem;color:var(--muted)}.jform textarea{min-height:76px;font:inherit;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--card);color:var(--fg)}
 .jside{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center}.jside select{width:auto}
 .jcase{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0;background:var(--card)}
@@ -265,7 +266,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
  <button class="gbtn" id="loginBtn" hidden><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>구글로 로그인</button>
  <p id="gateErr" hidden style="color:var(--warn);white-space:pre-line;font-size:.9rem"></p>
  <button class="linkbtn" id="gateOut" hidden>다른 계정으로 로그인</button>
-<p style="font-size:.75rem">버전 109</p></div></div>
+<p style="font-size:.75rem">버전 111</p></div></div>
 
 <div class="wrap">
  <header class="top">
@@ -397,7 +398,7 @@ a.missionbtn{text-decoration:none;display:inline-block}
    <ul class="list" id="shopList"></ul>
  </section>
  <section class="card sheet" id="c-judge" role="dialog" aria-label="AI 판사님" hidden>
-   <h2>⚖️ AI 판사님 <span style="display:inline-flex;gap:6px"><button class="btn small" id="judgeNew" hidden>새 사건</button><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
+   <h2>⚖️ AI 판사님 <span style="display:inline-flex;gap:6px"><span class="adm"><button class="btn small" id="judgeOpen"></button></span><button class="btn small" id="judgeNew" hidden>새 사건</button><button class="btn small" data-close aria-label="닫기">닫기</button></span></h2>
    <div id="judgeBox"></div>
  </section>
  <section class="card sheet" id="c-ladder" role="dialog" aria-label="사다리타기" hidden>
@@ -420,8 +421,8 @@ import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase
 import {getAuth,GoogleAuthProvider,onAuthStateChanged,signInWithPopup,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,addDoc,setDoc,updateDoc,deleteDoc,getDoc,writeBatch} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import {getMessaging,getToken,onMessage,isSupported} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging.js";
-import {firebaseConfig} from "./config.js?v=109";
-import {SEED_SCHEDULE} from "./seed.js?v=109";
+import {firebaseConfig} from "./config.js?v=111";
+import {SEED_SCHEDULE} from "./seed.js?v=111";
 
 const DAYS=[["mon","월"],["tue","화"],["wed","수"],["thu","목"],["fri","금"],["sat","토"],["sun","일"]];
 const DAYNAME=Object.fromEntries(DAYS);
@@ -1201,6 +1202,19 @@ for(const id of ["c-sched","c-tasks"]){let o=false;try{o=!!sessionStorage.getIte
  judge/{id}: {at,by,caseId,title,sides:[{who,say}],talk:[{who,text}],createdAt} → 서버 함수 aiJudge가 res를 채움.
  한 사건 = 같은 caseId 문서들. 판사님 질문에 대답하거나 다시 이야기하면 그동안의 talk를 담아 새 문서를 씀. */
 let judgeCase=null;
+
+/* 🎤 말로 적기 (sy 11/27): 브라우저 음성 인식(ko-KR). 말한 게 글씨 칸 끝에 붙고, 손으로 고칠 수 있어요. */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let jRec=null;
+function micify(box){if(!SR)return;box.querySelectorAll("textarea").forEach(t=>{if(t.dataset.mic)return;t.dataset.mic=1;
+ const b=document.createElement("button");b.type="button";b.className="btn small jmic";b.textContent="🎤 말로 적기";t.after(b);
+ let on=false;const done=()=>{on=false;const r=jRec;jRec=null;b.textContent="🎤 말로 적기";b.classList.remove("on");if(r)try{r.stop()}catch(e){}};
+ const listen=()=>{const r=new SR();r.lang="ko-KR";r.interimResults=true;r.continuous=true;const base=t.value.trim();let fin="";
+  r.onresult=e=>{let tmp="";for(let i=e.resultIndex;i<e.results.length;i++){const x=e.results[i][0].transcript;if(e.results[i].isFinal)fin+=x;else tmp+=x}t.value=[base,(fin+tmp).trim()].filter(Boolean).join(" ")};
+  r.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){toast("마이크를 허용해 주세요");on=false}else if(e.error!=="no-speech"&&e.error!=="aborted"&&e.error!=="network")toast("음성을 듣지 못했어요")};
+  // 말이 끊겨도 OK를 누를 때까지 계속 들어요
+  r.onend=()=>{if(on&&jRec===r){t.value=t.value.trim();setTimeout(()=>{if(on)listen()},150)}else if(jRec===r)done()};
+  try{r.start();jRec=r}catch(e){toast("음성을 켜지 못했어요");done()}};
+ b.onclick=()=>{if(on)return done();if(jRec)return;on=true;b.textContent="✓ OK (다 말했어요)";b.classList.add("on");listen()}})}
 const jCases=()=>{const m=new Map();for(const d of S.judge||[]){const k=d.caseId||d.id;const l=m.get(k)||[];l.push(d);m.set(k,l)}
  return[...m.entries()].map(([k,l])=>{l.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return{id:k,docs:l,last:l[l.length-1]}}).sort((a,b)=>(b.last.createdAt||0)-(a.last.createdAt||0))};
 const jWho=(n,v)=>`<select name="${n}">${[...PEOPLE,"서윤","누나","형","친구"].filter((x,i,a)=>a.indexOf(x)===i).map(p=>`<option${p===v?" selected":""}>${esc(p)}</option>`).join("")}</select>`;
@@ -1215,17 +1229,21 @@ function jRes(r){if(!r)return`<p class="jwait">판사님이 이야기를 듣고 
   if(r.each&&r.each.length)h+=r.each.map(x=>`<p style="margin:4px 0"><b>${esc(x.who)}</b> 잘한 점: ${esc(x.good)}<br><span class="meta">다음엔:</span> ${esc(x.try)}</p>`).join("");
   if(r.next)h+=`<p style="margin:8px 0 0"><b>오늘 이렇게 해 봐요</b> ${esc(r.next)}</p>`}
  return h+`</div>`}
-function renderJudge(){const box=$("judgeBox");if(!box)return;const cs=jCases();
- const pend=cs.filter(c=>c.last.res&&c.last.res.state==="ask").length;$("judgeN").textContent=pend?String(pend):"";
+const jOpen=()=>!!(S.settings.find(d=>d.id==="judge")||{}).open;
+function renderJudge(force){const box=$("judgeBox");if(!box)return;const cs=jCases();$("judgeOpen").textContent=jOpen()?"🔓 잠그기":"🔒 열기";
+ const pend=cs.filter(c=>c.last.res&&c.last.res.state==="ask").length;$("judgeN").textContent=pend?String(pend):jOpen()?"!":"";
  const c=judgeCase&&cs.find(x=>x.id===judgeCase);$("judgeNew").hidden=!c;
+ if(jRec)return;
+ // 적고 있는 글이 있으면 다시 그리지 않음(버튼으로 옮길 때만 force)
+ if(force!==true&&[...box.querySelectorAll("textarea,input")].some(x=>x.value.trim()))return;
  if(!c){const a=document.activeElement;if(box.contains(a)&&/TEXTAREA|INPUT|SELECT/.test(a.tagName)&&box.querySelector("#jForm"))return;
-  box.innerHTML=`<p class="status" style="margin:0 0 8px">의견이 부딪힐 때, 두 사람이 각자 이야기를 적으면 판사님이 듣고 공정하게 판단해 줘요.</p>
+  box.innerHTML=(!jOpen()&&!admin?`<p class="status" style="margin:0 0 8px">엄마(관리자)가 「🔒 열기」를 눌러야 새 사건을 맡길 수 있어요.</p>`:`<p class="status" style="margin:0 0 8px">의견이 부딪힐 때, 두 사람이 각자 이야기를 적으면 판사님이 듣고 공정하게 판단해 줘요.${jOpen()?"":" (지금 잠겨 있어요. 관리자라 쓸 수 있어요)"}</p>
   <form class="jform" id="jForm"><label>무슨 일이에요?<input name="title" maxlength="80" placeholder="예: 게임 시간 정하기" autocomplete="off"></label>
   <div class="jside">${jWho("w1",me||"시훈")}<span class="meta">의 이야기</span></div><textarea name="s1" maxlength="1500" aria-label="첫째 사람 이야기" placeholder="내 생각과 이유"></textarea>
   <div class="jside">${jWho("w2",(me||"시훈")==="엄마"?"시훈":"엄마")}<span class="meta">의 이야기</span></div><textarea name="s2" maxlength="1500" aria-label="둘째 사람 이야기" placeholder="상대 생각과 이유"></textarea>
-  <button class="btn primary">판사님께 맡기기</button></form>`+
+  <button class="btn primary">판사님께 맡기기</button></form>`)+
   (cs.length?`<h3 style="margin:16px 0 4px;font-size:1rem">지난 사건</h3>`+cs.slice(0,12).map(x=>{const r=x.last.res;const st=!r?"듣는 중":r.state==="ask"?"질문 있음":r.state==="verdict"?"판결":"멈춤";
-   return`<div class="jcase"><button class="btn small" data-jopen="${x.id}" style="float:right">보기</button><span class="jt">${esc(x.last.title||"사건")}</span> <span class="pill ${st==="질문 있음"?"warn":"info"}">${st}</span><br><span class="meta">${esc(x.last.sides.map(s=>s.who).join(" vs "))} · ${esc(String(x.last.at||""))}</span>${admin?` <button class="btn small" data-jdel="${x.id}">지우기</button>`:""}</div>`}).join(""):"");
+   return`<div class="jcase"><button class="btn small" data-jopen="${x.id}" style="float:right">보기</button><span class="jt">${esc(x.last.title||"사건")}</span> <span class="pill ${st==="질문 있음"?"warn":"info"}">${st}</span><br><span class="meta">${esc(x.last.sides.map(s=>s.who).join(" vs "))} · ${esc(String(x.last.at||""))}</span>${admin?` <button class="btn small" data-jdel="${x.id}">지우기</button>`:""}</div>`}).join(""):"");micify(box);
   return}
  const L=c.last,talk=L.talk||[];
  let h=`<div class="jcase"><span class="jt">${esc(L.title||"사건")}</span> <span class="meta">${esc(String(L.at||""))}</span>${L.sides.map(s=>`<p class="jsay"><b>${esc(s.who)}</b> ${esc(s.say)}</p>`).join("")}</div>`;
@@ -1233,24 +1251,25 @@ function renderJudge(){const box=$("judgeBox");if(!box)return;const cs=jCases();
  c.docs.forEach((d,i)=>{h+=jRes(d.res);const nx=c.docs[i+1];if(nx){const add=(nx.talk||[]).slice((d.talk||[]).length).filter(t=>t.who!=="judge");if(add.length)h+=`<div class="jcase">${add.map(t=>`<p class="jsay"><b>${esc(t.who)}</b> ${esc(t.text)}</p>`).join("")}</div>`}});
  const r=L.res;
  if(r&&r.state==="ask")h+=`<form class="jform" id="jAns">${(r.questions||[]).map((q,i)=>`<label>${esc(q.to)}의 대답 · ${esc(q.q)}<textarea name="a${i}" maxlength="1500"></textarea></label>`).join("")}<button class="btn primary">대답 보내기</button></form>`;
- else if(r&&r.state==="verdict")h+=`<details style="margin-top:10px"><summary class="meta">판결에 할 말이 있어요 (다시 이야기하기)</summary><form class="jform" id="jMore" style="margin-top:8px"><div class="jside">${jWho("w",me||"시훈")}<span class="meta">의 이야기</span></div><textarea name="t" maxlength="1500"></textarea><button class="btn">판사님께 다시 말하기</button></form></details>`;
+ else if(r&&r.state==="verdict"&&(jOpen()||admin))h+=`<details style="margin-top:10px"><summary class="meta">판결에 할 말이 있어요 (다시 이야기하기)</summary><form class="jform" id="jMore" style="margin-top:8px"><div class="jside">${jWho("w",me||"시훈")}<span class="meta">의 이야기</span></div><textarea name="t" maxlength="1500"></textarea><button class="btn">판사님께 다시 말하기</button></form></details>`;
  const a=document.activeElement;if(box.contains(a)&&/TEXTAREA|INPUT|SELECT/.test(a.tagName))return;
- box.innerHTML=h}
+ box.innerHTML=h;micify(box)}
 function jSend(base,talk){const d={at:today(),by:me||null,caseId:base.caseId,title:base.title,sides:base.sides,talk,createdAt:Date.now()};
  judgeCase=base.caseId;return run(db.collection("judge").add(d),"판사님께 보냈어요")}
 function jResText(r){return r.state==="ask"?[r.say,...(r.questions||[]).map(q=>`(${q.to}에게) ${q.q}`)].filter(Boolean).join(" "):`판결: ${r.decision||""} / 해결: ${r.next||""}`}
-$("judgeNew").onclick=()=>{judgeCase=null;renderJudge()};
+$("judgeOpen").onclick=()=>{if(!admin)return;const o=jOpen();run(db.collection("settings").doc("judge").set({open:!o},{merge:true}),o?"판사님을 잠갔어요":"판사님을 열었어요. 사건 하나를 맡길 수 있어요")};
+$("judgeNew").onclick=()=>{judgeCase=null;renderJudge(true)};
 $("judgeBox").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
- if(b.dataset.jopen){judgeCase=b.dataset.jopen;renderJudge();$("c-judge").scrollTop=0}
+ if(b.dataset.jopen){judgeCase=b.dataset.jopen;renderJudge(true);$("c-judge").scrollTop=0}
  if(b.dataset.jdel&&admin){const ids=(S.judge||[]).filter(d=>(d.caseId||d.id)===b.dataset.jdel).map(d=>d.id);if(confirm("이 사건을 지울까요?"))ids.forEach(id=>run(db.collection("judge").doc(id).delete()))}});
 $("judgeBox").addEventListener("submit",e=>{e.preventDefault();const f=e.target,v=n=>(f.elements[n]&&f.elements[n].value||"").trim();
- if(f.id==="jForm"){const s1=v("s1"),s2=v("s2");if(!s1&&!s2){toast("한 사람 이야기는 적어 주세요");return}
+ if(f.id==="jForm"){if(!jOpen()&&!admin){toast("엄마가 열어 줘야 해요");return}const s1=v("s1"),s2=v("s2");if(!s1&&!s2){toast("한 사람 이야기는 적어 주세요");return}
   const sides=[[v("w1"),s1],[v("w2"),s2]].filter(x=>x[1]).map(([who,say])=>({who,say}));const id="c"+Date.now().toString(36),title=v("title");
-  f.reset();document.activeElement&&document.activeElement.blur();jSend({caseId:id,title,sides},[]).then(renderJudge);return}
+  f.reset();document.activeElement&&document.activeElement.blur();jSend({caseId:id,title,sides},[]).then(()=>renderJudge(true));if(jOpen())run(db.collection("settings").doc("judge").set({open:false},{merge:true}));return}
  const c=jCases().find(x=>x.id===judgeCase);if(!c)return;const L=c.last,talk=[...(L.talk||[]),{who:"judge",text:jResText(L.res)}];
  if(f.id==="jAns"){const qs=L.res.questions||[];const ans=qs.map((q,i)=>({who:q.to,text:v("a"+i)})).filter(x=>x.text);if(!ans.length){toast("대답을 적어 주세요");return}
-  document.activeElement&&document.activeElement.blur();jSend(L,[...talk,...ans]).then(renderJudge);return}
- if(f.id==="jMore"){const t=v("t");if(!t){toast("할 말을 적어 주세요");return}document.activeElement&&document.activeElement.blur();jSend(L,[...talk,{who:v("w"),text:t}]).then(renderJudge)}});
+  document.activeElement&&document.activeElement.blur();jSend(L,[...talk,...ans]).then(()=>renderJudge(true));return}
+ if(f.id==="jMore"){if(!jOpen()&&!admin){toast("엄마가 열어 줘야 해요");return}const t=v("t");if(!t){toast("할 말을 적어 주세요");return}document.activeElement&&document.activeElement.blur();jSend(L,[...talk,{who:v("w"),text:t}]).then(()=>renderJudge(true))}});
 let sheetId=null;
 function openSheet(id){for(const x of ["c-help","c-shop","c-buy","c-ladder","c-judge"])$(x).hidden=x!==id;sheetId=id||null;$("sheetBg").hidden=!id;document.body.style.overflow=id?"hidden":""}
 $("missionBtn").onclick=()=>{helpMode="once";renderHelp();openSheet("c-help")};$("dailyBtn").onclick=()=>{helpMode="daily";renderHelp();openSheet("c-help")};$("shopBtn").onclick=()=>openSheet("c-shop");$("buyBtn").onclick=()=>openSheet("c-buy");$("ladderBtn").onclick=()=>openSheet("c-ladder");$("judgeBtn").onclick=()=>{renderJudge();openSheet("c-judge")};$("sheetClose").onclick=()=>openSheet(null);$("sheetBg").onclick=()=>openSheet(null);
@@ -1289,7 +1308,7 @@ setInterval(()=>{renderTop();if(today()!==lastDay){lastDay=today();schedDate=las
 renderAll();
 
 /* ---------- 새 버전 자동 적용 ---------- */
-const VERSION=109;
+const VERSION=111;
 async function checkVersion(){try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});const j=await r.json();
  if(j.v>VERSION){const k="reloadedFor";let done=null;try{done=sessionStorage.getItem(k)}catch(e){}
   if(done!==String(j.v)){try{sessionStorage.setItem(k,String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v)}}}catch(e){}}
