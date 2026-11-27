@@ -10148,39 +10148,46 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <table class="plan" style="text-align:left;margin-top:10px;font-size:15px"><tr><td></td><td class="m">오늘</td><td class="m">${m}월</td></tr>
       ${Object.keys(AIN).filter(c=>mon[c]).map(c=>`<tr><td>${AIN[c]}</td><td class="m">${day[c]?day[c].n+'번 · '+aiWon(aiUsd(day[c])):'-'}</td><td class="m">${mon[c].n}번 · ${aiWon(aiUsd(mon[c]))}</td></tr>`).join('')}</table>
       <p class="note" style="margin:6px 0 0">실제로 쓴 토큰으로 계산한 값이에요(1달러 1,450원). 기록 ${since}일 기준 하루 평균 ${aiWon(aiUsd(mS)/since)}. 정확한 청구액은 Claude 콘솔(platform.claude.com) Usage에서 봐요.</p>`}
+  let ADMS=''; // 관리자 6칸 중 지금 연 칸
   function admin(){const B=(ic,t,sub,attr)=>`<button class="go light" style="text-align:left;font:600 17px 'Noto Sans KR',sans-serif;margin:6px 0" ${attr}>${ic} ${t}<span style="display:block;font-size:13px;font-weight:400;color:var(--sub)">${sub}</span></button>`;
     const H=t=>`<h2 style="font-size:19px;margin:20px 0 6px">${t}</h2>`;const ms=stats('math');
     const row=(ic,n,h)=>`<div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><span style="min-width:92px"><b>${ic} ${n}</b></span>${h}</div>`;
-    $h('#hub').innerHTML=`<div class="hh"><h1>👩 관리자 모드</h1><div class="d">${dateLabel()}</div></div>
-      <div class="nav"><button data-h="home">◀ 첫 화면</button><span></span><button data-h="lock">🔒 잠그기</button></div>
-      <button class="go" data-h="report" style="display:block;width:100%;font-size:22px;padding:16px;margin:0 0 12px">📊 리포트 <span style="display:block;font-size:15px;font-weight:400">하루 전체 · 과목별 · 카츄 가르치기 · 기록 내보내기</span></button>
-      <div class="panel" style="text-align:left">
-      ${H('💰 AI 비용')}<div id="admAI"><p class="note" style="margin:0">불러오는 중…</p></div>
-      ${H('📅 오늘 시훈이')}
-      ${row('🇺🇸','영어',status('en'))}${row('📖','국어',status('ko'))}${row('🔢','수학',status('math'))}
-      ${M32()?row('🖼','그림 복습',`<span class="st ${ms.pf?'done':''}">${ms.pf?'오늘 1문제 했어요 ✅':'오늘은 아직(헤맨 5단계 문제가 있을 때만 나와요)'}</span>`):''}
-      ${row('✍️','글쓰기',status('write'))}
-      ${H('🔎 더 자세한 기록')}
-      ${B('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
-      ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
-      ${B('🧑‍🏫','가르치기 대화','시훈이가 카츄와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
-      ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}
-      ${H('👀 직접 해 보기 · 시훈이 화면 그대로')}
-      <p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 풀지 않아도 다음 ▶으로 넘기고, 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
-      ${B('🇺🇸','영어 · 오늘','시훈이가 오늘 하는 것 처음부터','data-h="try" data-app="en" data-day="today"')}
-      ${B('🇺🇸','영어 · 내일','시훈이가 내일 할 것 미리','data-h="try" data-app="en" data-day="tomorrow"')}
-      ${B('📖','국어','복습 · 비문학 · 숙제 · 누적 테스트','data-h="try" data-app="ko"')}
-      ${B('🔢','수학 3-2','단계 · 그림 틀 · 🖼 그림 복습 · 🧑‍🏫 가르치기 · 📘 최상위 문제집','data-h="try" data-app="m32"')}
-      ${B('✍️','글쓰기','AI 쌤과 글쓰기','data-h="try" data-app="write"')}
-      ${H('🔎 답 보기 (표로 한눈에)')}
-      ${B('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
-      ${B('🔢','수학 3-2 미리보기','문제 · 정답','data-h="aopen" data-app="m32" data-v="preview"')}
-      ${B('📘','최상위 문제집','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
-      ${B('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}
-      ${H('⚙️ 넣기 · 설정')}
-      ${B('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
-      ${B('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}
-      </div>`;adminAI()}
+    // 엄마 11/27: 관리자 화면을 6칸으로 — 📊 리포트 · 👀 엄마 체험 · 📚 문제 보기 · 🗺 진도 보기 · 🤖 AI 사용 현황 · ⚙ 설정 (없어진 기능 없음, 칸 안으로 옮김)
+    const SEC={
+      try:['👀','엄마 체험',`<p class="note" style="margin:0 0 4px">시훈이가 보는 화면 그대로 열려요. 답을 안 써도 「건너뛰기 ▶」로 넘어가고(카츄·AI 화면 전까지), 잠긴 단계도 열려요. 시훈이 기록엔 아무것도 안 남아요(🧑‍🏫·과외 AI는 실제로 답해서 비용만 조금 들어요). 위 노란 줄 「끝내기」로 나와요.</p>
+        ${B('🇺🇸','영어 · 오늘','시훈이가 오늘 하는 것 처음부터','data-h="try" data-app="en" data-day="today"')}
+        ${B('🇺🇸','영어 · 내일','시훈이가 내일 할 것 미리','data-h="try" data-app="en" data-day="tomorrow"')}
+        ${B('📖','국어','복습 · 비문학 · 숙제 · 누적 테스트','data-h="try" data-app="ko"')}
+        ${B('🔢','수학 3-2','단계 · 그림 틀 · 🖼 그림 복습 · 🧑‍🏫 가르치기 · 📘 최상위 문제집','data-h="try" data-app="m32"')}
+        ${B('✍️','글쓰기','AI 쌤과 글쓰기','data-h="try" data-app="write"')}`],
+      prob:['📚','문제 보기',`${B('🇺🇸','영어 미리보기','단어 · 문장 · 정답','data-h="aopen" data-app="en" data-v="preview"')}
+        ${B('🔢','수학 3-2 미리보기','문제 · 정답','data-h="aopen" data-app="m32" data-v="preview"')}
+        ${B('📘','최상위 문제집','문제 · 정답 · 힌트 · 🧭 길잡이 직접 해 보기','data-h="aopen" data-app="m32" data-v="book"')}
+        ${B('🔢','수학 4-1 큰 수 미리보기','문제와 답','data-h="aopen" data-app="math" data-v="preview"')}`],
+      prog:['🗺','진도 보기',`${H('📅 오늘 시훈이')}
+        ${row('🇺🇸','영어',status('en'))}${row('📖','국어',status('ko'))}${row('🔢','수학',status('math'))}
+        ${M32()?row('🖼','그림 복습',`<span class="st ${ms.pf?'done':''}">${ms.pf?'오늘 1문제 했어요 ✅':'오늘은 아직(헤맨 5단계 문제가 있을 때만 나와요)'}</span>`):''}
+        ${row('✍️','글쓰기',status('write'))}
+        ${H('🔎 과목별 진도 · 기록')}
+        ${B('🇺🇸','영어 기록','날짜별 문장 · 단어 기록','data-h="aopen" data-app="en" data-v="report"')}
+        ${B('🔢','수학 3-2 기록','기능별 단계 · 🖼 그림 틀 단계 · 최근 문제','data-h="aopen" data-app="m32" data-v="rec"')}
+        ${B('🧑‍🏫','가르치기 대화','시훈이가 카츄와 한 대화 전체 · 직접 해 보기','data-h="aopen" data-app="m32" data-v="teach"')}
+        ${B('📖','국어 엄마 보기','기록 · 성적 · 오답 · 숙제 답 · 추가 복습 고르기','data-h="aopen" data-app="ko" data-v="prev"')}`],
+      ai:['🤖','AI 사용 현황',`<div id="admAI"><p class="note" style="margin:0">불러오는 중…</p></div>`],
+      set:['⚙️','설정',`${B('✍️','글쓰기 과제 넣기','시훈이 글쓰기 칸에 과제 올리기','data-h="aopen" data-app="write" data-v="mom"')}
+        ${B('📏','S펜 칸 크기 맞추기','자를 대고 13mm 맞추기 (이 기기에 저장)','data-h="pencal"')}`]};
+    const big=(ic,t,sub,attr)=>`<button class="go light" style="text-align:left;font:700 21px 'Noto Sans KR',sans-serif;margin:8px 0;padding:16px" ${attr}>${ic} ${t}<span style="display:block;font-size:14px;font-weight:400;color:var(--sub)">${sub}</span></button>`;
+    const cur=SEC[ADMS];
+    $h('#hub').innerHTML=`<div class="hh"><h1>👩 관리자 모드${cur?' · '+cur[0]+' '+cur[1]:''}</h1><div class="d">${dateLabel()}</div></div>
+      <div class="nav">${cur?'<button data-h="asec" data-s="">◀ 관리자</button>':'<button data-h="home">◀ 첫 화면</button>'}<span></span><button data-h="lock">🔒 잠그기</button></div>
+      <div class="panel" style="text-align:left">${cur?cur[2]:`
+        ${big('📊','리포트','하루 전체 · 과목별 · 카츄 가르치기 · 기록 내보내기','data-h="report"')}
+        ${big('👀','엄마 체험','시훈이 화면 그대로 · 답 안 써도 넘어가기 · 기록 안 남음','data-h="asec" data-s="try"')}
+        ${big('📚','문제 보기','영어 · 수학 3-2 · 최상위 문제집 · 4-1 문제와 정답','data-h="asec" data-s="prob"')}
+        ${big('🗺','진도 보기','오늘 시훈이 · 과목별 단계와 기록 · 국어 엄마 보기','data-h="asec" data-s="prog"')}
+        ${big('🤖','AI 사용 현황','오늘 · 이번 달 비용과 횟수','data-h="asec" data-s="ai"')}
+        ${big('⚙️','설정','글쓰기 과제 넣기 · S펜 칸 크기','data-h="asec" data-s="set"')}`}
+      </div>`;if(ADMS==='ai')adminAI()}
   // ⏭ 직접 해 보기 「건너뛰기 ▶」(엄마 11/26): 답을 안 써도 다음 화면으로 — 엄마가 구성을 훑어보는 용도, 시훈이 화면엔 없음.
   // 한 번 누를 때마다: 빈 칸은 아무 글자로 채우고 → 「다음·확인·알겠어」 같은 버튼을 누르고(꺼져 있으면 켜서) → 그런 버튼이 없으면 보기 하나를 골라요.
   function trySkip(){const host=[...document.querySelectorAll('.apphost')].find(h=>!h.hidden&&h.shadowRoot);const root=host?host.shadowRoot:document;if(!host){alert('지금 화면은 과목 공부 화면이 아니에요. 끝까지 다 봤거나 공부 화면을 열어 주세요.');return}
@@ -10302,7 +10309,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     else if(a==='subj'){F=+t.dataset.i;VIEW='subj';render()}
     else if(a==='plan'){VIEW='plan';render()}
     else if(a==='open'){VIEW='home';RET=null;openApp(t.dataset.app,t.dataset.v)}
-    else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';render()})}
+    else if(a==='admin'){HUB.gate($h('#hub'),()=>{VIEW='admin';ADMS='';render()})}
+    else if(a==='asec'){ADMS=t.dataset.s||'';VIEW='admin';render();window.scrollTo(0,0)}
     else if(a==='aopen'){RET='admin';openApp(t.dataset.app,t.dataset.v)}
     else if(a==='try'){window.HUBTRY=true;window.TRYDAY=t.dataset.day||'';RET='admin';tryBar();openApp(t.dataset.app)}
     else if(a==='report'){location.href='./report.html'}
