@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="23";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="26";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -77,7 +77,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=3"></script><script src="talk-gen.js?v=2"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=4"></script><script src="talk-gen.js?v=4"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -152,7 +152,8 @@ const SP=window.SPEED||{STAGES:[],VWORDS:new Set(),byId:()=>null},TK=window.TALK
    · 하루 50문장 = 다시(어제까지 틀리거나 늦은 것) 20 + 새 문장 30(지금 단계 20 + 지난 단계). 틀린 문장은 그날 4문장 뒤에 한 번 더.
    · 통과(스피드연산식): 지금 단계 새 문장을 90% 막힘 없이 말한 날이 2번 → 다음 단계. 이틀 뒤 그 단계 다지기 15문장, 90%가 안 되면 그 단계로 돌아가요.
    · 막힘 없이 = 처음에 맞게 + 한글이 나오고 5초 안에 🎤 + 문장 듣기를 미리 누르지 않음(낱말 듣기는 괜찮아요). */
-const FAST_MS=5000,REC_MAX=55000,DAY_N=50,AGAIN_N=20,NEW_CUR=20,REV_N=15,PASS_PCT=.9,PASS_DAYS=2,REV_GAP=2,REASK_GAP=4;
+// 엄마 11/27 「짝 15」: 하루 50 = 짝 15(be↔do · 하나↔여럿 · a↔an · I↔He, 모든 단계 매일) + 지금 단계 15 + 다시 15 + 지난 단계 5
+const FAST_MS=5000,REC_MAX=55000,DAY_N=50,AGAIN_N=15,NEW_CUR=15,PAIR_N=15,REV_N=15,PASS_PCT=.9,PASS_DAYS=2,REV_GAP=2,REASK_GAP=4;
 const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','수능 단어'];
 // 문장 찾기: 새 문장 id = 바퀴.꼴.씨앗.묶음(예: 1.b_pos.12345.b_q). 옛 기록 id는 drills.js에서.
 function IT(id){id=String(id||'');if(TK&&id.split('.').length===4){const it=TK.make(id);if(it)return it}return SP.byId(id)}
@@ -210,6 +211,7 @@ function buildSet(stage,lap,rev){const units=[],seenId=new Set(),seenEn=new Set(
   (ST.again||[]).slice(0,AGAIN_N).forEach(id=>unit([id],'a'));
   if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,rev.l||lap),'v')}
   {let n=0,g=0;while(n<NEW_CUR&&g++<80)n+=unit(blockIds(stage,lap),'n')}
+  {const ZB=TK.zBlocks?TK.zBlocks(stage):[];let n=0,g=0;while(ZB.length&&n<PAIR_N&&g++<80){const b=ZB[Math.floor(Math.random()*ZB.length)];n+=unit(TK.blockOf(b,lap,seed()).filter(x=>x&&x.en&&x.ko).map(x=>x.id),'z')}}
   {let g=0;while(total<DAY_N&&g++<400)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
   // 넘치면 맨 끝(지난 단계) 묶음에서 덜어 내기
   while(total>DAY_N){const u=units[units.length-1];if(u[0][1]!=='p')break;u.pop();total--;if(!u.length)units.pop()}
@@ -243,7 +245,7 @@ const near=(a,b)=>a===b||lev(a,b)<=Math.max(1,Math.floor(Math.min(a.length,b.len
 const suf=(t,h)=>{const [a,b]=t.length<h.length?[t,h]:[h,t];if(!b.startsWith(a.replace(/e$/,'')))return false;return /^(s|es|ies|ed|d|ied|ing|er|est)$/.test(b.slice(a.length))||/^(s|es|ed|d|ing)$/.test(b.slice(a.replace(/e$/,'').length))};
 const ART=new Set(['a','an','the']);
 // 한 낱말: 0 = 똑같음, 1 = 비슷함(발음 흐림), -1 = 다름
-function w1(t,h){if(t===h)return 0;if(ART.has(t)||ART.has(h))return (t==='a'&&h==='an')||(t==='an'&&h==='a')?1:-1;if(PRON[t])return PRON[t].includes(h)?1:-1;if(STRUCT.has(t)||STRUCT.has(h))return -1;if(formErr(t,h))return -1;if(suf(t,h))return -1;return near(t,h)?1:-1}
+function w1(t,h){if(t===h)return 0;if(ART.has(t)||ART.has(h))return -1;/* 엄마 11/27: a ↔ an 도 틀림 */if(PRON[t])return PRON[t].includes(h)?1:-1;if(STRUCT.has(t)||STRUCT.has(h))return -1;if(formErr(t,h))return -1;if(suf(t,h))return -1;return near(t,h)?1:-1}
 function cmpSeq(T,W){if(T.length!==W.length)return -1;let f=0;for(let i=0;i<T.length;i++){const r=w1(T[i],W[i]);if(r<0)return -1;f+=r}return f?1:0}
 // 들린 말 속에 정답 문장이 그대로 들어 있으면 맞음(앞에서 고쳐 말한 것·뒤에 덧붙인 말은 봐줌). 주어 대명사 하나가 안 들려도 봐줌.
 function judge(target,heard){const T=words(target),H=words(heard);if(!H.length)return 'unclear';let best=-1;
@@ -366,7 +368,7 @@ function vsHTML(){if(TRY)return '';const me=ST.days[today()];if(!me||!me.end)ret
   if(yet.length)h+=`<p class="sub" style="margin:10px 0 0">${yet.map(o=>esc(o.st.name||'같이 하는 사람')).join(', ')}: 오늘 아직 안 했어요.</p>`;
   return h+'</div>'}
 // 📥 기록 내려받기(엑셀에서 열리는 CSV)
-const KIND={n:'새 문장',p:'지난 단계',a:'다시',v:'다지기',r:'한 번 더'};
+const KIND={n:'새 문장',p:'지난 단계',a:'다시',v:'다지기',r:'한 번 더',z:'짝'};
 function csv(key){const who=key&&key!==WHO?(OTHERS.find(o=>o.id===key)||{}).st:ST;if(!who)return;const ST_=who;const rows=[['날짜','단계','단어 바퀴','오늘 걸린 시간(초)','통과','종류','문장','한국어','처음에 맞음','생각 시간(초)','막힘 없이','문장 미리 들음','들린 말','넘어감']];
   Object.keys(ST_.days).sort().forEach(k=>{const d=ST_.days[k];(d.items||[]).forEach(r=>{const it=r.en?r:(IT(r.id)||{});
     rows.push([k,d.stage,LAPS[d.lap||1]||'',Math.round(d.ms/1000),d.up?'다음 단계':d.passed?'통과':'',KIND[r.k]||'',it.en||r.id,it.ko||'',r.ok1?'O':'',r.onset!=null?(r.onset/1000).toFixed(1):'',r.clean?'O':'',r.peek?'O':'',r.heard||'',r.skip==='quiet'?'안 들림':r.skip?'넘어감':''])})});
@@ -417,8 +419,9 @@ function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.k
   if(!it)return `<div class="err">이 문장을 못 불러왔어요.</div><button class="fin" data-act="skip">다음 ▶</button>`;
   let h=`<div class="top"><div class="prog"><b style="width:${Math.round(R.i/R.ids.length*100)}%"></b></div><span class="cnt">${R.i+1} / ${R.ids.length}</span><button class="x" data-act="quit">그만</button></div>`;
   const sn=it.stage||0;
-  h+=`<div class="base">${k==='a'||k==='r'||k==='v'?`<span class="tag re">🔁 ${k==='a'?'다시':k==='v'?'다지기':'한 번 더'}</span>`:''}<small>${sn?sn+'단계 · '+esc(stName(sn)):''}</small></div>`;
+  h+=`<div class="base">${k==='a'||k==='r'||k==='v'?`<span class="tag re">🔁 ${k==='a'?'다시':k==='v'?'다지기':'한 번 더'}</span>`:k==='z'?`<span class="tag">👯 짝 연습</span>`:''}<small>${sn?sn+'단계 · '+esc(stName(sn)):''}</small></div>`;
   h+=`<div class="ko">${esc(it.ko)}</div>`;
+  {const bs=pastBases(it.en);if(bs.length)h+=`<div class="sub" style="text-align:center;font-size:17px;margin-top:-2px">동사원형: <b style="color:var(--ink)">${bs.map(esc).join(' · ')}</b></div>`}
   const pre=ph==='ready'||ph==='retry'||ph==='quiet';
   if(pre&&(it.w||[]).length)h+=`<div class="wchips">${it.w.map((c,j)=>`<button class="wchip" data-act="word" data-j="${j}">${esc(c[0])}${R.wopen[j]?`<b>${esc(c[1])}</b>`:''}</button>`).join('')}</div>`;
   if(fol||ph==='model'||ph==='good')h+=`<div class="answer">${esc(it.en)}</div>`;
@@ -435,7 +438,7 @@ function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.k
   else if(ph==='model'){h+=`${R.ok?`<div class="okbox">👍 맞아요!</div>`:''}<div class="state">🔊 들어 봐요</div>`;
     if(!R.ok&&R.heard)h+=`<div class="heard">이렇게 들렸어요: <b>“${esc(R.heard)}”</b></div>`;
     if(!R.ok&&R.heardModel)h+=`<div class="row"><button class="light" data-act="again">🔊 한 번 더 듣기</button></div><button class="fin" data-act="nextq">다음 ▶</button>`}
-  else if(ph==='retry'){h+=`<div class="heard" style="font-size:22px">${R.diff}</div><p class="hint">빨간 곳을 고쳐서 다시 말해요 · ${R.tries} / ${TRY_MAX}</p><button class="big" data-act="resay" style="max-width:340px;margin:12px auto 0">🎤 다시 말하기</button>`}
+  else if(ph==='retry'){h+=`<div class="heard" style="font-size:22px">${R.diff}</div>${R.tip?`<p class="hint" style="color:#6b3d10;font-size:17px">💡 ${esc(R.tip)}</p>`:''}<p class="hint">빨간 곳을 고쳐서 다시 말해요 · ${R.tries} / ${TRY_MAX}</p><button class="big" data-act="resay" style="max-width:340px;margin:12px auto 0">🎤 다시 말하기</button>`}
   else if(ph==='quiet'){h+=`<div class="heard">🙉 잘 안 들렸어요. 조금 더 크게 말해 줄래요?</div><button class="big" data-act="resay" style="max-width:340px;margin:12px auto 0">🎤 다시 말하기</button><div class="row">${skip}</div>`}
   else if(ph==='good'){h+=`<div class="okbox">👍</div>`}
   // 👀 미리 해 보기(엄마 11/27 「그냥 넘겨 볼 수 있게」): 말 안 해도 정답 보고 넘김. 기록 안 남음. 엄마 11/27 「넘어간 문장은 다시 못 돌아가게」 → ◀ 이전 없음(앞으로만)
@@ -504,7 +507,7 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
     R.heard=h;R.ok=false;
     if(v==='unclear'){R.quiet++;if(R.first==null&&R.quiet>=3)R.skipped='quiet';R.fails=R.quiet>=3?1:0;R.ph='quiet';render();return}
     if(R.first==null){R.first=false;reask()}R.tries++;
-    if(R.tries<TRY_MAX){R.diff=diffHTML(it,h);R.ph='retry';render();return}
+    if(R.tries<TRY_MAX){R.diff=diffHTML(it,h);R.tip=R0TIP;R.ph='retry';render();return}
     toModel();return}
   if(ok){R.follow=true;R.ph='good';render();setTimeout(()=>{if(R===RUN&&!R.quit)next()},900);return}
   R.ftries++;R.fails++;
@@ -514,15 +517,39 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
 // 틀린 문장은 그날 4문장 뒤에 한 번 더(엄마 11/27). 한 번 더 나온 문장은 또 넣지 않아요.
 function reask(){const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
 // 들린 말 ↔ 정답 맞춰 보기(낱말 단위 편집 거리): 맞은 낱말은 그대로, 바뀐 낱말은 빨간 밑줄, 빠진 자리는 빈칸, 더 말한 낱말은 줄 긋기
-const TRY_MAX=3;
+// 엄마 11/27 「불규칙 동사 잘 모르니 과거형이 나오면 동사원형을 띄워 주자」: 과거형·과거분사 낱말이 있으면 원형만 작게(be 빼고, read처럼 모양이 같은 건 빼고)
+const PASTB={};if(TC){Object.keys(TC.IRV).forEach(b=>{if(b==='be')return;TC.IRV[b].forEach(x=>{if(x&&x!==b)PASTB[x]=b})});TC.VP.forEach(p=>{const b=String(p.e||'').split(' ')[0];if(!b||b==='be')return;[TC.EN.past(b),TC.EN.pp(b)].forEach(x=>{x=String(x).split(' ')[0];if(x&&x!==b&&!PASTB[x])PASTB[x]=b})})}
+['has','does','is','are','am'].forEach(x=>delete PASTB[x]);if(PASTB.did==='do')delete PASTB.did;
+function pastBases(en){const out=[];String(en||'').toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).forEach(w=>{const b=PASTB[w];if(b&&!out.includes(b))out.push(b)});return out}
+const TRY_MAX=3;let R0TIP='';
+// 엄마 11/27 「be·do, a·an, 복수, 3인칭 -s 엄청 중요」: 틀린 곳에 맞는 한 마디(정답은 안 알려 줌)
+const BEW=new Set(['am','is','are','was','were']),DOW=new Set(['do','does','did']);
+function hintOf(ops){const bad=ops.filter(o=>o[0]!=='ok');const T=new Set(bad.map(o=>o[2]).filter(Boolean)),H=new Set(bad.map(o=>o[1]).filter(Boolean));
+  const hasT=a=>[...T].some(x=>a.has(x)),hasH=a=>[...H].some(x=>a.has(x));
+  if(hasT(BEW)&&hasH(DOW))return '이건 be 문장이에요. 상태·누구·어디는 am · is · are (과거 was · were)';
+  if(hasT(DOW)&&hasH(BEW))return '이건 do 문장이에요. 움직임·하는 일은 do · does (과거 did)';
+  const tb=[...T].some(x=>BEW.has(x)),hb=bad.some(o=>o[0]!=='miss'&&BEW.has(o[1]));if(hb&&!tb&&!ops.some(o=>o[0]==='ok'&&BEW.has(o[1])))return '이건 do 문장이에요. 움직임·하는 일에는 am · is · are 를 안 써요';
+  for(const o of bad){const t=o[2]||'',h=o[1]||'';
+    if((t==='a'&&h==='an'))return '첫소리가 a·e·i·o·u가 아니면 a';
+    if((t==='an'&&h==='a'))return '첫소리가 a·e·i·o·u면 an';
+    if((t==='a'||t==='an')&&o[0]==='miss')return '하나면 a / an을 붙여요';
+    if(h==='a'||h==='an'){if(o[0]==='extra')return '여럿이면 a / an 없이 -s';}
+    if(t==='has'&&h==='have')return '그 · 그녀 · 한 사람이면 have → has';if(t==='have'&&h==='has')return 'I · you · we · they · 여럿이면 have';
+    if(t==='does'&&h==='do')return '그 · 그녀 · 한 사람이면 does';if(t==='do'&&h==='does')return 'I · you · we · they · 여럿이면 do';
+    if(t==='is'&&h==='are')return '하나면 is';if(t==='are'&&(h==='is'||h==='am'))return '여럿 · you면 are';if(t==='am'&&h!=='am'&&BEW.has(h))return 'I는 am';
+    if(t==='was'&&h==='were')return '하나 · I면 was';if(t==='were'&&h==='was')return '여럿 · you면 were';
+    if(t&&h&&t===h+'s'||t===h+'es'||(t.endsWith('ies')&&h===t.slice(0,-3)+'y'))return VW.has(t)?'그 · 그녀 · 한 사람이면 동사에 -s (go → goes, watch → watches, study → studies)':'여럿이면 -s';
+    if(t&&h&&(h===t+'s'||h===t+'es'))return VW.has(h)?'I · you · we · they · 여럿이면 동사에 -s 없이':'하나면 -s 없이'}
+  return ''}
 function alignOps(T,H){const m=T.length,n=H.length,D=[];for(let i=0;i<=m;i++){D.push([]);for(let j=0;j<=n;j++)D[i][j]=i===0?j:j===0?i:0}
   for(let i=1;i<=m;i++)for(let j=1;j<=n;j++){const c=w1(T[i-1],H[j-1])>=0?0:1;D[i][j]=Math.min(D[i-1][j-1]+c,D[i-1][j]+1,D[i][j-1]+1)}
-  const ops=[];let i=m,j=n;while(i>0||j>0){if(i>0&&j>0&&D[i][j]===D[i-1][j-1]+(w1(T[i-1],H[j-1])>=0?0:1)){ops.unshift([w1(T[i-1],H[j-1])>=0?'ok':'sub',H[j-1]]);i--;j--}
-    else if(i>0&&D[i][j]===D[i-1][j]+1){ops.unshift(['miss','']);i--}else{ops.unshift(['extra',H[j-1]]);j--}}
+  const ops=[];let i=m,j=n;while(i>0||j>0){if(i>0&&j>0&&D[i][j]===D[i-1][j-1]+(w1(T[i-1],H[j-1])>=0?0:1)){ops.unshift([w1(T[i-1],H[j-1])>=0?'ok':'sub',H[j-1],T[i-1]]);i--;j--}
+    else if(i>0&&D[i][j]===D[i-1][j]+1){ops.unshift(['miss','',T[i-1]]);i--}else{ops.unshift(['extra',H[j-1],'']);j--}}
   return {cost:D[m][n],ops}}
 function diffHTML(it,heard){const H=words(heard);let best=null;[it.en].concat(it.alt||[]).forEach(t=>{const a=alignOps(words(t),H);if(!best||a.cost<best.cost)best=a});
   // 앞뒤로 더 말한 것(고쳐 말하기 전 말 등)은 줄 긋지 않고 빼요
   const ops=best.ops.slice();while(ops.length&&ops[0][0]==='extra')ops.shift();while(ops.length&&ops[ops.length-1][0]==='extra')ops.pop();
+  const tip=hintOf(ops);R0TIP=tip;
   return ops.map(([k,w])=>k==='ok'?esc(w):k==='sub'?`<span class="bad">${esc(w)}</span>`:k==='miss'?'<span class="miss"></span>':`<span class="extra">${esc(w)}</span>`).join(' ')}
 async function toModel(){const R=RUN,it=IT(R.ids[R.i]);R.ph='model';R.msg='';R.fails=0;R.heardModel=false;render();await speak(it.en);if(R!==RUN||R.quit)return;
   if(R.ok){setTimeout(()=>{if(R===RUN&&!R.quit&&R.ph==='model')next()},1200)}else{R.heardModel=true;render()}}

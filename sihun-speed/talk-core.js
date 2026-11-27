@@ -137,7 +137,7 @@ const VP=[
  V('clean','청소하다','을',[['the room','방'],['the kitchen','부엌'],['the classroom','교실'],['the bathroom','화장실'],['the house','집'],['the garage','차고',2],['the laboratory','실험실',3,'xK'],['the desk','책상'],['the windows','창문'],['the car','차',2],['the yard','마당',2]],{h:1}),
  V('make','만들다','을',[['cookies','쿠키'],['sandwiches','샌드위치'],['a cake','케이크',1,'h0'],['paper planes','종이비행기'],['a snowman','눈사람',1,'h0'],['pancakes','팬케이크',2],['a robot','로봇',2,'h0'],['a short film','단편 영화',3,'h0'],['soup','수프'],['a sandcastle','모래성',1,'h0'],['a kite','연',1,'h0'],['kimchi','김치',2],['bracelets','팔찌',2],['a website','웹사이트',3,'h0']],{h:1}),
  V('draw','그리다','을',[['pictures','그림'],['cats','고양이'],['flowers','꽃'],['maps','지도',2],['cartoons','만화',2],['portraits','초상화',3],['dogs','개'],['robots','로봇'],['trees','나무'],['landscapes','풍경화',3]],{h:1,sk:1}),
- V('have','있다','이',[['a dog','개'],['a cat','고양이'],['a bike','자전거'],['a ball','공'],['a car','차',2,'xK'],['a garden','정원',2,'xK'],['a laptop','노트북',3],['a passport','여권',3],['a hamster','햄스터'],['a rabbit','토끼'],['a piano','피아노'],['a tablet','태블릿',2],['a camera','카메라',2]],{st:1,n:'없다',have:1}),
+ V('have','있다','이',[['a dog','개'],['an umbrella','우산'],['an orange','오렌지'],['an eraser','지우개'],['an old bike','낡은 자전거',2],['an iguana','이구아나',2],['a cat','고양이'],['a bike','자전거'],['a ball','공'],['a car','차',2,'xK'],['a garden','정원',2,'xK'],['a laptop','노트북',3],['a passport','여권',3],['a hamster','햄스터'],['a rabbit','토끼'],['a piano','피아노'],['a tablet','태블릿',2],['a camera','카메라',2]],{st:1,n:'없다',have:1}),
  V('swim','수영하다',null,null,{h:1,sk:1,a:['dog']}),
  V('run','달리다',null,null,{h:1,a:['dog','cat']}),
  V('sleep','자다',null,null,{a:['dog','cat'],nt:1}),
@@ -232,7 +232,7 @@ const JOB=[ // be + 직업: [영어 하나, 영어 여럿, 한국어, 단계]
  ['student','students','학생',1],['doctor','doctors','의사',1],['nurse','nurses','간호사',1],['cook','cooks','요리사',1],['farmer','farmers','농부',1],['singer','singers','가수',1],
  ['police officer','police officers','경찰관',1],['firefighter','firefighters','소방관',2],['pilot','pilots','비행기 조종사',2],['scientist','scientists','과학자',2],['engineer','engineers','엔지니어',2],
  ['dentist','dentists','치과 의사',2],['lawyer','lawyers','변호사',3],['architect','architects','건축가',3],['journalist','journalists','기자',3],['professor','professors','교수',3],
- ['teacher','teachers','선생님',1],['baker','bakers','제빵사',2],['vet','vets','수의사',2],['writer','writers','작가',2],['artist','artists','화가',2],['musician','musicians','음악가',2],
+ ['teacher','teachers','선생님',1],['actor','actors','배우',1],['office worker','office workers','회사원',1],['English teacher','English teachers','영어 선생님',1],['animal doctor','animal doctors','동물 의사',1],['baker','bakers','제빵사',2],['vet','vets','수의사',2],['writer','writers','작가',2],['artist','artists','화가',2],['musician','musicians','음악가',2],
  ['soldier','soldiers','군인',2],['dancer','dancers','무용수',2],['photographer','photographers','사진작가',3],['designer','designers','디자이너',3],['astronaut','astronauts','우주 비행사',3]
 ].map(([en,pl,ko,lv],i)=>({en,pl,ko,lv,i}));
 ADJ.forEach((x,i)=>x.i=i);PLACE.forEach((x,i)=>x.i=i);
