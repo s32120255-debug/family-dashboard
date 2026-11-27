@@ -2471,7 +2471,7 @@ function home(){const s=SES(),D=(RLOG.days||{})[today()];
   if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
     <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`+afterHTML()}
   else{const doneN=s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0;
-    h+=`<div class="card"><h2>오늘의 5문장</h2>${(()=>{const k=s&&s.stage?s.stage:(!s?todayStage():null);if(k)return `<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${esc(stageName(k))}</b>${g2().back===k?' · 🔁 다시 다지는 날':''}</div>`;const f=s?topicOf(s):null;return f?`<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${fLabel(f)}</b></div>`:''})()}<p>먼저 <b>📌 오늘의 문법</b>을 1~2분 배워요. 그다음 한국어를 보고 <b>먼저 혼자 영어로 써요.</b> <b>블록 없이, 철자까지 정확히</b> 써야 "알고 있다"로 쳐요. 틀리면 <b>블록으로 고쳐요</b>. 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요.</p>
+    h+=`<div class="card"><h2>오늘의 5문장</h2>${(()=>{const k=s&&s.stage?s.stage:(!s?todayStage():null);if(k)return `<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${esc(stageName(k))}</b>${g2().back===k?' · 🔁 다시 다지는 날':''}</div>`;const f=s?topicOf(s):null;return f?`<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${fLabel(f)}</b></div>`:''})()}<p>먼저 <b>📌 오늘의 문법</b>을 배워요. 그다음 한국어를 보고 <b>먼저 혼자 영어로 써요.</b> <b>블록 없이, 철자까지 정확히</b> 써야 "알고 있다"로 쳐요. 틀리면 <b>블록으로 고쳐요</b>. 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요.</p>
     ${s&&s.carried?'<div class="notice" style="background:#eef3ff">지난번에 멈춘 곳부터 이어서 해요.</div>':''}${vNeedToday()?`<div class="notice" style="background:#eef3ff">① 먼저 <b>단어</b> ${VS()?`(${Object.keys(VS().res).length} / ${VS().queue.length})`:`${Math.min(VDAILY,vLeft()+vDue().length)}개`} → ② 5문장</div>`:''}<div class="row"><button class="btn big" data-act="start">${vNeedToday()?'▶ 단어 시작':s?`▶ 이어서 하기 (${doneN} / ${s.queue.filter(q=>q.kind!=='다시').length})`:'▶ 시작'}</button></div></div>`}
   const left=freshLeft();
   h+=`<div class="row"><button class="btn light" data-act="report" style="background:rgba(255,255,255,.14);color:#fff">📊 기록 (엄마용)</button><button class="btn light" data-act="browse" style="background:rgba(255,255,255,.14);color:#fff">👀 미리보기 (엄마용)</button><span class="tip" style="color:#c9d3ea">${lenCap()}단어 이하 새 문장 ${left}개 남음${left<LOW?' · <b style="color:#ffb4b4">문장 추가 필요</b>':''}</span></div>`;
@@ -10091,9 +10091,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       .hrow{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;background:var(--card,#fffdf8);border:2px solid var(--line,#e8e1d4);border-radius:16px;padding:13px 16px;margin-top:10px;font:inherit;font-size:19px;color:inherit;text-decoration:none;text-align:left;cursor:pointer}
       .hrow .e{font-size:26px}.hrow b{flex:1}.hrow .r{font-size:14px;color:var(--sub)}</style>
       <div class="hh"><h1>${CATIMG}오늘의 공부</h1><div class="d">${dateLabel()}</div></div>
-      <div class="panel" style="text-align:left"><button data-h="sumtog" style="display:flex;width:100%;align-items:center;gap:8px;background:none;border:0;padding:0;margin:0 0 ${SUMOPEN?8:0}px;text-align:left"><h2 style="font-size:20px;margin:0;flex:1">📋 오늘 할 것</h2><span style="font-size:15px;color:var(--sub)">${SUMOPEN?'접기 ▲':(tot?'남은 것 약 '+hm(tot)+' · ':'')+'펼치기 ▼'}</span></button>${SUMOPEN?`
-      ${R.map(r=>`<div class="hit ${r.done?'dn':''}"><div class="t">${r.ic} <b>${r.name}</b><span class="m">${r.done?'✅ 완료':r.min?'약 '+hm(r.min):''}</span></div><div class="w">${r.what.map(([t,d])=>d?`<span style="text-decoration:line-through">${t}</span> ✅ 완료`:t).join('<br>')}</div></div>`).join('')}
-      ${tot?`<div class="htot"><span>남은 것 모두</span><span>약 ${hm(tot)}</span></div>`:''}`:''}</div>
+      <div class="panel" style="text-align:left"><button data-h="sumtog" style="display:flex;width:100%;align-items:center;gap:8px;background:none;border:0;padding:0;margin:0 0 ${SUMOPEN?8:0}px;text-align:left"><h2 style="font-size:20px;margin:0;flex:1">📋 오늘 할 것</h2><span style="font-size:15px;color:var(--sub)">${SUMOPEN?'접기 ▲':'펼치기 ▼'}</span></button>${SUMOPEN?`
+      ${R.map(r=>`<div class="hit ${r.done?'dn':''}"><div class="t">${r.ic} <b>${r.name}</b><span class="m">${r.done?'✅ 완료':''}</span></div><div class="w">${r.what.map(([t,d])=>d?`<span style="text-decoration:line-through">${t}</span> ✅ 완료`:t).join('<br>')}</div></div>`).join('')}`:''}</div>
       ${SUBJ.map((x,i)=>row(x.ic,x.name,x.off?'준비 중':(doneMark(x.k)==='—'?'아직':doneMark(x.k)),`data-h="subj" data-i="${i}"`)).join('')}
       ${HUBOUT.map(o=>row(o.ic,o.name,o.href==='../math/'?SPM.txt:SPM.en,`href="${o.href}"`)).join('')}
       <p class="note">🎙️ 영어 문장 녹음은 <b>Chrome</b>에서 열어야 돼요.</p>
@@ -10241,7 +10240,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
   function koPlan(st){let E={};try{E=APP_KO.est()}catch(x){}
     let P=[];try{P=APP_KO.plan()}catch(x){}const est=P.map(p=>p.k==='daily'?(E.daily?mm(E.daily):10):p.k==='test'?(E.test?mm(E.test):20):p.k==='hw'?20:p.k==='read'?40:5);const nx=P.findIndex(p=>!p.done);
     const rows=P.map((p,i)=>[(p.done?'✅ ':(i+1)+'. ')+p.label,p.sub,est[i]||10]);const tot=rows.filter((r,i)=>!P[i].done).reduce((a,r)=>a+r[2],0);
-    return `<table class="plan" style="text-align:left">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="m">약 ${r[2]}분</td></tr>`).join('')}${tot?`<tr class="sum"><td colspan="2">남은 것 모두</td><td class="m">약 ${tot}분</td></tr>`:''}</table>
+    return `<table class="plan" style="text-align:left">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}</table>
       <button class="go ko" data-h="open" data-app="ko" data-v="plan">${nx<0?'국어 다시 보기':'▶ '+P[nx].label}</button>`}
   function mm(sec){return Math.max(1,Math.round(sec/60))}
   function plan(){if(M32())return planM32();const st=stats('math');const e=mathEst();const left=Math.max(0,MATH_N-st.n);let P={};try{P=APP_MATH.plan()}catch(x){}
@@ -10254,9 +10253,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     $h('#hub').innerHTML=`<div class="hh"><h1>🔢 수학</h1><div class="d">${dateLabel()}</div></div>
       <div class="nav"><button data-h="home">◀ 돌아가기</button><span></span></div>
       <div class="panel"><h2>오늘 할 분량</h2>${P.day?`<p class="note" style="margin-top:0">큰 수 · ${P.day}</p>`:''}
-      <table class="plan">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="m">약 ${r[2]}분${r[3]?'':' <span class="note">(처음이라 대략)</span>'}</td></tr>`).join('')}
-      <tr class="sum"><td colspan="2">집중하면 모두</td><td class="m">약 ${tot}분</td></tr></table>
-      <p class="note">예상 시간은 시훈이가 전에 걸린 시간으로 계산해요. 개념 시간과 문제 시간은 따로 재요.</p><button class="link" data-h="open" data-app="math" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>
+      <table class="plan">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}</table>
+      <button class="link" data-h="open" data-app="math" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>
       <button class="go math" data-h="open" data-app="math">▶ 시작</button></div>`}
   function planM32(){const st=stats('math');let P={};try{P=APP_M32.plan()}catch(x){}const N=P.per||MATH_N;const left=Math.max(0,N-st.n);const pm=P.probMin||15;
     const rows=[];
@@ -10268,9 +10266,8 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
     $h('#hub').innerHTML=`<div class="hh"><h1>🔢 수학 3-2</h1><div class="d">${dateLabel()}</div></div>
       <div class="nav"><button data-h="home">◀ 돌아가기</button><span></span></div>
       <div class="panel"><h2>오늘 할 분량</h2><p class="note" style="margin-top:0">${P.unit||''}</p>
-      ${rows.length?`<table class="plan">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="m">약 ${r[2]}분</td></tr>`).join('')}
-      <tr class="sum"><td colspan="2">집중하면 모두</td><td class="m">약 ${tot}분</td></tr></table>`:`<p class="q">오늘 ${st.n}문제 끝 ✅ 더 풀어도 돼요.</p>`}
-      <p class="note">예상 시간은 시훈이가 전에 걸린 시간으로 계산해요(기록이 적으면 대략). 안에서 다른 기능이나 단계를 골라도 돼요.<br>마지막 단계까지 통과한 기능 ${P.passed||0} / ${P.total||10}개 · 10개 모두 통과하면 4학년 「큰 수」로 넘어가요.</p>
+      ${rows.length?`<table class="plan">${rows.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}</table>`:`<p class="q">오늘 ${st.n}문제 끝 ✅ 더 풀어도 돼요.</p>`}
+      <p class="note">안에서 다른 기능이나 단계를 골라도 돼요.<br>마지막 단계까지 통과한 기능 ${P.passed||0} / ${P.total||10}개 · 10개 모두 통과하면 4학년 「큰 수」로 넘어가요.</p>
       <button class="link" data-h="open" data-app="m32" data-v="preview">👀 미리보기 (엄마용 · 문제와 답)</button>
       <button class="go math" data-h="open" data-app="m32">▶ 시작</button></div>`}
   function why(){const k=CUR.k;const s=SUBJ.find(x=>x.k===k);const r=S(k);const st=refresh(k);
