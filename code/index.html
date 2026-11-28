@@ -109,7 +109,7 @@ button{font-size:17px;color:inherit;cursor:pointer}
    ===================================================================== */
 const APP_NAME = '';
 const INPUT = { text: true, mic: true };   // 엄마 11/27 「둘 다」
-const DAY_WON = 1000;          // 하루 한도 약 1,000원(엄마 11/27) — 서버(codeKatchu)도 같은 값으로 막아요
+const dayWon = () => new Date(kday() + 'T00:00:00Z').getUTCDay() === 6 ? 5000 : 1000;   // 하루 한도 약 1,000원, 토요일만 5,000원(엄마 11/28) — 서버(codeKatchu)도 같은 값으로 막아요
 const MOCK = /mock/.test(location.hash);   // #mock = Firebase 없이 화면 시험
 const TEST_INPUT = /input/.test(location.hash) && MOCK;
 const IN = TEST_INPUT ? { text: true, mic: true } : INPUT;
@@ -235,7 +235,7 @@ const app = $('#app');
 const CAT_ROWS = ['.YY........YY.', '.YOY......YOY.', '.YOOYYYYDYOOY.', 'YYYYYYYDYYYYYY', 'YYYYYYDDDYYYYY', 'YYKKYYYDYYKKYY', 'YYKKYYDYYYKKYY', 'YYYYYYYYYYYYYY', 'YYYYYYPPYYYYYY', '.YYYYKYYKYYYY.', '.YYYYYKKYYYYY.', '..YYYYYYYYYY..', '....YYYYYY....'];
 const CAT_PAL = { Y: '#f2c230', O: '#e8892b', D: '#a8400c', K: '#2a1d14', P: '#e58a8a' };
 const catSvg = (px) => `<svg class="cat" width="${px}" height="${px}" viewBox="-1 -1.5 16 16" shape-rendering="crispEdges" aria-hidden="true">${CAT_ROWS.map((r, y) => [...r].map((c, x) => CAT_PAL[c] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${CAT_PAL[c]}"/>` : '').join('')).join('')}</svg>`;
-const power = () => { const left = Math.max(0, DAY_WON - (+S.use.won || 0)); const pct = Math.round(left / DAY_WON * 100); return `<div class="power" title="오늘 카츄 힘">카츄 힘 <span class="bar"><i style="width:${pct}%"></i></span></div>`; };
+const power = () => { const left = Math.max(0, dayWon() - (+S.use.won || 0)); const pct = Math.round(left / dayWon() * 100); return `<div class="power" title="오늘 카츄 힘">카츄 힘 <span class="bar"><i style="width:${pct}%"></i></span></div>`; };
 const pubOf = (gid) => S.pubs.find((p) => p.id === gid);
 /* ---------------- 길 5칸: 내가 만들기 → 엄마 확인 → 가족에게 올림 → 엄마랑 고치기 → 가져오기 ----------------
    엄마랑 Claude가 저장소에서 같이 고친 게임은 games/list.json 에 적혀요: { "게임id": { "state": "working"|"ready", "note": "바뀐 것", "at": "2026-11-27T20:00:00+09:00", "path": "games/sesi/index.html" } }
@@ -416,7 +416,7 @@ async function toggleMic() {
 
 async function send(text) {
   if (S.busy || !text) return;
-  if ((+S.use.won || 0) >= DAY_WON) { S.chat.push({ who: 'k', text: '오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!' }); renderChat(); return; }
+  if ((+S.use.won || 0) >= dayWon()) { S.chat.push({ who: 'k', text: '오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!' }); renderChat(); return; }
   S.chat.push({ who: 'me', text }); S.choices = []; S.busy = 'talk'; renderChat(); saveChat();
   const g = S.game || {};
   const r = await API.ask({ mode: 'talk', gid: S.gid, turns: S.chat.filter((c) => c.who !== 'sys').slice(-16).map((c) => ({ who: c.who, text: c.plan ? c.text + '\n' + c.plan : c.text })) });
