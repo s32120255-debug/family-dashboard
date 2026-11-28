@@ -13,7 +13,7 @@
 <meta name="color-scheme" content="light only">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="2";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,7 +109,7 @@ h2{font-size:22px}
 <div id="app"></div>
 <div id="nav"></div>
 <div id="sheet"></div>
-<script src="data.js?v=1"></script>
+<script src="data.js?v=2"></script>
 <script src="figs.js?v=1"></script>
 <script>
 "use strict";
@@ -136,7 +136,7 @@ const leaks=(s,w)=>s.includes(w.replace(/\(.*\)/,'').trim());
 function others(t,n){let pool=t.b.t.filter(x=>x!==t);if(pool.length<n)pool=pool.concat(t.b.area.br.flatMap(b=>b.t).filter(x=>x!==t&&!pool.includes(x)));return shuf(pool).slice(0,n)}
 
 /* ───────── 화면 상태 ───────── */
-const STEPS=[['card','📖 카드'],['block','🧩 블록'],['quiz','✏️ 문제'],['talk','🎤 말하기'],['map','🌳 한 장']];
+const STEPS=[['card','📖 카드'],['block','🧩 블록'],['quiz','✏️ 문제'],['ox','⭕ O/X'],['talk','🎤 말하기'],['map','🌳 한 장']];
 let V={view:'home'};
 const $=s=>document.querySelector(s);
 function nextBranch(){return BR.find(b=>!S.done[b.id])||BR[0]}
@@ -172,13 +172,13 @@ function learn(){
   const list=listFor(key);
   if(list)h+=`<div class="dots">${list.map((_,i)=>`<i class="${i<V.i?'d':i===V.i?'c':''}"></i>`).join('')}</div>`;
   h+=`</div>`;
-  h+=({card:cardView,block:blockView,quiz:quizView,talk:talkView,map:mapView})[key]();
+  h+=({card:cardView,block:blockView,quiz:quizView,ox:quizView,talk:talkView,map:mapView})[key]();
   $('#app').innerHTML=h;
   const last=V.i>=(list?list.length:1)-1;
   $('#nav').innerHTML=`<div class="nav"><div class="in"><button data-act="prev" ${V.step===0&&V.i===0?'disabled':''}>◀ 이전</button><button class="main" data-act="next">${last&&V.step===STEPS.length-1?'가지 완성':'다음 ▶'}</button></div></div>`;
   window.scrollTo(0,0);
 }
-function listFor(k){if(k==='map')return null;if(k==='quiz')return V.qs||(V.qs=makeQuiz());return V.b.t}
+function listFor(k){if(k==='map')return null;if(k==='quiz')return V.qs||(V.qs=makeQuiz());if(k==='ox')return V.oxq||(V.oxq=makeOx());return V.b.t}
 function go(d){const k=STEPS[V.step][0],list=listFor(k),n=list?list.length:1;
   if(d>0){if(k==='card'){S.seen[V.b.t[V.i].w]=1;save()}
     if(V.i<n-1){V.i++;V.st={}}else{stepDone(k);if(V.step<STEPS.length-1){V.step++;V.i=0;V.st={};stepDone2()}else return finish()}}
@@ -213,23 +213,27 @@ function pickBlock(o){const t=V.b.t[V.i],st=V.st,bl=parts(t.d).filter(p=>typeof 
   render()}
 
 /* 3. 문제: 뜻→낱말 / 예→낱말 / O·X, 두 번 틀리면 정답+이유 */
+/* O/X: 낱말마다 맞는 문장·함정 문장 여러 개 (src/ox-*.txt) + 카드의 뜻·헷갈리지 마 */
+function oxPool(t){return (t.ox||[]).map(o=>({truth:!!o[0],text:o[1],why:o[2]})).concat([{truth:false,text:t.x,why:t.why},{truth:true,text:`「${t.w}」: ${plain(t.d)}`,why:`「${t.w}」의 뜻 그대로예요.`}])}
+function makeOx(){const a=[];V.b.t.forEach(t=>oxPool(t).forEach(o=>{if(!o.text.startsWith('「'))a.push({t,kind:'ox',...o})}));return shuf(a)}
+function curQ(){const k=STEPS[V.step][0];return k==='map'?V.rev.qs[V.rev.i]:k==='ox'?V.oxq[V.i]:V.qs[V.i]}
 function makeQuiz(){return shuf(V.b.t.map((t,i)=>qFor(t,['def','ex','ox'][i%3])))}
 function qFor(t,kind){
-  if(kind==='ox'){const truth=Math.random()<.5;return {t,kind,truth,text:truth?`「${t.w}」: ${plain(t.d)}`:t.x}}
+  if(kind==='ox'){const p=oxPool(t),o=p[Math.floor(Math.random()*p.length)];return {t,kind,...o}}
   const text=kind==='def'?mask(plain(t.d),t.w):mask(t.ex,t.w);
   if(leaks(text,t.w))return kind==='def'?qFor(t,'ex2'):qFor(t,'ox');
   const opts=shuf([t].concat(others(t,2)));
   return {t,kind:kind==='ex2'?'ex':kind,opts,text}}
-function quizView(){const q=V.qs[V.i],st=V.st;st.bad=st.bad||[];let h=`<div class="box">`;
-  if(q.kind==='ox'){h+=`<div class="sub">맞으면 O, 틀리면 X</div><div class="q">${esc(q.text)}</div><div class="ox">${['O','X'].map(o=>`<button class="opt ${st.end&&((o==='O')===q.truth)?'good':''} ${st.bad.includes(o)?'bad':''}" data-ox="${o}">${o}</button>`).join('')}</div>`}
+function quizView(){const q=curQ(),st=V.st;st.bad=st.bad||[];let h=`<div class="box">`;
+  if(q.kind==='ox'){h+=`<div class="sub">맞으면 O, 틀리면 X${STEPS[V.step][0]==='ox'?` · ${V.i+1}/${V.oxq.length}`:''}</div><div class="q">${esc(q.text)}</div><div class="ox">${['O','X'].map(o=>`<button class="opt ${st.end&&((o==='O')===q.truth)?'good':''} ${st.bad.includes(o)?'bad':''}" data-ox="${o}">${o}</button>`).join('')}</div>`}
   else{h+=`<div class="sub">${q.kind==='def'?'이 뜻은 어떤 낱말일까요?':'이 예는 어떤 낱말일까요?'}</div><div class="q">${esc(q.text)}</div><div class="opts">${q.opts.map(o=>`<button class="opt ${st.end&&o===q.t?'good':''} ${st.bad.includes(o.w)?'bad':''}" data-qa="${esc(o.w)}">${esc(o.w)}</button>`).join('')}</div>`}
   if(st.msg)h+=`<div class="msg ${st.msgc}">${st.msg}</div>`;
   return h+`</div>`}
-function answer(v){const inMap=STEPS[V.step][0]==='map';const q=inMap?V.rev.qs[V.rev.i]:V.qs[V.i],st=V.st;if(st.end)return;
+function answer(v){const q=curQ(),st=V.st;if(st.end)return;
   const ok=q.kind==='ox'?((v==='O')===q.truth):v===q.t.w;
-  if(ok){st.end=1;st.msgc='ok';st.msg=q.kind==='ox'?(q.truth?'맞아요!':'맞아요! '+esc(q.t.why)):'맞아요! '+esc(plain(q.t.d));if(!st.bad.length)unMiss(q.t.w)}
+  if(ok){st.end=1;st.msgc='ok';st.msg=q.kind==='ox'?'맞아요! '+esc(q.why):'맞아요! '+esc(plain(q.t.d));if(!st.bad.length)unMiss(q.t.w)}
   else{st.bad.push(v);markMiss(q.t.w);
-    if(st.bad.length>=2||q.kind==='ox'){st.end=1;st.msgc='no';st.msg=q.kind==='ox'?(q.truth?`O예요. 「${esc(q.t.w)}」의 뜻 그대로예요.`:`X예요. ${esc(q.t.why)}`):`정답은 「${esc(q.t.w)}」. ${esc(plain(q.t.d))}`}
+    if(st.bad.length>=2||q.kind==='ox'){st.end=1;st.msgc='no';st.msg=q.kind==='ox'?`${q.truth?'O':'X'}예요. ${esc(q.why)}`:`정답은 「${esc(q.t.w)}」. ${esc(plain(q.t.d))}`}
     else{st.msgc='info';st.msg='한 번 더 생각해 봐요.'}}
   render()}
 function markMiss(w){S.miss[w]=(S.miss[w]||0)+1;save()}
