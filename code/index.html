@@ -348,13 +348,14 @@ function renderTools() {
   const t = $('#tools'); if (!t) return; const g = S.game || {};
   const title = $('#gTitle'); if (title) title.textContent = g.title || '새 게임';
   const p = pubOf(S.gid);
-  t.innerHTML = g.ver ? `<button class="btn w s" id="reload">▶ 처음부터 다시</button><button class="btn w s" id="big">⛶ 크게</button><button class="btn w s" id="back">↩ 아까로 돌려 줘</button><button class="btn w s" id="pub" ${p && p.state === 'wait' && p.ver === g.ver ? 'disabled' : ''}>🏠 가족에게 올리기</button><span class="mini" style="align-self:center">${g.ver}번째 모습</span>` : '';
+  t.innerHTML = g.ver ? `<button class="btn w s" id="reload">▶ 처음부터 다시</button><button class="btn w s" id="big">⛶ 크게</button><button class="btn w s" id="back">↩ 아까로 돌려 줘</button><button class="btn w s" id="pub" ${p && p.state === 'wait' && p.ver === g.ver ? 'disabled' : ''}>🏠 가족에게 올리기</button><button class="btn w s" id="fileOut" title="엄마용: 프로젝트 채팅에 올릴 파일">📎 Claude에게 줄 파일</button><span class="mini" style="align-self:center">${g.ver}번째 모습</span>` : '';
   const rw = $('#roadW'); if (rw) { rw.innerHTML = g.ver || S.repo[g.id] ? `<div class="card" style="margin-top:10px">${roadHtml(g, g.id)}</div>` : ''; bindRoad(rw); }
   if (!g.ver) return;
   $('#reload').onclick = () => mountGame($('#stage'), S.preview ? S.preview.html : S.curHtml);
   $('#big').onclick = () => playFull(S.preview ? S.preview.html : S.curHtml);
   $('#back').onclick = openVersions;
   $('#pub').onclick = askPublish;
+  $('#fileOut').onclick = fileOut;
   const vb = $('#viewbar');
   vb.innerHTML = S.preview ? `<div class="viewbar"><b>${S.preview.n}번째 모습을 보는 중</b><button class="btn s" id="useV">이걸로 돌려</button><button class="btn w s" id="curV">지금 모습으로</button></div>` : '';
   if (S.preview) {
@@ -457,6 +458,30 @@ async function revertTo() {
   S.game = { ...g, ver: n, notes: { ...(g.notes || {}), [n]: note } }; S.curHtml = p.html; S.preview = null;
   S.chat.push({ who: 'sys', text: `${n}번째 모습: ${note}` }); saveChat();
   mountGame($('#stage'), S.curHtml); renderTools(); renderChat();
+}
+/* 📎 Claude에게 줄 파일(엄마 11/28 「코딩방에서 그걸 하자」): 올리지 않은 게임도 지금 모습을 html 파일로 받아요.
+   엄마가 프로젝트 채팅에 올리면 Claude가 고치고 games/list.json 에 적어 → 내일 시훈이 앱에 「🔄 가져오기」.
+   FILE_LOCK = true 면 엄마 비번(오늘의 공부 관리자 비번)을 한 번 물어요(이 창을 닫을 때까지 기억). */
+const FILE_LOCK = true;
+function fileOut() {
+  const g = S.game; const html = S.preview ? S.preview.html : S.curHtml; if (!g || !html) return;
+  const n = S.preview ? S.preview.n : g.ver;
+  const save = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.download = `sihun-game-${g.id}-v${n}.html`; // 한글 파일 이름은 기기에 따라 「download」로 바뀌어서 영어로
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    toast('파일을 받았어요. 프로젝트 채팅에 올려 주세요.');
+  };
+  let ok = !FILE_LOCK; try { if (sessionStorage.getItem('code:mom') === '1') ok = true; } catch (e) {}
+  if (ok) return save();
+  const d = document.createElement('div'); d.className = 'sheet';
+  d.innerHTML = `<div class="panel"><h2>📎 엄마만</h2><p>엄마 비밀번호를 넣으면 「${esc(g.title)}」 ${n}번째 모습 파일을 받아요.</p><input id="mpw" type="password" inputmode="numeric" autocomplete="off" maxlength="6" style="font:inherit;font-size:22px;width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:12px;letter-spacing:6px"><p class="mini" id="mpwMsg" style="min-height:20px"></p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="mpx">닫기</button><button class="btn s" id="mpgo">받기</button></div></div>`;
+  document.body.appendChild(d);
+  const inp = $('#mpw', d); inp.focus();
+  const go = () => { if (inp.value.replace(/\D/g, '') === '503553') { try { sessionStorage.setItem('code:mom', '1'); } catch (e) {} d.remove(); save(); } else { $('#mpwMsg', d).textContent = '비밀번호가 달라요.'; inp.value = ''; } };
+  $('#mpgo', d).onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  $('#mpx', d).onclick = () => d.remove();
 }
 function askPublish() {
   const g = S.game; if (!g || !g.ver) return;

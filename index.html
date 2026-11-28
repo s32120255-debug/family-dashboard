@@ -1139,7 +1139,7 @@ function renderCodeGames(){const el=$("codeList");if(!el)return;
  el.querySelectorAll("[data-cok]").forEach(b=>b.onclick=()=>run(updateDoc(doc(fs,"sihunCode/main/pub",b.dataset.cok),{state:"ok",okAt:Date.now()}),"가족에게 올렸어요"));
  el.querySelectorAll("[data-cno]").forEach(b=>b.onclick=()=>run(updateDoc(doc(fs,"sihunCode/main/pub",b.dataset.cno),{state:"no",noAt:Date.now()}),"시훈이에게 「다시 고쳐 보자」로 보였어요"));
  el.querySelectorAll("[data-cfile]").forEach(b=>b.onclick=()=>{const p=codePubs.find(x=>x.id===b.dataset.cfile);if(!p)return;
-  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([p.html],{type:"text/html"}));a.download=`시훈게임-${p.id}-${String(p.title||"게임").replace(/[\\/:*?"<>|\s]+/g,"_")}-${p.ver||0}.html`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast("파일을 받았어요. 프로젝트 채팅에 올려 주세요.")});
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([p.html],{type:"text/html"}));a.download=`sihun-game-${p.id}-v${p.ver||0}.html`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);toast("파일을 받았어요. 프로젝트 채팅에 올려 주세요.")});
 }
 function renderAll(){try{autoMe()}catch(e){}if(wkDay&&$("wkBox")&&!$("wkBox").contains(document.activeElement))try{openWeek()}catch(e){}for(const f of [renderMust,renderLadder,renderJudge,renderStore,renderWish,renderGrow,renderTop,renderSched,renderTasks,renderNotes,renderFood,renderPantry,renderChores,renderHelp,renderCal,renderMeals,renderShop,renderSupplies,renderLoc,renderCodeGames]){try{f()}catch(e){console.error(f.name,e)}}}
 
