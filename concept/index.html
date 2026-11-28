@@ -13,7 +13,7 @@
 <meta name="color-scheme" content="light only">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="4";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="5";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,9 +109,9 @@ h2{font-size:22px}
 <div id="app"></div>
 <div id="nav"></div>
 <div id="sheet"></div>
-<script src="data.js?v=4"></script>
-<script src="figs.js?v=4"></script>
-<script src="nopair.js?v=4"></script>
+<script src="data.js?v=5"></script>
+<script src="figs.js?v=5"></script>
+<script src="nopair.js?v=5"></script>
 <script>
 "use strict";
 /* ───────── 저장 (이 기기 안) ───────── */
