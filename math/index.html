@@ -15,7 +15,7 @@
 <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="1795824665";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
+(function(){var V="1795825359";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){var u=location.pathname+"?v="+j.v+location.hash;try{if(sessionStorage.getItem("mv")===String(j.v))return;sessionStorage.setItem("mv",String(j.v))}catch(e){}location.replace(u)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
@@ -144,7 +144,7 @@ details.card summary{cursor:pointer;padding:4px 0}
 .lg{white-space:nowrap}.lg sub,.st sub{font-size:.6em;vertical-align:-.35em;line-height:0}.pw{white-space:nowrap}.qline .pw sup,.qline .lg sup,.qline .intg sup{align-self:auto;margin-left:.04em;font-size:.6em;vertical-align:.6em;line-height:0}
 .qline.hs sup .box{font-size:1.5em;min-width:1.5em;height:1.3em}.pw.big sup{font-size:.82em!important}.pw.big sup sub{font-size:.7em}
 .intg{display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle}.intg i{font-style:normal;font-size:.58em;line-height:1.15}.intg b{font-weight:400;font-size:1.3em;line-height:.95}.intg.lim b{font-size:1em}.intg.ig b{font-size:1.9em;font-family:serif;line-height:1}.isym{font-size:1.7em;font-family:serif;line-height:1}.obar{text-decoration:overline}
-.qline.stack{flex-direction:column;gap:10px}
+.qline.stack{flex-direction:column;gap:10px}.qline.ordq{font-size:21px;gap:7px}.qline.ordq .ordh{font-size:1.15em;white-space:normal;flex-wrap:wrap;justify-content:center;gap:4px 6px;padding-bottom:5px;border-bottom:1px dashed var(--line)}.qline.ordq .ordl{white-space:normal;flex-wrap:wrap;justify-content:center;gap:3px 5px}.qline.ordq .ordl.done{opacity:.55}.qline.ordq .ordl>i{font-style:normal;font-size:.7em;color:var(--ink-2);border:1px solid var(--line);border-radius:50%;min-width:1.5em;height:1.5em;display:inline-flex;align-items:center;justify-content:center}
 .qline .dl{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 6px;max-width:100%}.qline .pairs{display:grid;grid-template-columns:1fr;gap:8px 22px;justify-items:center}.qline .pairs.two{grid-template-columns:1fr 1fr}
 .qline .sub{display:flex;align-items:center;gap:8px;white-space:nowrap}
 .qline sup{align-self:flex-start;font-size:.58em;line-height:1;margin-left:-.3em}
@@ -3103,12 +3103,35 @@ const HJD={"최대공약수":["最大公約數","가장 최 · 큰 대 · 함께
 "단위":["單位","홑 단 · 자리 위","잴 때 기준이 되는 하나"],"암산":["暗算","어두울 암 · 셈 산","쓰지 않고 머릿속으로 하는 셈"],"구구단":["九九段","아홉 구 · 아홉 구 · 층계 단","1 × 1부터 9 × 9까지의 곱셈표"],"혼합 계산":["混合計算","섞을 혼 · 합할 합 · 셀 계 · 셈 산","덧셈, 뺄셈, 곱셈, 나눗셈이 섞인 계산"],"계산 순서":["計算順序","셀 계 · 셈 산 · 차례 순 · 차례 서","먼저 할 것과 나중 할 것의 차례"],"규칙":["規則","법 규 · 법칙 칙","되풀이되는 정해진 법"],"대응":["對應","마주할 대 · 응할 응","두 수가 서로 짝을 이루는 것"],"반올림":["半올림","반 반","반(5) 이상이면 올리고 아니면 버리기"],
 "지수":["指數","가리킬 지 · 셈 수","몇 번 곱했는지 가리키는 작은 수"],"제곱근":["제곱根","뿌리 근","제곱해서 그 수가 되는 뿌리 수"],"전개":["展開","펼 전 · 열 개","괄호를 풀어 펼치기"],"복소수":["複素數","겹칠 복 · 바탕 소 · 셈 수","실수와 허수 두 가지가 겹쳐진 수"],"행렬":["行列","줄 행 · 벌일 렬","수를 가로줄과 세로줄로 늘어놓은 것"],"집합":["集合","모을 집 · 합할 합","조건에 맞는 것들의 모임"],"명제":["命題","이름 붙일 명 · 제목 제","참인지 거짓인지 가릴 수 있는 문장"],"수열":["數列","셈 수 · 벌일 렬","차례로 늘어놓은 수의 줄"],"극한":["極限","다할 극 · 끝 한","한없이 가까워지는 끝 값"],"미분":["微分","작을 미 · 나눌 분","아주 잘게 나눠 순간의 변화를 보기"],"적분":["積分","쌓을 적 · 나눌 분","잘게 나눈 것을 쌓아 모으기"],"순열":["順列","차례 순 · 벌일 렬","차례를 따져 늘어놓기"],"조합":["組合","짤 조 · 합할 합","차례 없이 골라 짜기"],"통계":["統計","거느릴 통 · 셀 계","자료를 모아 한눈에 보이게 세기"],"판별식":["判別式","가를 판 · 나눌 별 · 법 식","근이 몇 개인지 가려내는 식"],
 "만":["萬","일만 만","천이 10개. 0이 4개"],"억":["億","억 억","만이 만 개. 0이 8개"],"조":["兆","조 조","억이 만 개. 0이 12개"],"각":["角","뿔 각","뿔처럼 뾰족하게 벌어진 곳"],"변":["邊","가 변","도형의 가장자리 선분"],"항":["項","항목 항","식에서 + 와 − 로 나뉜 한 덩어리"],"원":["圓","둥글 원","한 점에서 같은 거리에 있는 둥근 모양"]};
-const HJX={OF:["분수","분모","분자"],A6:["약수"],A7:["약수"],A3:["배수"],MJ:["배수"],DJ:["약수"],PR:["약수"],FR:["가분수","대분수","분모","분자"],FV1:["가분수","대분수","분모","분자"],FV2:["대분수","가분수","분모","분자"],CK:["시각","시간","오전","오후"],CT:["시각","시간","오전","오후"],U2:["시각","시간"],CL:["달력","요일"],GB:["선분","반직선","직선","각","직각"],GA:["각도","직각"],GL:["변","선분"],GO:["원","반지름"],GR:["원","반지름"],LX:["항","계수","상수항","차수","동류항"],LE:["일차식","동류항","계수"],EV:["계수"],EQ:["방정식","등식","이항"],EW:["방정식","등식"],E1:["등식"],NS:["암산"],MM:["암산"],GU:["구구단"],T12:["구구단"],T19:["구구단"],BN:["만","억","조"],KN:["만","억"],BX:["함수"],CO:["함수"],GQ:["사각형","각"],AG:["다각형","내각","외각","대각선"],CD:["공약수","약수"],GC:["최대공약수","공약수"],CM:["공배수","배수"],LC:["최소공배수","공배수"]};
+const HJX={AP:["약수"],OF:["분수","분모","분자"],A6:["약수"],A7:["약수"],A3:["배수"],MJ:["배수"],DJ:["약수"],PR:["약수"],FR:["가분수","대분수","분모","분자"],FV1:["가분수","대분수","분모","분자"],FV2:["대분수","가분수","분모","분자"],CK:["시각","시간","오전","오후"],CT:["시각","시간","오전","오후"],U2:["시각","시간"],CL:["달력","요일"],GB:["선분","반직선","직선","각","직각"],GA:["각도","직각"],GL:["변","선분"],GO:["원","반지름"],GR:["원","반지름"],LX:["항","계수","상수항","차수","동류항"],LE:["일차식","동류항","계수"],EV:["계수"],EQ:["방정식","등식","이항"],EW:["방정식","등식"],E1:["등식"],NS:["암산"],MM:["암산"],GU:["구구단"],T12:["구구단"],T19:["구구단"],BN:["만","억","조"],KN:["만","억"],BX:["함수"],CO:["함수"],GQ:["사각형","각"],AG:["다각형","내각","외각","대각선"],CD:["공약수","약수"],GC:["최대공약수","공약수"],CM:["공배수","배수"],LC:["최소공배수","공배수"]};
 const HJK=Object.keys(HJD).filter(k=>k.length>1).sort((a,b)=>b.length-a.length);
 function hanjaOf(id){const T=TYPES[id];if(!T)return [];const out=(HJX[id]||[]).slice();let s=(T.name||"").replace("이항정리","");if(/분수/.test(s)&&!HJX[id])["분모","분자"].forEach(k=>out.push(k));
   const found=[];HJK.forEach(k=>{const i=s.indexOf(k);if(i>=0){found.push([i,k]);s=s.replace(k,"＿".repeat(k.length))}});found.sort((a,b)=>a[0]-b[0]).forEach(x=>out.push(x[1]));
   return [...new Set(out)].filter(k=>HJD[k]).slice(0,5)}
 function hanjaCard(id){const L=hanjaOf(id);if(!L.length)return "";return `<button class="card hjc" data-act="start" style="text-align:left;cursor:pointer;font:inherit;color:inherit"><b>🐾 오늘의 한자 뜻풀이</b>${L.map(k=>{const [h,r,m]=HJD[k];return `<span style="display:block"><b style="font-size:19px">${k}</b> <span style="font-size:20px;color:var(--accent,#1f4e9c)">${h}</span> <span class="small muted">${r}</span><span class="small" style="display:block">${m}</span></span>`}).join("")}<span class="small muted">읽었으면 여기를 누른다냥. 바로 시작한다옹.</span></button>`}
+/* 11/28 sy: 약수는 순서가 엉망 → "1부터 올리며 짝(1×12 → 2×6 → 3×4), 두 수가 만나면 멈춤"을 먼저 몸에 붙이는 단계 */
+const APP=N=>{const r=[];for(let a=1;a*a<=N;a++)if(N%a===0)r.push([a,N/a]);return r},AP2=[6,8,10,14,15,21,22,26,27,33,34,35],AP3=[12,18,20,28,32,44,45,50],APS=[4,9,16,25,49],AP4=[24,30,40,42,54,56];
+const apSkip=(N,a0,a1)=>{const sk=[];for(let x=a0+1;x<a1;x++)sk.push(x);return sk.length?`${sk.join(", ")}${eun(sk[sk.length-1])} 나누어떨어지지 않아서 건너뛴다냥.`:"바로 다음 수다냥."};
+const apRows=({N})=>{const P=APP(N),sq=P[P.length-1][0]===P[P.length-1][1];return{q:[`~${N}의 약수를 1부터 짝으로 찾는다`,...P.map((_,i)=>`[[${2*i}]] × [[${2*i+1}]]`)],a:P.flat(),t:`${N}의 약수 짝 (1부터)`,
+  st:P.map((pr,i)=>[i===0?`1부터 시작한다. [[0]] × [[1]]`:`다음으로 나누어떨어지는 수와 그 짝. [[0]] × [[1]]`,pr,i===0?"1과 자기 자신은 언제나 짝이다냥.":apSkip(N,P[i-1][0],pr[0])+(i===P.length-1?(sq?" 같은 수끼리 만났으니 여기서 끝이다옹.":" 다음 수는 짝보다 커지니 여기서 끝이다옹."):"")])}};
+EL("AP",{n:"약수 짝 찾기 (1부터 차례로)",c:"5-1",ex:"12:  1 × 12,  2 × 6,  3 × 4  끝",s:25,w:"약수를 하나도 안 빠뜨리는 순서다냥. 최대공약수, 약분, 소인수분해까지 이 순서로 간다옹.",i:"1부터 차례로 나눠 본다냥. 나누어떨어지면 짝과 함께 쓴다옹. 작은 수가 짝을 만나거나 넘으면 멈춘다냥."},[
+ ["짝 찾기 (한 쌍)",()=>{const N=pick([...AP3,...AP4]),P=APP(N);return{N,a:P[ri(1,P.length-1)][0]}},({N,a})=>({q:`${a} × [[0]] = ${N}`,a:[N/a],st:[[`${N} ÷ ${a} = [[0]]`,N/a,"곱해서 그 수가 되는 짝이다냥."]]})],
+ ["1부터 짝 (작은 수가 보임)",()=>({N:pick([...AP2,...AP3])}),({N})=>{const P=APP(N);return{q:[`~${N}의 약수를 1부터 짝으로 찾는다`,...P.map((pr,i)=>`${pr[0]} × [[${i}]]`)],a:P.map(x=>x[1]),t:`${N}의 약수 짝`,st:P.map((pr,i)=>[`${N} ÷ ${pr[0]} = [[0]]`,pr[1],i===P.length-1?"다음 수는 짝보다 커지니 여기서 끝이다옹.":"1부터 차례로 나눠 본다냥."])}}],
+ ["1부터 짝 (모두 직접 쓰기)",()=>({N:pick([...AP2,...AP3])}),apRows],
+ ["같은 수끼리 만나는 수",()=>({N:pick(APS)}),apRows],
+ ["1부터 짝 (약수 8개)",()=>({N:pick(AP4)}),apRows],
+ ["마지막 짝 찾기",()=>({N:pick([...AP3,...AP4,16,36])}),({N})=>{const P=APP(N),L=P[P.length-1];return{q:[`~${N}의 약수를 1부터 짝으로 찾는다`,`마지막 짝은 [[0]] × [[1]]`],a:L,t:`${N}의 마지막 짝`,st:[[`${L[0]} × [[0]] = ${N}`,L[1],`${L[0]+1}부터는 짝이 더 작아져서 이미 나온 수다냥.`],[`그래서 마지막 짝은 [[0]] × [[1]]`,L,"작은 수가 짝을 만나거나 넘기 바로 전이다옹."]]}}],
+ ["짝으로 약수 개수 세기",()=>({N:pick([...AP2,...AP3,...APS,...AP4])}),({N})=>{const P=APP(N),sq=P[P.length-1][0]===P[P.length-1][1],c=P.length*2-(sq?1:0);return{q:[`~${P.map(p=>p.join(" × ")).join(",  ")}`,`${N}의 약수는 [[0]]개`],a:[c],t:`${N}의 약수 개수`,st:[[`짝은 [[0]]쌍`,P.length,"곱셈 하나가 한 쌍이다냥."],[`${P.length} × 2${sq?" − 1":""} = [[0]]`,c,sq?"같은 수끼리 만난 짝은 수가 하나뿐이다옹.":"한 쌍에 약수가 두 개씩이다옹."]]}}]]);
+TYPES.AP.conAt=[0,1,2,3,5,6];TYPES.AP.optional=false;
+/* 11/28 sy: "풀이 순서가 엉망" → 순서 칸: 여러 단계로 푸는 유형은 앞 칸을 맞혀야 다음 줄이 열린다. 새 단계는 순서 칸 세트부터, 하나도 안 틀리면 답만 쓰는 세트로. 답만 세트에서 2개 이상 틀리면 순서 칸으로 돌아온다 */
+const ORDT=new Set(["B12","MX","E4","ZX","LX","LE","EQ","EW","FE","PA","MD","MF"]);
+const ordOn=id=>ORDT.has(id)&&S.cfg.ordOff!==true&&tst(id).ordM!==false&&!TYPES[id].seq;
+function ordQ(T,p,q){try{if(q.kind!=="num"||q.fr)return q;const L=T.steps(p).list;if(!L||L.length<2||L.some(x=>(x.kind||"num")!=="num"||x.fr))return q;
+  let n=0;const lines=[],a=[],ends=[];L.forEach(x=>{const b=n;lines.push(String(x.h).replace(/\[\[(\d+)\]\]/g,(m,i)=>`[[${b+ +i}]]`));x.a.forEach(v=>a.push(String(v)));n+=x.a.length;ends.push(n)});
+  if(JSON.stringify(L[L.length-1].a.map(String))!==JSON.stringify(q.a)){const b=n;lines.push(`답: ${q.html.replace(/\[\[(\d+)\]\]/g,(m,i)=>`[[${b+ +i}]]`).replace(/<span class="sub( w)?">/g,"<span>")}`);q.a.forEach(v=>a.push(v));n+=q.a.length;ends.push(n)}
+  if(n>10||lines.length>6)return q;
+  return{...q,a,alts:undefined,ord:true,ordL:lines,ordE:ends,ordH:q.html.replace(/\[\[\d+\]\]/g,"□"),cls:"hs stack ordq",sg:q.sg||L.some(x=>x.sg),ml:Math.max(q.ml||0,...a.map(v=>v.length),4)}}catch(e){return q}}
+const ordHtml=(q,act)=>{const k=Math.min(q.ordL.length-1,Math.max(0,q.ordE.findIndex(e=>e>act)));return `<span class="sub ordh">${q.ordH}</span>`+q.ordL.slice(0,k+1).map((h,i)=>`<span class="sub ordl ${i<k?"done":""}"><i>${i+1}</i>${h}</span>`).join("")};
 EL("DH",{n:"소수 두 · 세 자리",c:"4-2",ex:"0.01이 347개 = 3.47",s:8,w:"소수의 덧셈·뺄셈·곱셈, 단위 바꾸기에 쓰인다냥.",i:"0.1이 10개면 1, 0.01이 100개면 1이다냥. 10배 하면 소수점이 오른쪽으로 한 칸 간다옹."},[
  ["0.01이 몇 개",()=>({n:dN(101,999)}),({n})=>{const w=Math.floor(n/100);return{q:`${dS(n,2)}${eun(dS(n,2))} 0.01이 [[0]]개`,a:[n],st:[[`1은 0.01이 [[0]]개`,100,"0.01이 100개면 1이다냥."],[`${w}${eun(w)} 0.01이 [[0]]개`,w*100,"100개씩 묶음이다옹."],[`모두 [[0]]개`,n,"소수점을 지운 수와 같다냥."]]}}],
  ["0.01 모으기",()=>({n:dN(101,999)}),({n})=>{const A=dP(n,2);return{q:[`0.01이 ${n}개`,`= [[0]] . [[1]]`],a:A,st:[[`100개 묶음 [[0]]개`,A[0],"0.01이 100개면 1이다냥."],[`남은 0.01은 [[0]]개`,n%100,"묶고 남은 것이다옹."],[`그래서 [[0]] . [[1]]`,A,"남은 수는 두 자리로 쓴다냥. 7개면 07."]]}}],
@@ -3277,7 +3300,7 @@ const CUR={A1:["3-1","나눗셈"],B4:["3-1","덧셈과 뺄셈"],B5:["3-1","곱�
  A2:["3-2","나눗셈"],B9:["3-2","나눗셈"],B6:["3-2","곱셈"],B7:["3-2","곱셈"],FN:["3-2","분수"],FV1:["3-2","분수"],FV2:["3-2","분수"],FC:["3-2","분수"],OF:["3-2","분수"],U1:["3-2","들이와 무게 (길이 포함)"],
  B11:["4-1","곱셈과 나눗셈"],E3:["4-1","규칙 찾기"],
  FU:["4-2","분수의 덧셈과 뺄셈"],C1:["4-2","분수의 덧셈과 뺄셈"],FS:["4-2","분수의 덧셈과 뺄셈"],CA:["4-2","분수의 덧셈과 뺄셈"],DA:["4-2","소수의 덧셈과 뺄셈"],
- B12:["5-1","자연수의 혼합 계산"],A3:["5-1","약수와 배수"],A6:["5-1","약수와 배수"],A7:["5-1","약수와 배수"],MJ:["5-1","약수와 배수"],DJ:["5-1","약수와 배수"],MN:["5-1","약수와 배수"],CD:["5-1","약수와 배수"],GC:["5-1","약수와 배수"],CM:["5-1","약수와 배수"],LC:["5-1","약수와 배수"],
+ B12:["5-1","자연수의 혼합 계산"],A3:["5-1","약수와 배수"],A6:["5-1","약수와 배수"],AP:["5-1","약수와 배수"],A7:["5-1","약수와 배수"],MJ:["5-1","약수와 배수"],DJ:["5-1","약수와 배수"],MN:["5-1","약수와 배수"],CD:["5-1","약수와 배수"],GC:["5-1","약수와 배수"],CM:["5-1","약수와 배수"],LC:["5-1","약수와 배수"],
  CO:["5-1","규칙과 대응"],C2:["5-1","약분과 통분"],C3:["5-1","약분과 통분"],FT:["5-1","약분과 통분"],C4:["5-1","약분과 통분"],C5:["5-1","분수의 덧셈과 뺄셈"],
  FM:["5-2","분수의 곱셈"],DC:["5-2","소수의 곱셈"],FD:["6-1","분수의 나눗셈 (÷ 분수는 6-2)"],
  FX:["5-1","규칙과 대응"],
@@ -3317,7 +3340,7 @@ const FRP=["FA","FN","FU","FV1","FV2","FC","NL","C1","FS","CA","C2","C3","FT","C
 const V20=["BX","UW","PG","CK","GO","GL","GA","GP","GS","GV","GR","DP","ES","MX","DF","FQ","PL","ZX","FE","SC","SV","RF","MD","RZ","FY","QG","TV","IA"];
 const ORDER0=["T12","GU","A1","A3","B5","A6","FR",...V20,"OF","CO","E1","C2","D1","A2","A7","B6","C1",...FRP,...NEWT,"C3","C4","CA","C5","FX","KN","B13","B14","CB","RO","DM","DD","DV","RT","PP",...ELR,...MID].filter((x,i,a)=>a.indexOf(x)===i);
 /* 하루 20판 (11/25 sy): 12~19단1 몫찾기3 배수1 두자리×한자리2 약수1 분수길1 + 함수 상자2 + 3학년 새 단원 5(들이·무게, 그림그래프, 시계, 원, 평면도형) = 16, 남는 4칸은 대기 줄(지금 학기 3 + 다음 학기 미리 1) */
-const PLAN0={A1:2,A3:1,B5:2,A6:1,T12:1,GU:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:1,BN:1,CL:1,GO:1,GL:1,GB:1,GA:1};
+const PLAN0={A1:2,A3:1,B5:2,AP:1,A6:1,T12:1,GU:1,FR:1,NS:1,BX:2,UW:1,PG:1,CK:1,BN:1,CL:1,GO:1,GL:1,GB:1,GA:1};
 /* 11/26 sy: 수 가르기는 꼭 필요 → 매일 1세트 */
 function migNS(){if(S.cfg.plan.NS==null)S.cfg.plan.NS=1;if(S.cfg.nsPlan)return;S.cfg.nsPlan=true;const o=S.cfg.order.filter(x=>x!=="NS"),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,"NS");S.cfg.order=o}
 function mig20(){if(S.cfg.twenty)return;S.cfg.twenty=true;Object.keys(PLAN0).forEach(k=>{if(!(S.cfg.plan[k]>0))S.cfg.plan[k]=PLAN0[k]});const o=S.cfg.order.filter(x=>!V20.includes(x)),i=o.indexOf("FR");o.splice(i<0?o.length:i+1,0,...V20);S.cfg.order=o}
@@ -3364,6 +3387,7 @@ function loadFix(){
   if(!S.cfg.guAdd){S.cfg.guAdd=true;const o=S.cfg.order,i=o.indexOf("GU");if(i>=0)o.splice(i,1);o.splice(o.indexOf("T12")+1,0,"GU");if(!S.cfg.plan.GU){S.cfg.plan.GU=1;if((S.cfg.plan.CK||0)>=2)S.cfg.plan.CK-=1}try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.clAdd){S.cfg.clAdd=true;const o=S.cfg.order,i=o.indexOf("CL");if(i>=0)o.splice(i,1);o.splice(o.indexOf("CK")+1,0,"CL");if(!S.cfg.plan.CL)S.cfg.plan.CL=1;if(S.cfg.weSet&&!S.cfg.weSet.includes("CL"))S.cfg.weSet.push("CL")}
   if(!S.cfg.v55Add){S.cfg.v55Add=true;const o=S.cfg.order,put=(id,ref,af)=>{const i=o.indexOf(id);if(i>=0)o.splice(i,1);const k=o.indexOf(ref);o.splice(k<0?o.length:k+(af?1:0),0,id)};put("CT","CK",1);put("BN","CK",1);put("GB","GA",0);put("LX","EV",0);put("EW","EQ",1);["BN","GB","GA"].forEach(id=>{if(!S.cfg.plan[id])S.cfg.plan[id]=1});if(S.cfg.weSet)["GB","GA"].forEach(id=>{if(!S.cfg.weSet.includes(id))S.cfg.weSet.push(id)})}
+  if(!S.cfg.apAdd){S.cfg.apAdd=true;const o=S.cfg.order,i=o.indexOf("AP");if(i>=0)o.splice(i,1);const k=o.indexOf("A6");o.splice(k<0?o.length:k,0,"AP");if(!S.cfg.plan.AP)S.cfg.plan.AP=1}
   if(!S.cfg.wkS){S.cfg.wkS=true;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.ckBase){S.cfg.ckBase=true;const st=S.ts.CK;if(st&&!st.grad){st.step=0;st.stepLab=TYPES.CK.lv[0];st.rev=[];st.conceptDone=false}if(S.cfg.plan.A1===3)S.cfg.plan.A1=2;if((S.cfg.plan.CK||0)<=1)S.cfg.plan.CK=2;try{if(DAYS[today()])DAYS[today()].plan=planNow()}catch(e){}}
   if(!S.cfg.coRef){S.cfg.coRef=true;const st=S.ts.CO;if(st&&st.step)st.step=[0,2,4,6,8,9,10][Math.min(st.step,6)]}
@@ -3382,7 +3406,7 @@ const FRAC=new Set(["OF",...FRP]),passN=id=>Math.max(1,Math.min(6,FRAC.has(id)?(
 const finalPQ=id=>Math.round(tc(id).sec*(lvl(id)===0?2:1)*spdK()*10)/10;
 const D=()=>DAYS[today()];
 
-const PLANV="55";/* 하루 계획 만드는 방식이 바뀔 때마다 올린다 */
+const PLANV="56";/* 하루 계획 만드는 방식이 바뀔 때마다 올린다 */
 function ensureToday(){
   if(!S.cfg.ten){S.cfg.ten=true;S.cfg.plan=clone(PLAN0);S.lastDay=null}
   Object.keys(S.ts).forEach(id=>{const T=TYPES[id];if(T&&STEPT(T)&&(S.ts[id].step||0)>stepMax(T))S.ts[id].step=stepMax(T)});
@@ -3753,7 +3777,7 @@ function vIntro(){
    <div class="card"><h2>${T.name} <span class="small muted">${T.seq?T.seq(st.step||0).list.length:n}문제</span></h2>
      ${lr?`<dl class="kv"><dt>지난번</dt><dd class="tab">${fmt(lr.t)} · 오답 ${lr.w}</dd>${bp?`<dt>내 가장 빠른</dt><dd class="tab">${fmt(bp*n)}</dd>`:""}</dl>`:""}
      ${T.scaffold?`<p class="small"><span class="pill new">${lvl(id)===0?"칸 채우기":"답만"}</span></p>`:""}
-     ${STEPT(T)?`<p><span class="pill new">${stepLabel(T,st.step||0)}</span>${passN(id)>1&&(st.step||0)<stepMax(T)?` <span class="pill">통과 ${st.okS===(st.step||0)?st.okN||0:0}/${passN(id)}</span>`:""} 목표 ${fmt(finalPQ(id)*(T.seq?T.seq(st.step||0).list.length:n))}</p>`:tgt?`<p class="small">${tgt}</p>`:""}</div>
+     ${ordOn(id)&&(()=>{try{const p=T.rand(st.step||0);return ordQ(T,p,T.make(p)).ord}catch(e){return false}})()?`<p class="small"><span class="pill new">순서 칸</span> 앞 칸을 맞혀야 다음 줄이 열린다냥. 시간은 안 본다옹.</p>`:""}${STEPT(T)?`<p><span class="pill new">${stepLabel(T,st.step||0)}</span>${passN(id)>1&&(st.step||0)<stepMax(T)?` <span class="pill">통과 ${st.okS===(st.step||0)?st.okN||0:0}/${passN(id)}</span>`:""} 목표 ${fmt(finalPQ(id)*(T.seq?T.seq(st.step||0).list.length:n))}</p>`:tgt?`<p class="small">${tgt}</p>`:""}</div>
    ${T.link?`<div class="notice" style="text-align:left;font-size:15px">🐾 ${T.link}</div>`:""}
    ${hanjaCard(id)}
    ${needConcept?`<button class="bigbtn" data-act="concept">처음이니까 보기</button>`:""}
@@ -3765,7 +3789,7 @@ function vIntro(){
 /* 문제 풀이 엔진 (세트와 방법 찾기가 같이 씀) */
 /* 칸이 하나씩 나오는 문제(q.prog = 앞쪽 칸 수): 지금 칸까지만 보여 주고, 앞쪽을 다 채우면 마지막 칸(개수)이 나온다 */
 const progHtml=(q,act,vals)=>{const n=q.prog,m=Math.max(act,vals.reduce((a,v,i)=>v?i:a,-1));return `${q.pre}<span class="dl">${Array.from({length:Math.min(m,n-1)+1},(_,i)=>`[[${i}]]`).join(" , ")}</span>${m>=n?`<span class="sub">약수 [[${n}]]개</span>`:""}`};
-const qHtml=q=>q.prog&&!(RUN.items[curIdx()]||{}).showAll?progHtml(q,RUN.act,RUN.vals):q.html;
+const qHtml=q=>q.ord?ordHtml(q,RUN.act):q.prog&&!(RUN.items[curIdx()]||{}).showAll?progHtml(q,RUN.act,RUN.vals):q.html;
 function boxesHTML(html,vals,act,state){return html.replace(/\[\[(\d+)\]\]/g,(m,i)=>{i=+i;return `<button class="box ${i===act?"act":""} ${state&&state[i]||""}" data-act="box" data-arg="${i}">${fviewT(vals[i]||"")}</button>`})}
 /* 분수 입력 순서 (sy 11/25 저녁: 분모 먼저): 자연수 & 분모 \ 분자. 저장·채점은 자연수&분자\분모로 바꿔서 */
 function typedParts(v){const m=String(v).match(/^(-?)(\d*)(&?)(\d*)(\\?)(\d*)$/);if(!m)return null;return m[3]?{sg:m[1],w:m[2],d:m[4],n:m[6],bar:!!m[5]}:{sg:m[1],w:"",d:m[2],n:m[6],bar:!!m[5]}}
@@ -3827,10 +3851,11 @@ function startSet(){
   const id=RUN.type;RUN.probs=buildSet(id,PREVIEW?RUN.lv:undefined);RUN.order=RUN.probs.map((_,i)=>i);RUN.pos=0;
   RUN.items=RUN.probs.map(()=>({ms:0,tries:[],skip:false,mis:0,ok:false,ok1:false}));
   RUN.vals=[];RUN.act=0;RUN.say="";RUN.cur=null;RUN.pred=null;RUN.started=Date.now();RUN.user=null;
+  RUN.ord=false;if(!PREVIEW&&!RUN.duel&&!RUN.rev&&ordOn(id)){RUN.probs.forEach(pr=>{pr.q=ordQ(TYPES[id],pr.p,pr.q)});RUN.ord=RUN.probs.some(pr=>pr.q.ord);if(RUN.ord)RUN.label="순서"}
   view="play";beginQ();render();
 }
 const curIdx=()=>RUN.order[RUN.pos];
-function beginQ(){RUN.vals=[];RUN.act=0;RUN.user=null;RUN.say="";const it=RUN.items&&RUN.items[RUN.order[RUN.pos]];RUN.cur=it&&it.fz?null:performance.now();RUN.boxState=[];if(it&&it.again){it.rt=0;it.found=[];RUN.say="아까 그 문제다냥. 한 번 더 해 보자옹."}}
+function beginQ(){RUN.pend=false;RUN.vals=[];RUN.act=0;RUN.user=null;RUN.say="";const it=RUN.items&&RUN.items[RUN.order[RUN.pos]];RUN.cur=it&&it.fz?null:performance.now();RUN.boxState=[];if(it&&it.again){it.rt=0;it.found=[];RUN.say="아까 그 문제다냥. 한 번 더 해 보자옹."}}
 function stopClock(){if(RUN&&RUN.cur!=null&&RUN.items[curIdx()]){RUN.items[curIdx()].ms+=performance.now()-RUN.cur;RUN.cur=null}}
 function resumeClock(){if(RUN&&RUN.cur==null&&!(RUN.items&&RUN.items[curIdx()]||{}).fz)RUN.cur=performance.now()}
 function elapsed(){if(!RUN)return 0;let s=RUN.items.reduce((a,b)=>a+b.ms,0);if(RUN.cur!=null)s+=performance.now()-RUN.cur;return s/1000}
@@ -3852,12 +3877,16 @@ function vPlay(){
 }
 function typeKey(k){
   if(view==="graph"){gwKey(k);return}
-  const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx||(view==="play"&&RUN.lock))return;
+  const ctx=view==="play"?RUN:view==="concept"?CON:null;if(!ctx||(view==="play"&&(RUN.lock||RUN.pend)))return;
   const q=view==="play"?RUN.probs[curIdx()].q:curStep();if(!q||q.kind==="ox"||q.kind==="plot")return;if(q.kind==="multi")ctx.act=0;
   if(k==="ok"){submit();return}
   if(k==="clr"){if(view==="concept")ctx.vals[ctx.act]="";else{ctx.vals=[];ctx.act=0}ctx.boxState=[];softRender();return}
-  if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}ctx.act++;softRender();return}
-  const v=ctx.vals[ctx.act]||"";
+  if(k==="n"){const cnt=(q.a||[]).length;if(q.kind==="multi"||ctx.act>=cnt-1){submit();return}if(q.ord&&view==="play"){const cv=ctx.vals[ctx.act]||"";if(!cv)return;if(cv!==q.a[ctx.act]){judge(q.a.map((_,j)=>j<=ctx.act?ctx.vals[j]||"":""));return}}ctx.act++;softRender();return}
+  let v=ctx.vals[ctx.act]||"";
+  /* 11/28 sy: "빠르게 입력하면 오류" → 여러 답 찾기에서 앞 수가 이미 맞는 답이고 이어 붙인 수가 답이 아니면(또는 새 숫자가 혼자서도 답이면) 앞 수를 먼저 받아 준다 */
+  if(q.kind==="multi"&&view==="play"&&/^\d$/.test(k)&&v){const it=RUN.items[curIdx()],left=q.need.filter(x=>!(it.found||[]).includes(x));
+    const cont=left.some(x=>x.startsWith(v+k)),F=it.found||[],N=+q.need[q.need.length-1],pair=q.cntL==="약수"&&left.includes(v+k)&&F.length&&+F[F.length-1]*(+(v+k))===N;
+    if((left.includes(v)&&(!cont||(left.includes(k)&&!pair)))||(!left.includes(v)&&F.includes(v)&&!cont)){judgeMulti(v);if(RUN===null||view!=="play"||RUN.lock||modal)return;v=""}}
   if(k==="mn"){if(!q.sg||v)return;k="-"}
   if(k==="amp")k="&";if(k==="bs")k="\\";
   if((k==="&"||k==="\\")&&(!q.fr||v.includes(k)||(k==="&"&&v.includes("\\"))||!v||v==="-"||/[&\\]$/.test(v)))return;
@@ -3871,13 +3900,14 @@ function typeKey(k){
 function autoGo(q){const v=RUN.vals[RUN.act]||"";if(!v||v==="-")return;const i=curIdx();
   if(q.kind==="multi"){const it=RUN.items[i],left=q.need.filter(x=>!(it.found||[]).includes(x));
     const longer=left.some(x=>x!==v&&x.startsWith(v));const maxL=Math.max(...q.need.map(x=>x.length));
-    if((left.includes(v)&&!longer)||v.length>=maxL)setTimeout(()=>{if(view==="play"&&curIdx()===i&&RUN.vals[0]===v)submit()},120);
+    if(left.includes(v)&&!longer){judgeMulti(v);return}
+    if(v.length>=maxL||!left.some(x=>x.startsWith(v))){RUN.pend=true;setTimeout(()=>{if(!RUN)return;RUN.pend=false;if(view==="play"&&curIdx()===i&&RUN.vals[0]===v)submit()},120);return}
     /* 1처럼 맞는 답인데 12일 수도 있을 때: 잠깐 기다렸다가 더 안 누르면 그대로 받는다(다음 키를 안 눌러도 됨) */
     else if(left.includes(v))setTimeout(()=>{if(view==="play"&&curIdx()===i&&RUN.vals[0]===v&&!RUN.lock&&!modal)submit()},800);return}
   if(q.kind!=="num"||!q.a)return;const wl=Math.max(...[q.a,...(q.alts||[])].map(a=>String(a[RUN.act]??"").length));if(!wl||v.length<wl)return;
-  if(q.prog&&RUN.act<q.a.length-1&&v!==q.a[RUN.act]){const g=q.a.map((_,k)=>k<=RUN.act?RUN.vals[k]||"":"");setTimeout(()=>{if(view==="play"&&curIdx()===i&&!RUN.lock)judge(g)},120);return}
+  if((q.prog||q.ord)&&RUN.act<q.a.length-1&&v!==q.a[RUN.act]){const g=q.a.map((_,k)=>k<=RUN.act?RUN.vals[k]||"":"");setTimeout(()=>{if(view==="play"&&curIdx()===i&&!RUN.lock)judge(g)},120);return}
   if(RUN.act<q.a.length-1){RUN.act++;softRender();return}
-  if(q.a.every((_,k)=>RUN.vals[k]))setTimeout(()=>{if(view==="play"&&curIdx()===i)submit()},120)}
+  if(q.a.every((_,k)=>RUN.vals[k])){RUN.pend=true;setTimeout(()=>{if(!RUN)return;RUN.pend=false;if(view==="play"&&curIdx()===i)submit()},120)}}
 function softRender(){ // 숫자칸만 다시 그리기 (빠르게)
   if(view==="play"){const q=RUN.probs[curIdx()].q;const el=$(".qline");if(el)el.innerHTML=q.kind==="multi"?boxesHTML("[[0]]",RUN.vals,0,RUN.boxState):boxesHTML(qHtml(q),RUN.vals,RUN.act,RUN.boxState);const s=$(".say");if(s)s.innerHTML=RUN.say}
   else render();
@@ -3926,9 +3956,10 @@ function judge(given){
   if(!ok&&!it.misUsed&&q.kind==="num"&&oneOff(given.join("|"),q.a.join("|"))){slip(it);return}
   it.tries.push(given.join("|"));
   if(ok){it.ok=true;if(it.tries.length===1&&!it.again)it.ok1=true;RUN.boxState=q.a.map(()=>"ok");stopClock();softRender();RUN.lock=true;setTimeout(nextQ,220);return}
-  if(it.tries.length===1){it.pat=TYPES[RUN.type].pat(pr.p,given)||"";}
+  if(it.tries.length===1){try{it.pat=(q.ord?"":TYPES[RUN.type].pat(pr.p,given))||""}catch(e){it.pat=""}}
   if(wrongOnce(it,pr,q.kind==="ox"))return;
   if(q.kind==="ox"){RUN.say=`정답은 ${q.a[0]} 다냥. 눌러 보자옹.`;RUN.vals=[];render();return}
+  if(q.ord){const k0=Math.max(0,given.findIndex((v,k)=>v!==q.a[k]));RUN.say=it.again&&it.rt>=2?`이 칸은 ${fview(q.a[k0])} 다냥. 그대로 써 보자`:"이 칸을 다시 본다냥. 시간은 안 센다옹.";RUN.vals=given.slice(0,k0);RUN.act=k0;RUN.boxState=q.a.map((_,k)=>k===k0?"again":"");render();return}
   RUN.say=it.again&&it.rt>=2?`정답은 ${q.a.map(fview).join(" , ")} 다냥. 그대로 써 보자`:"다시 한 번 본다냥. 시간은 안 센다옹.";RUN.vals=[];RUN.user=null;RUN.act=0;RUN.boxState=q.a.map(()=>"again");render();
 }
 function nextQ(){
@@ -3942,6 +3973,10 @@ function finishSet(){
   if(PREVIEW){const id=RUN.type;RUN={type:id};MSG="";view="intro";modal=()=>`<div class="veil"><div class="sheet"><h3>미리 보기 끝</h3><p class="small muted">${TYPES[id].name} 세트를 끝까지 봤어요. 기록은 남지 않았어요.</p><button class="bigbtn" data-act="pvback">다른 것 보기</button></div></div>`;render();return}
   const id=RUN.type,c=tc(id),st=tst(id),T=TYPES[id];
   const n=RUN.probs.length,t=RUN.items.reduce((a,b)=>a+b.ms,0)/1000,w=RUN.items.filter(x=>!x.ok1).length;
+  if(RUN.ord){const ok=w===0;st.ordM=ok?false:true;st.at=Date.now();const rec={type:id,n,t:Math.round(t*10)/10,w,ord:true,at:Date.now(),lv:lvl(id),step:STEPT(T)?(st.step||0):undefined,lab:STEPT(T)?stepLabel(T,st.step||0):undefined,
+      items:RUN.items.map((x,k)=>({q:RUN.probs[k].q.text,a:RUN.probs[k].q.a.join("|"),g:x.tries,ok1:x.ok1,ok:x.ok,ms:Math.round(x.ms),skip:x.skip,mis:x.mis,pat:"",o:RUN.order.indexOf(k)}))};
+    const d=D();d.sets.push(rec);d.done[id]=(d.done[id]||0)+1;save(today());LAST={rec,out:{ord:ok?1:2},prevBest:null,prevLast:null,id,wrongs:[]};RUN=null;view="result";render();return}
+  if(ORDT.has(id)&&!RUN.rev&&w>=2&&st.ordM===false)st.ordM=true;
   const pq=t/n,fin=finalPQ(id),valid=w<=c.allow,clean=w===0&&!RUN.rev,prevRuns=st.runs.slice(),prevBest=bestPQ(id),prevLast=lastRun(id);
   const byO=[...new Set(RUN.order)].map(k=>RUN.items[k].ms),hh=Math.floor(n/2),h1=byO.slice(0,hh).reduce((a,b)=>a+b,0)/1000,h2=byO.slice(hh).reduce((a,b)=>a+b,0)/1000;
   const rec={type:id,n,t:Math.round(t*10)/10,w,h1:Math.round(h1*10)/10,h2:Math.round(h2*10)/10,pred:RUN.pred,at:Date.now(),
@@ -3956,7 +3991,7 @@ function finishSet(){
   rec.pass=out.pass||out.quick;rec.tgt=out.tgtBefore;rec.lv=lvl(id);
   if(STEPT(T)){rec.step=RUN.rev?RUN.rev.s:(st.step||0);out.near=!RUN.rev&&valid&&w>0&&pq<=fin&&(st.step||0)<stepMax(T)?w:0;if(!RUN.rev&&valid&&clean&&pq<=fin&&(st.step||0)<stepMax(T)){const os=st.step||0;
       /* 11/27 sy: "통과 너무 빨라, 의무적으로 체화할 게 있지 않나" → 한 단계에서 빠르고 정확한 세트를 passN()번(처음 값 2) 해야 다음 단계 */
-      if(st.okS!==os){st.okS=os;st.okN=0}st.okN=(st.okN||0)+1;if(st.okN<passN(id)){out.okN=st.okN}else{st.okN=0;st.okS=os+1;st.step=os+1;out.stepUp=stepLabel(T,st.step);if(!T.seq){st.rev=(st.rev||[]).filter(r=>r.s!==os).concat([{s:os,d:today(),miss:0}]).slice(-6)}}}}
+      if(st.okS!==os){st.okS=os;st.okN=0}st.okN=(st.okN||0)+1;if(st.okN<passN(id)){out.okN=st.okN}else{st.okN=0;st.okS=os+1;st.step=os+1;if(ORDT.has(id)){let nb=true;try{nb=baseOf(T,os+1)!==baseOf(T,os)}catch(e){}if(nb)delete st.ordM}out.stepUp=stepLabel(T,st.step);if(!T.seq){st.rev=(st.rev||[]).filter(r=>r.s!==os).concat([{s:os,d:today(),miss:0}]).slice(-6)}}}}
   /* 다지기: 이틀 이상 지난 통과 단계 문제를 세트에 3개 섞어 확인 */
   if(RUN.rev&&!PREVIEW){const r=(st.rev||[]).find(x=>x.s===RUN.rev.s);const ok=RUN.rev.idx.every(k=>RUN.items[k].ok1)&&pq<=fin;if(r){if(ok){st.rev=st.rev.filter(x=>x!==r);out.revOk=stepLabel(T,r.s)}else if((st.step||0)>r.s){st.step=r.s;st.rev=st.rev.filter(x=>x.s<r.s);out.revBack=stepLabel(T,r.s)}else st.rev=st.rev.filter(x=>x!==r)}}
   if(T.scaffold&&lvl(id)===0&&valid&&(out.pass||out.quick||(st.target==null&&pq<=fin))){out.levelUp=true}
@@ -3977,6 +4012,8 @@ function vResult(){
   if(prevLast){const dl=prevLast.t/prevLast.n*n-rec.t;if(dl>=1)facts.push([1,`지난번보다 ${Math.round(dl)}초 빨라졌다냥!`]);else facts.push([0,`지난번은 ${fmt(prevLast.t/prevLast.n*n)}였다냥.`])}
   if(prevBest!=null&&rec.w<=c.allow&&rec.t/n<prevBest-0.01)facts.push([1,`내 최고 기록이다냥!`]);
   if(out.stepUp)facts.push([1,`통과! 다음은 ${out.stepUp}이다냥.`]);
+  if(out.ord===1)facts.push([1,"순서대로 하나도 안 틀렸다냥. 다음 세트는 답만 쓴다옹. 머릿속으로도 같은 순서로 간다냥."]);
+  if(out.ord===2)facts.push([0,"순서 칸 세트는 시간을 안 본다냥. 하나도 안 틀리면 답만 쓰는 세트로 간다옹."]);
   if(out.okN)facts.push([1,`빠르고 정확했다냥. 이 단계 통과 ${out.okN}번째다옹. ${passN(id)-out.okN}번 더 하면 다음 단계로 간다냥.`]);
   if(out.near)facts.push([0,`빠르기는 벌써 통과다냥. 처음에 ${out.near}개만 안 틀리면 다음 단계로 간다옹.`]);
   if(out.revOk)facts.push([1,`며칠 전 단계(${out.revOk})를 다시 봐도 빠르고 정확했다. 진짜 통과다냥!`]);
@@ -4236,6 +4273,7 @@ function vParent(){
      return `<div class="card"><h3>시훈이 단계 정하기</h3><p class="small muted">${pname()} 계정에서 시훈이의 지금 단계를 바로 바꿔요. 시훈이 폰에서는 앱을 다시 열면 바뀐 단계로 나와요. 단계를 바꾸면 그 단계의 통과 횟수는 0부터 다시 세요.</p>
      ${c?ids.map(id=>{const T=TYPES[id],k=Math.min((c.ts[id]||{}).step||0,stepMax(T));return `<label class="small" style="display:flex;flex-direction:column;gap:3px;margin:8px 0"><b>${T.name}</b><select style="width:100%;max-width:100%;font-size:15px;padding:8px" data-ch="kstep" data-arg="${id}">${Array.from({length:stepMax(T)+1},(_,i)=>`<option value="${i}" ${i===k?"selected":""}>${i+1}. ${stepLabel(T,i)}</option>`).join("")}</select></label>`}).join("")||'<p class="small">시훈이 기록이 아직 없어요.</p>':""}
      <div class="row"><button class="nb" data-act="kidload">${c?"다시 불러오기":"시훈이 단계 불러오기"}</button></div></div>`})():""}
+   <div class="card"><h3>순서 칸</h3><p class="small muted">여러 단계로 푸는 유형(계산 순서, 혼합 계산, 문자와 식, 방정식 등)은 새 단계의 첫 세트를 순서 칸으로 풀어요. 앞 칸을 맞혀야 다음 줄이 열려서 건너뛸 수 없어요. 하나도 안 틀리면 답만 쓰는 세트로 가고, 답만 세트에서 2개 이상 틀리면 순서 칸으로 돌아와요. 순서 칸 세트는 시간과 통과 횟수에 넣지 않아요.</p><label class="row" style="align-items:center;gap:8px"><input type="checkbox" data-ch="ordsw" ${S.cfg.ordOff===true?"":"checked"}> 순서 칸 쓰기</label></div>
    <div class="card"><h3>단계 통과 횟수</h3><p class="small muted">한 단계에서 시간 안에 하나도 안 틀린 세트를 이만큼 해야 다음 단계로 가요. 한 번 잘한 것만으로는 몸에 붙었다고 보기 어려워서 처음 값은 2번이에요. 이틀 뒤 다지기 확인은 그대로 있어요.</p><div class="row" style="align-items:center"><span style="flex:1">통과해야 하는 횟수</span><button class="nb" data-act="pasn" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("T12")}번</b><button class="nb" data-act="pasn" data-arg="1">+</button></div>
      <div class="row" style="align-items:center"><span style="flex:1">분수 유형은</span><button class="nb" data-act="pasf" data-arg="-1">−</button><b style="min-width:2em;text-align:center">${passN("OF")}번</b><button class="nb" data-act="pasf" data-arg="1">+</button></div>
      <p class="small muted">분수는 시중 연산 문제집이 한 가지 꼴에 하루 한 장(20~30문제)을 주는 것에 맞춰 한 단계 3세트(30문제)예요.</p></div>
@@ -4408,7 +4446,7 @@ const ACT={
   cskip:()=>advanceStep(),
   demonext:()=>{CON.demo.shown++;render()},
   demoend:()=>{CON.demo=null;render()},
-  box:i=>{const ctx=view==="play"?RUN:CON;if(!ctx)return;ctx.act=+i;view==="play"?softRender():render()},
+  box:i=>{const ctx=view==="play"?RUN:CON;if(!ctx)return;if(view==="play"&&(RUN.probs[curIdx()].q||{}).ord)return;ctx.act=+i;view==="play"?softRender():render()},
   ox:v=>{if(view==="play"){RUN.vals=[v];submit()}else{CON.vals=[v];conceptSubmit()}},
   submit:()=>submit(),
   plotclear:()=>{const ctx=view==="play"?RUN:CON;ctx.user=null;render()},
@@ -4469,6 +4507,7 @@ app.addEventListener("change",e=>{const el=e.target.closest("[data-ch]");if(!el)
   if(k==="gwon"){S.cfg.gwOn=el.checked;save();return}
   if(k==="weitem"){const id=el.dataset.arg;let W=S.cfg.weSet?S.cfg.weSet.slice():weList();W=el.checked?[...new Set([...W,id])]:W.filter(x=>x!==id);if(W.length)S.cfg.weSet=W;D().plan=planNow();save(today());render();return}
   if(k==="kstep"){kidStep(id,+el.value);return}
+  if(k==="ordsw"){S.cfg.ordOff=!el.checked;save();render();return}
   if(k==="wksplit"){S.cfg.wkSplit=el.checked;D().plan=planNow();save(today());render();return}
   if(k==="corefirst"){S.cfg.coreFirst=el.checked;save();return}
   if(k==="okkey"){S.cfg.okKey=el.checked;save();return}
