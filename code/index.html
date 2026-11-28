@@ -241,10 +241,11 @@ const pubOf = (gid) => S.pubs.find((p) => p.id === gid);
    엄마랑 Claude가 저장소에서 같이 고친 게임은 games/list.json 에 적혀요: { "게임id": { "state": "working"|"ready", "note": "바뀐 것", "at": "2026-11-27T20:00:00+09:00", "path": "games/sesi/index.html" } }
    가져오면 게임에 imported(시각)를 적고, 그 뒤로 길은 다시 1번부터. */
 const ROAD = ['내가 만들기', '엄마 허락', '웹에 올림', '엄마랑 고치기', '가져오기'];
-/* 웹 주소(엄마 11/28): 서버 codePlay(Hosting /play/**)가 올린 모습을 보여 줘요.
+/* 웹 주소(엄마 11/28, 예전 주소 그대로): 세시풍속 = …/family-dashboard/sesi/, 새 게임 = …/family-dashboard/code/play.html?g=게임
+   그 페이지가 서버 codePlay에서 「마지막으로 올린 모습」을 받아 보여 줘요(play.js).
    - 주소가 있는 게임(엄마가 한 번 허락함, pub.addr / 세시풍속)은 「🌐 웹에 올리기」를 누르면 엄마 OK 없이 바로 바뀌어요.
    - 새 게임은 처음 한 번 엄마 허락(대시보드 관리자 「주소 만들어 주기」)을 받아야 주소가 생겨요. */
-const PLAY_URL = 'https://kmsysh-fa740.web.app/play/';
+const playUrl = (gid) => gid === 'sesi' ? new URL('../sesi/', location.href).href : new URL('play.html?g=' + encodeURIComponent(gid), location.href).href;
 const ADDR_GAMES = new Set(['sesi']);   // 처음부터 주소가 있던 게임
 const hasAddr = (gid) => ADDR_GAMES.has(gid) || !!(pubOf(gid) && (pubOf(gid).addr || pubOf(gid).state === 'ok'));
 async function loadRepo() { try { const r = await fetch('games/list.json', { cache: 'no-store' }); if (r.ok) S.repo = await r.json(); } catch (e) {} }
@@ -254,8 +255,8 @@ function stage(g) {
   if (e && eAt > imp && e.state === 'ready') return { now: 5, msg: '', arrive: e };
   if (e && eAt > imp && e.state === 'working') return { now: 4, msg: '지금 엄마랑 Claude가 크게 고치고 있어. 다 되면 여기에 「가져오기」가 생겨. 그동안 형아 게임은 계속 고쳐도 돼.' };
   if (p && p.state === 'wait') return { now: 2, msg: '엄마한테 웹 주소를 부탁했어. 엄마가 허락하면 주소가 생겨.' };
-  if (p && p.state === 'ok' && (+p.at || 0) > imp) return { now: 3, doneNow: true, url: PLAY_URL + g.id, msg: g.ver > p.ver ? `웹에는 ${p.ver}번째 모습이 올라가 있어. 지금 모습도 올리려면 「🌐 웹에 올리기」를 다시 눌러.` : '웹에 올라갔어! 다른 기기에서도 이 주소로 할 수 있어.' };
-  if (addr) return { now: 3, url: PLAY_URL + g.id, msg: '「🌐 웹에 올리기」를 누르면 바로 웹 주소에 올라가.' };
+  if (p && p.state === 'ok' && (+p.at || 0) > imp) return { now: 3, doneNow: true, url: playUrl(g.id), msg: g.ver > p.ver ? `웹에는 ${p.ver}번째 모습이 올라가 있어. 지금 모습도 올리려면 「🌐 웹에 올리기」를 다시 눌러.` : '웹에 올라갔어! 다른 기기에서도 이 주소로 할 수 있어.' };
+  if (addr) return { now: 3, url: playUrl(g.id), msg: '「🌐 웹에 올리기」를 누르면 바로 웹 주소에 올라가.' };
   if (p && p.state === 'no') return { now: 1, msg: '엄마가 조금 더 고쳐 보재. 고친 다음 다시 웹 주소를 부탁해 봐.' };
   return { now: 1, msg: g.ver ? '마음에 들면 「🌐 웹 주소 부탁하기」를 눌러 봐. 엄마가 허락하면 웹 주소가 생겨.' : '카츄랑 설계하는 중이야.' };
 }
@@ -294,7 +295,7 @@ function renderHome() {
       ${roadHtml(g, g.id)}
       <div class="row" style="margin-top:10px"><button class="btn s" data-open="${esc(g.id)}">이어 고치기</button>${g.ver ? `<button class="btn w s" data-play="${esc(g.id)}">▶ 해 보기</button>` : ''}</div></div>`).join('')}
   </div>
-  <div class="card"><h2>🌐 웹에 올린 게임</h2>${pubs.length ? pubs.map((p) => `<div class="row" style="margin-top:8px"><span style="flex:1">${esc(p.title)} <span class="mini">${p.ver}번째 모습</span><br><span class="mini" style="word-break:break-all">${esc(PLAY_URL + p.id)}</span></span><button class="btn w s" data-playpub="${esc(p.id)}">▶ 해 보기</button></div>`).join('') : '<div class="mini">아직 없어요</div>'}</div>`;
+  <div class="card"><h2>🌐 웹에 올린 게임</h2>${pubs.length ? pubs.map((p) => `<div class="row" style="margin-top:8px"><span style="flex:1">${esc(p.title)} <span class="mini">${p.ver}번째 모습</span><br><span class="mini" style="word-break:break-all">${esc(playUrl(p.id))}</span></span><button class="btn w s" data-playpub="${esc(p.id)}">▶ 해 보기</button></div>`).join('') : '<div class="mini">아직 없어요</div>'}</div>`;
   bindRoad(app);
   $('#newG').onclick = () => { const gid = 'g' + rid(); openGame(gid, true); };
   app.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => openGame(b.dataset.open));
@@ -492,7 +493,7 @@ function fileOut() {
 function askPublish() {
   const g = S.game; if (!g || !g.ver) return;
   const html = S.preview ? S.preview.html : S.curHtml; const n = S.preview ? S.preview.n : g.ver;
-  const addr = hasAddr(g.id), url = PLAY_URL + g.id;
+  const addr = hasAddr(g.id), url = playUrl(g.id);
   const d = document.createElement('div'); d.className = 'sheet';
   d.innerHTML = addr
     ? `<div class="panel"><h2>🌐 웹에 올리기</h2><p>「${esc(g.title)}」 ${n}번째 모습을 웹 주소에 바로 올려요. 다른 기기에서도 이 주소로 할 수 있어요.</p><p><b style="word-break:break-all">${esc(url)}</b></p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="px">아직</button><button class="btn s" id="pgo">올리기</button></div></div>`

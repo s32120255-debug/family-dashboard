@@ -1233,44 +1233,28 @@ exports.codeKatchu = onDocumentCreated(
 );
 
 // ===================================================================================
-// 🌐 시훈이 게임 웹 주소(엄마 11/28 「OK 안 거쳐도 바로 웹에 올라가게」): https://kmsysh-fa740.web.app/play/{게임id}
-// 코딩방에서 「🌐 웹에 올리기」를 누르면 sihunCode/main/pub/{게임id} 에 저장되고, 이 주소가 그 최신 모습을 보여 줘요.
-// 새 게임은 엄마가 대시보드에서 「주소 만들어 주기」(state ok, addr) 해야 열려요. 주소가 생긴 게임은 그 뒤로 시훈이가 바로 올려요.
-// (Firebase Hosting rewrite /play/** → codePlay) 로그인 없이 다른 기기에서도 열려요.
-// 안전: 바깥 페이지도 CSP sandbox(우리 로그인·저장소에 못 닿음), 게임은 코딩방과 같은 이중 잠긴 상자(frame-src·connect-src 'none').
+// 🌐 시훈이 게임 웹 주소(엄마 11/28 「OK 안 거쳐도 바로」, 주소는 예전 그대로 …github.io/family-dashboard/sesi/):
+// GitHub Pages 쪽 페이지(sesi/, code/play.html?g=)가 이 함수에서 「코딩방에서 마지막으로 올린 모습」을 받아 잠긴 상자에 띄워요.
+// 저장소에 쓰지 않으니 토큰이 필요 없어요. 올리면 바로(새로 열면) 바뀌어요.
+// GET ?g={게임id} → {title, ver, html}. 코딩방에서 올린 적 없으면 404(페이지가 저장소 원본을 보여 줌).
+// 새 게임은 엄마가 대시보드에서 「주소 만들어 주기」(state ok)를 해야 열려요.
 // ===================================================================================
 const { onRequest } = require("firebase-functions/v2/https");
-const PLAY_CSP = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src data: blob:; media-src data: blob:; connect-src 'none'; frame-src 'none'; child-src 'none'; worker-src 'none'; object-src 'none'; form-action 'none'; base-uri 'none'; manifest-src 'none'";
-const PLAY_SHIM = `<meta http-equiv="Content-Security-Policy" content="${PLAY_CSP}"><script>(function(){var m={},s={getItem:function(k){return Object.prototype.hasOwnProperty.call(m,k)?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}},key:function(i){return Object.keys(m)[i]||null},get length(){return Object.keys(m).length}};try{window.localStorage.getItem('x')}catch(e){try{Object.defineProperty(window,'localStorage',{value:s,configurable:true})}catch(e2){}}try{window.sessionStorage.getItem('x')}catch(e){try{Object.defineProperty(window,'sessionStorage',{value:s,configurable:true})}catch(e2){}}window.open=function(){return null};})();<\/script>`;
-const attrEsc = (h) => String(h).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-const htmlEsc = (h) => String(h).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-function playPage(title, html) {
-  let g = String(html || "").replace(/<link[^>]+rel=["']?(manifest|icon|apple-touch-icon|preconnect)["']?[^>]*>/gi, "").replace(/<base\b[^>]*>/gi, "");
-  g = /<head[^>]*>/i.test(g) ? g.replace(/<head[^>]*>/i, (m) => m + PLAY_SHIM) : PLAY_SHIM + g;
-  const box = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${PLAY_CSP}"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;overflow:hidden;background:#fff}iframe{display:block;border:0;width:100%;height:100%}</style></head><body><iframe sandbox="allow-scripts allow-modals" allow="autoplay" srcdoc="${attrEsc(g)}"></iframe></body></html>`;
-  return `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>${htmlEsc(title)}</title><style>html,body{margin:0;height:100%;overflow:hidden;background:#fff}iframe{display:block;border:0;width:100%;height:100dvh}</style></head><body><iframe sandbox="allow-scripts allow-modals" allow="autoplay" title="${attrEsc(title)}" srcdoc="${attrEsc(box)}"></iframe></body></html>`;
-}
-exports.codePlayPage = playPage; // 시험용
+const PLAY_ORIGINS = ["https://s32120255-debug.github.io", "https://kmsysh-fa740.web.app", "https://kmsysh-fa740.firebaseapp.com"];
 exports.codePlay = onRequest({ region: "asia-northeast3", maxInstances: 3, memory: "256MiB", timeoutSeconds: 30 }, async (req, res) => {
-  res.set("Content-Security-Policy", PLAY_CSP + "; sandbox allow-scripts allow-modals");
+  const origin = String(req.get("origin") || "");
+  if (PLAY_ORIGINS.includes(origin)) { res.set("Access-Control-Allow-Origin", origin); res.set("Vary", "Origin"); }
+  res.set("Cache-Control", "no-store");
   res.set("X-Robots-Tag", "noindex, nofollow");
-  res.set("Referrer-Policy", "no-referrer");
-  res.set("Cache-Control", "no-cache");
-  res.set("Content-Type", "text/html; charset=utf-8");
-  const m = String(req.path || "").match(/^\/play\/([A-Za-z0-9_-]{1,40})\/?$/);
-  const notFound = () => res.status(404).send('<!DOCTYPE html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><p style="font:20px sans-serif;padding:24px">아직 올라온 게임이 없어요.</p>');
-  if (!m) return notFound();
+  if (req.method === "OPTIONS") { res.set("Access-Control-Allow-Methods", "GET"); return res.status(204).send(""); }
+  const g = String(req.query.g || "");
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(g)) return res.status(400).json({ err: "bad" });
   try {
-    const d = (await getFirestore().doc("sihunCode/main/pub/" + m[1]).get()).data();
-    if (d && d.html && d.state === "ok") return res.status(200).send(playPage(String(d.title || "시훈이 게임").slice(0, 40), d.html));
-    // 아직 코딩방에서 올린 적 없으면 저장소 원본(code/games/{id}/index.html, 예: 세시풍속)을 보여 줘요.
-    const r = await fetch(`https://raw.githubusercontent.com/s32120255-debug/family-dashboard/main/code/games/${m[1]}/index.html`);
-    if (!r.ok) return notFound();
-    const html = await r.text();
-    const t = (html.match(/<title>([^<]{1,60})<\/title>/i) || [])[1] || "시훈이 게임";
-    return res.status(200).send(playPage(t, html));
+    const d = (await getFirestore().doc("sihunCode/main/pub/" + g).get()).data();
+    if (!d || !d.html || d.state !== "ok") return res.status(404).json({ err: "none" });
+    return res.status(200).json({ title: String(d.title || "시훈이 게임").slice(0, 40), ver: +d.ver || 0, at: +d.at || 0, html: d.html });
   } catch (e) {
     console.error("codePlay", e && e.message);
-    return res.status(500).send('<!DOCTYPE html><meta charset="utf-8"><p style="font:20px sans-serif;padding:24px">잠깐 문제가 생겼어요. 조금 뒤에 다시 열어 주세요.</p>');
+    return res.status(500).json({ err: "error" });
   }
 });
