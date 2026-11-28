@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="36";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="37";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,7 +78,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=9"></script><script src="talk-gen.js?v=11"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=9"></script><script src="talk-gen.js?v=12"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -251,7 +251,7 @@ let PLAN=null;
 function effU(st,pl){if(pl&&pl.u&&UKEY[pl.u]&&(pl.at||'')>(st.uAt||''))return pl.u;if(st.u&&UKEY[st.u])return st.u;return firstUnit(st.stage||1).key}
 function syncPlan(){if(!ST)return;const k=effU(ST,PLAN);if(k!==ST.u){ST.u=k;ST.stage=UKEY[k].s;if(PLAN&&PLAN.at)ST.uAt=PLAN.at}}
 // ---------- 채점(들린 말 ↔ 정답) ----------
-const CONTR=[[/\b(he|she|it)'s been\b/g,'$1 has been'],[/\bi've\b/g,'i have'],[/\byou've\b/g,'you have'],[/\bwe've\b/g,'we have'],[/\bthey've\b/g,'they have'],[/\bhasn't\b/g,'has not'],[/\bhaven't\b/g,'have not'],[/\bshouldn't\b/g,'should not'],[/\bwhat's\b/g,'what is'],[/\bwhere's\b/g,'where is'],[/\bwho's\b/g,'who is'],[/\bthat's\b/g,'that is'],[/\bi'm\b/g,'i am'],[/\byou're\b/g,'you are'],[/\bwe're\b/g,'we are'],[/\bthey're\b/g,'they are'],[/\bhe's\b/g,'he is'],[/\bshe's\b/g,'she is'],[/\bit's\b/g,'it is'],[/\bthere's\b/g,'there is'],
+const CONTR=[[/\b(he|she|it)'s been\b/g,'$1 has been'],[/\bi'd like\b/g,'i would like'],[/\bwe'd like\b/g,'we would like'],[/\bi've\b/g,'i have'],[/\byou've\b/g,'you have'],[/\bwe've\b/g,'we have'],[/\bthey've\b/g,'they have'],[/\bhasn't\b/g,'has not'],[/\bhaven't\b/g,'have not'],[/\bshouldn't\b/g,'should not'],[/\bwhat's\b/g,'what is'],[/\bwhere's\b/g,'where is'],[/\bwho's\b/g,'who is'],[/\bthat's\b/g,'that is'],[/\bi'm\b/g,'i am'],[/\byou're\b/g,'you are'],[/\bwe're\b/g,'we are'],[/\bthey're\b/g,'they are'],[/\bhe's\b/g,'he is'],[/\bshe's\b/g,'she is'],[/\bit's\b/g,'it is'],[/\bthere's\b/g,'there is'],
   [/\bisn't\b/g,'is not'],[/\baren't\b/g,'are not'],[/\bwasn't\b/g,'was not'],[/\bweren't\b/g,'were not'],[/\bdon't\b/g,'do not'],[/\bdoesn't\b/g,'does not'],[/\bdidn't\b/g,'did not'],
   [/\bcan't\b/g,'can not'],[/\bcannot\b/g,'can not'],[/\bwon't\b/g,'will not'],[/\bi'll\b/g,'i will'],[/\byou'll\b/g,'you will'],[/\bhe'll\b/g,'he will'],[/\bshe'll\b/g,'she will'],[/\bwe'll\b/g,'we will'],[/\bthey'll\b/g,'they will']];
 const NOAP={im:'i am',dont:'do not',doesnt:'does not',didnt:'did not',isnt:'is not',arent:'are not',wasnt:'was not',werent:'were not',cant:'can not',wont:'will not',youre:'you are',theyre:'they are',theres:'there is',hes:'he is',shes:'she is',ive:'i have',youve:'you have',weve:'we have',theyve:'they have',hasnt:'has not',havent:'have not',shouldnt:'should not',whats:'what is'};
