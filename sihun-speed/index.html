@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="32";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="34";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -461,7 +461,9 @@ const ACT={
     warm();try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch(e){}
     const c=ST.cur,lv=b&&b.dataset&&+b.dataset.lv;const stage=stageOf();let lap=lapOf(),ids,kinds,i=0,res=[],ms=0,rv=TRY?null:dueRev();
     if(lv&&!TRY){lap=lv;ST.lap=lv}else if(!TRY&&c&&c.v===2&&c.date===today()&&c.lap)lap=c.lap;
-    if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null}
+    if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null;
+      // 이어서 할 때: 새 규칙으로 빠진 문장(우리 이웃·가족 단어 등)은 남은 차례에서 빼요
+      const keep=ids.map((id,j)=>j<i||!!IT(id));ids=ids.filter((x,j)=>keep[j]);kinds=kinds.filter((x,j)=>keep[j])}
     else{({ids,kinds}=buildSet(stage,lap,rv))}
     if(!ids.length){alert('문장을 만들지 못했어요. 앱을 닫았다가 다시 열어 주세요.');return}
     RUN={date:today(),stage,lap,rv,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
