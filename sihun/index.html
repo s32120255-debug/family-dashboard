@@ -2478,7 +2478,7 @@ function home(){const s=SES(),D=(RLOG.days||{})[today()];
   let h=topbar('🇺🇸 계단영어');
   if(mapSetToday()){h=topbar('🇺🇸 계단영어')+mapHomeHTML();$('#main').innerHTML=h;return}
 
-  if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.predMin?` · 내 예측 ${D.predMin}분`:''}${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
+  if(D&&D.end){h+=`<div class="card"><h2>${D.skipped?'오늘은 여기까지':'오늘 영어 끝! ✅'}</h2><p>걸린 시간 <b>${D.actualMin}분</b>${D.skipped?` · 건너뛴 문장 <b>${D.skipped}개</b>`:''}</p>
     <div class="row">${D.skipped&&s?'<button class="btn" data-act="start">▶ 건너뛴 문장 하기</button>':''}<button class="btn light" data-act="hub">← 오늘의 공부로</button></div></div>`+afterHTML()}
   else{const doneN=s?s.queue.filter(q=>q.kind!=='다시'&&q.res).length:0;
     h+=`<div class="card"><h2>오늘의 5문장</h2>${(()=>{const k=s&&s.stage?s.stage:(!s?todayStage():null);if(k)return `<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${esc(stageName(k))}</b>${g2().back===k?' · 🔁 다시 다지는 날':''}</div>`;const f=s?topicOf(s):null;return f?`<div class="hint" style="margin:0 0 8px">📌 오늘의 문법: <b>${fLabel(f)}</b></div>`:''})()}<p>먼저 <b>📌 오늘의 문법</b>을 배워요. 그다음 한국어를 보고 <b>먼저 혼자 영어로 써요.</b> <b>블록 없이, 철자까지 정확히</b> 써야 "알고 있다"로 쳐요. 틀리면 <b>블록으로 고쳐요</b>. 블록 중에는 <b>쓰면 안 되는 함정 블록</b>(is ↔ does 같은 것)이 섞여 있어요. 두 번 틀리면 정답을 알려 줘요. 완성하면 문장을 들려주니까 <b>따라 말하며 녹음</b>해요.</p>
@@ -2637,7 +2637,6 @@ function done(){const D=dayRec(today());const diff=D.predMin?D.actualMin-D.predM
   let v='';if(diff!=null)v=Math.abs(diff)<=2?`<div class="res ok">🎯 예측 적중! 차이 ${Math.abs(diff)}분. 내 속도를 정확히 알고 있었어요.</div>`:`<div class="res slow">예측보다 ${Math.abs(diff)}분 ${diff>0?'더 걸렸어요':'빨리 끝났어요'}. 다음엔 차이를 2분 안으로 줄여 보자.</div>`;
   const c=k=>(D.cls||{})[k]||0;
   $('#main').innerHTML=topbar('오늘 끝! 🎉',true)+`<div class="card"><h2>${D.skipped?`오늘은 여기까지 (건너뛴 문장 ${D.skipped}개)`:'5문장 끝!'}</h2>${D.stage?g2DoneHTML():D.topic?`<p class="tip">오늘의 문법: ${fLabel(D.topic)}</p>`:''}
-   <div class="stat" style="grid-template-columns:repeat(2,1fr)"><div><b>${D.predMin?D.predMin+'분':'-'}</b>내 예측</div><div><b>${D.actualMin}분</b>실제</div></div>${v}
    <p class="tip">혼자 써서 맞힘 ${D.typeOk||0}문장 · 블록으로 고쳐 완성 ${c('access')}문장 · 다시 나온 문장 포함 모두 ${D.n}번 했어요</p>
    <div class="row"><button class="btn ${afterHTML()&&!chatDone(D)?'light':''}" data-act="savehub">💾 저장하고 오늘의 공부로</button></div></div>`+afterHTML()}
 function g2DoneHTML(){const d=(g2().days||{})[today()];if(!d)return '';const nx=STAGES[Math.min(g2().si,STAGES.length-1)];
@@ -2681,7 +2680,7 @@ const ACT={
   hub:()=>{if(DIC&&rc&&rc.phase==='listening')DIC.stop().catch(()=>{});V={view:'home'};HUB.back('en')},
   home:()=>{if(DIC&&rc&&rc.phase==='listening')DIC.stop().catch(()=>{});V={view:'home'};render()},
   report:()=>HUB.gate($('#main'),()=>{V={view:'report'};render()},true),
-  start:()=>{if(vNeedToday()){vStart();return}if(mapSetToday()){mapOpen();return}const D=dayRec(today());if(!SES()&&D.predMin==null){V={view:'predict'};render()}else startSession()},
+  start:()=>{if(vNeedToday()){vStart();return}if(mapSetToday()){mapOpen();return}startSession()},
   pred:t=>{const D=dayRec(today());D.predMin=+t.dataset.m;D.predAt=new Date().toISOString();save();startSession()},
   go:t=>{const s=SES(),i=+t.dataset.i;if(i<0)return;if(i>rc.i&&(rc.phase==='result'||rc.phase==='answer')&&!recOK()){rc.note2=1;render();return}if(i>=s.queue.length){finishSession();return}openR(i)},
   next:()=>{if(rc&&(rc.phase==='result'||rc.phase==='answer')&&!recOK())return;const s=SES();if(rc.i>=s.queue.length-1){finishSession();return}openR(rc.i+1)},
@@ -10498,9 +10497,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       <button class="go math" data-h="open" data-app="m32">▶ 시작</button></div>`}
   function why(){const k=CUR.k;const s=SUBJ.find(x=>x.k===k);const r=S(k);const st=refresh(k);
     let sum='';
-    if(k==='en'){const d=st.predMin?st.actualMin-st.predMin:null;
-      sum=`<div class="cmp"><div>내 예측<b>${st.predMin?st.predMin+'분':'-'}</b></div><div>실제<b>${st.actualMin?st.actualMin+'분':'-'}</b></div></div>`+
-        (d==null?'':Math.abs(d)<=2?`<div class="verdict hit">🎯 예측 적중! 차이 ${Math.abs(d)}분.</div>`:`<div class="verdict miss">예측보다 ${Math.abs(d)}분 ${d>0?'더 걸렸어요':'빨리 끝났어요'}.</div>`)}
+    if(k==='en'){}
     else if(k==='ko'){sum=`<p class="q">오늘 저장 ${st.n}개${st.score!=null?` · 누적 테스트 ${st.score}점`:''}</p>`}
     else{let T={concept:0,problem:0};try{T=(M32()?APP_M32:APP_MATH).time()}catch(x){}r.time={conceptMin:Math.round(T.concept/60),problemMin:Math.round(T.problem/60)};
       sum=`<div class="cmp"><div>개념<b>${Math.round(T.concept/60)}분</b></div><div>문제<b>${Math.round(T.problem/60)}분</b></div></div><p class="q">오늘 ${st.n}문제 · 힌트 없이 한 번에 ${st.ok}문제</p>`}
