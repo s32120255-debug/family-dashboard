@@ -42,6 +42,19 @@ for a in areas:
       t['ln']=list(dict.fromkeys(k for k in t['ln'] if k in names and k!=t['w']))
       drop=[k for k in book.get(t['w'],([],''))[0] if k and ALIAS.get(k,k) not in names and not (k=='소수' and t['w'] in SOSU)]
       if drop: errs.append(f"link dropped {t['w']}: {drop}")
+# O/X 문장 (src/ox-*.txt: 낱말|O 또는 X|문장|이유)
+T={t['w']:t for a in areas for b in a['br'] for t in b['t']}
+nox=0
+for f in sorted(glob.glob('src/ox-*.txt')):
+    for ln,l in enumerate(open(f),1):
+        l=l.rstrip('\n')
+        if not l.strip() or l.startswith('#'): continue
+        p=l.split('|')
+        if len(p)!=4 or p[1] not in ('O','X') or not p[2] or not p[3]: errs.append(f'{f}:{ln} ox'); continue
+        if p[0] not in T: errs.append(f'{f}:{ln} ox 낱말 없음 {p[0]}'); continue
+        T[p[0]].setdefault('ox',[]).append([1 if p[1]=='O' else 0,p[2],p[3]]); nox+=1
+few=[w for w,t in T.items() if len(t.get('ox',[]))<3]
+print('ox',nox,'(O',sum(o[0] for t in T.values() for o in t.get('ox',[])),') 3개 안 되는 낱말:',few)
 print('terms',len(seen),'branches',sum(len(a['br']) for a in areas))
 print('missing from book:',miss)
 print('\n'.join(errs))
