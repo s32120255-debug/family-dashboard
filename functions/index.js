@@ -1082,6 +1082,8 @@ exports.aiJudge = onDocumentCreated(
 // 게임은 앱에서 네트워크가 막힌 잠긴 상자(sandbox iframe + CSP)에서만 돌아가요.
 // ===================================================================================
 const CODE_DAY_WON = 1000;   // 하루 한도(원)
+const CODE_SAT_WON = 5000;   // 토요일만(엄마 11/28)
+const codeLimit = (at) => new Date(at + "T00:00:00Z").getUTCDay() === 6 ? CODE_SAT_WON : CODE_DAY_WON;
 const KRW_PER_USD = 1450;    // 대략 환율
 const codeWon = (u) => ((+u.in || 0) * 4 + (+u.cw || 0) * 5 + (+u.cr || 0) * 0.4 + (+u.out || 0) * 20) / 1e6 * KRW_PER_USD;
 const CODE_SAFE = `안 되는 것(이런 부탁이면 action "refuse"로 다정하게 거절하고 다른 방법을 하나 제안해):
@@ -1161,7 +1163,7 @@ exports.codeKatchu = onDocumentCreated(
     const useRef = base.collection("use").doc(at);
     const done = (res) => snap.ref.update({ res: { ...res, atRes: Date.now() } });
     const spent = +(((await useRef.get()).data() || {}).won || 0);
-    if (spent >= CODE_DAY_WON) return done({ state: "limit", say: "오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!", spent });
+    if (spent >= codeLimit(at)) return done({ state: "limit", say: "오늘은 카츄가 힘을 다 썼어. 내일 또 만들자!", spent });
     const addUse = async (u, tag) => {
       const won = codeWon(u);
       await useRef.set({ won: FieldValue.increment(won), n: FieldValue.increment(1), [tag]: FieldValue.increment(1) }, { merge: true });
