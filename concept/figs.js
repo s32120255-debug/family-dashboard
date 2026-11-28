@@ -45,7 +45,7 @@ P.square=()=>{let s='';for(let r=0;r<3;r++)for(let c=0;c<3;c++)s+=`<rect x="${75
 /* 분수 원 */
 const pie=(cx,cy,r,n,k,c2=A)=>{let s='';for(let i=0;i<n;i++){const a1=-90+i*360/n,a2=-90+(i+1)*360/n,p=a=>[cx+r*Math.cos(a*Math.PI/180),cy+r*Math.sin(a*Math.PI/180)];const[x1,y1]=p(a1),[x2,y2]=p(a2);s+=`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 0 1 ${x2},${y2} Z" fill="${i<k?AF:F}" stroke="${i<k?c2:B}" stroke-width="2"/>`}return s};
 const frac=(x,y,a,b,ca=B,cb=B)=>tx(x,y-6,a,ca,'middle',20)+ln(x-14,y,x+14,y,T,2)+tx(x,y+22,b,cb,'middle',20);
-P.frac4=w=>sv(pie(80,75,52,4,3)+frac(180,72,'3','4',w==='분자'?A:B,w==='분모'?A:B)+(w==='분자'?tx(215,62,'분자',A,'start'):'')+(w==='분모'?tx(215,98,'분모',A,'start'):''));
+P.frac4=w=>sv(pie(80,75,52,4,3)+frac(180,72,'3','4',w==='분자'?A:B,w==='분모'?A:B)+(w==='분자'?tx(200,62,'분자',A,'start'):'')+(w==='분모'?tx(200,98,'분모',A,'start'):''));
 P.frac8=w=>sv(pie(80,75,52,8,w==='전체'?8:1)+(w==='전체'?tx(180,80,'전체 = 1',A,'middle',16):frac(180,72,'1','8')));
 P.frac6=()=>sv(pie(120,75,55,6,1)+tx(210,80,'6등분',A,'middle',14));
 P.frac2=()=>sv(pie(90,75,52,2,1)+frac(185,72,'1','2'));
@@ -62,11 +62,11 @@ P.ang=w=>{const s=angleFig(50,w==='각도'?'50°':'');return w==='각'?s.replace
 P.ang90=()=>angleFig(90,'90°');P.ang60=()=>angleFig(40,'40°');P.ang120=()=>angleFig(130,'130°');
 P.ang180=()=>sv(ln(20,100,220,100)+dot(120,100)+arc(120,100,30,0,180)+tx(120,58,'180°',A,'middle',16));
 P.prot=()=>sv(`<path d="M30,120 A90,90 0 0 1 210,120 Z" fill="${F}" stroke="${B}" stroke-width="2.5"/>`+(()=>{let s='';for(let i=0;i<=18;i++){const a=i*10*Math.PI/180;s+=ln(120+80*Math.cos(a),120-80*Math.sin(a),120+(i%9?72:62)*Math.cos(a),120-(i%9?72:62)*Math.sin(a),B,1.5)}return s})()+dot(120,120,A,4)+ln(120,120,120+85*Math.cos(1.05),120-85*Math.sin(1.05),A,2.5)+tx(120,140,'중심을 꼭짓점에',A,'middle',11));
-P.perp=w=>sv(ln(30,110,210,110)+ln(120,20,120,110,w==='수선'?A:B)+rA(120,110,1,-1,14)+tx(150,40,w==='수선'?'수선':'직각으로 만나요',A,'start'));
+P.perp=w=>sv(ln(30,110,210,110)+ln(120,20,120,110,w==='수선'?A:B)+rA(120,110,1,-1,14)+tx(170,40,w==='수선'?'수선':'직각으로 만나요',A,'middle'));
 P.par=w=>sv(ln(30,45,210,45)+ln(30,105,210,105)+(w==='평행선 사이의 거리'?ln(120,45,120,105,A,3)+rA(120,105,1,-1,10)+tx(130,80,'거리',A,'start'):tx(120,80,'끝까지 늘여도 안 만나요',A)));
 P.cross=w=>{let s=ln(40,30,200,120)+ln(40,120,200,30)+dot(120,75,w==='교점'?A:B,w==='교점'?5:3.5);if(w==='맞꼭지각')s+=arc(120,75,22,150,210)+arc(120,75,22,-30,30);else if(w==='교각')s+=arc(120,75,18,30,150)+arc(120,75,24,150,210,B)+arc(120,75,18,210,330)+arc(120,75,24,-30,30,B);s+=w==='교점'?tx(120,110,'교점',A):'';return sv(s)};
 P.trans=w=>{let s=ln(20,45,220,45)+ln(20,105,220,105)+ln(80,15,170,135);const ix=a=>80+(a-15)*(90/120);const x1=ix(45),x2=ix(105);
- if(w==='동위각')s+=arc(x1,45,16,307,360)+arc(x2,105,16,307,360);else s+=arc(x1,45,16,307,360)+arc(x2,105,16,127,180);return sv(s+tx(120,148,'두 직선이 평행할 때 크기가 같아요',T,'middle',11))};
+ if(w==='동위각')s+=arc(x1,45,16,307,360)+arc(x2,105,16,307,360);else s+=arc(x1,45,16,307,360)+arc(x2,105,16,127,180);return sv(s+tx(100,144,'평행선에서는 크기가 같아요',T,'middle',11))};
 P.mid=w=>sv(ln(30,90,210,90)+dot(30,90)+dot(210,90)+dot(120,90,A,5)+tx(30,115,'A')+tx(210,115,'B')+tx(120,115,'O',A)+ln(70,84,70,96,A,2)+ln(166,84,166,96,A,2)+(w==='수직이등분선'?ln(120,20,120,135,A,2.5)+rA(120,90,1,-1,12):''));
 /* 다각형 */
 const TRI=[[40,125],[200,125],[130,25]];
@@ -99,7 +99,7 @@ P.circ=w=>{const cx=120,cy=75,r=55;let s=`<circle cx="${cx}" cy="${cy}" r="${r}"
  else if(w==='원의 중심')s+=tx(cx,cy+22,'중심',A);
  return sv(s)};
 P.arc=w=>{const cx=120,cy=78,r=58;const p=a=>[cx+r*Math.cos(a*Math.PI/180),cy-r*Math.sin(a*Math.PI/180)];const[a1,a2]=[p(20),p(140)];let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${F}" stroke="${B}" stroke-width="2.5"/>`+dot(cx,cy);
- s+=w==='현'?ln(a1[0],a1[1],a2[0],a2[1],A,3.5)+tx(cx,a2[1]+28,'현',A):arc(cx,cy,r,20,140,A,5)+tx(cx,12,'호',A);s+=dot(a1[0],a1[1])+dot(a2[0],a2[1]);return sv(s)};
+ s+=w==='현'?ln(a1[0],a1[1],a2[0],a2[1],A,3.5)+tx(cx,a2[1]+28,'현',A):arc(cx,cy,r,20,140,A,5)+tx(170,26,'호',A,'start');s+=dot(a1[0],a1[1])+dot(a2[0],a2[1]);return sv(s)};
 P.sector=w=>{const cx=120,cy=80,r=60;const p=a=>[cx+r*Math.cos(a*Math.PI/180),cy-r*Math.sin(a*Math.PI/180)];const[a1,a2]=[p(30),p(110)];return sv(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${F}" stroke="${B}" stroke-width="2"/><path d="M${cx},${cy} L${a1[0]},${a1[1]} A${r},${r} 0 0 0 ${a2[0]},${a2[1]} Z" fill="${AF}" stroke="${A}" stroke-width="2.5"/>`+(w==='중심각'?arc(cx,cy,16,30,110,A,3):''))};
 P.ellipse=()=>sv(`<ellipse cx="120" cy="75" rx="90" ry="45" fill="${F}" stroke="${B}" stroke-width="2.5"/>`+dot(120,75));
 /* 합동 닮음 이동 */
@@ -108,7 +108,7 @@ P.cong=()=>sv(shp(30,115)+shp(140,115,1,AF,A)+tx(120,140,'모양도 크기도 �
 P.sim=()=>sv(shp(25,115,0.7)+shp(115,125,1.6,AF,A)+tx(120,145,'모양은 같고 크기만 달라요',T,'middle',12));
 const flag=(x,y,s=1,f=F,c=B,mir=false)=>{const m=v=>mir?-v:v;return poly([[x,y],[x,y-60*s],[x+m(45)*s,y-45*s],[x,y-30*s]],f,c)};
 P.slide=()=>sv(flag(40,110)+flag(150,110,1,AF,A)+arr(80,125,145,125,A));
-P.flip=w=>sv(ln(120,15,120,135,A,2,'6 5')+flag(110,110,1,F,B,true)+flag(130,110,1,AF,A)+(w==='반사'?tx(120,148,'거울',A,'middle',11):''));
+P.flip=w=>sv(ln(120,15,120,135,A,2,'6 5')+flag(110,110,1,F,B,true)+flag(130,110,1,AF,A)+(w==='반사'?tx(120,144,'거울',A,'middle',11):''));
 P.turn=w=>{const ccw=w==='반시계 방향';return sv(dot(120,80)+poly([[120,80],[120,25],[150,40],[120,55]],F,B)+poly([[120,80],[175,80],[160,110],[145,80]],AF,A)+(ccw?`<path d="M80,50 A50,50 0 0 1 120,25" stroke="${A}" stroke-width="2.5"/>`+pl([[112,20],[120,25],[113,32]],A):`<path d="M150,30 A55,55 0 0 1 180,60" stroke="${A}" stroke-width="2.5"/>`+pl([[172,58],[180,60],[183,52]],A))+tx(120,140,ccw?'반시계 방향':'시계 방향으로 90°',A,'middle',12))};
 P.symline=()=>sv(`<path d="M120,130 C40,80 60,20 120,50 C180,20 200,80 120,130 Z" fill="${F}" stroke="${B}" stroke-width="2.5"/>`+ln(120,10,120,140,A,2.5,'6 5'));
 P.pointsym=()=>sv(poly([[50,110],[150,110],[190,40],[90,40]])+ln(50,110,190,40,G,1.5)+ln(150,110,90,40,G,1.5)+dot(120,75,A,5)+tx(120,135,'180° 돌려도 같아요',A,'middle',12));

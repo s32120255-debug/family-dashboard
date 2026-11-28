@@ -13,7 +13,7 @@
 <meta name="color-scheme" content="light only">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="2";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="4";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("mcv")===String(j.v))return;sessionStorage.setItem("mcv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +51,7 @@ h2{font-size:22px}
 /* 학습 화면 */
 .top{position:sticky;top:0;z-index:5;background:rgba(246,248,252,.96);margin:0 -16px;padding:10px 16px 8px;border-bottom:1px solid var(--line)}
 .steps{display:flex;gap:4px;margin-top:8px}
-.steps button{flex:1;border-radius:10px;padding:6px 2px;font-size:13px;background:#fff;border:1.5px solid var(--line);color:var(--sub)}
+.steps button{flex:1 1 0;min-width:0;white-space:nowrap;line-height:1.35;border-radius:10px;padding:6px 2px;font-size:13px;background:#fff;border:1.5px solid var(--line);color:var(--sub)}
 .steps button.on{border-color:var(--b);color:var(--b);font-weight:700;background:var(--bs)}
 .steps button.ok{color:var(--ok)}
 .dots{display:flex;gap:4px;margin-top:8px}
@@ -109,8 +109,9 @@ h2{font-size:22px}
 <div id="app"></div>
 <div id="nav"></div>
 <div id="sheet"></div>
-<script src="data.js?v=2"></script>
-<script src="figs.js?v=1"></script>
+<script src="data.js?v=4"></script>
+<script src="figs.js?v=4"></script>
+<script src="nopair.js?v=4"></script>
 <script>
 "use strict";
 /* ───────── 저장 (이 기기 안) ───────── */
@@ -131,9 +132,15 @@ const plain=d=>parts(d).map(p=>typeof p==='string'?p:p.ans).join('');
 const defHTML=d=>parts(d).map(p=>typeof p==='string'?esc(p):'<b>'+esc(p.ans)+'</b>').join('');
 /* 문제에서 답이 보이지 않게 낱말을 가림 */
 const PART='은는이가을를의에도로과와만쪽';
-function mask(s,w){const base=w.replace(/\(.*\)/,'').trim();let r=s;[w,base].forEach(k=>{if(!k)return;const re=new RegExp('(^|[^가-힣])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+(k.length===1?'(?=$|[^가-힣]|['+PART+'])':''),'g');r=r.replace(re,'$1○○')});return r}
-const leaks=(s,w)=>s.includes(w.replace(/\(.*\)/,'').trim());
-function others(t,n){let pool=t.b.t.filter(x=>x!==t);if(pool.length<n)pool=pool.concat(t.b.area.br.flatMap(b=>b.t).filter(x=>x!==t&&!pool.includes(x)));return shuf(pool).slice(0,n)}
+const NAMES=Object.keys(T).concat(Object.keys(T).map(w=>w.replace(/\(.*\)/,'').trim()));
+/* 낱말을 ○○로 가림. 더 긴 낱말의 앞부분(소수→소수점, 원주→원주율)은 가리지 않음 */
+function mask(s,w){const base=w.replace(/\(.*\)/,'').trim();let r=s;[w,base].forEach(k=>{if(!k)return;const re=new RegExp('(^|[^가-힣])'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+(k.length===1?'(?=$|[^가-힣]|['+PART+'])':''),'g');r=r.replace(re,(m,p,off,str)=>{const at=off+p.length;return NAMES.some(L=>L.length>k.length&&L.startsWith(k)&&str.startsWith(L,at))?m:p+'○○'})});return r}
+const leaks=(s,w)=>s.includes(w.replace(/\(.*\)/,'').trim())||!!(window.EXLEAK&&EXLEAK[w]&&s.includes(EXLEAK[w]));
+/* 오답 보기: 같은 가지 → 같은 영역 → 전체 순. 정답도 될 수 있는 낱말(nopair.js)은 빼요 */
+function others(t,n){const no=(window.NOPAIR||{})[t.w]||{},ok=x=>x!==t&&!no[x.w];let pool=t.b.t.filter(ok);
+  if(pool.length<n)pool=pool.concat(shuf(t.b.area.br.flatMap(b=>b.t).filter(x=>ok(x)&&!pool.includes(x))).slice(0,n-pool.length));
+  if(pool.length<n)pool=pool.concat(shuf(BR.flatMap(b=>b.t).filter(x=>ok(x)&&!pool.includes(x))).slice(0,n-pool.length));
+  return shuf(pool).slice(0,n)}
 
 /* ───────── 화면 상태 ───────── */
 const STEPS=[['card','📖 카드'],['block','🧩 블록'],['quiz','✏️ 문제'],['ox','⭕ O/X'],['talk','🎤 말하기'],['map','🌳 한 장']];
@@ -168,7 +175,7 @@ function stepDone(k){const p=S.prog[V.b.id]=S.prog[V.b.id]||{};p[k]=1;p.step=V.s
 function learn(){
   const b=V.b,[key]=STEPS[V.step],p=S.prog[b.id]||{};
   let h=`<div class="top"><div class="row"><button class="sub" data-act="home">⏮ 처음으로</button><span class="sp"></span><span class="pill">${esc(b.area.n)} · ${esc(b.n)}</span></div>
-  <div class="steps">${STEPS.map(([k,n],i)=>`<button class="${i===V.step?'on':''} ${p[k]?'ok':''}" data-step="${i}">${n}${p[k]?' ✓':''}</button>`).join('')}</div>`;
+  <div class="steps">${STEPS.map(([k,n],i)=>`<button class="${i===V.step?'on':''} ${p[k]?'ok':''}" data-step="${i}">${n.replace(' ','<br>')}${p[k]?' ✓':''}</button>`).join('')}</div>`;
   const list=listFor(key);
   if(list)h+=`<div class="dots">${list.map((_,i)=>`<i class="${i<V.i?'d':i===V.i?'c':''}"></i>`).join('')}</div>`;
   h+=`</div>`;
