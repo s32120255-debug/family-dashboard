@@ -837,13 +837,19 @@ exports.stt = onDocumentCreated(
     const base = { encoding: "WEBM_OPUS", sampleRateHertz: 48000, languageCode: lang, enableAutomaticPunctuation: true };
     const tryRec = async (config) => {
       const [r] = await client.recognize({ config, audio: { content: req.audio } });
-      return (r.results || []).map((x) => (x.alternatives && x.alternatives[0] ? x.alternatives[0].transcript : "")).join(" ").replace(/\s+/g, " ").trim();
+      const res = r.results || [];
+      const pickAlt = (k) => res.map((x) => (x.alternatives && (x.alternatives[k] || x.alternatives[0]) ? (x.alternatives[k] || x.alternatives[0]).transcript : "")).join(" ").replace(/\s+/g, " ").trim();
+      const alts = [1, 2].map(pickAlt).filter((t, i, a) => t && t !== pickAlt(0) && a.indexOf(t) === i);
+      return { text: pickAlt(0), alts };
     };
     try {
-      let text;
-      try { text = await tryRec({ ...base, model: "latest_long", speechContexts: [{ phrases: STT_HINTS[lang] }] }); }
-      catch (e1) { console.warn("stt latest_long failed, retrying default", e1 && e1.code, e1 && e1.message); text = await tryRec(base); }
-      return done({ text });
+      let out;
+      // 스피드영어(엄마 11/28 「맞게 해도 인식이 잘 안 돼」): 짧은 문장에 맞는 latest_short + 받아쓴 후보 3개까지(앱이 그중 가장 잘 맞는 걸로 채점)
+      const speed = req.app === "speed";
+      const cfg = speed ? { ...base, model: "latest_short", maxAlternatives: 3 } : { ...base, model: "latest_long", speechContexts: [{ phrases: STT_HINTS[lang] }] };
+      try { out = await tryRec(cfg); }
+      catch (e1) { console.warn("stt " + cfg.model + " failed, retrying default", e1 && e1.code, e1 && e1.message); out = await tryRec(speed ? { ...base, maxAlternatives: 3 } : base); }
+      return done(speed ? out : { text: out.text });
     } catch (e) {
       console.error("stt", e && e.code, e && e.message);
       return done({ text: "", err: String((e && e.code) || (e && e.message) || "error") });

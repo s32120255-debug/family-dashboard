@@ -282,13 +282,16 @@ function rms(){if(!MIC)return 0;MIC.an.getFloatTimeDomainData(MIC.buf);let s=0;f
 // 서버 받아쓰기(시훈 공부방과 같은 stt). 서버를 미리 깨워 둠.
 function warm(){if(!DB)return;const id='warm-'+Date.now().toString(36);DB.set('stt/'+id,{warm:1,at:today()}).then(()=>setTimeout(()=>DB.del('stt/'+id),20000)).catch(()=>{})}
 function b64(blob){return new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]||'');fr.onerror=()=>res('');fr.readAsDataURL(blob)})}
-async function stt(blob,sec,target){
+// 엄마 11/28 「맞게 해도 인식이 잘 안 돼」: 서버가 받아쓴 후보(최대 3개) 중 가장 잘 맞는 것으로 채점(채점 기준은 그대로)
+let STT_ALTS=[];
+function bestHeard(it,h){let best=h,bv=judgeAll(it,h);(STT_ALTS||[]).forEach(a=>{const v=judgeAll(it,a);if(RANK[v]>RANK[bv]){bv=v;best=a}});STT_ALTS=[];return best}
+async function stt(blob,sec,target){STT_ALTS=[];
   if(MOCK){await new Promise(r=>setTimeout(r,400));return window.__mockSTT?window.__mockSTT(target):target}
   if(!DB||blob.size<1500)return '';const data=await b64(blob);if(!data)return '';
   const id=today()+'-sp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   await DB.set('stt/'+id,{at:today(),lang:'en-US',sec,audio:data,app:'speed'});
   return await new Promise(res=>{let un=null,fin=false;const end=t=>{if(fin)return;fin=true;try{un&&un()}catch(e){}DB.del('stt/'+id);res(t)};
-    un=DB.watch('stt/'+id,d=>{if(d&&d.res)end(d.res.text||'')});setTimeout(()=>end(''),25000)})}
+    un=DB.watch('stt/'+id,d=>{if(d&&d.res){STT_ALTS=d.res.alts||[];end(d.res.text||'')}});setTimeout(()=>end(''),25000)})}
 
 // 녹음 한 번(엄마 11/26): 시훈이가 생각하고 🎤 를 눌러 시작 → 다 말하면 ⏹ 를 눌러 끝. 자동으로 끊지 않아요.
 // (서버 받아쓰기가 한 번에 60초까지라 55초가 되면 그때만 저절로 멈춰요.) 멈춘 뒤 한 번만 받아 적어 정답과 비교해요.
@@ -468,7 +471,7 @@ const ACT={
     R.ph=R.ph==='ready'?'rec':'frec';render();recStart(UI)},
   async stop(){const R=RUN;if(R.ph!=='rec'&&R.ph!=='frec')return;const fol=R.ph==='frec';R.ph=fol?'fthink':'think';render();
     const r=await recStop();if(R!==RUN||R.quit)return;const it=IT(R.ids[R.i]);
-    let h='';if(r&&(r.blob||MOCK)){try{h=await stt(r.blob,r.sec,it.en)}catch(e){}}if(R!==RUN||R.quit)return;
+    let h='';if(r&&(r.blob||MOCK)){try{h=await stt(r.blob,r.sec,it.en);h=bestHeard(it,h)}catch(e){}}if(R!==RUN||R.quit)return;
     const v=judgeAll(it,h);if(!fol&&r&&r.blob)R.blobs[R.i]=r.blob;judged(v,h,fol)},
   again(){const it=IT(RUN.ids[RUN.i]);speak(it.en)},
   // 낱말 듣기(엄마 11/27 「단어 따로 문장 따로」): 말하기 전에 눌러 그 영어 낱말 소리 + 조용히 글자. 막힘 없이에는 영향 없음
@@ -519,7 +522,8 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
   next()}
 // 엄마 11/26 「왜 두 번 녹음하는 거야? / 한 번만 녹음」: 따라 말하기 녹음을 없앰. 맞으면 정답 소리를 듣고 저절로 다음, 틀렸으면 정답을 보고 들은 뒤 「다음 ▶」.
 // 틀린 문장은 그날 4문장 뒤에 한 번 더(엄마 11/27). 한 번 더 나온 문장은 또 넣지 않아요.
-function reask(){const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
+// 엄마 11/28 「틀린 거 추가는 하지 마, 담날 나오게 해」: 그날 다시 넣지 않아요(틀린 문장은 다음 날 「다시」로)
+function reask(){return;const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
 // 들린 말 ↔ 정답 맞춰 보기(낱말 단위 편집 거리): 맞은 낱말은 그대로, 바뀐 낱말은 빨간 밑줄, 빠진 자리는 빈칸, 더 말한 낱말은 줄 긋기
 // 엄마 11/27 「불규칙 동사 잘 모르니 과거형이 나오면 동사원형을 띄워 주자」: 과거형·과거분사 낱말이 있으면 원형만 작게(be 빼고, read처럼 모양이 같은 건 빼고)
 const PASTB={};if(TC){Object.keys(TC.IRV).forEach(b=>{if(b==='be')return;TC.IRV[b].forEach(x=>{if(x&&x!==b)PASTB[x]=b})});TC.VP.forEach(p=>{const b=String(p.e||'').split(' ')[0];if(!b||b==='be')return;[TC.EN.past(b),TC.EN.pp(b)].forEach(x=>{x=String(x).split(' ')[0];if(x&&x!==b&&!PASTB[x])PASTB[x]=b})})}
