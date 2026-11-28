@@ -24,7 +24,7 @@ function _A(s){const L=s.slice(-1),p=s.slice(0,-1),[c,v,j]=dec(L);
   if(ID.has(L))return p+com(c,v,8)+(bright(v)?'아':'어');
   if(IS.has(L))return p+com(c,v,0)+(bright(v)?'아':'어');
   if(j)return s+(bright(v)?'아':'어');
-  if(L==='르'&&p){const q=p.slice(-1),[qc,qv]=dec(q);return p.slice(0,-1)+com(qc,qv,8)+(bright(qv)?'라':'러')}
+  if(L==='르'&&p&&!/(따|치|들)$/.test(p)){const q=p.slice(-1),[qc,qv]=dec(q);return p.slice(0,-1)+com(qc,qv,8)+(bright(qv)?'라':'러')}
   switch(v){case 0:case 1:case 3:case 4:case 5:case 6:case 7:return s;
     case 8:return p+com(c,9,0);case 13:return p+com(c,14,0);case 20:return p+com(c,6,0);case 11:return p+com(c,10,0);
     case 18:{const pv=p?dec(p.slice(-1))[1]:4;return p+com(c,bright(pv)?0:4,0)}
@@ -58,7 +58,7 @@ const IRV={be:['was','been'],go:['went','gone'],eat:['ate','eaten'],drink:['dran
   overcome:['overcame','overcome'],understand:['understood','understood'],spend:['spent','spent'],think:['thought','thought'],put:['put','put'],cut:['cut','cut'],
   hurt:['hurt','hurt'],lead:['led','led'],grow:['grew','grown'],throw:['threw','thrown'],choose:['chose','chosen'],keep:['kept','kept'],hold:['held','held'],
   send:['sent','sent'],pay:['paid','paid'],say:['said','said'],sell:['sold','sold'],stand:['stood','stood'],fall:['fell','fallen'],drive:['drove','driven'],set:['set','set'],hide:['hid','hidden']};
-const DBL=new Set('stop plan shop jog hop chat drop hug clap swim run sit begin get put cut win forget set skip'.split(' '));
+const DBL=new Set('stop plan shop jog hop chat drop hug clap swim run sit begin get put cut win forget set skip submit admit prefer regret permit commit'.split(' '));
 const head=v=>v.split(' ')[0],tail=v=>{const i=v.indexOf(' ');return i<0?'':v.slice(i)};
 function b3(v){if(v==='have')return 'has';if(v==='do')return 'does';if(v==='go')return 'goes';if(/(s|x|z|ch|sh)$/.test(v))return v+'es';if(/[^aeiou]y$/.test(v))return v.slice(0,-1)+'ies';return v+'s'}
 function bPast(v){if(IRV[v])return IRV[v][0];if(/e$/.test(v))return v+'d';if(/[^aeiou]y$/.test(v))return v.slice(0,-1)+'ied';if(DBL.has(v))return v+v.slice(-1)+'ed';return v+'ed'}
@@ -108,7 +108,11 @@ const SUBJ=[
  {en:'the engineers',ko:'그 엔지니어들',t:'adult',pl:1,lv:3,r:'themselves',po:'their',pr:'they'},
  {en:'the puppy',ko:'그 강아지',t:'ani',s:1,an:'dog'},
  {en:'Tom',ko:'톰',t:'kid',s:1,r:'himself',po:'his',pr:'he',nm:1},{en:'Mina',ko:'미나',t:'kid',s:1,r:'herself',po:'her',pr:'she',nm:1},
- {en:'Jake',ko:'제이크',t:'kid',s:1,r:'himself',po:'his',pr:'he',nm:1},{en:'Yuna',ko:'유나',t:'kid',s:1,r:'herself',po:'her',pr:'she',nm:1}
+ {en:'Jake',ko:'제이크',t:'kid',s:1,r:'himself',po:'his',pr:'he',nm:1},{en:'Yuna',ko:'유나',t:'kid',s:1,r:'herself',po:'her',pr:'she',nm:1},
+ // 고등(2.5)·수능(3) 주어
+ {en:'the pharmacist',ko:'그 약사',t:'adult',s:1,lv:2.5},{en:'the researchers',ko:'그 연구원들',t:'adult',pl:1,lv:2.5,r:'themselves',po:'their',pr:'they'},
+ {en:'the mechanic',ko:'그 정비사',t:'adult',s:1,lv:2.5},{en:'the volunteers',ko:'그 자원봉사자들',t:'adult',pl:1,lv:2.5,r:'themselves',po:'their',pr:'they'},
+ {en:'the surgeon',ko:'그 외과 의사',t:'adult',s:1,lv:3},{en:'the economists',ko:'그 경제학자들',t:'adult',pl:1,lv:3,r:'themselves',po:'their',pr:'they'}
 ];
 SUBJ.forEach((x,i)=>{x.i=i;x.lv=x.lv||1;x.nom=x.nom||josa(x.ko,'이/가');x.top=josa(x.ko,'은/는');
   x.be=x.s?'is':x.t==='me'?'am':'are';x.was=x.s||x.t==='me'?'was':'were';x.do=x.s?'does':'do'});
@@ -196,19 +200,33 @@ const VP=[
  V('feed','먹이를 주다','에게',[['the dog','개'],['the fish','물고기'],['the chickens','닭',2]],{h:1}),
  V('wear','쓰다','을',[['a helmet','헬멧'],['a mask','마스크'],['a hat','모자']],{h:1}),
  V('wash','씻다','을',[['{po} hands','손']],{h:1,po:1}),
- V('tidy up','정리하다','을',[['{po} room','방'],['{po} desk','책상']],{h:1,po:1})
+ V('tidy up','정리하다','을',[['{po} room','방'],['{po} desk','책상']],{h:1,po:1}),
+ // 고등(2.5)
+ V('attend','참석하다','에',[['the meeting','회의',2.5,'xK'],['the ceremony','기념식',2.5],['the concert','콘서트',2.5]],{lv:2.5}),
+ V('avoid','피하다','을',[['junk food','정크 푸드',2.5],['crowded places','붐비는 곳',2.5]],{lv:2.5,ab:1}),
+ V('review','복습하다','을',[['the lesson','수업 내용',2.5],['the new words','새 단어',2.5]],{lv:2.5,h:1}),
+ V('describe','묘사하다','을',[['the picture','그림',2.5],['the scene','장면',2.5]],{lv:2.5}),
+ V('compare','비교하다','을',[['the prices','가격',2.5],['the two answers','두 답',2.5]],{lv:2.5}),
+ V('collect','모으다','을',[['stamps','우표',2.5],['coins','동전',2.5],['stickers','스티커',2.5]],{lv:2.5,h:1}),
+ V('memorize','외우다','을',[['the poem','시',2.5],['the new words','새 단어',2.5]],{lv:2.5,h:1}),
+ // 수능(3)
+ V('investigate','조사하다','을',[['the cause','원인',3],['the accident','사고',3]],{lv:3,x:['kid']}),
+ V('evaluate','평가하다','을',[['the results','결과',3],['the plan','계획',3]],{lv:3,x:['kid']}),
+ V('overcome','극복하다','을',[['difficulties','어려움',3],['obstacles','장애물',3]],{lv:3,ab:1}),
+ V('maintain','유지하다','을',[['a healthy diet','건강한 식단',3],['good habits','좋은 습관',3]],{lv:3,ab:1}),
+ V('preserve','보존하다','을',[['the forest','숲',3],['old traditions','옛 전통',3]],{lv:3,ab:1})
 ];
 VP.forEach((v,i)=>{v.i=i;v.lv=v.lv||1;if(v.o)v.o.forEach((o,j)=>{o.j=j;if(v.lv>o.lv)o.lv=v.lv})});
 
 // ───────── be 뒤에 오는 말 ─────────
 // 형용사: [영어, 한국어 기본형, 단계, 표시] 표시: a 동물도 · tr 성격·생김새(「어제」 안 붙임) · fe 느낌(왜 물어보기 좋음) · c 이다형 · n:없다형
-const AD=(en,ko,lv,f,n)=>({en,ko,lv:lv||1,f:f||'',n});
+const AD=(en,ko,lv,f,n,mx)=>({en,ko,lv:lv||1,f:f||'',n,mx});
 const ADJ=[
  AD('happy','행복하다',1,'a fe'),AD('hungry','배가 고프다',1,'a fe'),AD('full','배가 부르다',1,'a fe'),AD('tired','피곤하다',1,'a fe'),AD('sad','슬프다',1,'a fe'),
- AD('sleepy','졸리다',1,'a fe'),AD('busy','바쁘다',1,'fe'),AD('sick','아프다',1,'a fe'),AD('cold','춥다',1,'a fe'),AD('hot','덥다',1,'a fe'),AD('thirsty','목이 마르다',1,'a fe'),
- AD('bored','심심하다',1,'fe'),AD('kind','친절하다',1,'tr'),AD('funny','웃기다',1,'tr'),AD('cute','귀엽다',1,'a tr'),AD('smart','똑똑하다',1,'a tr'),AD('tall','키가 크다',1,'tr'),
+ AD('sleepy','졸리다',1,'a fe'),AD('busy','바쁘다',1,'fe'),AD('sick','아프다',1,'a fe',undefined,2),AD('cold','춥다',1,'a fe'),AD('hot','덥다',1,'a fe'),AD('thirsty','목이 마르다',1,'a fe'),
+ AD('bored','심심하다',1,'fe'),AD('kind','친절하다',1,'tr'),AD('funny','웃기다',1,'tr'),AD('cute','귀엽다',1,'a tr'),AD('smart','똑똑하다',1,'a tr',undefined,2),AD('tall','키가 크다',1,'tr'),
  AD('strong','힘이 세다',1,'tr'),AD('fast','빠르다',1,'a tr'),AD('quiet','조용하다',1,'a'),
- AD('angry','화가 나다',1,'a fe'),AD('scared','무섭다',1,'a fe'),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',9,'a tr'),
+ AD('angry','화가 나다',1,'a fe'),AD('scared','무섭다',1,'a fe',undefined,2),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',9,'a tr'),
  AD('shy','수줍음이 많다',1,'a tr'),AD('slow','느리다',1,'a tr'),AD('weak','힘이 약하다',1,'tr'),AD('young','어리다',1,'a tr'),
  AD('lonely','외롭다',2,'a fe'),AD('healthy','건강하다',2,'a'),AD('honest','정직하다',2,'tr'),AD('brave','용감하다',2,'a tr'),AD('lazy','게으르다',2,'a tr'),AD('famous','유명하다',2,'tr'),
  AD('curious','호기심이 많다',2,'a tr'),AD('upset','속상하다',2,'fe'),AD('calm','침착하다',2,'tr'),AD('polite','예의 바르다',2,'tr'),AD('popular','인기가 많다',2,'tr'),AD('nervous','긴장되다',2,'fe'),
@@ -218,7 +236,16 @@ const ADJ=[
  AD('patient','참을성이 있다',3,'tr','참을성이 없다'),AD('anxious','불안하다',3,'fe'),AD('modest','겸손하다',3,'tr'),AD('sensitive','예민하다',3,'tr'),AD('stubborn','고집이 세다',3,'tr'),
  AD('mature','성숙하다',3,'tr'),AD('independent','독립적',3,'tr c'),AD('ambitious','야망이 있다',3,'tr','야망이 없다'),AD('optimistic','낙천적',3,'tr c'),AD('exhausted','지쳐 있다',3,'fe'),
  AD('considerate','사려 깊다',3,'tr'),AD('talented','재능이 있다',3,'tr','재능이 없다'),AD('sincere','진실하다',3,'tr'),AD('cautious','신중하다',3,'tr'),AD('energetic','활기차다',3,'a tr'),
- AD('grateful','고맙다',3,'fe'),AD('frustrated','답답하다',3,'fe'),AD('relieved','안심이 되다',3,'fe')
+ AD('grateful','고맙다',3,'fe'),AD('frustrated','답답하다',3,'fe'),AD('relieved','안심이 되다',3,'fe'),
+ // 고등(2.5): 아프다·똑똑하다·무섭다는 고등부터 ill·intelligent·frightened로(엄마 11/28 「초등중등고등 다 달라야지」)
+ AD('ill','아프다',2.5,'a fe'),AD('intelligent','똑똑하다',2.5,'a tr'),AD('frightened','무섭다',2.5,'a fe'),
+ AD('thoughtful','배려심이 많다',2.5,'tr'),AD('reliable','믿음직하다',2.5,'tr'),AD('creative','창의적',2.5,'tr c'),AD('determined','의지가 굳다',2.5,'tr'),
+ AD('satisfied','만족스럽다',2.5,'fe'),AD('disappointed','실망하다',2.5,'fe'),AD('confused','헷갈리다',2.5,'fe'),AD('jealous','질투가 나다',2.5,'fe'),AD('ashamed','부끄럽다',2.5,'fe'),
+ AD('punctual','시간을 잘 지키다',2.5,'tr'),AD('humorous','유머 감각이 있다',2.5,'tr','유머 감각이 없다'),
+ // 수능(3)
+ AD('affectionate','다정하다',3,'a tr'),AD('compassionate','동정심이 많다',3,'tr'),AD('persistent','끈기가 있다',3,'tr','끈기가 없다'),AD('arrogant','거만하다',3,'tr'),
+ AD('indifferent','무관심하다',3,'tr'),AD('enthusiastic','열정적',3,'tr c'),AD('furious','몹시 화가 나다',3,'fe'),AD('miserable','비참하다',3,'fe'),AD('delighted','아주 기쁘다',3,'fe'),
+ AD('courageous','용기가 있다',3,'tr','용기가 없다')
 ];
 const PLACE=[ // be + 곳: 「있다/없다」
  AD('at home','집에 있다',1,'a','집에 없다'),AD('at school','학교에 있다',1,'','학교에 없다'),AD('in the park','공원에 있다',1,'a','공원에 없다'),
@@ -228,14 +255,18 @@ const PLACE=[ // be + 곳: 「있다/없다」
  AD('at the zoo','동물원에 있다',1,'a','동물원에 없다'),AD('at the beach','해변에 있다',1,'a','해변에 없다'),AD('in the classroom','교실에 있다',1,'','교실에 없다'),
  AD('in the living room','거실에 있다',1,'a','거실에 없다'),AD('in the car','차 안에 있다',1,'a','차 안에 없다'),AD('at the store','가게에 있다',1,'','가게에 없다'),
  AD('at the bank','은행에 있다',2,'','은행에 없다'),AD('at the station','역에 있다',2,'','역에 없다'),AD('in the gym','체육관에 있다',2,'','체육관에 없다'),
- AD('at the bakery','빵집에 있다',2,'','빵집에 없다'),AD('in the auditorium','강당에 있다',3,'','강당에 없다'),AD('at the conference','회의에 가 있다',3,'xK','회의에 가 있지 않다')
+ AD('at the bakery','빵집에 있다',2,'','빵집에 없다'),AD('in the auditorium','강당에 있다',3,'','강당에 없다'),AD('at the conference','회의에 가 있다',3,'xK','회의에 가 있지 않다'),
+ AD('at the stadium','경기장에 있다',2.5,'a','경기장에 없다'),AD('in the waiting room','대기실에 있다',2.5,'','대기실에 없다'),AD('at the city hall','시청에 있다',2.5,'xK','시청에 없다'),
+ AD('in the dormitory','기숙사에 있다',2.5,'xK','기숙사에 없다'),AD('at the embassy','대사관에 있다',3,'xK','대사관에 없다'),AD('in the operating room','수술실에 있다',3,'xK','수술실에 없다')
 ];
 const JOB=[ // be + 직업: [영어 하나, 영어 여럿, 한국어, 단계]
  ['student','students','학생',1],['doctor','doctors','의사',1],['nurse','nurses','간호사',1],['cook','cooks','요리사',1],['farmer','farmers','농부',1],['singer','singers','가수',1],
  ['police officer','police officers','경찰관',1],['firefighter','firefighters','소방관',2],['pilot','pilots','비행기 조종사',2],['scientist','scientists','과학자',2],['engineer','engineers','엔지니어',2],
  ['dentist','dentists','치과 의사',2],['lawyer','lawyers','변호사',3],['architect','architects','건축가',3],['journalist','journalists','기자',3],['professor','professors','교수',3],
  ['teacher','teachers','선생님',1],['actor','actors','배우',1],['office worker','office workers','회사원',1],['English teacher','English teachers','영어 선생님',1],['animal doctor','animal doctors','동물 의사',1],['baker','bakers','제빵사',2],['vet','vets','수의사',2],['writer','writers','작가',2],['artist','artists','화가',2],['musician','musicians','음악가',2],
- ['soldier','soldiers','군인',2],['dancer','dancers','무용수',2],['photographer','photographers','사진작가',3],['designer','designers','디자이너',3],['astronaut','astronauts','우주 비행사',3]
+ ['soldier','soldiers','군인',2],['dancer','dancers','무용수',2],['photographer','photographers','사진작가',3],['designer','designers','디자이너',3],['astronaut','astronauts','우주 비행사',3],
+ ['librarian','librarians','사서',2.5],['mechanic','mechanics','정비사',2.5],['pharmacist','pharmacists','약사',2.5],['flight attendant','flight attendants','승무원',2.5],['counselor','counselors','상담 선생님',2.5],
+ ['surgeon','surgeons','외과 의사',3],['economist','economists','경제학자',3],['diplomat','diplomats','외교관',3],['philosopher','philosophers','철학자',3],['entrepreneur','entrepreneurs','사업가',3]
 ].map(([en,pl,ko,lv],i)=>({en,pl,ko,lv,i}));
 ADJ.forEach((x,i)=>x.i=i);PLACE.forEach((x,i)=>x.i=i);
 

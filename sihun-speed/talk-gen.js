@@ -1,7 +1,7 @@
 /* ⚡ 스피드 영어 · 문장 만들기 ② 단계별 문장 틀 (엄마 11/27 「문법 단계에 따라 고급 말하기까지」)
    문장 번호 = 바퀴.꼴.씨앗.묶음꼴  예) 1.v_neg.123456.v_q
    같은 씨앗이면 같은 뼈대(주어·동사·목적어)라서, 한 묶음 안에서 「He plays → He doesn't play → Does he play?」처럼 꼴만 바뀌어요.
-   바퀴(lap) 1 = 초등 낱말, 2 = 중등까지, 3 = 수능까지. */
+   단어 수준(id 맨 앞 숫자) 1 초등 · 2 중등 · 3 고등 · 4 수능. 낱말 단계 lv: 1 초등, 2 중등, 2.5 고등, 3 수능(엄마 11/28 「초중고수능」). mx = 그 수준까지만(같은 한국어가 수준마다 다른 영어일 때). */
 (function(){
 'use strict';
 const C=window.TALKCORE,{josa,KO,COP,EN,AN,SUBJ,PEOPLE,VP,ADJ,PLACE,JOB,TIME}=C;
@@ -11,9 +11,18 @@ const FAM_KO=/(엄마|아빠|부모님|사촌|가족|삼촌|이모|고모|누나
 function isFam(it){return FAM_EN.test(it.en)||FAM_KO.test(it.ko)}
 // ───────── 바탕 ─────────
 function rng(seed){let a=seed>>>0;return ()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^(t>>>15),t|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296}}
-const pick=(r,a)=>a[Math.floor(r()*a.length)];
+// 고정 목록의 낱말에 _l(수준: 2 중등 · 2.5 고등 · 3 수능)을 붙이면 pick이 오늘 단어 수준에 맞춰 골라요. _mx = 그 수준까지만.
+let CURLV=1;const _lv=x=>(x&&x._l)||1;
+// 같은 한국어라도 고등·수능에서는 더 어려운 영어로(엄마 11/28): 목록 안의 [영어, 한국어, …] 짝에 그대로 적용
+const UPW={smart:'intelligent',sick:'ill',scared:'frightened'};
+const up=x=>CURLV>=2.5&&Array.isArray(x)&&UPW[x[0]]?Object.assign([UPW[x[0]]].concat(x.slice(1)),{_l:x._l,_mx:x._mx}):x;
+const pick=(r,a)=>up(pick0(r,a));
+const pick0=(r,a)=>{if(!a.some(x=>x&&x._l))return a[Math.floor(r()*a.length)];
+  let ok=a.filter(x=>_lv(x)<=CURLV&&!(x._mx&&CURLV>x._mx));if(!ok.length)return undefined;const m=Math.max(...ok.map(_lv));
+  if(m>1&&r()<.6){const top=ok.filter(x=>_lv(x)===m);return top[Math.floor(r()*top.length)]}return ok[Math.floor(r()*ok.length)]};
+const LVT=(l,a,mx)=>a.map(x=>{x._l=l;if(mx)x._mx=mx;return x});
 // 바퀴에 맞는 낱말: 이번 바퀴 낱말을 60% 먼저
-function lvPick(r,a,lap,bias){const ok=a.filter(x=>(x.lv||1)<=lap);if(!ok.length)return null;const top=ok.filter(x=>(x.lv||1)===lap);const u=r();return lap>1&&top.length&&u<(bias||.6)?pick(r,top):pick(r,ok)}
+function lvPick(r,a,lap,bias){const ok=a.filter(x=>(x.lv||1)<=lap&&!(x.mx&&lap>x.mx));if(!ok.length)return null;const top=ok.filter(x=>(x.lv||1)===lap);const u=r();return lap>1&&top.length&&u<(bias||.6)?pick(r,top):pick(r,ok)}
 const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const sp=a=>a.filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
 const SEN=(a,q)=>cap(sp(a))+(q?'?':'.');
@@ -899,7 +908,7 @@ const ALT=[['it was raining','비가 오고 있었지만','we played soccer','�
  ['she is small','그녀는 작지만','she is very strong','아주 힘이 세']];
 const LIKES=[['pizza','피자를 좋아하다'],['soccer','축구를 좋아하다'],['music','음악을 좋아하다'],['cats','고양이를 좋아하다'],['math','수학을 좋아하다'],['ice cream','아이스크림을 좋아하다']];
 const EITH=[['juice','milk','주스','우유','마시다'],['pizza','pasta','피자','파스타','먹다'],['the red one','the blue one','빨간 거','파란 거','고르다'],['a cat','a dog','고양이','개','키우다'],['soccer','baseball','축구','야구','하다']];
-function NSkel(r,lap){for(let g=0;g<50;g++){const A=pick(r,NMP),B=pick(r,NMP);if(A===B)continue;const PA=ASA.filter(x=>!/old|busy/.test(x[0]));const a1=pick(r,PA),AS2=[a1,pick(r,PA.filter(x=>x!==a1))];const s=pick(r,SOT);return {A,B,s,sp:pick(r,s[2]),S:pick(r,PS),al:pick(r,ALT),lk:pick(r,LIKES),ei:pick(r,EITH),a1:AS2[0],a2:AS2[1]}}throw new Error('no N')}
+function NSkel(r,lap){for(let g=0;g<50;g++){const A=pick(r,NMP),B=pick(r,NMP);if(A===B)continue;const PA=ASA.filter(x=>!/old|busy/.test(x[0]));const a1=pick(r,PA),AS2=[a1,pick(r,PA.filter(x=>x[0]!==a1[0]))];const s=pick(r,SOT);return {A,B,s,sp:pick(r,s[2]),S:pick(r,PS),al:pick(r,ALT),lk:pick(r,LIKES),ei:pick(r,EITH),a1:AS2[0],a2:AS2[1]}}throw new Error('no N')}
 function NForm(k,f){const {A,B,S}=k;let en,ko,alt=[];switch(f){
   case 'N_sothat':{const p=k.sp;en=p[2]?SEN([S.en,k.s[0],'so that',p[0]]):SEN([S.en,k.s[0],'so that',S.en,'could',p[0]]);ko=p[2]?D([S.top,'모두가 이해할 수 있게',k.s[1]]):D([S.top,KO.R(p[1]),k.s[1]]);break}
   case 'N_although':en=cap('although '+k.al[0])+', '+k.al[2]+'.';ko=k.al[1]+' '+k.al[3]+'.';alt=[cap('though '+k.al[0])+', '+k.al[2]+'.'];break;
@@ -955,7 +964,7 @@ const RSH=[['studied harder','더 열심히 공부하다'],['gone to bed earlier
  ['eaten breakfast','아침을 먹다'],['checked the answers','답을 확인하다'],['left earlier','더 일찍 출발하다'],['asked for help','도움을 요청하다'],['practiced more','더 연습하다'],['worn a coat','외투를 입다']];
 const RSN=[['eaten so much','그렇게 많이 먹다'],['gone to bed so late','그렇게 늦게 자다'],['said that','그런 말을 하다'],['spent all the money','돈을 다 쓰다'],['played games all night','밤새 게임을 하다'],['told a lie','거짓말을 하다'],['run in the rain','빗속에서 뛰다']];
 const RMV=[['left already','이미 떠나다'],['forgotten about it','그걸 잊어버리다'],['lost the key','열쇠를 잃어버리다'],['missed the bus','버스를 놓치다'],['finished the work','일을 끝내다'],['heard the news','그 소식을 듣다'],['taken the wrong bus','버스를 잘못 타다'],['dropped it somewhere','어딘가에 떨어뜨리다'],['gone home','집에 가다'],['fallen asleep','잠들다'],['seen the movie','그 영화를 보다'],['broken the vase','꽃병을 깨다'],['eaten the cake','케이크를 먹다'],['practiced a lot','연습을 많이 하다']];
-function RSkel(r,lap){const A=RSH.concat(TC.filter(c=>!c[2]).map(c=>[ppPh(c[0]),c[1]])),N=RSN.concat(TC.filter(c=>c[2]).map(c=>[ppPh(c[0]),c[1]]));return {S:pick(r,HS),a:pick(r,A),n:pick(r,N),m:pick(r,RMV),adj:lvPick(r,ADJ.filter(a=>/fe/.test(a.f)&&!/\bc\b/.test(a.f)&&!a.n),lap),q:r()}}
+function RSkel(r,lap){const A=RSH.concat(TC.filter(c=>!c[2]).map(c=>Object.assign([ppPh(c[0]),c[1]],{_l:c._l}))),N=RSN.concat(TC.filter(c=>c[2]).map(c=>Object.assign([ppPh(c[0]),c[1]],{_l:c._l})));return {S:pick(r,HS),a:pick(r,A),n:pick(r,N),m:pick(r,RMV),adj:lvPick(r,ADJ.filter(a=>/fe/.test(a.f)&&!/\bc\b/.test(a.f)&&!a.n),lap),q:r()}}
 function RForm(k,f){const S=k.S;let en,ko;switch(f){
   case 'R_should':en=SEN([S.en,'should have',k.a[0]]);ko=D([S.top,KO.P(k.a[1])+'야 했어']);return {en,ko,w:[chip(k.a[1],k.a[0])]};
   case 'R_shouldnt':en=SEN([S.en,"shouldn't have",k.n[0]]);ko=D([S.top,KO.S(k.n[1])+'지 말았어야 했어']);return {en,ko,alt:[en.replace("shouldn't",'should not')],w:[chip(k.n[1],k.n[0])]};
@@ -1070,7 +1079,10 @@ const HS=PS.map((x,i)=>Object.assign({},x,{po:PO[i],pr:x.en,wish:x.s?'wishes':'w
 const fillS=(t,S)=>t.replace('{N}',S.nom).replace('{E}',S.ko+'에게');
 const dropS=t=>t.replace(/\{[NE]\} /,'');
 const isCop=t=>/[가-힣]이다$/.test(t)&&!/있다$/.test(t);
-const kIf=t=>isCop(t)?josa(t.slice(0,-2),'이라면/라면'):t.replace(/다$/,'다면');
+// 동사는 「안다면·산다면·잘한다면」(형용사·있다는 「많다면·있다면」)
+const KIFV=/(알다|살다|잘하다|모으다|연습하다|공부하다|일하다|다니다|읽다|운동하다)$/;
+const kDecl=t=>{const st=t.slice(0,-1),c=st.charCodeAt(st.length-1)-0xAC00,jong=c%28,head=st.slice(0,-1);if(jong===0)return head+String.fromCharCode(st.charCodeAt(st.length-1)+4)+'다';if(jong===8)return head+String.fromCharCode(st.charCodeAt(st.length-1)-4)+'다';return st+'는다'};
+const kIf=t=>isCop(t)?josa(t.slice(0,-2),'이라면/라면'):KIFV.test(t)?kDecl(t)+'면':t.replace(/다$/,'다면');
 const kMyeon=t=>isCop(t)?josa(t.slice(0,-2),'이면/면'):KO.M(t);
 // 가정법 과거: [조건(영어 과거꼴, 주어 뒤), 한국어 기본형({N} 주어 · {E} ~에게), 결과 [[영어 동사구, 한국어 기본형]]]
 const SC=[['were a bird','{N} 새이다',[['fly over the mountains','산 위를 날아가다'],['fly to the sea','바다로 날아가다'],['sing every morning','매일 아침 노래하다']]],
@@ -1314,7 +1326,7 @@ const ZS2=[PS[0],PS[4],PS[5]].concat(NMP.slice(0,6).map((x,i)=>NP(x[0],x[1],40+i
 const zAux=(a,S)=>a==='do'?(S.s?'does':'do'):a==='am'?beOf(S):a==='was'?S.was:a==='have'?(S.s?'has':'have'):a;
 const ZNS=[['big fish','그렇게 큰 물고기'],['tall tree','그렇게 큰 나무'],['beautiful sunset','그렇게 아름다운 노을'],['funny movie','그렇게 웃긴 영화'],['cute puppy','그렇게 귀여운 강아지'],['long line','그렇게 긴 줄'],
  ['huge cake','그렇게 커다란 케이크'],['strange bird','그렇게 이상한 새'],['bright star','그렇게 밝은 별'],['crowded beach','그렇게 붐비는 바닷가']];
-function Z2Skel(r){for(let g=0;g<50;g++){const S1=pick(r,ZS1),S2=pick(r,ZS2);if(S1.en===S2.en)continue;const a1=pick(r,ASA.filter(x=>!/old|busy/.test(x[0])));const a2=pick(r,ASA.filter(x=>!/old|busy/.test(x[0])&&x!==a1));
+function Z2Skel(r){for(let g=0;g<50;g++){const S1=pick(r,ZS1),S2=pick(r,ZS2);if(S1.en===S2.en)continue;const a1=pick(r,ASA.filter(x=>!/old|busy/.test(x[0])));const a2=pick(r,ASA.filter(x=>!/old|busy/.test(x[0])&&x[0]!==a1[0]));
   return {n:pick(r,ZWHO),d:pick(r,ZDO),zw:pick(r,ZW),ze:pick(r,ZE),S1,S2,so:pick(r,ZSO),nv:pick(r,ZNV),N:pick(r,[PS[0],PS[2],PS[3],PS[4],PS[5]]),ns:pick(r,ZNS),A:pick(r,HS.filter(x=>x.s)),a1,a2}}throw new Error('no Z')}
 function Z2Form(k,f){let en,ko;switch(f){
   case 'Z_it':en=SEN(['it was',k.n[0],'that',k.d[0]]);ko=D([KO.N(k.d[1]),'건 바로',josa(k.n[1],'이었어/였어')]);return {en,ko,alt:[en.replace(' that ',' who ')],w:[]};
@@ -1470,7 +1482,7 @@ const ASA2=ASA.concat([['short','키가 작다'],['quiet','조용하다'],['shy'
 function I3Skel(r,lap){for(let g=0;g<50;g++){const A=pick(r,NMP2),B=pick(r,NMP2);if(A===B)continue;return {A,B,a:pick(r,ASA2),t:pick(r,THE)}}throw new Error('no I')}
 // 48단계
 JWHO.length=0;JWHO.push(['the boy','남자아이','k'],['the girl','여자아이','k'],['the man','남자','a'],['the woman','여자','a'],['the student','학생','k'],['the old man','할아버지','o'],['the old woman','할머니','o']);
-JIS.length=0;JIS.push(['my friend','내 친구','k'],['my cousin','내 사촌','ka'],['my neighbor','우리 이웃','kao'],['my classmate','우리 반 친구','k'],['my teacher','우리 선생님','a'],['my coach','우리 코치님','a']);
+JIS.length=0;JIS.push(['my friend','내 친구','k'],['my teammate','우리 팀 친구','k'],['my neighbor','우리 이웃','kao'],['my classmate','우리 반 친구','k'],['my teacher','우리 선생님','a'],['my coach','우리 코치님','a']);
 JPOST.push(['playing the guitar','기타를 치고 있는'],['walking a dog','개를 산책시키고 있는'],['carrying a big box','큰 상자를 나르고 있는']);
 JING.push(['laughing','children','웃고 있는 아이들',1],['shouting','man','소리치는 남자'],['jumping','frog','뛰어오르는 개구리'],['sleeping','cat','자는 고양이'],['burning','house','불타는 집'],
  ['smiling','girl','웃고 있는 여자아이'],['moving','car','움직이는 차'],['sleeping','puppy','자는 강아지'],['playing','children','놀고 있는 아이들',1]);
@@ -1566,6 +1578,99 @@ function Y4Form(k,f){if(f==='Y_whenp'){const S=k.S,w=k.w,x=k.wr;return {en:cap('
 function G5Form(k,f){if(f==='G_enoughp'){const x=k.e,S=k.S;if(x[4])return {en:SEN(['it was',x[0],'enough to',x[2]]),ko:D([KO.L(x[3])+' 만큼',KO.P(x[1])]),w:[chip(x[1],x[0])]};return {en:SEN([S.en,S.was,x[0],'enough to',x[2]]),ko:D([S.top,KO.L(x[3])+' 만큼',KO.P(x[1])]),w:[chip(x[1],x[0])]}}return G4Form(k,f)}
 // 가족 낱말이 든 사람·말 목록 정리(생성 전에)
 [WOLD,WS,WANS,WOWN,JIS,NMP2,ZWHO,ADU,IOX,ZS2,SEEO].forEach(A=>{for(let i=A.length-1;i>=0;i--){const e=A[i];const en=Array.isArray(e)?e[0]:e.en,ko=Array.isArray(e)?e[1]:e.ko;if(isFam({en,ko})||/(엄마|아빠|할머니|할아버지|사촌)/.test(ko))A.splice(i,1)}});
+// ───────── 고등(2.5)·수능(3) 낱말: 39~45단계(엄마 11/28 「초중고수능」) ─────────
+GV.push(...LVT(2,[['pass','passed','to',[['the salt','소금을 건네주다'],['the ball','공을 건네주다']]]],2),
+ ...LVT(2.5,[['lend','lent','to',[['some money','돈을 빌려주다'],['an umbrella','우산을 빌려주다'],['a pencil','연필을 빌려주다']]],['hand','handed','to',[['the scissors','가위를 건네주다'],['the report','보고서를 건네주다']]],['offer','offered','to',[['a seat','자리를 양보하다']]]]),
+ ...LVT(3,[['award','awarded','to',[['a prize','상을 수여하다'],['a medal','메달을 수여하다']]],['assign','assigned','to',[['a task','일을 맡기다'],['a new project','새 프로젝트를 맡기다']]]]));
+Object.assign(EMO3,{anxious:'불안하다',exhausted:'지치다',frustrated:'답답하다',relieved:'안심되다',disappointed:'실망하다',satisfied:'만족스럽다',confused:'헷갈리다',delighted:'아주 기쁘다',furious:'몹시 화가 나다',miserable:'비참하다'});
+MK2.push(...LVT(2.5,[['the result','그 결과','disappointed satisfied relieved'],['the rule','그 규칙','confused frustrated'],['the long exam','그 긴 시험','exhausted anxious']]),
+ ...LVT(3,[['the rumor','그 소문','anxious furious'],['the surprise party','그 깜짝 파티','delighted'],['the endless homework','끝없는 숙제','exhausted miserable frustrated']]));
+FNA.push(...LVT(2.5,[['useful','유용하다'],['unusual','특이하다'],['complicated','복잡하다']]),...LVT(3,[['profound','심오하다'],['absurd','터무니없다'],['remarkable','놀랍다'],['meaningful','의미 있다']]));
+FND.push(...LVT(2.5,[['the lecture','그 강의'],['the documentary','그 다큐멘터리']]),...LVT(3,[['the theory','그 이론'],['the argument','그 주장'],['the experiment','그 실험']]));
+KEEP.push(...LVT(2.5,[['a good diet','좋은 식단','healthy','건강하다'],['this heater','이 난로','warm','따뜻하다']]),...LVT(3,[['regular exercise','꾸준한 운동','fit','튼튼하다'],['meditation','명상','calm','차분하다']]));
+ACT.push(...LVT(2.5,[['submit the homework','숙제를 내다'],['turn off the lights','불을 끄다'],['lower the volume','소리를 줄이다'],['apologize','사과하다']]),
+ ...LVT(3,[['reconsider the plan','계획을 다시 생각해 보다'],['reduce the noise','소음을 줄이다'],['keep the promise','약속을 지키다'],['participate in the discussion','토론에 참여하다'],['concentrate on the lesson','수업에 집중하다']]));
+SEEV.push(...LVT(2.5,[['fix the computer','컴퓨터를 고치다'],['feed the birds','새에게 모이를 주다'],['water the plants','화분에 물을 주다']]),...LVT(3,[['steal the wallet','지갑을 훔치다'],['rescue the kitten','새끼 고양이를 구하다'],['deliver the package','소포를 배달하다']]));
+HEARV.push(...LVT(2.5,[['whisper','속삭이다'],['complain','불평하다'],['snore','코를 골다']]),...LVT(3,[['argue','말다툼하다'],['scream','비명을 지르다'],['apologize','사과하다']]));
+LETV.push(...LVT(2.5,[['borrow the book','그 책을 빌리다'],['join the club','동아리에 들어가다'],['stay longer','더 오래 있다']]),...LVT(3,[['attend the concert','콘서트에 참석하다'],['adopt a puppy','강아지를 입양하다'],['explore the cave','동굴을 탐험하다']]));
+MAKEV.push(...LVT(2.5,[['rewrite the essay','에세이를 다시 쓰다'],['apologize','사과하다']]),...LVT(3,[['revise the report','보고서를 수정하다'],['memorize the poem','시를 외우다'],['clean up the mess','어질러진 것을 치우다']]));
+TOO.push(...LVT(2.5,[['exhausted','지치다','continue','계속하다'],['anxious','불안하다','sleep','자다'],['nervous','긴장되다','speak','말하다']]),...LVT(3,[['frightened','무섭다','move','움직이다'],['embarrassed','창피하다','say anything','아무 말도 하다']]));
+ENG.push(...LVT(2.5,[['mature','성숙하다','understand the problem','그 문제를 이해하다'],['experienced','경험이 많다','lead the team','팀을 이끌다'],['skilled','실력이 좋다','join the team','팀에 들어가다']]),
+ ...LVT(3,[['qualified','자격이 있다','teach the class','그 수업을 가르치다'],['wealthy','부유하다','buy the building','그 건물을 사다'],['persuasive','설득력이 있다','change their minds','그들의 마음을 바꾸다']]));
+HOWTO.push(...LVT(2.5,[['solve the puzzle','퍼즐을 풀다'],['fix a flat tire','펑크 난 타이어를 고치다'],['write an essay','에세이를 쓰다'],['take notes','필기를 하다']]),
+ ...LVT(3,[['manage time','시간을 관리하다'],['analyze data','데이터를 분석하다'],['give a presentation','발표를 하다'],['negotiate a price','가격을 흥정하다']]));
+WTO.push(...LVT(2.5,[['what to write','뭘 써야 할지'],['how to explain it','그걸 어떻게 설명해야 할지']]),...LVT(3,[['whom to trust','누구를 믿어야 할지'],['how to respond','어떻게 대답해야 할지']]));
+ITA.push(...LVT(2.5,[['necessary','필요하다'],['helpful','도움이 되다']]),...LVT(3,[['essential','꼭 필요하다'],['beneficial','이롭다'],['challenging','만만치 않다']]));
+ITV.push(...LVT(2.5,[['volunteer at a hospital','병원에서 봉사하다','necessary helpful hard'],['recycle plastic','플라스틱을 재활용하다','necessary important easy'],['take notes in class','수업 시간에 필기하다','helpful important']]),
+ ...LVT(3,[['exercise regularly','꾸준히 운동하다','essential beneficial'],['learn a second language','제2 외국어를 배우다','challenging beneficial'],['save energy','에너지를 아끼다','essential'],['manage time well','시간을 잘 관리하다','challenging essential']]));
+ASA2.forEach(x=>{if(x[0]==='smart')x._mx=2});
+ASA2.push(...LVT(2.5,[['intelligent','똑똑하다'],['honest','정직하다'],['generous','너그럽다']]),...LVT(3,[['diligent','성실하다'],['modest','겸손하다'],['mature','성숙하다']]));
+THE.push(...LVT(2.5,[['the harder you work','the more you achieve','열심히 할수록 더 많이 이뤄'],['the longer you wait','the more nervous you get','오래 기다릴수록 더 긴장돼']]),
+ ...LVT(3,[['the more you know','the more humble you become','많이 알수록 더 겸손해져'],['the more you exercise','the healthier you become','운동을 많이 할수록 더 건강해져'],['the more carefully you listen','the more you understand','주의 깊게 들을수록 더 많이 이해해']]));
+// ───────── 고등·수능 낱말: 48~57단계 ─────────
+JING.push(...LVT(2.5,[['barking','dog','짖는 개'],['shining','star','빛나는 별'],['smiling','child','웃고 있는 아이']]),...LVT(3,[['shivering','puppy','떨고 있는 강아지'],['flickering','candle','깜빡이는 촛불'],['sinking','ship','가라앉는 배'],['approaching','storm','다가오는 폭풍']]));
+JED.push(...LVT(2.5,[['frozen','lake','얼어붙은 호수'],['stolen','bike','도둑맞은 자전거'],['wounded','bird','다친 새']]),...LVT(3,[['abandoned','house','버려진 집'],['damaged','car','망가진 차'],['injured','player','부상당한 선수']]));
+JPOST.push(...LVT(2.5,[['holding an umbrella','우산을 들고 있는'],['sitting on the bench','벤치에 앉아 있는'],['waiting for the bus','버스를 기다리고 있는']]),...LVT(3,[['carrying a heavy box','무거운 상자를 나르고 있는'],['standing by the entrance','입구 옆에 서 있는'],['taking photos of the sunset','노을 사진을 찍고 있는']]));
+JPP.push(...LVT(2.5,[['a song','노래','written by a famous singer','유명한 가수가 쓴'],['a house','집','built 100 years ago','100년 전에 지어진']]),...LVT(3,[['a novel','소설','translated into Korean','한국어로 번역된'],['a bridge','다리','designed by a famous architect','유명한 건축가가 설계한'],['a painting','그림','stolen from the museum','박물관에서 도난당한']]));
+WHOSE.push(...LVT(2.5,[['a classmate','반 친구','dream is to be a doctor','꿈이 의사인'],['a neighbor','이웃','car is very old','차가 아주 오래된']]),...LVT(3,[['a friend','친구','handwriting is beautiful','글씨가 아름다운'],['a classmate','반 친구','grades are excellent','성적이 아주 뛰어난'],['a neighbor','이웃','garden is full of roses','정원이 장미로 가득한']]));
+WHAT.push(...LVT(2.5,[['ordered','주문한'],['chose','고른'],['expected','기대한']]),...LVT(3,[['recommended','추천한'],['imagined','상상한'],['predicted','예측한']]));
+LPL.push(...LVT(2.5,[['stadium','경기장',[['watch baseball games','야구 경기를 보다'],['cheer for the team','팀을 응원하다']]],['gym','체육관',[['practice basketball','농구를 연습하다'],['work out','운동하다']]]]),
+ ...LVT(3,[['laboratory','실험실',[['conduct experiments','실험을 하다'],['do research','연구를 하다']]],['community center','주민 센터',[['volunteer on weekends','주말마다 봉사하다'],['take art classes','미술 수업을 듣다']]]]));
+LDY.push(...LVT(2.5,[['won the prize','상을 받다'],['got lost in the city','도시에서 길을 잃다']]),...LVT(3,[['gave a speech','연설을 하다'],['graduated from school','학교를 졸업하다'],['overcame stage fright','무대 공포증을 극복하다']]));
+LTM.push(...LVT(2.5,[['the moment','순간']]),...LVT(3,[['the year','해']]));
+LRY.push(...LVT(2.5,[['changed the plan','계획을 바꾸다'],['missed the class','수업에 빠지다']]),...LVT(3,[['quit the team','팀을 그만두다'],['postponed the trip','여행을 미루다'],['canceled the meeting','회의를 취소하다'],['refused the offer','제안을 거절하다']]));
+LHO.push(...LVT(2.5,[['saved money','돈을 모으다'],['learned Chinese','중국어를 배우다']]),...LVT(3,[['overcame the problem','문제를 극복하다'],['achieved the goal','목표를 이루다'],['persuaded the team','팀을 설득하다']]));
+CL.push(...LVT(2.5,[['why','practice so hard','왜 그렇게 열심히','연습하다'],['where','spend the weekend','주말을 어디에서','보내다'],['how','solve the problem','그 문제를 어떻게','풀다']]),
+ ...LVT(3,[['why','refuse the offer','왜 그 제안을','거절하다'],['how','manage time','시간을 어떻게','관리하다'],['what','expect from the trip','여행에서 뭘','기대하다']]));
+WILLV.push(...LVT(2.5,[['accept the offer','제안을 받아들이다'],['agree with us','우리 의견에 동의하다']]),...LVT(3,[['recover soon','곧 회복하다'],['approve the plan','계획을 승인하다'],['attend the ceremony','기념식에 참석하다']]));
+SOT.push(...LVT(2.5,[['saved money','돈을 모았어',[['buy a new bike','새 자전거를 사다'],['travel abroad','해외여행을 가다']]],['took notes','필기를 했어',[['remember the lesson','수업 내용을 기억하다']]]]),
+ ...LVT(3,[['practiced every day','매일 연습했어',[['win the competition','대회에서 우승하다']]],['left home early','집에서 일찍 나섰어',[['avoid the traffic','차가 막히는 걸 피하다']]]]));
+ALT.push(...LVT(2.5,[['the test was difficult','시험은 어려웠지만','she got a perfect score','그녀는 만점을 받았어'],['it was freezing','몹시 추웠지만','we went camping','우리는 캠핑을 갔어']]),
+ ...LVT(3,[['he had little experience','그는 경험이 거의 없었지만','he led the team well','팀을 잘 이끌었어'],['the task was challenging','그 일은 만만치 않았지만','we completed it on time','우리는 제시간에 끝냈어']]));
+BUT.push(...LVT(2.5,[['exhausted','지치다',[['finished the race','경주를 끝까지 마쳤어'],['kept studying','계속 공부했어']]],['nervous','긴장되다',[['gave a speech','발표를 했어'],['sang on stage','무대에서 노래했어']]]]),
+ ...LVT(3,[['anxious','불안하다',[['took the test','시험을 봤어']]],['frustrated','답답하다',[["didn't give up",'포기하지 않았어']]]]));
+LIKES.push(...LVT(2.5,[['classical music','클래식 음악을 좋아하다'],['documentaries','다큐멘터리를 좋아하다']]),...LVT(3,[['philosophy','철학을 좋아하다'],['abstract art','추상화를 좋아하다']]));
+EITH.push(...LVT(2.5,[['the window seat','the aisle seat','창가 자리','통로 자리','고르다']]),...LVT(3,[['the morning session','the afternoon session','오전 수업','오후 수업','고르다']]));
+ASA.push(...LVT(2.5,[['honest','정직하다']]),...LVT(3,[['diligent','성실하다'],['generous','너그럽다']]));
+USED.push(...LVT(2.5,[['collect stamps','우표를 모으다'],['keep a diary','일기를 쓰다'],['take piano lessons','피아노 레슨을 받다']]),...LVT(3,[['commute by subway','지하철로 통근하다'],['volunteer at the shelter','보호소에서 봉사하다'],['work overtime','야근하다']]));
+PACT.push(...LVT(2.5,[['submit the report','보고서를 내다'],['pack the bags','짐을 싸다'],['buy the tickets','표를 사다']]),...LVT(3,[['complete the project','프로젝트를 끝마치다'],['analyze the data','데이터를 분석하다'],['make a reservation','예약을 하다']]));
+PBEF.push(...LVT(2.5,[['before the meeting started','회의가 시작하기 전에'],['before the deadline','마감 전에']]),...LVT(3,[['before the guests arrived','손님들이 도착하기 전에'],['before the exam began','시험이 시작되기 전에']]));
+PW2.push(...LVT(2.5,[['arrived at the airport','공항에 도착했을',[['the plane had already taken off','비행기는 이미 이륙했어']]]]),...LVT(3,[['reached the summit','정상에 도착했을',[['the fog had already cleared','안개는 이미 걷혀 있었어']]],['arrived at the auditorium','강당에 도착했을',[['the ceremony had already begun','기념식은 이미 시작했어']]]]));
+PWHEN.push(...LVT(2.5,[['we arrived at the airport','the plane had already taken off','우리가 공항에 도착했을 때 비행기는 이미 이륙했어']]),...LVT(3,[['the firefighters arrived','the fire had already spread','소방관들이 도착했을 때 불은 이미 번져 있었어']]));
+PNEV.push(...LVT(2.5,[['I had never flown on a plane before I turned ten.','나는 열 살이 되기 전에는 비행기를 타 본 적이 없었어.']]),...LVT(3,[['She had never faced such a challenge before she joined the team.','그녀는 그 팀에 들어가기 전에는 그런 어려움을 겪어 본 적이 없었어.']]));
+QACT.push(...LVT(2.5,[['practice the violin','바이올린을 연습하다','s'],['prepare for the test','시험을 준비하다','sl'],['search for the key','열쇠를 찾다','s']]),...LVT(3,[['research the topic','그 주제를 조사하다','sl'],['negotiate with them','그들과 협상하다','s'],['volunteer at the shelter','보호소에서 봉사하다','sl']]));
+QWA.push(...LVT(2.5,[['take an exam','시험을 보다'],['pack for the trip','여행 짐을 싸다']]),...LVT(3,[['give a presentation','발표를 하다'],['attend a conference','학회에 참석하다']]));
+RMV.push(...LVT(2.5,[['missed the bus','버스를 놓치다'],['overslept','늦잠을 자다'],['taken the wrong train','기차를 잘못 타다']]),...LVT(3,[['misunderstood the question','질문을 잘못 이해하다'],['underestimated the problem','문제를 얕보다'],['forgotten the password','비밀번호를 잊어버리다']]));
+// ───────── 고등·수능 낱말: 58~66단계 ─────────
+SC.push(...LVT(2.5,[['had a smartphone','{E} 스마트폰이 있다',[['look up the answer','답을 찾아보다'],['take better pictures','사진을 더 잘 찍다']]],['were a famous athlete','{N} 유명한 운동선수이다',[['travel all over the world','전 세계를 돌아다니다'],['play in the Olympics','올림픽에 나가다']]]]),
+ ...LVT(3,[['were the mayor','{N} 시장님이다',[['build more parks','공원을 더 많이 짓다'],['reduce traffic','교통량을 줄이다']]],['had unlimited time','{E} 시간이 무한히 있다',[['learn every language','모든 언어를 배우다'],['read every book in the library','도서관의 모든 책을 읽다']]],
+  ['could speak five languages','{N} 다섯 개 언어를 할 수 있다',[['work as a translator','번역가로 일하다'],['make friends everywhere','어디서든 친구를 사귀다']]]]));
+TC.push(...LVT(2.5,[['check the weather','날씨를 확인하다',0,[['bring an umbrella','우산을 가져오다',1],['get caught in the rain','비를 맞다',0]]],['read the instructions carefully','설명서를 꼼꼼히 읽다',0,[['assemble it correctly','그걸 제대로 조립하다',1],['make so many mistakes','그렇게 많이 실수하다',0]]]]),
+ ...LVT(3,[['prepare more thoroughly','더 철저히 준비하다',0,[['pass the interview','면접에 합격하다',1],['fail the audition','오디션에서 떨어지다',0]]],["follow the doctor's advice",'의사의 조언을 따르다',0,[['recover faster','더 빨리 회복하다',1],['get worse','더 나빠지다',0]]]]));
+TM.push(...LVT(2.5,[['bring a jacket','재킷을 가져오다',0,[["wouldn't be cold now",'지금 춥지 않을 텐데']]]]),...LVT(3,[['take the medicine','약을 먹다',0,[['would feel better now','지금 몸이 더 나을 텐데']]]]));
+ASIF.push(...LVT(2.5,[['were an expert','전문가인'],['had seen a ghost','유령을 본']]),...LVT(3,[['owned the place','그곳의 주인인'],['had won the lottery','복권에 당첨된']]));
+WOUT.push(...LVT(2.5,[['electricity','전기','we',[["couldn't use computers",'컴퓨터를 쓸 수 없을 거야']]]]),...LVT(3,[['oxygen','산소','we',[["couldn't breathe",'숨을 쉴 수 없을 거야']]]]));
+VWHY.push(...LVT(2.5,[['nervous','긴장되다',[['took a deep breath','심호흡을 했어'],['practiced once more','한 번 더 연습했어']]]]),...LVT(3,[['exhausted','지치다',[['lay down on the sofa','소파에 누웠어'],['canceled the plans','약속을 취소했어']]],['anxious','불안하다',[['called {po} friend','친구에게 전화했어']]]]));
+VHAV.push(...LVT(2.5,[['saved enough money','돈을 충분히 모아서',[['bought a new laptop','새 노트북을 샀어']]]]),...LVT(3,[['completed the project','프로젝트를 끝내고',[['took a long vacation','긴 휴가를 떠났어']]],['missed the last bus','마지막 버스를 놓쳐서',[['took a taxi','택시를 탔어']]]]));
+VNOT.push(...LVT(2.5,[['wanting to be late','늦고 싶지 않아서',[['took a taxi','택시를 탔어'],['ran to the station','역까지 뛰어갔어']]]]),...LVT(3,[['having enough money','돈이 충분하지 않아서',[["couldn't buy the ticket",'표를 살 수 없었어']]]]));
+WV.push(...LVT(2.5,[['listened carefully','주의 깊게 들었어','e a']]),...LVT(3,[['meditated','명상했어','e'],['waited patiently','참을성 있게 기다렸어','e a']]));
+XH.push(...LVT(2.5,[['pen pal','펜팔'],['tutor','과외 선생님']]),...LVT(3,[['mentor','멘토']]));
+XVP.push(...LVT(2.5,[['works at a hospital','병원에서 일해'],['speaks three languages','3개 국어를 해']]),...LVT(3,[['runs a small bakery','작은 빵집을 운영해'],['studies architecture','건축을 공부해']]));
+YHT.push(...LVT(2.5,[['memorize all the words','단어를 다 외우다'],['finish it in an hour','한 시간 안에 그걸 끝내다']]),...LVT(3,[['persuade him','그를 설득하다'],['solve this equation','이 방정식을 풀다']]));
+YAN.push(...LVT(2.5,[['choose','고르다','골라도']]),...LVT(3,[['hire','고용하다','고용해도'],['recommend','추천하다','추천해도']]));
+YV.push(...LVT(2.5,[['order','주문하다','주문해도'],['borrow','빌리다','빌려도']]),...LVT(3,[['purchase','구입하다','구입해도']]));
+YF.push(...LVT(2.5,[['Whatever happens, I will stay calm.','무슨 일이 일어나든지 나는 침착할 거야.']]),...LVT(3,[['However difficult the task is, we will complete it.','그 일이 아무리 어려워도 우리는 해낼 거야.']]));
+ZDO.push(...LVT(2.5,[['won the contest','대회에서 우승하다'],['found the lost dog','잃어버린 개를 찾다']]),...LVT(3,[['solved the mystery','수수께끼를 풀다'],['invented this game','이 게임을 발명하다']]));
+ZNS.push(...LVT(2.5,[['huge whale','그렇게 큰 고래']]),...LVT(3,[['magnificent castle','그렇게 웅장한 성'],['spectacular view','그렇게 멋진 경치']]));
+ZNV.push(...LVT(2.5,[['Never have I been so nervous.','나는 그렇게 긴장한 적이 한 번도 없어.']]),...LVT(3,[['Rarely do we see such a beautiful sunset.','우리는 그렇게 아름다운 노을을 좀처럼 보지 못해.']]));
+ZSO.push(...LVT(2.5,[['enjoys classical music','클래식 음악을 즐겨','do','so',''],['can play chess','체스를 둘 수 있어','can','so','']]),...LVT(3,[['volunteers on weekends','주말마다 봉사해','do','so','']]));
+RMA.push(...LVT(2.5,[['submit the form','신청서를 내다'],['back up the files','파일을 백업하다']]),...LVT(3,[['renew the library card','도서관 카드를 갱신하다'],['confirm the reservation','예약을 확인하다']]));
+SAID.push(...LVT(2.5,[['exhausted','지쳤다'],['nervous','긴장된다']]),...LVT(3,[['grateful','고맙다'],['relieved','안심이 된다']]));
+SAIDW.push(...LVT(2.5,[['call later','나중에 전화하다'],['bring the book','그 책을 가져오다']]),...LVT(3,[['consider the offer','그 제안을 고려하다'],['attend the meeting','회의에 참석하다']]));
+SAIDH.push(...LVT(2.5,[['lost the ticket','표를 잃어버리다'],['forgotten the password','비밀번호를 잊어버리다']]),...LVT(3,[['submitted the application','지원서를 내다'],['completed the survey','설문 조사를 마치다']]));
+AFG.push(...LVT(2.5,[['winning the first prize','1등 상을 받았던'],['visiting the palace','그 궁궐에 갔던']]),...LVT(3,[['climbing Mount Halla','한라산에 올랐던'],['performing on stage','무대에서 공연했던']]));
+ASTI.push(...LVT(2.5,[['skipping breakfast','아침 거르는 걸 그만뒀어'],['complaining','불평하는 걸 그만뒀어']]),...LVT(3,[['procrastinating','일을 미루는 걸 그만뒀어'],['wasting time','시간 낭비하는 걸 그만뒀어']]));
+ASTT.push(...LVT(2.5,[['check the map','지도를 확인하다'],['tie {po} shoes','신발 끈을 묶다']]),...LVT(3,[['admire the view','경치를 감상하다'],['catch {po} breath','숨을 고르다']]));
 // 하루마다 섞어 낼 짝 묶음(모든 단계에서): 지금 단계에 맞는 것만
 const ZBLK=[{min:1,max:6,b:[['z_ab','z_anb'],['z_anb','z_ab']]},{min:2,b:[['z_sg','z_pl'],['z_pl','z_sg']]},{min:3,b:[['d_this','d_these'],['d_that','d_those']]},{min:5,b:[['n_is','n_are']]},
   {min:7,b:[['z_a','z_an'],['z_an','z_a']]},{min:8,b:[['z_i','z_he'],['z_he','z_i']]},{min:9,b:[['z_bpos','z_vpos'],['z_vpos','z_bpos']]},{min:10,b:[['o_obj','o_swap'],['o_this','o_mine']]},
@@ -1645,8 +1750,9 @@ const STAGES=[
 const F2S={};STAGES.forEach((st,i)=>st.blk.forEach(b=>b.forEach(f=>{if(F2S[f]==null){let own=true;for(let j=0;j<i;j++)if(STAGES[j].blk.some(bb=>bb.includes(f)))own=false;if(own)F2S[f]=i+1}})));
 // 문장 하나 만들기
 const CACHE=new Map();
-function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=String(id).split('.');const L=Math.max(1,Math.min(3,+lap||1));const fam=FAM[f[0]];if(!fam)return null;
-  const r=rng(+seed);let it;try{const k=fam[0](r,L,ctx||f);it=fam[1](k,f)}catch(e){return null}
+const LVTH=[0,1,2,2.5,3];
+function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=String(id).split('.');const L=Math.max(1,Math.min(4,+lap||1));const fam=FAM[f[0]];if(!fam)return null;
+  const r=rng(+seed);let it;CURLV=LVTH[L];try{const k=fam[0](r,LVTH[L],ctx||f);it=fam[1](k,f)}catch(e){return null}
   if(it&&!window.TALK_NOFAM&&isFam(it)){CACHE.set(id,null);return null}
   it=Object.assign({id:String(id),stage:F2S[f]||0,lap:L,f},it);it.alt=it.alt||[];it.w=(it.w||[]).filter((c,i,a)=>c&&c[0]&&c[1]&&a.findIndex(x=>x[0]===c[0])===i);
   if(CACHE.size>3000)CACHE.clear();CACHE.set(id,it);return it}

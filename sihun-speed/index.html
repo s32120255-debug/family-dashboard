@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="30";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="31";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,6 +29,7 @@ h1{font:400 32px/1.15 'Jua',sans-serif;margin:4px 0 2px}
 .card{background:var(--card);border:2px solid var(--line);border-radius:24px;padding:20px;margin-top:14px}
 .big{display:block;width:100%;border-radius:18px;padding:16px;margin-top:14px;font:400 26px 'Jua',sans-serif;color:#fff;background:var(--en)}
 .big:disabled{opacity:.45}
+.lvgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.lvgrid .big{margin-top:10px;font-size:22px;padding:14px 8px}.lvgrid .last{outline:4px solid var(--ink);outline-offset:-4px}
 .light{display:inline-block;border-radius:14px;padding:11px 16px;font-weight:700;font-size:17px;background:var(--chip);margin:6px 4px 0 0}
 .link{background:none;color:var(--sub);text-decoration:underline;font-size:14px;padding:8px 4px;margin-top:10px}
 .stage{display:inline-block;background:var(--en-soft);color:var(--en);font-weight:800;border-radius:999px;padding:3px 12px;font-size:15px}
@@ -77,7 +78,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=6"></script><script src="talk-gen.js?v=8"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=7"></script><script src="talk-gen.js?v=9"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -148,13 +149,13 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
    정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교. */
 const SP=window.SPEED||{STAGES:[],VWORDS:new Set(),byId:()=>null},TK=window.TALK||null,TC=window.TALKCORE||null,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
 /* ⚡ 스피드영어 = 쉬운 문장 꼴 바꾸기 드릴(엄마 11/27)
-   · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 27개 × 단어 바퀴 3개)가 그때그때 만들어요. 한 묶음 = 같은 문장을 긍정·부정·질문·과거로 바꿔 말하기.
+   · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 66개, 단어 수준 4개)가 그때그때 만들어요. 한 묶음 = 같은 문장을 긍정·부정·질문·과거로 바꿔 말하기.
    · 하루 50문장 = 다시(어제까지 틀리거나 늦은 것) 20 + 새 문장 30(지금 단계 20 + 지난 단계). 틀린 문장은 그날 4문장 뒤에 한 번 더.
    · 통과(스피드연산식): 지금 단계 새 문장을 90% 막힘 없이 말한 날이 2번 → 다음 단계. 이틀 뒤 그 단계 다지기 15문장, 90%가 안 되면 그 단계로 돌아가요.
    · 막힘 없이 = 처음에 맞게 + 한글이 나오고 5초 안에 🎤 + 문장 듣기를 미리 누르지 않음(낱말 듣기는 괜찮아요). */
 // 엄마 11/27 「짝 15」: 하루 50 = 짝 15(be↔do · 하나↔여럿 · a↔an · I↔He, 모든 단계 매일) + 지금 단계 15 + 다시 15 + 지난 단계 5
 const FAST_MS=5000,REC_MAX=55000,DAY_N=50,AGAIN_N=15,NEW_CUR=15,PAIR_N=15,REV_N=15,PASS_PCT=.9,PASS_DAYS=2,REV_GAP=2,REASK_GAP=4;
-const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','수능 단어'];
+const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','고등 단어','수능 단어'],LVN=4;
 // 문장 찾기: 새 문장 id = 바퀴.꼴.씨앗.묶음(예: 1.b_pos.12345.b_q). 옛 기록 id는 drills.js에서.
 function IT(id){id=String(id||'');if(TK&&id.split('.').length===4){const it=TK.make(id);if(it)return it}return SP.byId(id)}
 const stName=n=>TK&&TK.STAGES[n-1]?TK.STAGES[n-1].t:'';
@@ -209,7 +210,7 @@ function buildSet(stage,lap,rev){const units=[],seenId=new Set(),seenEn=new Set(
     if(k!=='a'){const sk=SUBK(its[0][1].en);if((subjN[sk]||0)>=4)return 0;if(isAni(its[0][1].en)&&aniN>=4)return 0;subjN[sk]=(subjN[sk]||0)+its.length;if(isAni(its[0][1].en))aniN+=its.length}
     const u=its.map(([id,it])=>{seenId.add(id);seenEn.add(it.en);return [id,k]});units.push(u);total+=u.length;return u.length};
   (ST.again||[]).slice(0,AGAIN_N).forEach(id=>unit([id],'a'));
-  if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,rev.l||lap),'v')}
+  if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,lap),'v')}
   {let n=0,g=0;while(n<NEW_CUR&&g++<80)n+=unit(blockIds(stage,lap),'n')}
   {const ZB=TK.zBlocks?TK.zBlocks(stage):[];let n=0,g=0;while(ZB.length&&n<PAIR_N&&g++<80){const b=ZB[Math.floor(Math.random()*ZB.length)];n+=unit(TK.blockOf(b,lap,seed()).filter(x=>x&&x.en&&x.ko).map(x=>x.id),'z')}}
   {let g=0;while(total<DAY_N&&g++<400)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
@@ -312,7 +313,8 @@ function render(){const a=$('#app');
   else if(V.view==='log')a.innerHTML=logHTML();
   bind()}
 function stageOf(){return TRY&&V.tryStage?V.tryStage:ST.stage}
-function lapOf(){return TRY&&V.tryLap?V.tryLap:(ST.lap||1)}
+function lapOf(){return TRY&&V.tryLap?V.tryLap:Math.min(LVN,ST.lap||1)}
+// 엄마 11/28 「스스로 고르고 넘어가게 하자 매일」: 단계는 문법으로만, 단어 수준(초등·중등·고등·수능)은 시훈이가 날마다 시작할 때 골라요
 // 📲 앱으로 설치(엄마 11/26 「다운로드되게」): 크롬이 설치를 허락하면 버튼, 아니면 메뉴로 설치하는 방법을 알려 줘요
 let INSTALL=null;const STANDALONE=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();INSTALL=e;if(V.view==='home')render()});
@@ -321,23 +323,24 @@ if('serviceWorker' in navigator&&!MOCK)navigator.serviceWorker.register('sw.js')
 function installHTML(){if(STANDALONE)return '';
   return INSTALL?`<button class="light" style="display:block;margin:12px auto 0" data-act="install">📲 앱으로 설치하기</button>`
     :''}
-function stagesHTML(){let h=`<details style="margin-top:12px"><summary class="sub">전체 단계 보기 (${NS}단계 × 단어 3바퀴)</summary><ul class="stlist">`;
-  TK.STAGES.forEach((x,i)=>{const n=i+1,lap=ST.lap||1,cls=n===ST.stage?'now':(n<ST.stage||lap>1)?'ok':'';h+=`<li class="${cls}">${n<ST.stage||lap>1?'✓ ':n===ST.stage?'▶ ':''}${n}. ${esc(x.t)}</li>`});
+function stagesHTML(){let h=`<details style="margin-top:12px"><summary class="sub">전체 단계 보기 (${NS}단계)</summary><ul class="stlist">`;
+  TK.STAGES.forEach((x,i)=>{const n=i+1,cls=n===ST.stage?'now':n<ST.stage?'ok':'';h+=`<li class="${cls}">${n<ST.stage?'✓ ':n===ST.stage?'▶ ':''}${n}. ${esc(x.t)}</li>`});
   return h+`</ul></details>`}
 function homeHTML(){const d=ST.days[today()];
   let h=(TRY?'':tabsHTML('home'))+`<h1>⚡ 스피드 영어</h1>
    <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span>${TRY?'':`<button class="link" style="margin:0" data-act="out">다른 아이디로</button>`}</div>`;
   if(!TK||!NS)return h+`<div class="err">문장을 불러오지 못했어요. 인터넷을 확인하고 앱을 완전히 닫았다가 다시 열어 주세요.</div>`;
   if(LOADERR&&!TRY)h+=`<div class="err" style="font-size:15px">서버 기록을 못 불러와서 이 기기에 있는 기록으로 열었어요. 인터넷이 되면 다시 열어 주세요.</div>`;
-  if(TRY){h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계와 단어 바퀴를 골라 보세요.</div>
+  if(TRY){h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계와 단어 수준을 골라 보세요.</div>
     <div class="row" style="justify-content:flex-start"><select id="tryStage">${TK.STAGES.map((x,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}. ${esc(x.t)}</option>`).join('')}</select>
-    <select id="tryLap">${[1,2,3].map(l=>`<option value="${l}"${l===lapOf()?' selected':''}>${LAPS[l]}</option>`).join('')}</select></div>`}
+    <select id="tryLap">${[1,2,3,4].map(l=>`<option value="${l}"${l===lapOf()?' selected':''}>${LAPS[l]}</option>`).join('')}</select></div>`}
   if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
   const n=stageOf(),st=TK.STAGES[n-1],rv=TRY?null:dueRev();
-  h+=`<div class="card"><span class="stage">${n}단계 · ${LAPS[lapOf()]}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>${st.ex?`<div class="ex">${esc(st.ex)}</div>`:''}
+  h+=`<div class="card"><span class="stage">${n}단계${TRY?' · '+LAPS[lapOf()]:''}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>${st.ex?`<div class="ex">${esc(st.ex)}</div>`:''}
     ${TRY?'':`<p class="sub" style="margin:10px 0 0">통과한 날 <b style="color:var(--ink)">${ST.pd||0} / ${PASS_DAYS}</b> · 이 단계 새 문장을 90% 막힘 없이 말한 날이 ${PASS_DAYS}번이면 다음 단계예요.</p>`}
     ${rv?`<div class="note">🔁 오늘은 <b>${rv.s}단계 다지기</b> 문장도 나와요. 90% 막힘 없이 말하면 그 단계는 끝!</div>`:''}
-    <button class="big" data-act="start">${ST.cur&&ST.cur.date===today()&&ST.cur.v===2&&!TRY?`🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length})`:`🎤 오늘 ${DAY_N}문장 시작`}</button>
+    ${TRY?`<button class="big" data-act="start">🎤 오늘 ${DAY_N}문장 시작</button>`:ST.cur&&ST.cur.date===today()&&ST.cur.v===2?`<button class="big" data-act="start">🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length}) · ${LAPS[ST.cur.lap||1]||''}</button>`
+      :`<p class="sub" style="margin:14px 0 0;color:var(--ink);font-weight:700">오늘은 어떤 단어로 할까? 골라서 바로 시작!</p><div class="lvgrid">${[1,2,3,4].map(l=>`<button class="big${l===lapOf()?' last':''}" data-act="start" data-lv="${l}">🎤 ${LAPS[l]}</button>`).join('')}</div>`}
     ${MIME||MOCK||TRY?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}
     <p class="hint">모르는 낱말은 말하기 전에 눌러서 들어요. 🔊 문장 듣기는 맨 마지막 방법!</p></div>`;
   if(!TRY)h+=stagesHTML()+`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
@@ -450,11 +453,12 @@ const UI={level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',
 function bind(){document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>ACT[b.dataset.act](b));
   const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()};const m=$('#tryLap');if(m)m.onchange=()=>{V.tryLap=+m.value;render()}}
 const ACT={
-  async start(){if(!TK||!NS)return;if(!MIME&&!MOCK&&!TRY)return;
+  async start(b){if(!TK||!NS)return;if(!MIME&&!MOCK&&!TRY)return;
     try{if(!MOCK||window.__mockMic)await micOpen()}catch(e){if(!TRY){alert('마이크를 쓸 수 없어요. 주소창 옆 🔒 → 마이크 → 허용으로 바꿔 주세요.');return}}
     warm();try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch(e){}
-    const stage=stageOf(),lap=lapOf();let ids,kinds,i=0,res=[],ms=0,rv=TRY?null:dueRev();
-    const c=ST.cur;if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null}
+    const c=ST.cur,lv=b&&b.dataset&&+b.dataset.lv;const stage=stageOf();let lap=lapOf(),ids,kinds,i=0,res=[],ms=0,rv=TRY?null:dueRev();
+    if(lv&&!TRY){lap=lv;ST.lap=lv}else if(!TRY&&c&&c.v===2&&c.date===today()&&c.lap)lap=c.lap;
+    if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null}
     else{({ids,kinds}=buildSet(stage,lap,rv))}
     if(!ids.length){alert('문장을 만들지 못했어요. 앱을 닫았다가 다시 열어 주세요.');return}
     RUN={date:today(),stage,lap,rv,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
@@ -575,12 +579,12 @@ function finishDay(){const R=RUN;pauseClock();micClose();
     // 다시: 틀리거나 늦은(또는 문장을 미리 들은) 문장은 내일 다시, 막힘 없이 말하면 빠짐
     const done=R.res.filter(x=>x&&x.k!=='r'),miss=[],hit=new Set();done.forEach(x=>{if(x.skip==='quiet')return;if(x.clean)hit.add(x.id);else if(!miss.includes(x.id))miss.push(x.id)});
     ST.again=miss.concat((ST.again||[]).filter(id=>!hit.has(id)&&!miss.includes(id))).slice(0,60);
-    if(ST.stage===R.stage&&(ST.lap||1)===R.lap){
+    if(ST.stage===R.stage){
       if(R.rv&&P.revOK!==null){ST.rev=(ST.rev||[]).filter(x=>!(x.s===R.rv.s&&x.d===R.rv.d));
-        if(!P.revOK){day.back=1;ST.stage=R.rv.s;ST.lap=R.rv.l||ST.lap;ST.pd=0}}
+        if(!P.revOK){day.back=1;ST.stage=R.rv.s;ST.pd=0}}
       if(!day.back&&P.passed){ST.pd=(ST.pd||0)+1;
         if(ST.pd>=PASS_DAYS){day.up=1;ST.rev=(ST.rev||[]).concat([{s:R.stage,l:R.lap,d:R.date}]);ST.pd=0;
-          if(ST.stage<NS)ST.stage++;else if((ST.lap||1)<3){ST.lap=(ST.lap||1)+1;ST.stage=1}}}}
+          if(ST.stage<NS)ST.stage++}}}
     save()}
   V={view:'end'};render();if(!TRY)loadOther().then(()=>{if(V.view==='end')render()})}
 
