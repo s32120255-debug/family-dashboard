@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="34";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="35";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -132,6 +132,7 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
 .wchip{background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:6px 11px;font-size:17px;color:var(--ink)}
 .wchip b{color:var(--en);margin-left:6px;font-family:'Noto Sans KR',sans-serif!important;font-weight:800!important}
 .hint{text-align:center;color:var(--sub);font-size:14px;margin-top:6px}
+.adt{width:100%;border-collapse:collapse;margin-top:6px}.adt td{border-top:1px solid var(--line);padding:6px 4px;vertical-align:top;font-size:16px}
 .stlist{margin:8px 0 0;padding:0;list-style:none;font-size:15px}.stlist li{padding:5px 2px;border-bottom:1px solid var(--line);color:var(--sub)}.stlist li.now{color:var(--en);font-weight:800}.stlist li.ok{color:#1d6e40}
 .heard .bad{color:#b23a1d;font-weight:800;text-decoration:underline;text-underline-offset:4px}.heard .miss{display:inline-block;width:1.8em;border-bottom:3px solid #b23a1d;margin:0 2px}.heard .extra{color:#b23a1d;text-decoration:line-through}
 .err{background:#fdecea;color:#7a2318;border-radius:16px;padding:14px;margin-top:14px;font-size:17px}
@@ -149,12 +150,12 @@ body,body *{font-size-adjust:.56}@media (min-width:700px){body,body *{font-size-
    정답 문장을 서버에 미리 알려 주지 않아요(알려 주면 틀린 발음도 정답처럼 받아 적음) → 들린 그대로 비교. */
 const SP=window.SPEED||{STAGES:[],VWORDS:new Set(),byId:()=>null},TK=window.TALK||null,TC=window.TALKCORE||null,MOCK=/mock/.test(location.hash),TRY=/try/.test(location.hash);
 /* ⚡ 스피드영어 = 쉬운 문장 꼴 바꾸기 드릴(엄마 11/27)
-   · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 66개, 단어 수준 4개)가 그때그때 만들어요. 한 묶음 = 같은 문장을 긍정·부정·질문·과거로 바꿔 말하기.
-   · 하루 50문장 = 다시(어제까지 틀리거나 늦은 것) 20 + 새 문장 30(지금 단계 20 + 지난 단계). 틀린 문장은 그날 4문장 뒤에 한 번 더.
-   · 통과(스피드연산식): 지금 단계 새 문장을 90% 막힘 없이 말한 날이 2번 → 다음 단계. 이틀 뒤 그 단계 다지기 15문장, 90%가 안 되면 그 단계로 돌아가요.
+   · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 66개, 단어 수준 4개)가 그때그때 만들어요.
+   · 엄마 11/28 「문장을 쪼개자, be 긍정만 10개 그런 식으로」: 66단계를 작은 단계(꼴 하나)로 쪼갰어요. 작은 단계 하나 = 같은 꼴 10문장, 그 안에 주어·하나/여럿·a/an이 골고루.
+   · 하루 50문장 = 지금 작은 단계 10 + 바로 앞 작은 단계 4개 × 10. 틀린 문장은 그날도 다음 날도 다시 안 넣어요.
+   · 엄마 11/28 「단계 올리는 건 내가 수동으로」: 저절로 올라가지 않아요. 엄마 화면(관리자)에서 「시훈이 여기로」.
    · 막힘 없이 = 처음에 맞게 + 한글이 나오고 5초 안에 🎤 + 문장 듣기를 미리 누르지 않음(낱말 듣기는 괜찮아요). */
-// 엄마 11/27 「짝 15」: 하루 50 = 짝 15(be↔do · 하나↔여럿 · a↔an · I↔He, 모든 단계 매일) + 지금 단계 15 + 다시 15 + 지난 단계 5
-const FAST_MS=5000,REC_MAX=55000,DAY_N=50,AGAIN_N=15,NEW_CUR=15,PAIR_N=15,REV_N=15,PASS_PCT=.9,PASS_DAYS=2,REV_GAP=2,REASK_GAP=4;
+const FAST_MS=5000,REC_MAX=55000,DAY_N=50,UNIT_N=10,PREV_U=4;
 const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','고등 단어','수능 단어'],LVN=4;
 // 문장 찾기: 새 문장 id = 바퀴.꼴.씨앗.묶음(예: 1.b_pos.12345.b_q). 옛 기록 id는 drills.js에서.
 function IT(id){id=String(id||'');if(TK&&id.split('.').length===4){const it=TK.make(id);if(it)return it}return SP.byId(id)}
@@ -170,7 +171,7 @@ const sec1=ms=>(ms/1000).toFixed(1)+'초';
 
 // ---------- 저장 ----------
 const LS={get(k,d){try{const v=localStorage.getItem('speed:'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('speed:'+k,JSON.stringify(v))}catch(e){}}};
-function blank(){return {v:2,stage:1,lap:1,pd:0,rev:[],days:{},again:[],cur:null}}
+function blank(){return {v:2,stage:1,lap:1,days:{},cur:null}}
 // 옛 기록(계단영어 문장·옛 단계)에서 넘어오면: 날짜 기록은 그대로 두고 단계는 be부터(엄마 11/27 「일단 be부터」)
 function migrate(st){if(st.v===2)return st;return Object.assign(blank(),{days:st.days||{},name:st.name,updated:st.updated})}
 // 엄마 11/26 「선택 말고 아이디로 쌓을 거야」: 로그인한 구글 아이디마다 기록을 서버에 따로 쌓아요(speed/u-아이디).
@@ -197,28 +198,58 @@ addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set(doc
 // ---------- 오늘 50문장 ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function lastDay(before){const ks=Object.keys(ST.days).filter(k=>k<before&&ST.days[k].end).sort();return ks.length?Object.assign({date:ks[ks.length-1]},ST.days[ks[ks.length-1]]):null}
-function dueRev(){return (ST.rev||[]).find(r=>dayDiff(r.d,today())>=REV_GAP)||null}
-// 한 묶음(같은 문장을 꼴만 바꿔서): [id,…]
-function blockIds(stage,lap){const st=TK.STAGES[stage-1];const b=TK.block(stage,lap,seed(),Math.floor(Math.random()*st.blk.length));return b.filter(x=>x&&x.en&&x.ko).map(x=>x.id)}
-// 지난 단계: 가까운 단계가 조금 더 자주
-const prevStage=stage=>1+Math.floor((stage-1)*Math.sqrt(Math.random()));
-function buildSet(stage,lap,rev){const units=[],seenId=new Set(),seenEn=new Set();let total=0;
-  // 엄마 11/27 「우리 고양이 또 나옴」: 하루에 같은 주어는 4문장까지, 동물 문장은 4문장까지(다시 문장은 빼고 셈)
-  const subjN={};let aniN=0;const SUBK=en=>{const t=en.toLowerCase().replace(/[^a-z' ]/g,'').replace(/^(who|what|where|when|why|how)\s+/,'').replace(/^(is|are|am|was|were|do|does|did|can|will|have|has|should)\s+/,'').split(' ');return /^(my|your|the|our|his|her|their)$/.test(t[0])?t.slice(0,2).join(' '):t[0]};
-  const isAni=en=>/\b(cat|cats|dog|dogs|puppy)\b/i.test(en);
-  const unit=(ids,k)=>{const its=ids.map(id=>[id,IT(id)]).filter(([id,it])=>it&&it.en&&!seenId.has(id)&&!seenEn.has(it.en));if(!its.length)return 0;
-    if(k!=='a'){const sk=SUBK(its[0][1].en);if((subjN[sk]||0)>=4)return 0;if(isAni(its[0][1].en)&&aniN>=4)return 0;subjN[sk]=(subjN[sk]||0)+its.length;if(isAni(its[0][1].en))aniN+=its.length}
-    const u=its.map(([id,it])=>{seenId.add(id);seenEn.add(it.en);return [id,k]});units.push(u);total+=u.length;return u.length};
-  (ST.again||[]).slice(0,AGAIN_N).forEach(id=>unit([id],'a'));
-  if(rev){let n=0,g=0;while(n<REV_N&&g++<80)n+=unit(blockIds(rev.s,lap),'v')}
-  {let n=0,g=0;while(n<NEW_CUR&&g++<80)n+=unit(blockIds(stage,lap),'n')}
-  {const ZB=TK.zBlocks?TK.zBlocks(stage):[];let n=0,g=0;while(ZB.length&&n<PAIR_N&&g++<80){const b=ZB[Math.floor(Math.random()*ZB.length)];n+=unit(TK.blockOf(b,lap,seed()).filter(x=>x&&x.en&&x.ko).map(x=>x.id),'z')}}
-  {let g=0;while(total<DAY_N&&g++<400)unit(blockIds(stage>1?prevStage(stage):1,lap),'p')}
-  // 넘치면 맨 끝(지난 단계) 묶음에서 덜어 내기
-  while(total>DAY_N){const u=units[units.length-1];if(u[0][1]!=='p')break;u.pop();total--;if(!u.length)units.pop()}
-  // 묶음은 붙여 두고 순서만 섞기(다시 문장이 처음에 몰리지 않게)
-  const flat=[].concat(...shuffle(units));return {ids:flat.map(x=>x[0]),kinds:flat.map(x=>x[1])}}
-
+// 🧩 작은 단계(엄마 11/28): 66단계마다 그 단계에서 처음 나오는 꼴 하나 = 작은 단계 하나, 꼴이 둘 이상인 단계는 끝에 「섞기」
+const UNITS=(()=>{const U=[],seen=new Set();if(!TK)return U;
+  TK.STAGES.forEach((S,si)=>{const fs=[],cx={};S.blk.forEach(B=>B.forEach(f=>{if(!fs.includes(f))fs.push(f);(cx[f]=cx[f]||[]).includes(B[B.length-1])||cx[f].push(B[B.length-1])}));let k=0;
+    fs.forEach(f=>{if(seen.has(f))return;seen.add(f);U.push({key:(si+1)+':'+f,s:si+1,k:++k,forms:[f],cx})});
+    if(fs.length>1)U.push({key:(si+1)+':mix',s:si+1,k:++k,forms:fs,cx,mix:true})});
+  U.forEach((u,i)=>u.i=i);return U})();
+const UKEY={};UNITS.forEach(u=>UKEY[u.key]=u);
+const firstUnit=st=>UNITS.find(u=>u.s===st)||UNITS[0];
+const unitOfKey=k=>UKEY[k]||null;
+// 작은 단계 이름: 예문 하나(초등 단어) + 긍정/부정/질문/섞기
+const UEX={};function uEx(u){if(UEX[u.key]!=null)return UEX[u.key];let e='';if(u.mix)e='';else{for(let g=0;g<8&&!e;g++){const it=TK.make([1,u.forms[0],1000+g*7919,u.forms[0]].join('.'));if(it&&it.en)e=it.en}}return UEX[u.key]=e}
+function uTag(u){if(u.mix)return '섞기';const e=uEx(u);return /\?$/.test(e)?'질문':/\b(not|never)\b|n't\b/i.test(e)?'부정':''}
+function uName(u){return `${u.s}-${u.k}${uTag(u)?' '+uTag(u):''}`}
+// 🚫 엄마가 뺀 문장(엄마 11/28): 서버 speed/flags에 영어 문장으로 모아요. 여기 든 문장은 다시 안 나와요.
+let FLAGS={list:[]},FLAGSET=new Set();
+function setFlags(f){FLAGS=f&&Array.isArray(f.list)?f:{list:[]};FLAGSET=new Set(FLAGS.list.map(x=>x.en))}
+async function loadFlags(){try{setFlags(DB?await DB.get('speed/flags'):LS.get('flags',null))}catch(e){}}
+async function saveFlags(change){try{if(DB){const cur=await DB.get('speed/flags');setFlags(cur)}else setFlags(LS.get('flags',null))}catch(e){}change(FLAGS.list);setFlags(FLAGS);
+  if(DB)await DB.set('speed/flags',FLAGS).catch(()=>{});else LS.set('flags',FLAGS)}
+const okIt=it=>it&&it.en&&it.ko&&!FLAGSET.has(it.en);
+// 같은 주어 반복을 줄이는 열쇠(첫 낱말, the·my 같은 말이면 두 낱말)
+const SUBK=en=>{const t=en.toLowerCase().replace(/[^a-z' ]/g,'').replace(/^(who|what|where|when|why|how)\s+/,'').replace(/^(is|are|am|was|were|do|does|did|can|will|have|has|should)\s+/,'').split(' ');return /^(my|your|the|our|his|her|their|this|that|these|those)$/.test(t[0])?t.slice(0,2).join(' '):t[0]};
+const PRONS=['i','you','he','she','it','we','they'],NOTNAME=/^(I|You|He|She|It|We|They|The|This|That|These|Those|My|Your|His|Her|Our|Their|Its|Is|Are|Am|Was|Were|Do|Does|Did|Don't|Doesn't|Didn't|What|Where|When|Who|Whom|Why|How|Whose|Which|Let's|Please|There|Can|Could|Will|Would|Should|Shall|May|Must|Have|Has|Had|If|When|Although|Because|Not|No|Never|A|An|Some|Many|Much|Every|All|Each|Both|Either|Neither|Being|Having|To|It's|I'm|Isn't|Aren't|Wasn't|Weren't|Won't|Can't)$/;
+// 문법 요소: 주어 종류(I/you/he/she/we/they/이름/the·my 하나/여럿) + a/an/the + 하나/여럿
+function feats(en){const w=en.replace(/[^A-Za-z' ]/g,' ').split(/\s+/).filter(Boolean),lw=w.map(x=>x.toLowerCase()),F=[];
+  PRONS.forEach(p=>{if(lw.includes(p))F.push('p:'+p)});if(w.some((x,i)=>/^[A-Z][a-z]+$/.test(x)&&!NOTNAME.test(x)&&(i>0||true)))F.push('name');
+  ['a','an','the'].forEach(a=>{if(lw.includes(a))F.push(a)});if(lw.some(x=>/^(are|were|these|those)$/.test(x)))F.push('pl');if(lw.some(x=>/^(is|was|this|that|does|has)$/.test(x)))F.push('sg');
+  if(/^(my|your|our|his|her|their)$/.test(lw[0]||''))F.push('own');return F}
+// 작은 단계 하나에서 n문장: 후보를 많이 만들고, 주어·문법 요소가 겹치지 않게 골라요(섞기는 꼴도 골고루)
+function unitIds(u,lap,n,avoid){avoid=avoid||new Set();const C=[];
+  for(let g=0;g<n*8;g++){const f=u.forms[u.mix?g%u.forms.length:0],cs=u.cx[f]||[f],id=[lap,f,seed(),cs[g%cs.length]].join('.');const it=IT(id);if(!okIt(it)||avoid.has(it.en)||C.some(c=>c[1].en===it.en))continue;C.push([id,it,f,SUBK(it.en),feats(it.en)])}
+  const out=[],uS={},uF={},uFm={};
+  while(out.length<n&&C.length){let bi=0,bs=-1e9;
+    C.forEach((c,j)=>{const sc=-(uS[c[3]]||0)*3+c[4].filter(x=>!uF[x]).length-(uFm[c[2]]||0)*(u.mix?2:0)+Math.random()*.6;if(sc>bs){bs=sc;bi=j}});
+    const c=C.splice(bi,1)[0];avoid.add(c[1].en);out.push(c[0]);uS[c[3]]=(uS[c[3]]||0)+1;c[4].forEach(x=>uF[x]=1);uFm[c[2]]=(uFm[c[2]]||0)+1}
+  return out}
+// 오늘 50문장 = 지금 작은 단계 10 + 앞 작은 단계 4개 × 10(맨 처음엔 앞 단계가 모자라면 지금 단계를 더). 묶음 하나 = 꼴 하나, 묶음은 붙여 두고 지금 단계가 맨 앞.
+function daySet(key,lap){const u=unitOfKey(key)||UNITS[0],avoid=new Set(),ids=[],kinds=[];
+  const add=(x,k,n)=>unitIds(x,lap,n,avoid).forEach(id=>{ids.push(id);kinds.push(k)});
+  add(u,'n',UNIT_N);
+  const prev=[];for(let j=u.i-1;j>=0&&prev.length<PREV_U;j--)prev.push(UNITS[j]);
+  shuffle(prev).forEach(x=>add(x,'p',UNIT_N));
+  let g=0;while(ids.length<DAY_N&&g++<6)add(u,'n',Math.min(UNIT_N,DAY_N-ids.length));
+  return {ids,kinds}}
+// 엄마가 정한 것(엄마 화면): 시훈이 기록과 따로 speed/plan-아이디 에 둬요(시훈이 앱이 열려 있다 닫혀도 덮어쓰지 않게)
+// plan = {u:작은 단계, at:정한 때, pre:{d:날짜, u, L:{수준:{ids,kinds}}}}
+async function getPlan(w){try{return DB?await DB.get('speed/plan-'+w):LS.get('plan-'+w,null)}catch(e){return null}}
+async function setPlan(w,pl){if(DB)await DB.set('speed/plan-'+w,pl);else LS.set('plan-'+w,pl)}
+let PLAN=null;
+// 지금 작은 단계: 엄마가 더 나중에 정했으면 그것, 아니면 기록에 있는 것, 둘 다 없으면 지금 단계의 첫 작은 단계
+function effU(st,pl){if(pl&&pl.u&&UKEY[pl.u]&&(pl.at||'')>(st.uAt||''))return pl.u;if(st.u&&UKEY[st.u])return st.u;return firstUnit(st.stage||1).key}
+function syncPlan(){if(!ST)return;const k=effU(ST,PLAN);if(k!==ST.u){ST.u=k;ST.stage=UKEY[k].s;if(PLAN&&PLAN.at)ST.uAt=PLAN.at}}
 // ---------- 채점(들린 말 ↔ 정답) ----------
 const CONTR=[[/\b(he|she|it)'s been\b/g,'$1 has been'],[/\bi've\b/g,'i have'],[/\byou've\b/g,'you have'],[/\bwe've\b/g,'we have'],[/\bthey've\b/g,'they have'],[/\bhasn't\b/g,'has not'],[/\bhaven't\b/g,'have not'],[/\bshouldn't\b/g,'should not'],[/\bwhat's\b/g,'what is'],[/\bwhere's\b/g,'where is'],[/\bwho's\b/g,'who is'],[/\bthat's\b/g,'that is'],[/\bi'm\b/g,'i am'],[/\byou're\b/g,'you are'],[/\bwe're\b/g,'we are'],[/\bthey're\b/g,'they are'],[/\bhe's\b/g,'he is'],[/\bshe's\b/g,'she is'],[/\bit's\b/g,'it is'],[/\bthere's\b/g,'there is'],
   [/\bisn't\b/g,'is not'],[/\baren't\b/g,'are not'],[/\bwasn't\b/g,'was not'],[/\bweren't\b/g,'were not'],[/\bdon't\b/g,'do not'],[/\bdoesn't\b/g,'does not'],[/\bdidn't\b/g,'did not'],
@@ -314,8 +345,10 @@ function render(){const a=$('#app');
   else if(V.view==='drill')a.innerHTML=drillHTML();
   else if(V.view==='end')a.innerHTML=endHTML();
   else if(V.view==='log')a.innerHTML=logHTML();
+  else if(V.view==='admin')a.innerHTML=adminViewHTML();
   bind()}
-function stageOf(){return TRY&&V.tryStage?V.tryStage:ST.stage}
+function unitKey(){return TRY&&V.tryU?V.tryU:ST.u||firstUnit(ST.stage||1).key}
+function stageOf(){return (unitOfKey(unitKey())||UNITS[0]).s}
 function lapOf(){return TRY&&V.tryLap?V.tryLap:Math.min(LVN,ST.lap||1)}
 // 엄마 11/28 「스스로 고르고 넘어가게 하자 매일」: 단계는 문법으로만, 단어 수준(초등·중등·고등·수능)은 시훈이가 날마다 시작할 때 골라요
 // 📲 앱으로 설치(엄마 11/26 「다운로드되게」): 크롬이 설치를 허락하면 버튼, 아니면 메뉴로 설치하는 방법을 알려 줘요
@@ -334,19 +367,17 @@ function homeHTML(){const d=ST.days[today()];
    <div class="row" style="justify-content:flex-start;align-items:center"><span class="stage">👤 ${esc(USER.name)}</span>${TRY?'':`<button class="link" style="margin:0" data-act="out">다른 아이디로</button>`}</div>`;
   if(!TK||!NS)return h+`<div class="err">문장을 불러오지 못했어요. 인터넷을 확인하고 앱을 완전히 닫았다가 다시 열어 주세요.</div>`;
   if(LOADERR&&!TRY)h+=`<div class="err" style="font-size:15px">서버 기록을 못 불러와서 이 기기에 있는 기록으로 열었어요. 인터넷이 되면 다시 열어 주세요.</div>`;
-  if(TRY){h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 단계와 단어 수준을 골라 보세요.</div>
-    <div class="row" style="justify-content:flex-start"><select id="tryStage">${TK.STAGES.map((x,i)=>`<option value="${i+1}"${i+1===stageOf()?' selected':''}>${i+1}. ${esc(x.t)}</option>`).join('')}</select>
+  if(TRY){h+=`<div class="note">👀 <b>미리 해 보기</b> · 기록이 남지 않아요. 작은 단계와 단어 수준을 골라 보세요.</div>
+    <div class="row" style="justify-content:flex-start"><select id="tryU" style="max-width:100%">${TK.STAGES.map((x,i)=>`<optgroup label="${i+1}. ${esc(x.t)}">${UNITS.filter(u=>u.s===i+1).map(u=>`<option value="${u.key}"${u.key===unitKey()?' selected':''}>${esc(uName(u))} · ${esc(uEx(u)||'섞기')}</option>`).join('')}</optgroup>`).join('')}</select>
     <select id="tryLap">${[1,2,3,4].map(l=>`<option value="${l}"${l===lapOf()?' selected':''}>${LAPS[l]}</option>`).join('')}</select></div>`}
-  if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();h+=installHTML();return h}
-  const n=stageOf(),st=TK.STAGES[n-1],rv=TRY?null:dueRev();
-  h+=`<div class="card"><span class="stage">${n}단계${TRY?' · '+LAPS[lapOf()]:''}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>${st.ex?`<div class="ex">${esc(st.ex)}</div>`:''}
-    ${TRY?'':`<p class="sub" style="margin:10px 0 0">통과한 날 <b style="color:var(--ink)">${ST.pd||0} / ${PASS_DAYS}</b> · 이 단계 새 문장을 90% 막힘 없이 말한 날이 ${PASS_DAYS}번이면 다음 단계예요.</p>`}
-    ${rv?`<div class="note">🔁 오늘은 <b>${rv.s}단계 다지기</b> 문장도 나와요. 90% 막힘 없이 말하면 그 단계는 끝!</div>`:''}
-    ${TRY?`<button class="big" data-act="start">🎤 오늘 ${DAY_N}문장 시작</button>`:ST.cur&&ST.cur.date===today()&&ST.cur.v===2?`<button class="big" data-act="start">🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length}) · ${LAPS[ST.cur.lap||1]||''}</button>`
+  if(d&&d.end&&!TRY){h+=resultCard(d,today())+vsHTML();if(ADMIN)h+=`<button class="light" style="display:block;margin:12px auto 0" data-act="admin">🧩 엄마 화면</button>`;h+=installHTML();return h}
+  const uk=unitKey(),u=unitOfKey(uk)||UNITS[0],n=u.s,st=TK.STAGES[n-1];
+  h+=`<div class="card"><span class="stage">${n}단계 · 작은 단계 ${esc(uName(u).replace(/^\d+-/,''))}${TRY?' · '+LAPS[lapOf()]:''}</span><h2 style="font:400 26px 'Jua';margin:8px 0 2px">${esc(st.t)}</h2>${u.mix?`<div class="ex">이 단계 꼴을 섞어서</div>`:uEx(u)?`<div class="ex">${esc(uEx(u))}</div>`:''}
+    ${TRY?`<button class="big" data-act="start">🎤 오늘 ${DAY_N}문장 시작</button>`:ST.cur&&ST.cur.date===today()&&ST.cur.v===3&&ST.cur.u===uk?`<button class="big" data-act="start">🎤 이어서 (${ST.cur.i+1} / ${(ST.cur.ids||[]).length}) · ${LAPS[ST.cur.lap||1]||''}</button>`
       :`<p class="sub" style="margin:14px 0 0;color:var(--ink);font-weight:700">오늘은 어떤 단어로 할까? 골라서 바로 시작!</p><div class="lvgrid">${[1,2,3,4].map(l=>`<button class="big${l===lapOf()?' last':''}" data-act="start" data-lv="${l}">🎤 ${LAPS[l]}</button>`).join('')}</div>`}
     ${MIME||MOCK||TRY?'':`<div class="heard">이 기기는 녹음이 안 돼요. 안드로이드 Chrome으로 열어 주세요.</div>`}
     <p class="hint">모르는 낱말은 말하기 전에 눌러서 들어요. 🔊 문장 듣기는 맨 마지막 방법!</p></div>`;
-  if(!TRY)h+=stagesHTML()+`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
+  if(!TRY)h+=stagesHTML()+(ADMIN?`<button class="light" style="display:block;margin:12px auto 0" data-act="admin">🧩 엄마 화면</button>`:'')+`<button class="link" data-act="try">👀 미리 해 보기(엄마)</button>`;
   h+=installHTML();
   return h}
 function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=(x.items||[]).map(i=>i.onset).filter(v=>v!=null);return o.length?o.reduce((a,b)=>a+b,0)/o.length:null};
@@ -355,13 +386,8 @@ function resultCard(d,date){const prev=lastDay(date);const avg=x=>{const o=(x.it
    <div class="cmp"><div><small>오늘 걸린 시간</small><b>${fmt(d.ms)}</b>${prev?`<small>지난번 ${fmt(prev.ms)}</small>`:''}</div>
    <div><small>생각 시간 (평균)</small><b>${a1!=null?sec1(a1):'-'}</b>${a0!=null?`<small>지난번 ${sec1(a0)}</small>`:''}</div></div>`;
   if(prev&&diff>=1000)h+=`<p class="good" style="font-weight:800;font-size:19px">지난번보다 ${fmt(diff)} 빨라졌어요! ⚡</p>`;
-  if(d.sn!=null)h+=`<p style="font-size:18px">${d.stage}단계 새 문장 막힘 없이 <b>${d.sc} / ${d.sn}</b></p>`;
-  if(d.rn)h+=`<p style="font-size:18px">${d.rs}단계 다지기 <b>${d.rc} / ${d.rn}</b> ${d.back?'':'· 끝! ✓'}</p>`;
-  const nx=d.up?(d.stage<NS?`${d.stage+1}단계`:'다음 바퀴 1단계'):'';
-  h+=d.back?`<p style="font-size:18px">${d.rs}단계가 아직 조금 막혀요. 내일은 <b>${d.rs}단계</b>를 다시 다져요.</p>`
-    :d.up?`<p style="font-size:18px">${d.stage}단계 통과! 내일은 <b>${nx}</b>예요. ${d.stage}단계는 이틀 뒤에 다지기로 한 번 더 나와요.</p>`
-    :d.passed?`<p style="font-size:18px">오늘 통과! 하루 더 통과하면 다음 단계예요.</p>`
-    :`<p style="font-size:18px">내일 ${d.stage}단계를 한 번 더 해요. 틀리거나 늦은 문장은 내일 다시 나와요.</p>`;
+  if(d.u&&UKEY[d.u]){if(d.sn)h+=`<p style="font-size:18px">지금 작은 단계(${esc(uName(UKEY[d.u]))}) 막힘 없이 <b>${d.sc} / ${d.sn}</b></p>`;h+=`<p class="sub" style="font-size:16px">단계는 엄마가 올려 줘요.</p>`}
+  else if(d.sn!=null)h+=`<p style="font-size:18px">${d.stage}단계 새 문장 막힘 없이 <b>${d.sc} / ${d.sn}</b></p>`;
   return h+'</div>'}
 // 오늘 같이 한 사람 결과 나란히(엄마 11/26)
 function vsHTML(){if(TRY)return '';const me=ST.days[today()];if(!me||!me.end)return '';
@@ -374,14 +400,14 @@ function vsHTML(){if(TRY)return '';const me=ST.days[today()];if(!me||!me.end)ret
   if(yet.length)h+=`<p class="sub" style="margin:10px 0 0">${yet.map(o=>esc(o.st.name||'같이 하는 사람')).join(', ')}: 오늘 아직 안 했어요.</p>`;
   return h+'</div>'}
 // 📥 기록 내려받기(엑셀에서 열리는 CSV)
-const KIND={n:'새 문장',p:'지난 단계',a:'다시',v:'다지기',r:'한 번 더',z:'짝'};
+const KIND={n:'지금 작은 단계',p:'앞 작은 단계',a:'다시',v:'다지기',r:'한 번 더',z:'짝'};
 function csv(key){const who=key&&key!==WHO?(OTHERS.find(o=>o.id===key)||{}).st:ST;if(!who)return;const ST_=who;const rows=[['날짜','단계','단어 바퀴','오늘 걸린 시간(초)','통과','종류','문장','한국어','처음에 맞음','생각 시간(초)','막힘 없이','문장 미리 들음','들린 말','넘어감']];
   Object.keys(ST_.days).sort().forEach(k=>{const d=ST_.days[k];(d.items||[]).forEach(r=>{const it=r.en?r:(IT(r.id)||{});
     rows.push([k,d.stage,LAPS[d.lap||1]||'',Math.round(d.ms/1000),d.up?'다음 단계':d.passed?'통과':'',KIND[r.k]||'',it.en||r.id,it.ko||'',r.ok1?'O':'',r.onset!=null?(r.onset/1000).toFixed(1):'',r.clean?'O':'',r.peek?'O':'',r.heard||'',r.skip==='quiet'?'안 들림':r.skip?'넘어감':''])})});
   const t='﻿'+rows.map(r=>r.map(x=>{x=String(x==null?'':x);return /[",\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x}).join(',')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/csv;charset=utf-8'}));a.download=`speed-english_${(key||WHO).replace(/^u-/,'').replace(/_[a-z0-9]+_com$/,'').replace(/[^a-zA-Z0-9_-]/g,'')}_${today()}.csv` /* 한글 파일 이름은 일부 기기에서 'download'로 바뀌어서 영어로 */;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000)}
 function endHTML(){const d=RUN.day;let h=resultCard(d,RUN.date)+vsHTML();
-  h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.res.map((r,i)=>r?`<tr><td>${r.clean?'':'<span class="sub">🔁 </span>'}${esc(r.en)}<div class="sub" style="font-size:13px">${esc(r.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`:'').join('')}</table><p class="sub" style="margin:8px 0 0">🔁 = 내일 다시 나와요</p></div>
+  h+=`<div class="card"><b>🔊 내 목소리 · 정답 소리</b><table>${RUN.res.map((r,i)=>r?`<tr><td>${r.clean?'':'<span class="sub">🔁 </span>'}${esc(r.en)}<div class="sub" style="font-size:13px">${esc(r.ko)}</div></td><td style="white-space:nowrap">${RUN.blobs[i]?`<button class="play" data-act="mine" data-i="${i}">내 목소리</button>`:''}<button class="play" data-act="ans" data-i="${i}">정답</button></td></tr>`:'').join('')}</table><p class="sub" style="margin:8px 0 0">🔁 = 막혔던 문장</p></div>
   <button class="fin" data-act="home">끝 ✓</button>`;return h}
 // 📊 기록 탭(엄마 11/26 「기록 볼 수 있는 탭 따로」): 아이디마다 지금 단계, 올라가는 기준과 얼마나 왔는지, 날짜별 기록, 엑셀 내려받기
 function tabsHTML(on){return `<div class="tabs"><button class="${on==='home'?'on':''}" data-act="home">⚡ 말하기</button><button class="${on==='log'?'on':''}" data-act="log">📊 기록</button></div>`}
@@ -393,6 +419,48 @@ async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncod
 function adminHTML(){if(ADMIN)return `<div class="row"><span class="sub">🔓 관리자 모드</span><button class="link" style="margin:0" data-act="adminOff">끄기</button></div>`;
   if(!ADMIN_ASK)return `<div class="row"><button class="link" data-act="adminAsk">🔒 관리자</button></div>`;
   return `<div class="row" style="align-items:center"><input id="apw" type="password" inputmode="numeric" placeholder="관리자 비밀번호" style="font-size:17px;padding:9px;border-radius:10px;border:1.5px solid var(--line);width:180px"><button class="light" style="margin:0" data-act="adminGo">확인</button></div>${ADMIN_MSG?`<p class="sub" style="text-align:center">${ADMIN_MSG}</p>`:''}`}
+
+// 🧩 엄마 화면(엄마 11/28, 관리자 비밀번호 뒤): ① 작은 단계 전체 목록 → 누르면 10문장(수준 4개) → 「시훈이 여기로」 ② 오늘 문장 보기(수준마다 50문장, 저장해 두면 시훈이도 똑같이) ③ 🚫 문장 빼기 + 목록 복사
+let AV={tab:'units',open:null,lap:1,sent:{},kid:null,msg:'',openSet:new Set()};
+async function kidFind(){if(AV.kid)return AV.kid;let id=WHO,st=ST;
+  if(DB){try{for(const x of await DB.list('speed')){if(!/^u-/.test(x.id))continue;
+    const h=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x.id)))).map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+    if(h==='83afd7e83abd2cf0'){id=x.id;st=x.id===WHO?ST:migrate(Object.assign(blank(),x.data||{}));break}}}catch(e){}}
+  AV.kid={id,st,plan:await getPlan(id)};return AV.kid}
+const kidU=()=>AV.kid?effU(AV.kid.st,AV.kid.plan):null;
+function flagBtn(id){return `<button class="light" style="margin:0;padding:4px 9px;font-size:14px" data-act="flag" data-id="${esc(id)}">🚫 빼기</button>`}
+function sentRows(ids,kinds){let h='<table class="adt">';ids.forEach((id,j)=>{const it=IT(id);if(!it)return;
+    if(kinds&&j&&j%UNIT_N===0)h+=`<tr><td colspan="2" style="border-top:3px solid var(--en);padding:0"></td></tr>`;
+    h+=`<tr><td>${esc(it.en)}<div class="sub" style="font-size:14px">${esc(it.ko)}</div></td><td style="white-space:nowrap;width:1%">${flagBtn(id)}</td></tr>`});return h+'</table>'}
+function lapTabs(){return `<div class="row" style="justify-content:flex-start;gap:6px">${[1,2,3,4].map(l=>`<button class="light${AV.lap===l?' on':''}" style="margin:0;padding:6px 10px${AV.lap===l?';outline:3px solid var(--en)':''}" data-act="alap" data-l="${l}">${LAPS[l]}</button>`).join('')}</div>`}
+function adminViewHTML(){if(!ADMIN)return logHTML();const K=AV.kid;let h=tabsHTML('log')+`<h1>🧩 엄마 화면</h1>`;
+  if(!K)return h+`<p class="sub" style="text-align:center">시훈이 기록 찾는 중…</p>`;
+  const ku=unitOfKey(kidU()),me=K.id===WHO;
+  h+=`<div class="card"><b>👤 ${esc(K.st.name||'시훈')}${me?' (이 기기)':''}</b><div class="sub" style="margin-top:4px">지금 <b style="color:var(--ink)">${ku?esc(uName(ku))+' · '+esc(stName(ku.s)):''}</b>${ku&&!ku.mix?' · '+esc(uEx(ku)):''}</div>
+    <div class="row" style="justify-content:flex-start;gap:6px;margin-top:10px"><button class="light${AV.tab==='units'?' on':''}" style="margin:0" data-act="atab" data-t="units">📚 작은 단계 전체</button><button class="light${AV.tab==='today'?' on':''}" style="margin:0" data-act="atab" data-t="today">📅 오늘 문장 보기</button><button class="light${AV.tab==='flags'?' on':''}" style="margin:0" data-act="atab" data-t="flags">🚫 뺀 문장 ${FLAGS.list.length}</button></div>
+    ${AV.msg?`<div class="note">${AV.msg}</div>`:''}</div>`;
+  if(AV.tab==='units'){h+=`<div class="card"><p class="sub" style="margin:0 0 6px">작은 단계 ${UNITS.length}개 · 단계를 누르면 펼쳐져요 · 작은 단계를 누르면 10문장</p>${lapTabs()}`;
+    TK.STAGES.forEach((S,si)=>{const us=UNITS.filter(u=>u.s===si+1),isNow=ku&&ku.s===si+1,openS=AV.openSet.has(si+1);
+      h+=`<div><button class="link" style="margin:0;padding:7px 0;text-align:left;display:block;width:100%;${isNow?'color:var(--en);font-weight:800':'color:var(--ink)'}" data-act="astage" data-s="${si+1}">${openS?'▾':'▸'} ${si+1}. ${esc(S.t)} <span class="sub">(${us.length})</span></button>`;
+      if(openS)us.forEach(u=>{const now=ku&&ku.key===u.key,op=AV.open===u.key;
+        h+=`<div style="border-top:1px solid var(--line);padding:6px 0"><button class="link" style="margin:0;text-align:left;${now?'color:var(--en);font-weight:800':''}" data-act="aopen" data-k="${u.key}">${now?'▶ ':''}${esc(uName(u))} · ${esc(u.mix?'이 단계 꼴 섞기':uEx(u))}</button>`;
+        if(op){const sk=u.key+'@'+AV.lap;if(!AV.sent[sk])AV.sent[sk]=unitIds(u,AV.lap,UNIT_N);
+          h+=sentRows(AV.sent[sk])+`<div class="row" style="justify-content:flex-start;gap:6px"><button class="light" style="margin:0" data-act="amore" data-k="${u.key}">🔄 다른 10문장</button>${now?'<span class="sub">시훈이가 지금 여기예요</span>':`<button class="big" style="margin:0;max-width:220px;font-size:19px;padding:10px" data-act="aset" data-k="${u.key}">👉 시훈이 여기로</button>`}</div>`}
+        h+=`</div>`});h+=`</div>`});return h+`</div>`}
+  if(AV.tab==='today'){const uk=kidU(),pl=K.plan||{},pre=pl.pre&&pl.pre.d===today()&&pl.pre.u===uk?pl.pre:null,L=pre&&pre.L&&pre.L[AV.lap],c=K.st.cur&&K.st.cur.v===3&&K.st.cur.date===today()&&K.st.cur.u===uk&&K.st.cur.lap===AV.lap?K.st.cur:null,d=K.st.days&&K.st.days[today()];
+    h+=`<div class="card"><p class="sub" style="margin:0 0 6px">시훈이가 고른 단어 수준의 문장이 나와요. 맨 위 10개가 지금 작은 단계, 그 아래는 앞 작은 단계 4개.</p>${lapTabs()}`;
+    if(d&&d.end)h+=`<div class="note">오늘은 이미 끝냈어요.</div>`;
+    else if(c)h+=`<div class="note">시훈이가 이 수준으로 벌써 시작했어요 (${c.i} / ${c.ids.length}). 아래가 그 문장이에요.</div>`+sentRows(c.ids,c.kinds);
+    else if(L)h+=`<div class="sub" style="margin:8px 0">✓ 저장됨 · 시훈이가 ${LAPS[AV.lap]}를 고르면 이 ${L.ids.length}문장이 나와요.</div>`+sentRows(L.ids,L.kinds)+`<div class="row"><button class="light" data-act="anew">🔄 50문장 새로 만들기</button></div>`;
+    else h+=`<div class="row"><button class="big" style="max-width:320px" data-act="anew">📅 ${LAPS[AV.lap]} 오늘 문장 만들기</button></div>`;
+    return h+`</div>`}
+  // 뺀 문장
+  h+=`<div class="card"><p class="sub" style="margin:0 0 6px">🚫 뺀 문장은 다시 안 나와요. 「목록 복사」를 눌러 Claude 채팅에 붙여 넣으면 같은 종류를 고쳐요.</p>
+    <div class="row" style="justify-content:flex-start"><button class="light" style="margin:0" data-act="acopy"${FLAGS.list.length?'':' disabled'}>📋 목록 복사</button></div><table class="adt">`;
+  FLAGS.list.slice().reverse().forEach(x=>{h+=`<tr><td>${esc(x.en)}<div class="sub" style="font-size:14px">${esc(x.ko)} · ${esc(x.u||'')} · ${esc(x.d||'')}</div></td><td style="width:1%"><button class="light" style="margin:0;padding:4px 9px;font-size:14px" data-act="unflag" data-en="${esc(x.en)}">되돌리기</button></td></tr>`});
+  return h+`</table></div>`}
+function flagText(){return '스피드영어 뺀 문장 '+FLAGS.list.length+'개\n'+FLAGS.list.map((x,i)=>`${i+1}. ${x.en} | ${x.ko} | ${x.u||''} | ${x.l?LAPS[x.l]:''}`).join('\n')}
+async function savePre(K,uk,lap,set){const pl=Object.assign({},K.plan||{});const pre=pl.pre&&pl.pre.d===today()&&pl.pre.u===uk?pl.pre:{d:today(),u:uk,L:{}};pre.L=Object.assign({},pre.L,{[lap]:set});pl.pre=pre;K.plan=pl;await setPlan(K.id,pl).catch(()=>{AV.msg='저장이 안 됐어요. 인터넷을 확인해 주세요.'});if(K.id===WHO)PLAN=pl}
 function calT(ms){const t=Math.round((ms||0)/1000);return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')}
 function calHTML(st,key){const days=st.days||{},base=new Date();base.setDate(1);base.setMonth(base.getMonth()+CALM);
   const y=base.getFullYear(),m=base.getMonth(),first=new Date(y,m,1).getDay(),n=new Date(y,m+1,0).getDate(),td=today();
@@ -409,13 +477,14 @@ function calHTML(st,key){const days=st.days||{},base=new Date();base.setDate(1);
   return h}
 function personCard(st,name,key,me){const v2=st.v===2,stage=st.stage||1;
   let h=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b style="font-size:20px">👤 ${esc(name)}${me?' <span class="sub">(나)</span>':''}</b>${ADMIN?`<button class="light" style="margin:0" data-act="csv" data-k="${esc(key)}">📥 엑셀</button>`:''}</div>`;
-  if(v2&&TK)h+=`<div class="sub" style="margin-top:6px">지금 <b style="color:var(--ink)">${stage}단계 · ${esc(stName(stage))}</b> · ${LAPS[st.lap||1]} · 통과한 날 ${st.pd||0}/${PASS_DAYS}${(st.rev||[]).length?` · 다지기 기다리는 단계 ${(st.rev||[]).map(x=>x.s).join(', ')}`:''}</div>`;
+  if(v2&&TK){const uu=unitOfKey(st.u);h+=`<div class="sub" style="margin-top:6px">지금 <b style="color:var(--ink)">${stage}단계 · ${esc(stName(stage))}${uu?' · 작은 단계 '+esc(uName(uu)):''}</b> · ${LAPS[st.lap||1]}</div>`}
   h+=calHTML(st,key);
   return h+'</div>'}
 function logHTML(){let h=tabsHTML('log')+`<h1>📊 기록</h1>`;
   h+=personCard(ST,USER.name,WHO,true);
   OTHERS.forEach(o=>{h+=personCard(o.st,o.st.name||'같이 하는 사람',o.id,false)});
 
+  if(ADMIN)h+=`<button class="big" style="max-width:360px;margin:14px auto 0;display:block" data-act="admin">🧩 엄마 화면 · 작은 단계 · 오늘 문장</button>`;
   h+=adminHTML();
   return h}
 // 드릴 화면(상태는 RUN.ph)
@@ -454,20 +523,23 @@ const UI={level(x,talk){const m=$('#mt');if(!m)return;m.classList.toggle('talk',
   clock(s){const e=$('#clk');if(e)e.textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}};
 
 function bind(){document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>ACT[b.dataset.act](b));
-  const s=$('#tryStage');if(s)s.onchange=()=>{V.tryStage=+s.value;render()};const m=$('#tryLap');if(m)m.onchange=()=>{V.tryLap=+m.value;render()}}
+  const s=$('#tryU');if(s)s.onchange=()=>{V.tryU=s.value;render()};const m=$('#tryLap');if(m)m.onchange=()=>{V.tryLap=+m.value;render()}}
 const ACT={
   async start(b){if(!TK||!NS)return;if(!MIME&&!MOCK&&!TRY)return;
     try{if(!MOCK||window.__mockMic)await micOpen()}catch(e){if(!TRY){alert('마이크를 쓸 수 없어요. 주소창 옆 🔒 → 마이크 → 허용으로 바꿔 주세요.');return}}
     warm();try{speechSynthesis.speak(new SpeechSynthesisUtterance(''))}catch(e){}
-    const c=ST.cur,lv=b&&b.dataset&&+b.dataset.lv;const stage=stageOf();let lap=lapOf(),ids,kinds,i=0,res=[],ms=0,rv=TRY?null:dueRev();
-    if(lv&&!TRY){lap=lv;ST.lap=lv}else if(!TRY&&c&&c.v===2&&c.date===today()&&c.lap)lap=c.lap;
-    if(!TRY&&c&&c.v===2&&c.date===today()&&c.stage===stage&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);rv=c.rv||null;
-      // 이어서 할 때: 새 규칙으로 빠진 문장(우리 이웃·가족 단어 등)은 남은 차례에서 빼요
-      const keep=ids.map((id,j)=>j<i||!!IT(id));ids=ids.filter((x,j)=>keep[j]);kinds=kinds.filter((x,j)=>keep[j])}
-    else{({ids,kinds}=buildSet(stage,lap,rv))}
+    if(!TRY){try{const fresh=await load();if((fresh.updated||'')>(ST.updated||''))ST=fresh;PLAN=await getPlan(WHO)}catch(e){}syncPlan()}
+    const c=ST.cur,lv=b&&b.dataset&&+b.dataset.lv,uk=unitKey(),stage=stageOf();let lap=lapOf(),ids,kinds,i=0,res=[],ms=0;
+    if(lv&&!TRY){lap=lv;ST.lap=lv}else if(!TRY&&c&&c.v===3&&c.date===today()&&c.lap)lap=c.lap;
+    const pre=!TRY&&PLAN&&PLAN.pre&&PLAN.pre.d===today()&&PLAN.pre.u===uk&&PLAN.pre.L&&PLAN.pre.L[lap];
+    if(!TRY&&c&&c.v===3&&c.date===today()&&c.u===uk&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);
+      // 이어서 할 때: 새 규칙으로 빠진 문장·엄마가 뺀 문장은 남은 차례에서 빼요
+      const keep=ids.map((id,j)=>j<i||okIt(IT(id)));ids=ids.filter((x,j)=>keep[j]);kinds=kinds.filter((x,j)=>keep[j])}
+    else if(pre){ids=[];kinds=[];pre.ids.forEach((id,j)=>{if(okIt(IT(id))){ids.push(id);kinds.push(pre.kinds[j]||'n')}})}
+    else{({ids,kinds}=daySet(uk,lap))}
     if(!ids.length){alert('문장을 만들지 못했어요. 앱을 닫았다가 다시 열어 주세요.');return}
-    RUN={date:today(),stage,lap,rv,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
-    V={view:'drill',tryStage:V.tryStage,tryLap:V.tryLap};runItem()},
+    RUN={date:today(),stage,u:uk,lap,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
+    V={view:'drill',tryU:V.tryU,tryLap:V.tryLap};runItem()},
   rec(){const R=RUN;if(R.ph!=='ready'&&R.ph!=='fready')return;try{speechSynthesis.cancel()}catch(e){}
     if(R.ph==='ready'&&R.think==null)R.think=Date.now()-R.shown; // 생각 시간 = 한글이 나온 뒤 🎤 누를 때까지(첫 번째만)
     R.ph=R.ph==='ready'?'rec':'frec';render();recStart(UI)},
@@ -485,14 +557,34 @@ const ACT={
   nextq(){if(RUN&&RUN.ph==='model')next()},
   tryNext(){const R=RUN;if(!TRY||!R)return;try{speechSynthesis.cancel()}catch(e){}R.skipped='try';next()},
   skip(){const R=RUN;if(R.ph[0]!=='f')R.skipped=R.tries===0?'quiet':'wrong';next()},
-  quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();keepCur();micClose();V={view:'home',tryStage:V.tryStage,tryLap:V.tryLap};render()},
-  home(){V={view:'home',tryStage:V.tryStage,tryLap:V.tryLap};render()},
+  quit(){RUN.quit=true;recCancel();try{speechSynthesis.cancel()}catch(e){}pauseClock();keepCur();micClose();V={view:'home',tryU:V.tryU,tryLap:V.tryLap};render()},
+  home(){V={view:'home',tryU:V.tryU,tryLap:V.tryLap};render()},
   async log(){V={view:'log'};render();if(!TRY){await loadOther();if(V.view==='log')render()}},
   out(){if(window.__SP.signOut)window.__SP.signOut()},
   csv(b){if(ADMIN)csv(b&&b.dataset.k)},
   adminAsk(){ADMIN_ASK=true;ADMIN_MSG='';render();const i=$('#apw');if(i){i.focus();i.onkeydown=e=>{if(e.key==='Enter')ACT.adminGo()}}},
   async adminGo(){const i=$('#apw');const v=(i&&i.value||'').replace(/\D/g,'');if(v&&await sha(v)===ADMIN_H){ADMIN=true;ADMIN_ASK=false;try{sessionStorage.setItem('speed:admin','1')}catch(e){}}else ADMIN_MSG='비밀번호가 달라요';render()},
   adminOff(){ADMIN=false;try{sessionStorage.removeItem('speed:admin')}catch(e){}render()},
+  async admin(){if(!ADMIN)return;V={view:'admin'};AV.msg='';AV.kid=null;render();await kidFind();const ku=unitOfKey(kidU());if(ku)AV.openSet.add(ku.s);if(V.view==='admin')render()},
+  atab(b){AV.tab=b.dataset.t;AV.msg='';render()},
+  alap(b){AV.lap=+b.dataset.l;render()},
+  aopen(b){const k=b.dataset.k;AV.open=AV.open===k?null:k;render()},
+  astage(b){const n=+b.dataset.s;AV.openSet.has(n)?AV.openSet.delete(n):AV.openSet.add(n);render()},
+  amore(b){delete AV.sent[b.dataset.k+'@'+AV.lap];render()},
+  async aset(b){const K=AV.kid,u=unitOfKey(b.dataset.k);if(!K||!u)return;const pl=Object.assign({},K.plan||{},{u:u.key,at:new Date().toISOString()});delete pl.pre;
+    try{await setPlan(K.id,pl);K.plan=pl;if(K.id===WHO){PLAN=pl;syncPlan();save()}AV.msg=`👉 이제 <b>${esc(uName(u))}</b>예요. 시훈이 앱을 완전히 닫았다가 다시 열면 바뀌어요.`}catch(e){AV.msg='저장이 안 됐어요. 인터넷을 확인해 주세요.'}render()},
+  async anew(){const K=AV.kid;if(!K)return;const uk=kidU();await savePre(K,uk,AV.lap,daySet(uk,AV.lap));render()},
+  async flag(b){const id=b.dataset.id,it=IT(id);if(!it)return;const f=id.split('.')[1],u=UNITS.find(x=>!x.mix&&x.forms[0]===f);
+    await saveFlags(L=>{if(!L.some(x=>x.en===it.en))L.push({en:it.en,ko:it.ko,u:u?uName(u):f,f,l:+id.split('.')[0],d:today()})});
+    // 보던 목록에서는 같은 작은 단계의 다른 문장으로 바꿔 끼워요
+    const swap=(ids,kinds)=>{const j=ids.indexOf(id);if(j<0)return false;const uu=UNITS.find(x=>x.forms.includes(f)&&!x.mix)||UNITS[0];const av=new Set(ids.map(x=>(IT(x)||{}).en));const nw=unitIds(uu,+id.split('.')[0],1,av)[0];if(nw)ids[j]=nw;else{ids.splice(j,1);if(kinds)kinds.splice(j,1)}return true};
+    Object.keys(AV.sent).forEach(k=>swap(AV.sent[k]));
+    const K=AV.kid;if(K&&K.plan&&K.plan.pre&&K.plan.pre.L){for(const l in K.plan.pre.L){const S=K.plan.pre.L[l];if(swap(S.ids,S.kinds))await savePre(K,K.plan.pre.u,+l,S)}}
+    AV.msg=`🚫 뺐어요: ${esc(it.en)}`;render()},
+  async unflag(b){const en=b.dataset.en;await saveFlags(L=>{const j=L.findIndex(x=>x.en===en);if(j>=0)L.splice(j,1)});render()},
+  async acopy(){const t=flagText();let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}
+    if(!ok){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{ok=document.execCommand('copy')}catch(e){}ta.remove()}
+    AV.msg=ok?'📋 복사했어요. Claude 채팅에 붙여 넣어 주세요.':'복사가 안 됐어요.';render()},
   calm(b){CALM=Math.min(0,CALM+(+b.dataset.d));render()},
   calsel(b){const k=b.dataset.k,d=b.dataset.d;CALSEL[k]=CALSEL[k]===d?null:d;render()},
   async install(){if(INSTALL){INSTALL.prompt();try{await INSTALL.userChoice}catch(e){}INSTALL=null;render()}},
@@ -504,7 +596,7 @@ function pauseClock(){if(RUN&&RUN.t){RUN.ms+=Date.now()-RUN.t;RUN.t=0}}
 function resumeClock(){if(RUN&&!RUN.t)RUN.t=Date.now()}
 document.addEventListener('visibilitychange',()=>{if(V.view!=='drill')return;if(document.visibilityState==='hidden')pauseClock();else resumeClock()});
 
-function keepCur(){const R=RUN;if(TRY||!R)return;ST.cur={v:2,date:R.date,stage:R.stage,lap:R.lap,rv:R.rv,ids:R.ids,kinds:R.kinds,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
+function keepCur(){const R=RUN;if(TRY||!R)return;ST.cur={v:3,date:R.date,stage:R.stage,u:R.u,lap:R.lap,ids:R.ids,kinds:R.kinds,i:R.i,res:R.res,ms:R.ms+(R.t?Date.now()-R.t:0)};save()}
 function runItem(){const R=RUN;if(R.i>=R.ids.length){finishDay();return}Object.assign(R,{ph:'ready',wopen:{},peek:false,words:0,tries:0,quiet:0,fails:0,ftries:0,ok:false,msg:'',think:null,heard:'',first:null,follow:false,skipped:null,shown:Date.now()});render()}
 // 받아 적은 말 판정: 맞음 → 정답 듣고 따라 말하기 / 틀림 → 한 번 더(두 번째도 틀리면 정답 듣기) / 안 들림 → 다시 녹음(틀림 아님)
 async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact'||v==='fuzzy';
@@ -525,7 +617,7 @@ async function judged(v,h,fol){const R=RUN,it=IT(R.ids[R.i]);const ok=v==='exact
 // 엄마 11/26 「왜 두 번 녹음하는 거야? / 한 번만 녹음」: 따라 말하기 녹음을 없앰. 맞으면 정답 소리를 듣고 저절로 다음, 틀렸으면 정답을 보고 들은 뒤 「다음 ▶」.
 // 틀린 문장은 그날 4문장 뒤에 한 번 더(엄마 11/27). 한 번 더 나온 문장은 또 넣지 않아요.
 // 엄마 11/28 「틀린 거 추가는 하지 마, 담날 나오게 해」: 그날 다시 넣지 않아요(틀린 문장은 다음 날 「다시」로)
-function reask(){return;const R=RUN;if(TRY||R.kinds[R.i]==='r')return;const at=Math.min(R.i+1+REASK_GAP,R.ids.length);R.ids.splice(at,0,R.ids[R.i]);R.kinds.splice(at,0,'r')}
+function reask(){}
 // 들린 말 ↔ 정답 맞춰 보기(낱말 단위 편집 거리): 맞은 낱말은 그대로, 바뀐 낱말은 빨간 밑줄, 빠진 자리는 빈칸, 더 말한 낱말은 줄 긋기
 // 엄마 11/27 「불규칙 동사 잘 모르니 과거형이 나오면 동사원형을 띄워 주자」: 과거형·과거분사 낱말이 있으면 원형만 작게(be 빼고, read처럼 모양이 같은 건 빼고)
 const PASTB={};if(TC){Object.keys(TC.IRV).forEach(b=>{if(b==='be')return;TC.IRV[b].forEach(x=>{if(x&&x!==b)PASTB[x]=b})});TC.VP.forEach(p=>{const b=String(p.e||'').split(' ')[0];if(!b||b==='be')return;[TC.EN.past(b),TC.EN.pp(b)].forEach(x=>{x=String(x).split(' ')[0];if(x&&x!==b&&!PASTB[x])PASTB[x]=b})})}
@@ -573,31 +665,21 @@ function next(){const R=RUN;const ok1=R.first===true,it=IT(R.ids[R.i])||{};
   R.i++;keepCur();
   if(R.i<R.ids.length){runItem();return}
   finishDay()}
-// 셈: 안 들려서 넘어간 문장은 빼요(안 들림은 틀림 아님).
+// 셈: 안 들려서 넘어간 문장은 빼요(안 들림은 틀림 아님). 엄마 11/28: 저절로 단계가 올라가지 않아요(엄마가 올려 줘요), 틀린 문장도 다시 안 넣어요.
 function passCheck(res){const all=res.filter(x=>x&&x.k!=='r'&&x.skip!=='quiet');
-  const N=all.filter(x=>x.k==='n'),sc=N.filter(x=>x.clean).length,VV=all.filter(x=>x.k==='v'),rc=VV.filter(x=>x.clean).length;
-  return {clean:all.filter(x=>x.clean).length,n:all.length,sn:N.length,sc,passed:N.length>=10&&sc>=Math.ceil(N.length*PASS_PCT),rn:VV.length,rc,revOK:VV.length<5?null:rc>=Math.ceil(VV.length*PASS_PCT)}}
+  const N=all.filter(x=>x.k==='n'),sc=N.filter(x=>x.clean).length;
+  return {clean:all.filter(x=>x.clean).length,n:all.length,sn:N.length,sc}}
 function finishDay(){const R=RUN;pauseClock();micClose();
   const P=passCheck(R.res);
-  const day={stage:R.stage,lap:R.lap,end:new Date().toISOString(),ms:R.ms,items:R.res.filter(Boolean),clean:P.clean,n:P.n,sn:P.sn,sc:P.sc,passed:P.passed};
-  if(R.rv&&P.rn){day.rs=R.rv.s;day.rn=P.rn;day.rc=P.rc}R.day=day;
-  if(!TRY){ST.days[R.date]=day;ST.cur=null;
-    // 다시: 틀리거나 늦은(또는 문장을 미리 들은) 문장은 내일 다시, 막힘 없이 말하면 빠짐
-    const done=R.res.filter(x=>x&&x.k!=='r'),miss=[],hit=new Set();done.forEach(x=>{if(x.skip==='quiet')return;if(x.clean)hit.add(x.id);else if(!miss.includes(x.id))miss.push(x.id)});
-    ST.again=miss.concat((ST.again||[]).filter(id=>!hit.has(id)&&!miss.includes(id))).slice(0,60);
-    if(ST.stage===R.stage){
-      if(R.rv&&P.revOK!==null){ST.rev=(ST.rev||[]).filter(x=>!(x.s===R.rv.s&&x.d===R.rv.d));
-        if(!P.revOK){day.back=1;ST.stage=R.rv.s;ST.pd=0}}
-      if(!day.back&&P.passed){ST.pd=(ST.pd||0)+1;
-        if(ST.pd>=PASS_DAYS){day.up=1;ST.rev=(ST.rev||[]).concat([{s:R.stage,l:R.lap,d:R.date}]);ST.pd=0;
-          if(ST.stage<NS)ST.stage++}}}
-    save()}
+  const day={stage:R.stage,u:R.u,lap:R.lap,end:new Date().toISOString(),ms:R.ms,items:R.res.filter(Boolean),clean:P.clean,n:P.n,sn:P.sn,sc:P.sc};
+  R.day=day;
+  if(!TRY){ST.days[R.date]=day;ST.cur=null;save()}
   V={view:'end'};render();if(!TRY)loadOther().then(()=>{if(V.view==='end')render()})}
 
 (async function boot(){$('#app').innerHTML='<p class="sub" style="text-align:center;margin-top:40px">여는 중…</p>';
   if(document.readyState==='loading')await new Promise(r=>addEventListener('DOMContentLoaded',r));
   if(/log/.test(location.hash))V={view:'log'};
-  DB=await window.__SP.ready;USER=window.__SP.user||{email:'',name:'나'};WHO=keyOf(USER.email);await tabletSihun();ST=await load();await loadOther();if(TRY){V.tryStage=ST.stage;V.tryLap=ST.lap||1}render()})();
+  DB=await window.__SP.ready;USER=window.__SP.user||{email:'',name:'나'};WHO=keyOf(USER.email);await tabletSihun();ST=await load();await loadFlags();if(!TRY){PLAN=await getPlan(WHO);syncPlan()}await loadOther();if(TRY){V.tryU=ST.u||firstUnit(ST.stage||1).key;V.tryLap=ST.lap||1}render()})();
 </script>
 </body>
 </html>
