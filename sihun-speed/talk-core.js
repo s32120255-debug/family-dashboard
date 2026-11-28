@@ -151,7 +151,7 @@ const VP=[
  V('dance','춤추다',null,null,{h:1,sk:1}),
  V('cook','요리하다',null,null,{h:1,sk:1}),
  V('walk','걸어가다','에',[['to school','학교',1,'xA'],['to the park','공원'],['to the library','도서관'],['to the station','역',2]],{h:1,go:1}),
- V('ride','타다','을',[['a bike','자전거'],['a horse','말',1,'h0'],['the bus','버스'],['a skateboard','스케이트보드'],['the subway','지하철',2],['a motorcycle','오토바이',3,'xK'],['a scooter','킥보드'],['the train','기차'],['a boat','배',2,'h0']],{h:1,sk:1}),
+ V('ride','타다','을',[['a bike','자전거'],['a horse','말',1,'h0'],['a skateboard','스케이트보드'],['a motorcycle','오토바이',3,'xK'],['a scooter','킥보드'],['a boat','배',2,'h0']],{h:1,sk:1}),
  V('learn','배우다','을',[['English','영어'],['Taekwondo','태권도'],['the piano','피아노'],['swimming','수영'],['coding','코딩',2],['ballet','발레',2],['calligraphy','서예',3],['sign language','수어',3],['the guitar','기타'],['soccer','축구'],['Chinese','중국어',2],['cooking','요리',2],['magic tricks','마술',2],['photography','사진',3]],{h:1}),
  V('teach','가르치다','을',[['English','영어'],['math','수학'],['science','과학'],['music','음악'],['history','역사',2],['art','미술',2],['economics','경제학',3],['Korean','국어'],['dance','춤',2],['cooking','요리',2],['physics','물리학',3]],{h:1,x:['me','you','kid']}),
  V('help','돕다','을',[['the teacher','선생님'],['my mom','우리 엄마',1,'nm'],['the new student','새로 온 학생',2],['the patients','환자들',3,'xK']],{h:1}),
