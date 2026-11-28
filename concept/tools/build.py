@@ -1,4 +1,9 @@
 import re,json,sys,glob
+# 책의 ◎ 연결 낱말을 카드 이름으로 맞춤(책 표기와 카드 표기가 다른 것)
+ALIAS={'수선의 이등분선':'수직이등분선','개':'개(단위)','덧셈의 결합법칙':'덧셈에 대한 결합법칙','곱셈의 결합법칙':'곱셈에 대한 결합법칙',
+ '수판':'주판','나누기':'나누다','구':'구(공)','이등분':'이등분하다','좌표':'좌표평면','모눈':'모눈종이','0':'영','양의 정수':'자연수',
+ '음의 정수':'음수','원통':'원기둥','회전축':'축'}
+SOSU={'소수점':'소수(小數)','할푼리':'소수(小數)','소인수분해':'소수(素數)'}
 book={}
 for l in open(sys.argv[1]):
     if l.startswith('#') or not l.strip(): continue
@@ -25,7 +30,7 @@ for f in sorted(glob.glob('src/a*.txt')):
             if len(set(o))!=len(o): errs.append(f'dup opt {w}')
         t={'w':w,'en':en,'d':d,'ex':ex,'x':x,'why':why}
         if fig: t['fig']=fig
-        if w in book: t['ln']=[k for k in book[w][0] if k]
+        if w in book: t['ln']=[ALIAS.get(k,k) for k in book[w][0] if k]
         else: errs.append(f'not in book: {w}')
         areas[-1]['br'][-1]['t'].append(t)
 miss=[w for w in book if w not in seen]
@@ -33,7 +38,10 @@ names=set(seen)
 for a in areas:
   for b in a['br']:
     for t in b['t']:
-      t['ln']=[k for k in t.get('ln',[]) if k in names and k!=t['w']]
+      t['ln']=[SOSU.get(t['w'],k) if k=='소수' else k for k in t.get('ln',[])]
+      t['ln']=list(dict.fromkeys(k for k in t['ln'] if k in names and k!=t['w']))
+      drop=[k for k in book.get(t['w'],([],''))[0] if k and ALIAS.get(k,k) not in names and not (k=='소수' and t['w'] in SOSU)]
+      if drop: errs.append(f"link dropped {t['w']}: {drop}")
 # O/X 문장 (src/ox-*.txt: 낱말|O 또는 X|문장|이유)
 T={t['w']:t for a in areas for b in a['br'] for t in b['t']}
 nox=0
