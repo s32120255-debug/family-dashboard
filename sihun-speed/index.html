@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="43";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="44";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -152,10 +152,10 @@ const SP=window.SPEED||{STAGES:[],VWORDS:new Set(),byId:()=>null},TK=window.TALK
 /* ⚡ 스피드영어 = 쉬운 문장 꼴 바꾸기 드릴(엄마 11/27)
    · 문장은 talk-core.js(낱말·활용) + talk-gen.js(문법 단계 66개, 단어 수준 4개)가 그때그때 만들어요.
    · 엄마 11/28 「문장을 쪼개자, be 긍정만 10개 그런 식으로」: 66단계를 작은 단계(꼴 하나)로 쪼갰어요. 작은 단계 하나 = 같은 꼴 10문장, 그 안에 주어·하나/여럿·a/an이 골고루.
-   · 하루 50문장 = 지금 작은 단계 10 + 바로 앞 작은 단계 4개 × 10. 틀린 문장은 그날도 다음 날도 다시 안 넣어요.
+   · 엄마 11/28 「하루에 딱 10개만」: 하루 10문장 = 지금 작은 단계 10문장(앞 단계 섞기 없음). 틀린 문장은 그날도 다음 날도 다시 안 넣어요.
    · 엄마 11/28 「단계 올리는 건 내가 수동으로」: 저절로 올라가지 않아요. 엄마 화면(관리자)에서 「시훈이 여기로」.
    · 막힘 없이 = 처음에 맞게 + 한글이 나오고 5초 안에 🎤 + 문장 듣기를 미리 누르지 않음(낱말 듣기는 괜찮아요). */
-const FAST_MS=5000,REC_MAX=55000,DAY_N=50,UNIT_N=10,PREV_U=4;
+const FAST_MS=5000,REC_MAX=55000,DAY_N=10,UNIT_N=10,PREV_U=0;
 const NS=TK?TK.STAGES.length:0,LAPS=['','초등 단어','중등 단어','고등 단어','수능 단어'],LVN=4;
 // 문장 찾기: 새 문장 id = 바퀴.꼴.씨앗.묶음(예: 1.b_pos.12345.b_q). 옛 기록 id는 drills.js에서.
 function IT(id){id=String(id||'');if(TK&&id.split('.').length===4){const it=TK.make(id);if(it)return it}return SP.byId(id)}
@@ -195,7 +195,7 @@ let saveT=null;
 function save(){if(TRY)return;const w=WHO,st=ST;st.name=USER.name;st.updated=new Date().toISOString();LS.set(lsOf(w),st);clearTimeout(saveT);saveT=setTimeout(()=>{if(DB)DB.set(docOf(w),st).catch(()=>{})},300)}
 addEventListener('pagehide',()=>{if(!TRY&&DB&&ST){clearTimeout(saveT);DB.set(docOf(WHO),ST).catch(()=>{})}});
 
-// ---------- 오늘 50문장 ----------
+// ---------- 오늘 10문장 ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function lastDay(before){const ks=Object.keys(ST.days).filter(k=>k<before&&ST.days[k].end).sort();return ks.length?Object.assign({date:ks[ks.length-1]},ST.days[ks[ks.length-1]]):null}
 // 🧩 작은 단계(엄마 11/28): 66단계마다 그 단계에서 처음 나오는 꼴 하나 = 작은 단계 하나, 꼴이 둘 이상인 단계는 끝에 「섞기」
@@ -234,14 +234,14 @@ function unitIds(u,lap,n,avoid){avoid=avoid||new Set();const C=[];
     C.forEach((c,j)=>{const sc=-(uS[c[3]]||0)*3+c[4].filter(x=>!uF[x]).length-(uFm[c[2]]||0)*(u.mix?2:0)+Math.random()*.6;if(sc>bs){bs=sc;bi=j}});
     const c=C.splice(bi,1)[0];avoid.add(c[1].en);out.push(c[0]);uS[c[3]]=(uS[c[3]]||0)+1;c[4].forEach(x=>uF[x]=1);uFm[c[2]]=(uFm[c[2]]||0)+1}
   return out}
-// 오늘 50문장 = 지금 작은 단계 10 + 앞 작은 단계 4개 × 10(맨 처음엔 앞 단계가 모자라면 지금 단계를 더). 묶음 하나 = 꼴 하나, 묶음은 붙여 두고 지금 단계가 맨 앞.
+// 오늘 DAY_N문장 = 지금 작은 단계 UNIT_N + 앞 작은 단계 PREV_U개 × UNIT_N(지금은 10 + 0). 묶음 하나 = 꼴 하나, 묶음은 붙여 두고 지금 단계가 맨 앞.
 function daySet(key,lap){const u=unitOfKey(key)||UNITS[0],avoid=new Set(),ids=[],kinds=[];
   const add=(x,k,n)=>unitIds(x,lap,n,avoid).forEach(id=>{ids.push(id);kinds.push(k)});
-  add(u,'n',UNIT_N);
+  add(u,'n',Math.min(UNIT_N,DAY_N));
   const prev=[];for(let j=u.i-1;j>=0&&prev.length<PREV_U;j--)prev.push(UNITS[j]);
   shuffle(prev).forEach(x=>add(x,'p',UNIT_N));
   let g=0;while(ids.length<DAY_N&&g++<6)add(u,'n',Math.min(UNIT_N,DAY_N-ids.length));
-  return {ids,kinds}}
+  return {ids:ids.slice(0,DAY_N),kinds:kinds.slice(0,DAY_N)}}
 // 엄마가 정한 것(엄마 화면): 시훈이 기록과 따로 speed/plan-아이디 에 둬요(시훈이 앱이 열려 있다 닫혀도 덮어쓰지 않게)
 // plan = {u:작은 단계, at:정한 때, pre:{d:날짜, u, L:{수준:{ids,kinds}}}}
 async function getPlan(w){try{return DB?await DB.get('speed/plan-'+w):LS.get('plan-'+w,null)}catch(e){return null}}
@@ -420,7 +420,7 @@ function adminHTML(){if(ADMIN)return `<div class="row"><span class="sub">🔓 �
   if(!ADMIN_ASK)return `<div class="row"><button class="link" data-act="adminAsk">🔒 관리자</button></div>`;
   return `<div class="row" style="align-items:center"><input id="apw" type="password" inputmode="numeric" placeholder="관리자 비밀번호" style="font-size:17px;padding:9px;border-radius:10px;border:1.5px solid var(--line);width:180px"><button class="light" style="margin:0" data-act="adminGo">확인</button></div>${ADMIN_MSG?`<p class="sub" style="text-align:center">${ADMIN_MSG}</p>`:''}`}
 
-// 🧩 엄마 화면(엄마 11/28, 관리자 비밀번호 뒤): ① 작은 단계 전체 목록 → 누르면 10문장(수준 4개) → 「시훈이 여기로」 ② 오늘 문장 보기(수준마다 50문장, 저장해 두면 시훈이도 똑같이) ③ 🚫 문장 빼기 + 목록 복사
+// 🧩 엄마 화면(엄마 11/28, 관리자 비밀번호 뒤): ① 작은 단계 전체 목록 → 누르면 10문장(수준 4개) → 「시훈이 여기로」 ② 오늘 문장 보기(수준마다 10문장, 저장해 두면 시훈이도 똑같이) ③ 🚫 문장 빼기 + 목록 복사
 let AV={tab:'units',open:null,lap:1,sent:{},kid:null,msg:'',openSet:new Set()};
 async function kidFind(){if(AV.kid)return AV.kid;let id=WHO,st=ST;
   if(DB){try{for(const x of await DB.list('speed')){if(!/^u-/.test(x.id))continue;
@@ -451,7 +451,7 @@ function adminViewHTML(){if(!ADMIN)return logHTML();const K=AV.kid;let h=tabsHTM
     h+=`<div class="card"><p class="sub" style="margin:0 0 6px">시훈이가 고른 단어 수준의 문장이 나와요. 맨 위 10개가 지금 작은 단계, 그 아래는 앞 작은 단계 4개.</p>${lapTabs()}`;
     if(d&&d.end)h+=`<div class="note">오늘은 이미 끝냈어요.</div>`;
     else if(c)h+=`<div class="note">시훈이가 이 수준으로 벌써 시작했어요 (${c.i} / ${c.ids.length}). 아래가 그 문장이에요.</div>`+sentRows(c.ids,c.kinds);
-    else if(L)h+=`<div class="sub" style="margin:8px 0">✓ 저장됨 · 시훈이가 ${LAPS[AV.lap]}를 고르면 이 ${L.ids.length}문장이 나와요.</div>`+sentRows(L.ids,L.kinds)+`<div class="row"><button class="light" data-act="anew">🔄 50문장 새로 만들기</button></div>`;
+    else if(L)h+=`<div class="sub" style="margin:8px 0">✓ 저장됨 · 시훈이가 ${LAPS[AV.lap]}를 고르면 이 ${Math.min(L.ids.length,DAY_N)}문장이 나와요.</div>`+sentRows(L.ids.slice(0,DAY_N),(L.kinds||[]).slice(0,DAY_N))+`<div class="row"><button class="light" data-act="anew">🔄 10문장 새로 만들기</button></div>`;
     else h+=`<div class="row"><button class="big" style="max-width:320px" data-act="anew">📅 ${LAPS[AV.lap]} 오늘 문장 만들기</button></div>`;
     return h+`</div>`}
   // 뺀 문장
@@ -536,8 +536,10 @@ const ACT={
     const pre=!TRY&&PLAN&&PLAN.pre&&PLAN.pre.d===today()&&PLAN.pre.u===uk&&PLAN.pre.L&&PLAN.pre.L[lap];
     if(!TRY&&c&&c.v===3&&c.date===today()&&c.u===uk&&c.lap===lap&&c.ids&&c.kinds){({ids,kinds,i,res,ms}=c);
       // 이어서 할 때: 새 규칙으로 빠진 문장·엄마가 뺀 문장은 남은 차례에서 빼요
-      const keep=ids.map((id,j)=>j<i||okIt(IT(id)));ids=ids.filter((x,j)=>keep[j]);kinds=kinds.filter((x,j)=>keep[j])}
-    else if(pre){ids=[];kinds=[];pre.ids.forEach((id,j)=>{if(okIt(IT(id))){ids.push(id);kinds.push(pre.kinds[j]||'n')}})}
+      const keep=ids.map((id,j)=>j<i||okIt(IT(id)));ids=ids.filter((x,j)=>keep[j]);kinds=kinds.filter((x,j)=>keep[j]);
+      // 엄마 11/28 하루 10문장: 전에 만든 50문장 묶음은 10문장(이미 10 넘게 했으면 지금 문장)까지만
+      const cut=Math.max(DAY_N,i+1);ids=ids.slice(0,cut);kinds=kinds.slice(0,cut)}
+    else if(pre){ids=[];kinds=[];pre.ids.forEach((id,j)=>{if(ids.length<DAY_N&&okIt(IT(id))){ids.push(id);kinds.push(pre.kinds[j]||'n')}})}
     else{({ids,kinds}=daySet(uk,lap))}
     if(!ids.length){alert('문장을 만들지 못했어요. 앱을 닫았다가 다시 열어 주세요.');return}
     RUN={date:today(),stage,u:uk,lap,ids,kinds,i,res,ms,t:Date.now(),blobs:[],day:null};keepCur();
