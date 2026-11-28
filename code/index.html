@@ -218,7 +218,7 @@ async function seedSesi() {
   const meta = await API.getMeta();
   if (meta.seededSesi) return;
   try {
-    const r = await fetch('../sesi/index.html', { cache: 'no-store' });
+    const r = await fetch('games/sesi/index.html', { cache: 'no-store' });
     if (!r.ok) return;
     const html = await r.text();
     const gid = 'sesi';
@@ -238,25 +238,32 @@ const catSvg = (px) => `<svg class="cat" width="${px}" height="${px}" viewBox="-
 const power = () => { const left = Math.max(0, DAY_WON - (+S.use.won || 0)); const pct = Math.round(left / DAY_WON * 100); return `<div class="power" title="오늘 카츄 힘">카츄 힘 <span class="bar"><i style="width:${pct}%"></i></span></div>`; };
 const pubOf = (gid) => S.pubs.find((p) => p.id === gid);
 /* ---------------- 길 5칸: 내가 만들기 → 엄마 확인 → 가족에게 올림 → 엄마랑 고치기 → 가져오기 ----------------
-   엄마랑 Claude가 저장소에서 같이 고친 게임은 games/list.json 에 적혀요: { "게임id": { "state": "working"|"ready", "note": "바뀐 것", "at": "2026-11-27T20:00:00+09:00", "path": "../sesi/index.html" } }
+   엄마랑 Claude가 저장소에서 같이 고친 게임은 games/list.json 에 적혀요: { "게임id": { "state": "working"|"ready", "note": "바뀐 것", "at": "2026-11-27T20:00:00+09:00", "path": "games/sesi/index.html" } }
    가져오면 게임에 imported(시각)를 적고, 그 뒤로 길은 다시 1번부터. */
-const ROAD = ['내가 만들기', '엄마 확인', '가족에게 올림', '엄마랑 고치기', '가져오기'];
+const ROAD = ['내가 만들기', '엄마 허락', '웹에 올림', '엄마랑 고치기', '가져오기'];
+/* 웹 주소(엄마 11/28, 예전 주소 그대로): 세시풍속 = …/family-dashboard/sesi/, 새 게임 = …/family-dashboard/code/play.html?g=게임
+   그 페이지가 서버 codePlay에서 「마지막으로 올린 모습」을 받아 보여 줘요(play.js).
+   - 주소가 있는 게임(엄마가 한 번 허락함, pub.addr / 세시풍속)은 「🌐 웹에 올리기」를 누르면 엄마 OK 없이 바로 바뀌어요.
+   - 새 게임은 처음 한 번 엄마 허락(대시보드 관리자 「주소 만들어 주기」)을 받아야 주소가 생겨요. */
+const playUrl = (gid) => gid === 'sesi' ? new URL('../sesi/', location.href).href : new URL('play.html?g=' + encodeURIComponent(gid), location.href).href;
+const ADDR_GAMES = new Set(['sesi']);   // 처음부터 주소가 있던 게임
+const hasAddr = (gid) => ADDR_GAMES.has(gid) || !!(pubOf(gid) && (pubOf(gid).addr || pubOf(gid).state === 'ok'));
 async function loadRepo() { try { const r = await fetch('games/list.json', { cache: 'no-store' }); if (r.ok) S.repo = await r.json(); } catch (e) {} }
 function stage(g) {
-  const imp = +g.imported || 0, e = S.repo[g.id], p = pubOf(g.id);
+  const imp = +g.imported || 0, e = S.repo[g.id], p = pubOf(g.id), addr = hasAddr(g.id);
   const eAt = e ? Date.parse(e.at) || 0 : 0;
   if (e && eAt > imp && e.state === 'ready') return { now: 5, msg: '', arrive: e };
   if (e && eAt > imp && e.state === 'working') return { now: 4, msg: '지금 엄마랑 Claude가 크게 고치고 있어. 다 되면 여기에 「가져오기」가 생겨. 그동안 형아 게임은 계속 고쳐도 돼.' };
-  const pp = p && (+p.at || 0) > imp ? p : null;
-  if (pp && pp.state === 'ok') return { now: 3, done3: true, msg: '가족에게 올라갔어! 엄마랑 크게 고치고 싶으면 엄마한테 말해 봐.' + (g.ver > pp.ver ? ' 올린 뒤에 더 고친 건 다시 올려야 가족이 볼 수 있어.' : '') };
-  if (pp && pp.state === 'wait') return { now: 2, msg: '엄마한테 보냈어. 엄마가 해 보고 OK 하면 가족에게 올라가.' };
-  if (pp && pp.state === 'no') return { now: 1, msg: '엄마가 조금 더 고쳐 보재. 고친 다음 다시 「가족에게 올리기」를 눌러 봐.' };
-  return { now: 1, msg: g.ver ? '마음에 들면 「가족에게 올리기」를 눌러 봐. 엄마가 보고 OK 하면 가족에게 올라가.' : '카츄랑 설계하는 중이야.' };
+  if (p && p.state === 'wait') return { now: 2, msg: '엄마한테 웹 주소를 부탁했어. 엄마가 허락하면 주소가 생겨.' };
+  if (p && p.state === 'ok' && (+p.at || 0) > imp) return { now: 3, doneNow: true, url: playUrl(g.id), msg: g.ver > p.ver ? `웹에는 ${p.ver}번째 모습이 올라가 있어. 지금 모습도 올리려면 「🌐 웹에 올리기」를 다시 눌러.` : '웹에 올라갔어! 다른 기기에서도 이 주소로 할 수 있어.' };
+  if (addr) return { now: 3, url: playUrl(g.id), msg: '「🌐 웹에 올리기」를 누르면 바로 웹 주소에 올라가.' };
+  if (p && p.state === 'no') return { now: 1, msg: '엄마가 조금 더 고쳐 보재. 고친 다음 다시 웹 주소를 부탁해 봐.' };
+  return { now: 1, msg: g.ver ? '마음에 들면 「🌐 웹 주소 부탁하기」를 눌러 봐. 엄마가 허락하면 웹 주소가 생겨.' : '카츄랑 설계하는 중이야.' };
 }
 function roadHtml(g, gidAttr) {
   const s = stage(g);
-  const steps = ROAD.map((t, i) => { const n = i + 1; const cls = n < s.now || (n === 3 && s.done3) ? 'done' : n === s.now ? 'now' : ''; return `<div class="st ${cls}${n === s.now && cls === 'done' ? ' now' : ''}"><div class="c">${cls === 'done' ? '✓' : n}</div>${t}</div>`; }).join('');
-  const body = s.arrive ? `<div class="arrive"><b>엄마랑 고친 모습이 도착했어</b><div class="mini" style="margin:4px 0 10px">${s.arrive.note ? '바뀐 것: ' + esc(s.arrive.note) : ''}</div><div class="row"><button class="btn s" data-imp="${esc(gidAttr)}">🔄 가져오기</button><button class="btn w s" data-tryrepo="${esc(gidAttr)}">먼저 해 보기</button></div></div>` : `<div class="say">${esc(s.msg)}</div>`;
+  const steps = ROAD.map((t, i) => { const n = i + 1; const cls = n < s.now || (n === s.now && s.doneNow) ? 'done' : n === s.now ? 'now' : ''; return `<div class="st ${cls}${n === s.now && cls === 'done' ? ' now' : ''}"><div class="c">${cls === 'done' ? '✓' : n}</div>${t}</div>`; }).join('');
+  const body = s.arrive ? `<div class="arrive"><b>엄마랑 고친 모습이 도착했어</b><div class="mini" style="margin:4px 0 10px">${s.arrive.note ? '바뀐 것: ' + esc(s.arrive.note) : ''}</div><div class="row"><button class="btn s" data-imp="${esc(gidAttr)}">🔄 가져오기</button><button class="btn w s" data-tryrepo="${esc(gidAttr)}">먼저 해 보기</button></div></div>` : `<div class="say">${esc(s.msg)}${s.url ? `<br><b style="word-break:break-all">${esc(s.url)}</b>` : ''}</div>`;
   return `<div class="road" role="list" aria-label="지금 단계: ${s.now}. ${ROAD[s.now - 1]}">${steps}</div>${body}`;
 }
 function bindRoad(root) {
@@ -288,7 +295,7 @@ function renderHome() {
       ${roadHtml(g, g.id)}
       <div class="row" style="margin-top:10px"><button class="btn s" data-open="${esc(g.id)}">이어 고치기</button>${g.ver ? `<button class="btn w s" data-play="${esc(g.id)}">▶ 해 보기</button>` : ''}</div></div>`).join('')}
   </div>
-  <div class="card"><h2>🏠 가족에게 올린 게임</h2>${pubs.length ? pubs.map((p) => `<div class="row" style="margin-top:8px"><span style="flex:1">${esc(p.title)} <span class="mini">${p.ver}번째 모습</span></span><button class="btn w s" data-playpub="${esc(p.id)}">▶ 해 보기</button></div>`).join('') : '<div class="mini">아직 없어요</div>'}</div>`;
+  <div class="card"><h2>🌐 웹에 올린 게임</h2>${pubs.length ? pubs.map((p) => `<div class="row" style="margin-top:8px"><span style="flex:1">${esc(p.title)} <span class="mini">${p.ver}번째 모습</span><br><span class="mini" style="word-break:break-all">${esc(playUrl(p.id))}</span></span><button class="btn w s" data-playpub="${esc(p.id)}">▶ 해 보기</button></div>`).join('') : '<div class="mini">아직 없어요</div>'}</div>`;
   bindRoad(app);
   $('#newG').onclick = () => { const gid = 'g' + rid(); openGame(gid, true); };
   app.querySelectorAll('[data-open]').forEach((b) => b.onclick = () => openGame(b.dataset.open));
@@ -348,13 +355,14 @@ function renderTools() {
   const t = $('#tools'); if (!t) return; const g = S.game || {};
   const title = $('#gTitle'); if (title) title.textContent = g.title || '새 게임';
   const p = pubOf(S.gid);
-  t.innerHTML = g.ver ? `<button class="btn w s" id="reload">▶ 처음부터 다시</button><button class="btn w s" id="big">⛶ 크게</button><button class="btn w s" id="back">↩ 아까로 돌려 줘</button><button class="btn w s" id="pub" ${p && p.state === 'wait' && p.ver === g.ver ? 'disabled' : ''}>🏠 가족에게 올리기</button><span class="mini" style="align-self:center">${g.ver}번째 모습</span>` : '';
+  t.innerHTML = g.ver ? `<button class="btn w s" id="reload">▶ 처음부터 다시</button><button class="btn w s" id="big">⛶ 크게</button><button class="btn w s" id="back">↩ 아까로 돌려 줘</button><button class="btn w s" id="pub" ${!hasAddr(g.id) && p && p.state === 'wait' && p.ver === g.ver ? 'disabled' : ''}>${hasAddr(g.id) ? '🌐 웹에 올리기' : '🌐 웹 주소 부탁하기'}</button><button class="btn w s" id="fileOut" title="엄마용: 프로젝트 채팅에 올릴 파일">📎 Claude에게 줄 파일</button><span class="mini" style="align-self:center">${g.ver}번째 모습</span>` : '';
   const rw = $('#roadW'); if (rw) { rw.innerHTML = g.ver || S.repo[g.id] ? `<div class="card" style="margin-top:10px">${roadHtml(g, g.id)}</div>` : ''; bindRoad(rw); }
   if (!g.ver) return;
   $('#reload').onclick = () => mountGame($('#stage'), S.preview ? S.preview.html : S.curHtml);
   $('#big').onclick = () => playFull(S.preview ? S.preview.html : S.curHtml);
   $('#back').onclick = openVersions;
   $('#pub').onclick = askPublish;
+  $('#fileOut').onclick = fileOut;
   const vb = $('#viewbar');
   vb.innerHTML = S.preview ? `<div class="viewbar"><b>${S.preview.n}번째 모습을 보는 중</b><button class="btn s" id="useV">이걸로 돌려</button><button class="btn w s" id="curV">지금 모습으로</button></div>` : '';
   if (S.preview) {
@@ -458,18 +466,52 @@ async function revertTo() {
   S.chat.push({ who: 'sys', text: `${n}번째 모습: ${note}` }); saveChat();
   mountGame($('#stage'), S.curHtml); renderTools(); renderChat();
 }
+/* 📎 Claude에게 줄 파일(엄마 11/28 「코딩방에서 그걸 하자」): 올리지 않은 게임도 지금 모습을 html 파일로 받아요.
+   엄마가 프로젝트 채팅에 올리면 Claude가 고치고 games/list.json 에 적어 → 내일 시훈이 앱에 「🔄 가져오기」.
+   FILE_LOCK = true 면 엄마 비번(오늘의 공부 관리자 비번)을 한 번 물어요(이 창을 닫을 때까지 기억). */
+const FILE_LOCK = true;
+function fileOut() {
+  const g = S.game; const html = S.preview ? S.preview.html : S.curHtml; if (!g || !html) return;
+  const n = S.preview ? S.preview.n : g.ver;
+  const save = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    a.download = `sihun-game-${g.id}-v${n}.html`; // 한글 파일 이름은 기기에 따라 「download」로 바뀌어서 영어로
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    toast('파일을 받았어요. 프로젝트 채팅에 올려 주세요.');
+  };
+  let ok = !FILE_LOCK; try { if (sessionStorage.getItem('code:mom') === '1') ok = true; } catch (e) {}
+  if (ok) return save();
+  const d = document.createElement('div'); d.className = 'sheet';
+  d.innerHTML = `<div class="panel"><h2>📎 엄마만</h2><p>엄마 비밀번호를 넣으면 「${esc(g.title)}」 ${n}번째 모습 파일을 받아요.</p><input id="mpw" type="password" inputmode="numeric" autocomplete="off" maxlength="6" style="font:inherit;font-size:22px;width:100%;padding:10px 12px;border:2px solid var(--line);border-radius:12px;letter-spacing:6px"><p class="mini" id="mpwMsg" style="min-height:20px"></p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="mpx">닫기</button><button class="btn s" id="mpgo">받기</button></div></div>`;
+  document.body.appendChild(d);
+  const inp = $('#mpw', d); inp.focus();
+  const go = () => { if (inp.value.replace(/\D/g, '') === '503553') { try { sessionStorage.setItem('code:mom', '1'); } catch (e) {} d.remove(); save(); } else { $('#mpwMsg', d).textContent = '비밀번호가 달라요.'; inp.value = ''; } };
+  $('#mpgo', d).onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+  $('#mpx', d).onclick = () => d.remove();
+}
 function askPublish() {
   const g = S.game; if (!g || !g.ver) return;
+  const html = S.preview ? S.preview.html : S.curHtml; const n = S.preview ? S.preview.n : g.ver;
+  const addr = hasAddr(g.id), url = playUrl(g.id);
   const d = document.createElement('div'); d.className = 'sheet';
-  d.innerHTML = `<div class="panel"><h2>🏠 가족에게 올리기</h2><p>「${esc(g.title)}」 ${g.ver}번째 모습을 엄마에게 보내요. 엄마가 해 보고 OK 하면 가족 대시보드에 「시훈이 게임」으로 올라가요.</p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="px">아직</button><button class="btn s" id="pgo">엄마에게 보내기</button></div></div>`;
+  d.innerHTML = addr
+    ? `<div class="panel"><h2>🌐 웹에 올리기</h2><p>「${esc(g.title)}」 ${n}번째 모습을 웹 주소에 바로 올려요. 다른 기기에서도 이 주소로 할 수 있어요.</p><p><b style="word-break:break-all">${esc(url)}</b></p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="px">아직</button><button class="btn s" id="pgo">올리기</button></div></div>`
+    : `<div class="panel"><h2>🌐 웹 주소 부탁하기</h2><p>새 게임은 엄마가 한 번 허락해야 웹 주소가 생겨요. 「${esc(g.title)}」 ${n}번째 모습을 엄마에게 보낼까?</p><div class="row" style="justify-content:flex-end"><button class="btn w s" id="px">아직</button><button class="btn s" id="pgo">엄마에게 부탁하기</button></div></div>`;
   document.body.appendChild(d);
   $('#px', d).onclick = () => d.remove();
   $('#pgo', d).onclick = async () => {
-    const html = S.curHtml; if (!html) return;
+    if (!html) return;
     try {
-      await API.setPub(g.id, { title: g.title || '내 게임', ver: g.ver, html, state: 'wait', at: Date.now() });
-      await API.addNote(`🎮 시훈이가 「${g.title || '내 게임'}」 게임을 가족에게 올리고 싶대요. 대시보드 「시훈이가 만든 게임」에서 관리자 모드로 해 보고 OK를 눌러 주세요.`);
-      d.remove(); S.chat.push({ who: 'sys', text: '엄마에게 보냈어요. 엄마가 OK 하면 가족에게 올라가요.' }); saveChat(); renderChat(); renderTools();
+      if (addr) {
+        await API.setPub(g.id, { title: g.title || '내 게임', ver: n, html, state: 'ok', addr: true, at: Date.now() });
+        S.chat.push({ who: 'sys', text: `${n}번째 모습을 웹에 올렸어요: ${url}` });
+      } else {
+        await API.setPub(g.id, { title: g.title || '내 게임', ver: n, html, state: 'wait', at: Date.now() });
+        await API.addNote(`🎮 시훈이가 새 게임 「${g.title || '내 게임'}」의 웹 주소를 부탁했어요. 대시보드 「오늘」 탭 「🎮 시훈이가 만든 게임」에서 관리자 모드로 해 보고 「주소 만들어 주기」를 눌러 주세요.`);
+        S.chat.push({ who: 'sys', text: '엄마에게 웹 주소를 부탁했어요. 엄마가 허락하면 주소가 생겨요.' });
+      }
+      d.remove(); saveChat(); renderChat(); renderTools();
     } catch (e) { toast('보내지 못했어요. 인터넷을 확인해 주세요.'); }
   };
 }

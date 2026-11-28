@@ -1231,3 +1231,30 @@ exports.codeKatchu = onDocumentCreated(
     }
   }
 );
+
+// ===================================================================================
+// 🌐 시훈이 게임 웹 주소(엄마 11/28 「OK 안 거쳐도 바로」, 주소는 예전 그대로 …github.io/family-dashboard/sesi/):
+// GitHub Pages 쪽 페이지(sesi/, code/play.html?g=)가 이 함수에서 「코딩방에서 마지막으로 올린 모습」을 받아 잠긴 상자에 띄워요.
+// 저장소에 쓰지 않으니 토큰이 필요 없어요. 올리면 바로(새로 열면) 바뀌어요.
+// GET ?g={게임id} → {title, ver, html}. 코딩방에서 올린 적 없으면 404(페이지가 저장소 원본을 보여 줌).
+// 새 게임은 엄마가 대시보드에서 「주소 만들어 주기」(state ok)를 해야 열려요.
+// ===================================================================================
+const { onRequest } = require("firebase-functions/v2/https");
+const PLAY_ORIGINS = ["https://s32120255-debug.github.io", "https://kmsysh-fa740.web.app", "https://kmsysh-fa740.firebaseapp.com"];
+exports.codePlay = onRequest({ region: "asia-northeast3", maxInstances: 3, memory: "256MiB", timeoutSeconds: 30 }, async (req, res) => {
+  const origin = String(req.get("origin") || "");
+  if (PLAY_ORIGINS.includes(origin)) { res.set("Access-Control-Allow-Origin", origin); res.set("Vary", "Origin"); }
+  res.set("Cache-Control", "no-store");
+  res.set("X-Robots-Tag", "noindex, nofollow");
+  if (req.method === "OPTIONS") { res.set("Access-Control-Allow-Methods", "GET"); return res.status(204).send(""); }
+  const g = String(req.query.g || "");
+  if (!/^[A-Za-z0-9_-]{1,40}$/.test(g)) return res.status(400).json({ err: "bad" });
+  try {
+    const d = (await getFirestore().doc("sihunCode/main/pub/" + g).get()).data();
+    if (!d || !d.html || d.state !== "ok") return res.status(404).json({ err: "none" });
+    return res.status(200).json({ title: String(d.title || "시훈이 게임").slice(0, 40), ver: +d.ver || 0, at: +d.at || 0, html: d.html });
+  } catch (e) {
+    console.error("codePlay", e && e.message);
+    return res.status(500).json({ err: "error" });
+  }
+});
