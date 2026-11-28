@@ -4823,7 +4823,7 @@ function bindCommon(){ document.querySelectorAll('[data-act="home"]').forEach(b=
 async function toHub(){ const skipT=toHub.later; toHub.later=false;
   if(!skipT&&!teachDone()&&DB_STATE==='ok'){ const m=modal(`<h2>🧑‍🏫 오늘의 가르치기가 남았어요</h2><p>카츄에게 1문제만 알려 주면 수학 끝이에요.</p><div class="acts"><button class="ok" id="tg">가르치러 가기</button></div><div class="acts"><button class="hint" id="tlt" style="flex:1">이따가 할게요</button></div>`);
     m.querySelector('#tg').onclick=()=>{ m.remove(); teachHome(); }; m.querySelector('#tlt').onclick=()=>{ m.remove(); toHub.later=true; toHub(); }; return; }
-  if(!skipT&&CMD&&!cmDone()&&DB_STATE==='ok'){ const m=modal(`<h2>🗺️ 오늘의 개념 지도가 남았어요</h2><p>빈칸에 카드를 넣어 지도 한 장만 채우면 돼요.</p><div class="acts"><button class="ok" id="cg">지도 채우러 가기</button></div><div class="acts"><button class="hint" id="clt" style="flex:1">이따가 할게요</button></div>`);
+  if(CM_ON&&!skipT&&CMD&&!cmDone()&&DB_STATE==='ok'){ const m=modal(`<h2>🗺️ 오늘의 개념 지도가 남았어요</h2><p>빈칸에 카드를 넣어 지도 한 장만 채우면 돼요.</p><div class="acts"><button class="ok" id="cg">지도 채우러 가기</button></div><div class="acts"><button class="hint" id="clt" style="flex:1">이따가 할게요</button></div>`);
     m.querySelector('#cg').onclick=()=>{ m.remove(); cmHome(); }; m.querySelector('#clt').onclick=()=>{ m.remove(); toHub.later=true; toHub(); }; return; }
   if(UNSAVED.length||DIRTY){ m32Backup(); await saveAll(true); } if(!UNSAVED.length&&!DIRTY) return HUB.back('m32');
   const m=modal(`<h2>저장 안 한 기록이 있어요</h2><p>💾 저장을 눌러야 기록이 남아요.</p><div class="acts"><button class="ok" id="hs">💾 저장하고 나가기</button></div><div class="acts"><button class="hint" id="hn" style="flex:1">저장 안 하고 나가기</button><button class="hint" id="hc" style="flex:1">취소</button></div>`);
@@ -4839,7 +4839,7 @@ function home(){ CUR='home'; C=null; LS=null; const t=nextTarget(), s=SKILLS[t.i
    ${EMBED?'':`<div class="mombar">👩 엄마 검토용 앱이에요. 시훈이는 <b>오늘의 공부 → 수학</b>에서 풀어요 (기록은 그쪽에 남아요).</div>`}
    ${pfReviewHome()}<button class="big" id="go"><div><div class="t">${big.t}</div><div class="s">${big.s}</div></div><span class="go">▶</span></button>
    ${EMBED?`<button class="big tbig ${teachDone()?'done':''}" id="tgo"><div><div class="t">${teachDone()?'✅ 오늘의 가르치기 끝':'🧑‍🏫 오늘의 가르치기 · 1문제'}</div><div class="s">${teachDone()?'카츄에게 잘 알려 줬어요. 내일 또 해요!':'카츄에게 풀이를 처음부터 순서대로 알려 줘요'}</div></div><span class="go">${teachDone()?'✓':'▶'}</span></button>`:''}
-   <button class="big tbig cmbig ${cmDone()?'done':''}" id="cmgo"><div><div class="t">${cmDone()?'✅ 오늘의 개념 지도 끝':'🗺️ 오늘의 개념 지도 · 한 장'}</div><div class="s">${cmDone()?'지도를 다 채웠어요. 내일 또 해요!':'빈칸에 낱말 카드를 넣어 지도를 완성해요'}</div></div><span class="go">${cmDone()?'✓':'▶'}</span></button>
+   ${CM_ON?`   <button class="big tbig cmbig ${cmDone()?'done':''}" id="cmgo"><div><div class="t">${cmDone()?'✅ 오늘의 개념 지도 끝':'🗺️ 오늘의 개념 지도 · 한 장'}</div><div class="s">${cmDone()?'지도를 다 채웠어요. 내일 또 해요!':'빈칸에 낱말 카드를 넣어 지도를 완성해요'}</div></div><span class="go">${cmDone()?'✓':'▶'}</span></button>`:''}
    ${units}
    <div class="note">기록은 문제마다 자동으로 저장돼요. 중간에 나가도 다음에 이어서 해요.</div>
    <div class="foot"><button class="pbtn" id="parent">👩 엄마 보기</button></div></div>`;
@@ -5684,6 +5684,7 @@ const CMAPS=[
    f19:{a:'큰',t:['작은'],c:'분모가 같은 분수 크기 비교: 분자가 어떤 쪽이 큰가'},
    f20:{a:'1/3',t:['1/5'],c:'단위분수 1/3과 1/5 중 더 큰 것(분모가 작을수록 큼)'}}}
 ];
+const CM_ON=false; // 엄마 11/28: 하루 개념 지도는 아티팩트 「시훈 수학 과외」로 옮김(앱에선 숨김, 기록·엄마 탭은 그대로)
 const CM_HINT=[3,6]; // 같은 칸에서 막힌 횟수가 이만큼이면 힌트 1단계·2단계
 let CMD=null, CMX=null, CM_LOADING=null, CM_OFF=false;
 const cmMap=id=>CMAPS.find(m=>m.id===id)||CMAPS[0];
@@ -5745,33 +5746,39 @@ function cmAfter(){ const X=CMX; if(X.mom) return; const D=X.D, M=CMD.maps[D.map
     D.blanks.forEach(k=>{ const r=D.res[k]||{}; const s=M.sl[k]||(M.sl[k]={n:0,ok:0,st:0}); s.n++; if(r.first){ s.ok++; s.st=(s.st||0)+1; s.last=true; } else { s.st=0; s.last=false; } });
     if(D.blanks.length===cmKeys(X.m).length&&D.blanks.every(k=>D.res[k]&&D.res[k].first)) M.done=true; refreshTop(); }
   cmSave(); }
-function cmTalkDraw(){ const X=CMX, T=X.talk, el=$('#cmt'); if(!el||!T) return; const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+// 선생님 대화 창(개념 지도·최상위S 같이 씀). send(v): 시훈이 대답, again(): 다시 보내기
+function tkDraw(el,T,send,again,tip){ if(!el||!T) return; const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   const bub=t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?'<b class="tnm cmtn">👩‍🏫 수학 선생님</b>':'🙋 '}${picEsc(t.text)}</div>`;
-  el.innerHTML=`<div class="tutor cmtalk"><div class="tlog">${T.turns.map(bub).join('')}</div>${T.wait?'<div class="twait">👩‍🏫 선생님이 생각하고 있어요…</div>':T.err?`<div class="fb show h">선생님 연결이 잠깐 안 됐어요.</div><div class="acts"><button class="ok" id="cmre">다시 보내기</button></div>`:`<textarea class="tans" id="cmta" rows="2" placeholder="${SR?'🎤 누르고 말로 대답해요. 다 말하면 「보내기」!':'여기에 대답을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;min-height:64px"></textarea><div class="acts">${SR?'<button class="ok" id="cmm">🎤 말로 대답</button>':''}<button class="hint" id="cms" style="flex:0 0 auto">보내기 ▶</button></div><div class="tsub">답을 알 것 같으면 언제든 위에서 카드를 다시 골라요 · <button class="tlink" id="cml">🔊 다시 듣기</button></div>`}</div>`;
+  el.innerHTML=`<div class="tutor cmtalk"><div class="tlog">${T.turns.map(bub).join('')}</div>${T.wait?'<div class="twait">👩‍🏫 선생님이 생각하고 있어요…</div>':T.err?`<div class="fb show h">선생님 연결이 잠깐 안 됐어요.</div><div class="acts"><button class="ok" id="cmre">다시 보내기</button></div>`:`<textarea class="tans" id="cmta" rows="2" placeholder="${SR?'🎤 누르고 말로 대답해요. 다 말하면 「보내기」!':'여기에 대답을 써요.'}" style="width:100%;box-sizing:border-box;font:inherit;font-size:19px;min-height:64px"></textarea><div class="acts">${SR?'<button class="ok" id="cmm">🎤 말로 대답</button>':''}<button class="hint" id="cms" style="flex:0 0 auto">보내기 ▶</button></div><div class="tsub">${tip} · <button class="tlink" id="cml">🔊 다시 듣기</button></div>`}</div>`;
   const l=el.querySelector('.tlog'); if(l) l.scrollTop=l.scrollHeight;
-  const re=el.querySelector('#cmre'); if(re) re.onclick=()=>{ T.err=null; cmAsk(); };
+  const re=el.querySelector('#cmre'); if(re) re.onclick=()=>{ T.err=null; again(); };
   const ta=el.querySelector('#cmta'); if(!ta) return; let MIC=null; const stop=()=>{ if(MIC){ MIC.stop(); MIC=null; } };
   const mb=el.querySelector('#cmm'); if(mb) mb.onclick=()=>{ if(MIC&&MIC.isOn()){ stop(); return; } MIC=window.liveMic?window.liveMic(ta,on=>{ const b=el.querySelector('#cmm'); if(b) b.textContent=on?'⏹ 그만 듣기':(ta.value.trim()?'🎤 이어서 말하기':'🎤 말로 대답'); if(!on) MIC=null; }):null; if(!MIC) toast('음성 인식이 안 돼요. 글로 써 줘요.'); };
-  el.querySelector('#cms').onclick=()=>{ stop(); const v=ta.value.trim(); if(!v){ toast('말로 하거나 써서 대답해 줘요.'); return; } T.turns.push({who:'me',text:v}); const r=X.D.res[T.k]; if(r){ r.turns=(r.turns||0)+1; cmSave(); } cmAsk(); };
+  el.querySelector('#cms').onclick=()=>{ stop(); const v=ta.value.trim(); if(!v){ toast('말로 하거나 써서 대답해 줘요.'); return; } T.turns.push({who:'me',text:v}); send(v); };
   el.querySelector('#cml').onclick=()=>{ const a=T.turns.filter(t=>t.who==='ai').slice(-1)[0]; if(a) tutorSay(a.text); }; }
+function cmTalkDraw(){ const X=CMX, T=X.talk; tkDraw($('#cmt'),T,()=>{ const r=X.D.res[T.k]; if(r){ r.turns=(r.turns||0)+1; cmSave(); } cmAsk(); },()=>cmAsk(),'답을 알 것 같으면 언제든 위에서 카드를 다시 골라요'); }
+// m32tutor에 보내고 답 기다리기(같이 씀). alive(): 아직 그 화면인지
+async function tkCall(id,req,alive){ if(!tutorOK()) return {state:'error'}; let res=null;
+  try{ await DBH.doc('m32tutor/'+id).set(req);
+    for(let i=0;i<75&&!res;i++){ await new Promise(z=>setTimeout(z,i<5?1500:1000)); if(!alive()) return null; try{ const sn=await DBH.doc('m32tutor/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) res=d.res; }catch(e){} }
+  }catch(e){ return {state:'error'}; } return res||{state:'error'}; }
+const TK_TONE='말투: 시훈이에게 존댓말(해요체)로 말해요. 「~해 볼래요?」「~이에요?」처럼. 반말은 절대 쓰지 마요.';
+const tkHint=hl=>hl===0?'힌트 단계 0: 힌트는 주지 마요. 질문만.':hl===1?'힌트 단계 1: 시훈이가 여러 번 막혔어요. 질문과 함께 아주 작은 힌트 하나(어디를 보면 되는지 정도)를 줘도 돼요. 정답은 여전히 말하지 마요.':'힌트 단계 2: 시훈이가 많이 막혔어요. 조금 더 구체적인 힌트(예: 비슷한 쉬운 예를 같이 계산)를 줘도 돼요. 그래도 정답 자체는 말하지 마요.';
 function cmContext(k){ const m=CMX.m; let row=m.rows.find(r=>JSON.stringify(r).includes('['+k+']'));
   const txt=row?(row.top||row.cri||row.t||(row.pair||[]).join(' / ')):''; return stripTags(txt.replace(/<br>/g,' ').replace(/\[(\w+)\]/g,(_,x)=>x===k?'(빈칸)':(CMX.D.blanks.includes(x)&&!(CMX.D.res[x]&&CMX.D.res[x].ok)?'(다른 빈칸)':m.slots[x].a))); }
 async function cmAsk(){ const X=CMX, T=X.talk; if(!T) return; const k=T.k, s=X.m.slots[k], r=X.D.res[k]||{}; const hl=cmHintLv(k);
   T.wait=true; T.err=null; cmTalkDraw(); const T0=T;
   const rule=[
-   '[이번 요청은 문제 풀이가 아니라 「개념 지도 빈칸 채우기」야. 패드 그림은 없어. 너는 카츄가 아니라 수학 선생님이야.]',
+   '[이번 요청은 문제 풀이가 아니라 「개념 지도 빈칸 채우기」예요. 패드 그림은 없어요. 너는 카츄가 아니라 수학 선생님이에요.]', TK_TONE,
    `지도: ${X.m.title}. 빈칸이 있는 줄: ${cmContext(k)}`,
    `이 칸의 뜻: ${s.c}. 정답 카드: 「${s.a}」. 시훈이가 지금까지 넣은 틀린 카드: ${(r.wrong||[]).map(x=>'「'+x+'」').join(', ')||'없음'}.`,
-   '엄마가 정한 규칙: 정답 카드(낱말·숫자)를 절대 직접 말하지 마. 시훈이가 스스로 맞는 카드를 찾을 때까지 끝없이 질문해. 질문을 끝내지 말고, 앞에서 한 질문을 되풀이하지 말고, 시훈이 대답에서 출발해서 질문을 점점 더 작게 쪼개.',
-   '좋은 질문: "그게 맞아?", "왜 그렇게 생각해?", "확인해 볼래?", 반례 하나를 직접 계산해 보게 하기(예: 11÷4를 해 보면 몫과 나머지가 뭐야?), 검산식으로 확인해 보게 하기, 낱말의 뜻을 시훈이 말로 해 보게 하기.',
-   hl===0?'힌트 단계 0: 힌트는 주지 마. 질문만.':hl===1?'힌트 단계 1: 시훈이가 같은 칸에서 여러 번 막혔어. 질문과 함께 아주 작은 힌트 하나(어디를 보면 되는지 정도)를 줘도 돼. 정답은 여전히 말하지 마.':'힌트 단계 2: 시훈이가 많이 막혔어. 조금 더 구체적인 힌트(예: 비슷한 쉬운 예를 같이 계산)를 줘도 돼. 그래도 정답 카드 자체는 말하지 마.',
-   'state: 질문하면 "ask". 시훈이가 맞는 생각에 다다른 것 같으면 "retry"로 "그럼 카드를 다시 골라 볼까요?"처럼 말해. "end"는 쓰지 마. say는 1~2문장, 질문은 하나만.',
-   'mom에는 시훈이가 이 칸에서 어떻게 생각했는지 엄마에게 한 문장으로.'];
-  const req={at:today(),date:today(),ts:new Date().toISOString(),kind:'cmap',mom:X.mom?1:0,problem:{q:`개념 지도 빈칸: ${cmContext(k)}`,ans:s.a,sol:rule},answers:(r.wrong||[]).slice(),turns:T.turns.map(t=>({who:t.who,text:t.text})),img1:'',img2:''};
-  let res=null; const id=`${X.id}-c${k}-${++T.seq}`;
-  if(!tutorOK()) res={state:'error'}; else { try{ await DBH.doc('m32tutor/'+id).set(req); T.calls++;
-    for(let i=0;i<75&&!res;i++){ await new Promise(z=>setTimeout(z,i<5?1500:1000)); if(CMX!==X||X.talk!==T0) return; try{ const sn=await DBH.doc('m32tutor/'+id).get(); const d=sn.exists?sn.data():null; if(d&&d.res) res=d.res; }catch(e){} }
-    }catch(e){ res={state:'error'}; } }
+   '엄마가 정한 규칙: 정답 카드(낱말·숫자)를 절대 직접 말하지 마요. 시훈이가 스스로 맞는 카드를 찾을 때까지 끝까지 질문해요. 질문을 끝내지 말고, 앞에서 한 질문을 되풀이하지 말고, 시훈이 대답에서 출발해서 질문을 점점 더 작게 쪼개요. 시훈이 말을 대신 정리하거나 요약해 주지 마요.',
+   '좋은 질문: "그게 맞아요?", "왜 그렇게 생각해요?", "확인해 볼래요?", 반례 하나를 직접 계산해 보게 하기(예: 11÷4를 해 보면 몫과 나머지가 뭐예요?), 검산식으로 확인해 보게 하기, 낱말의 뜻을 시훈이 말로 해 보게 하기.',
+   tkHint(hl),
+   'state: 질문하면 "ask". 시훈이가 맞는 생각에 다다른 것 같으면 "retry"로 "그럼 카드를 다시 골라 볼까요?"처럼 말해요. "end"는 쓰지 마요. say는 1~2문장, 질문은 하나만.',
+   'mom에는 시훈이가 이 칸에서 어떻게 생각했는지 엄마에게 한 문장으로.'].filter(Boolean);
+  const req={at:today(),date:today(),ts:new Date().toISOString(),kind:'cmap',deep:1,mom:X.mom?1:0,problem:{q:`개념 지도 빈칸: ${cmContext(k)}`,ans:s.a,sol:rule},answers:(r.wrong||[]).slice(),turns:T.turns.map(t=>({who:t.who,text:t.text})),img1:'',img2:''};
+  const id=`${X.id}-c${k}-${++T.seq}`; T.calls++; const res=await tkCall(id,req,()=>CMX===X&&X.talk===T0); if(!res) return;
   if(CMX!==X||X.talk!==T0) return; T.wait=false;
   if(!res||res.state==='error'||!res.say){ T.err=true; cmTalkDraw(); return; }
   if(res.state==='limit'){ T.turns.push({who:'ai',text:'오늘은 선생님이 쉬어야 해요. 카드를 하나씩 넣어 보고, 검산으로 확인해 봐요.'}); cmTalkDraw(); return; }
@@ -5794,10 +5801,11 @@ function cmMomBind(){ $('#cmmom').onclick=()=>{ cmHome.mi=0; cmHome(true); }; co
        ${tk.map(x=>`<div class="tlog" style="max-height:none;margin-top:8px">${(x.turns||[]).map(t=>`<div class="tb ${t.who==='ai'?'ai':'me'}">${t.who==='ai'?`<b class="tnm cmtn">👩‍🏫 수학 선생님${t.hl?` · 힌트 ${t.hl}단계`:''}</b>`:'🙋 '}${picEsc(t.text)}</div>`).join('')}</div>${(x.mom||[]).length?`<div class="sm">👩 메모: ${x.mom.map(picEsc).join(' / ')}</div>`:''}`).join('')}</details>`; }).join(''):'<p class="note">아직 기록이 없어요.</p>'); }); }
 function cmContextOf(m,k){ const r=m.rows.find(x=>JSON.stringify(x).includes('['+k+']')); const t=r?(r.top||r.cri||r.t||(r.pair||[]).join(' / ')):''; return stripTags(t.replace(/<br>/g,' ').replace(/\[(\w+)\]/g,(_,x)=>x===k?'(빈칸)':m.slots[x].a)); }
 
+
 home(); loadDB();
 // ===== 오늘의 공부 홈 화면과 주고받는 것 =====
 function allPassed(){ return SKILLS.every(s=>PROG.sk[s.id].lv>=5); } // 10개 기능 모두 최상위 통과 → 4학년 큰 수로
-function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length, teach:teachDone(), cmap:cmDone(), pf:PROG.pfday===t}; }
+function todayStats(){ const t=today(); const a=allAtt().filter(x=>x.d===t&&x.mode==='solve'&&x.res!=='s'); return {n:a.length, ok:a.filter(x=>x.res==='o').length, teach:teachDone(), cmap:CM_ON?cmDone():undefined, pf:PROG.pfday===t}; }
 function todayTime(){ const t=today(); const concept=PROG.ctime.filter(c=>c.d===t).reduce((s,c)=>s+(c.sec||0),0); const problem=allAtt().filter(x=>x.d===t&&x.mode==='solve').reduce((s,x)=>s+(x.sec||0),0); return {concept,problem}; }
 function hubPlan(){ const t=nextTarget(), s=SKILLS[t.i], r=PROG.sk[s.id]; const lvn=t.kind==='solve'?LV[t.lv]:LV[Math.min(r.lv,4)];
   return {kind:t.kind, title:s.title, unit:s.unit, lv:lvn, lessonMin:estLesson(), checkMin:estCheck(), probMin:estProblems(), per:PER, ready:DB_STATE!=='loading', passed:SKILLS.filter(x=>PROG.sk[x.id].lv>=5).length, total:SKILLS.length}; }
@@ -10325,7 +10333,7 @@ return {open(v){clearInterval(window._tm);if(v==='plan'||(!v&&PLAN)){setPlanMode
       ent('ko',P.map(p=>[p.label,!!p.done&&p.k!=='rest']),L.filter(p=>p.k!=='rest').reduce((a,p)=>a+est(p),0)||null,!L.length)}catch(e){}
     try{const st=stats('math');if(M32()){let P={};try{P=APP_M32.plan()}catch(x){}const N=P.per||MATH_N,left=Math.max(0,N-st.n),pm=P.probMin||15;
         let min=(P.kind==='lesson'?(P.lessonMin||10):0)+((P.kind==='lesson'||P.kind==='check')?(P.checkMin||3):0)+(left?Math.max(1,Math.round(pm*left/N)):0);
-        ent('math',[[`${P.title||'3-2'}${P.kind==='solve'&&P.lv?' · '+P.lv:''} · ${left?left+'문제':'오늘 문제'}`,!left],['🧑‍🏫 가르치기 1문제',!!st.teach],['🗺️ 개념 지도 한 장',!!st.cmap]],min||null,!left&&!!st.teach&&(st.cmap===undefined||!!st.cmap))}
+        ent('math',[[`${P.title||'3-2'}${P.kind==='solve'&&P.lv?' · '+P.lv:''} · ${left?left+'문제':'오늘 문제'}`,!left],['🧑‍🏫 가르치기 1문제',!!st.teach]].concat(st.cmap===undefined?[]:[['🗺️ 개념 지도 한 장',!!st.cmap]]),min||null,!left&&!!st.teach&&(st.cmap===undefined||!!st.cmap))}
       else{const e=mathEst(),left=Math.max(0,MATH_N-st.n);ent('math',[[`4-1 큰 수 · ${left||MATH_N}문제`,!left]],left?(e.min!=null?Math.max(1,Math.round(e.min*left/MATH_N)):15):null,!left)}}catch(e){}
     try{const st=stats('write');ent('write',[[st.n?`오늘 글 ${st.n}개 저장`:'쓸 글이 있을 때만',!!st.n]],null,false)}catch(e){}
     return out}
