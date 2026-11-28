@@ -1559,11 +1559,11 @@ function G4Form(k,f){const S=k.S;
   return G3Form(k,f)}
 ITV.push(['grow vegetables','채소를 기르다','fun interesting'],['ride a horse','말을 타다','fun exciting dangerous'],['skate on the ice','얼음 위에서 스케이트를 타다','fun dangerous'],['draw animals','동물을 그리다','fun easy hard'],
  ['learn magic tricks','마술을 배우다','fun interesting'],['go to bed early','일찍 자다','important good hard'],['visit a museum','박물관에 가다','interesting fun'],['write a story','이야기를 쓰다','fun hard'],
- ['ride the subway alone','혼자 지하철을 타다','dangerous exciting'],['play outside','밖에서 놀다','fun good'],['wear a helmet','헬멧을 쓰다','important'],['listen to others','다른 사람 말을 듣다','important'],
+ ['take the subway alone','혼자 지하철을 타다','dangerous exciting'],['play outside','밖에서 놀다','fun good'],['wear a helmet','헬멧을 쓰다','important'],['listen to others','다른 사람 말을 듣다','important'],
  ['make a cake','케이크를 만들다','fun hard'],['catch a fish','물고기를 잡다','fun hard exciting'],['sing in front of the class','반 친구들 앞에서 노래하다','hard exciting']);
 WHAT.push(['wrote','쓴'],['chose','고른'],['said','말한'],['saw','본'],['heard','들은']);
 YWN.push(['go to the store','가게에 가다',[['buy some gum','껌을 사다'],['look at the toys','장난감을 구경하다']]],['take a bath','목욕하다',[['sing a song','노래를 부르다'],['play with a rubber duck','고무 오리를 가지고 놀다']]],
- ['ride the bus','버스를 타다',[['sit by the window','창가에 앉다'],['read a book','책을 읽다']]],['feel happy','기분이 좋다',[['sing a song','노래를 부르다'],['dance','춤을 추다']]],
+ ['take the bus','버스를 타다',[['sit by the window','창가에 앉다'],['read a book','책을 읽다']]],['feel happy','기분이 좋다',[['sing a song','노래를 부르다'],['dance','춤을 추다']]],
  ['go to the pool','수영장에 가다',[['jump into the water','물에 뛰어들다'],['swim for an hour','한 시간 동안 수영하다']]],['see a puppy','강아지를 보다',[['say hello','인사하다'],['smile','웃다']]],
  ['get home','집에 오다',[['wash {po} hands','손을 씻다'],['drink some water','물을 좀 마시다']]],['wake up early','일찍 일어나다',[['take a walk','산책하다'],['read a book','책을 읽다']]],
  ['go to the movies','영화관에 가다',[['buy popcorn','팝콘을 사다'],['sit in the front','앞쪽에 앉다']]],['feel cold','춥다',[['drink hot chocolate','코코아를 마시다'],['put on a sweater','스웨터를 입다']]]);
@@ -1776,9 +1776,9 @@ const XF={
  _wereto(r){if(r()<.25){const x=pick(r,WERETO);return {en:x[0],ko:x[1],cue:'were to'}}const S=pick(r,SB),x=pick(r,WTO);return {en:cap('if '+S.en+' were to '+x[0])+', '+S.pr+' would '+PO(S,x[2])+'.',ko:D(['만약',S.nom,x[1],x[3]+' 텐데']),cue:'were to'}},
  _contr(r,lap,seed){const fs=['b_pos','b_neg','z_bneg','z_vneg','z_heneg','v_neg','v_pneg','v_futneg','v_fut','v_prog','v_progneg','b_pneg','v_cant'];for(let g=0;g<20;g++){const f=fs[Math.floor(r()*fs.length)];const it=make([lap,f,(seed+g*7919)>>>0,f].join('.'));if(!it)continue;const en=contract(it.en);if(en!==it.en)return {en,ko:it.ko,w:it.w,cue:"줄임말 (I'm · isn't · don't · won't)"}}throw 0},
  // ───── 낱말 차이(엄마 11/28 「여배우는 actress 같은 미묘한 차이를 스피드영어에」): 한국어는 하나인데 영어는 다른 것. tip = 틀렸을 때 💡 한 줄
- _wgender(r){const F=[SB[3],SB[7],SB[9],_P('Sora','소라',{be:'is',s:1})],M=[SB[2],SB[6],SB[8],_P('Ben','벤',{be:'is',s:1})],fem=r()<.6,S=pick(r,fem?F:M),j=pick(r,[['actor','actress','배우'],['waiter','waitress','종업원'],['prince','princess',''],['host','hostess','진행자'],['hero','heroine','주인공']]);
+ _wgender(r){const F=[SB[3],SB[7],SB[9],_P('Sora','소라',{be:'is',s:1})],M=[SB[2],SB[6],SB[8],_P('Ben','벤',{be:'is',s:1})],fem=r()<.6,S=pick(r,fem?F:M),j=pick(r,[['actor','actress','배우'],['waiter','waitress','종업원'],['prince','princess','']]);
    const w=fem?j[1]:j[0],ko=j[2]||(fem?'공주':'왕자'),adj=r()<.4?pick(r,[['famous','유명한'],['good','훌륭한'],['young','젊은'],['kind','친절한']]):null;const np=(adj?adj[0]+' ':'')+w;
-   return {en:SEN([S.en,S.be,(/^[aeiou]/.test(np)?'an':'a'),np]),ko:D([S.top,COP.pos((adj?adj[1]+' ':'')+ko)]),tip:'여자면 actress · waitress · hostess · heroine',w:adj?[chip(adj[1],adj[0])]:[]}},
+   return {en:SEN([S.en,S.be,(/^[aeiou]/.test(np)?'an':'a'),np]),ko:D([S.top,COP.pos((adj?adj[1]+' ':'')+ko)]),tip:'여자면 actress · waitress · princess',w:adj?[chip(adj[1],adj[0])]:[]}},
  _wbig(r){const t=Math.floor(r()*3),neg=r()<.3;let S,a;
    if(t===0){S=pick(r,SB);a=pick(r,[['tall','키가 크다'],['short','키가 작다']])}
    else if(t===1){S=pick(r,[_P('the box','그 상자',{be:'is'}),_P('the house','그 집',{be:'is'}),_P('the bag','그 가방',{be:'is'}),_P('this shirt','이 셔츠',{be:'is'}),_P('the room','그 방',{be:'is'}),_P('the elephant','그 코끼리',{be:'is'}),_P('the bowl','그 그릇',{be:'is'})]);a=pick(r,[['big','크다'],['small','작다']])}
@@ -1786,8 +1786,8 @@ const XF={
    return {en:SEN([S.en,neg?S.be+' not':S.be,a[0]]),ko:D([S.top,neg?KO.S(a[1])+'지 않아':KO.A(a[1])]),tip:'사람 키는 tall · short, 물건 크기는 big · small, 소리는 loud'}},
  _wlate(r){const S=pick(r,SB.concat([_P('the bus','그 버스',{be:'is'}),_P('the train','그 기차',{be:'is'})])),late=r()<.5,neg=r()<.3,a=late?['late','늦다']:['slow','느리다'];
    return {en:SEN([S.en,neg?S.be+' not':S.be,a[0]]),ko:D([S.top,late?(neg?'늦지 않았어':'늦었어'):(neg?'느리지 않아':'느려')]),tip:'시간에 늦으면 late, 빠르지 않으면 slow'}},
- _wwear(r){const S=pick(r,SB),x=pick(r,[['a hat','모자를 쓰다'],['glasses','안경을 끼다'],['a coat','외투를 입다'],['sneakers','운동화를 신다'],['a watch','시계를 차다'],['gloves','장갑을 끼다'],['a scarf','목도리를 하다'],['a uniform','교복을 입다'],['a mask','마스크를 쓰다'],['boots','장화를 신다'],['a helmet','헬멧을 쓰다']]),t=pick(r,[['',''],['every day','매일'],['at school','학교에서'],['in winter','겨울에는']]);
-   return {en:SEN([S.en,S3(S,'wear'),x[0],t[0]]),ko:D([S.top,t[1],KO.A(x[1])]),tip:'입다 · 쓰다 · 신다 · 끼다 · 차다는 모두 wear'}},
+ _wwear(r){const S=pick(r,SB),pl=S.be==='are'&&!/^you$/i.test(S.en),x=pick(r,[['a hat','모자를 쓰다','hats'],['glasses','안경을 끼다'],['a coat','외투를 입다','coats',1],['sneakers','운동화를 신다'],['a watch','시계를 차다','watches'],['gloves','장갑을 끼다',0,1],['a scarf','목도리를 하다','scarves',1],['a uniform','교복을 입다','uniforms'],['a mask','마스크를 쓰다','masks'],['boots','부츠를 신다',0,1],['a helmet','헬멧을 쓰다','helmets']]),T=[['',''],['every day','매일'],['at school','학교에서']].concat(x[3]?[['in winter','겨울에는']]:[]),t=pick(r,T);
+   return {en:SEN([S.en,S3(S,'wear'),pl&&x[2]?x[2]:x[0],t[0]]),ko:D([S.top,t[1],KO.A(x[1])]),tip:'입다 · 쓰다 · 신다 · 끼다 · 차다는 모두 wear'}},
  _wride(r){const S=pick(r,SB),rd=r()<.5,x=rd?pick(r,[['a bike','자전거'],['a horse','말'],['a skateboard','스케이트보드'],['a scooter','킥보드']]):pick(r,[['the bus','버스'],['the subway','지하철'],['a taxi','택시'],['the train','기차']]),sch=r()<.4;
    return {en:SEN([S.en,S3(S,rd?'ride':'take'),x[0],sch&&'to school']),ko:D([S.top,sch?'학교에 '+josa(x[1],'을/를')+' 타고 가':josa(x[1],'을/를')+' 타']),tip:'올라타서 모는 건 ride, 버스 · 지하철 · 택시는 take'}},
  _wdo(r){const S=pick(r,SB),x=pick(r,[['do','{po} homework','숙제를 하다'],['do','the dishes','설거지를 하다'],['do','the laundry','빨래를 하다'],['do','yoga','요가를 하다'],['do','a puzzle','퍼즐을 하다'],['make','a cake','케이크를 만들다'],['make','dinner','저녁을 만들다'],['make','a snowman','눈사람을 만들다'],['make','a card','카드를 만들다'],['make','a mistake','실수를 하다'],['make','new friends','새 친구를 사귀다'],['make','a plan','계획을 세우다']]);
@@ -1796,18 +1796,18 @@ const XF={
    if(!tk&&r()<.3)return {en:SEN(['bring me',x[0].replace(/^your /,'the ')]),ko:D(['나한테',x[1].replace(/^네 /,''),'가져와']),tip:'가져가는 건 take, 가져오는 건 bring'};
    return {en:SEN([tk?'take':'bring',x[0],t[0]]),ko:D([t[1],x[1],tk?'가져가':'가져와']),tip:'가져가는 건 take, 가져오는 건 bring'}},
  _wsee(r){const S=pick(r,SB),t=Math.floor(r()*3);let x;
-   if(t===0){x=pick(r,[['TV','텔레비전을 봤어'],['cartoons','만화를 봤어'],['the soccer game','축구 경기를 봤어'],['a baseball game','야구 경기를 봤어']]);return {en:SEN([S.en,'watched',x[0]]),ko:D([S.top,x[1]]),tip:'TV · 경기처럼 오래 지켜보면 watch'}}
+   if(t===0){x=pick(r,[['TV','텔레비전을 봤어'],['cartoons','만화를 봤어'],['soccer games','축구 경기를 봤어'],['baseball games','야구 경기를 봤어']]);return {en:SEN([S.en,'watched',x[0]]),ko:D([S.top,x[1]]),tip:'TV · 경기처럼 오래 지켜보면 watch'}}
    if(t===1){x=pick(r,[['a rainbow','무지개를 봤어'],['a shooting star','별똥별을 봤어'],['a big snake','큰 뱀을 봤어'],['Tom at the park','공원에서 톰을 봤어'],['a fire truck','소방차를 봤어'],['a deer in the woods','숲에서 사슴을 봤어']]);return {en:SEN([S.en,'saw',x[0]]),ko:D([S.top,x[1]]),tip:'눈에 보인 건 see(saw)'}}
    x=pick(r,[['the board','칠판을 쳐다봤어'],['the map','지도를 쳐다봤어'],['the clock','시계를 쳐다봤어'],['the sky','하늘을 쳐다봤어'],['the picture','그림을 쳐다봤어']]);return {en:SEN([S.en,'looked at',x[0]]),ko:D([S.top,x[1]]),tip:'일부러 쳐다보면 look at'}},
- _wlisten(r){const S=pick(r,SB),ls=r()<.5,x=ls?pick(r,[['music','음악을'],['the teacher','선생님 말씀을'],['the radio','라디오를'],['a song','노래를'],['the story','그 이야기를']]):pick(r,[['a strange sound','이상한 소리가'],['a loud noise','큰 소리가'],['thunder','천둥소리가'],['a dog barking','개 짖는 소리가'],['the bell','종소리가']]);
-   return ls?{en:SEN([S.en,'listened to',x[0]]),ko:D([S.top,x[1],'들었어']),tip:'일부러 들으면 listen to'}:{en:SEN([S.en,'heard',x[0]]),ko:D([S.top,x[1],'들렸어']),tip:'저절로 들리면 hear(heard)'}},
+ _wlisten(r){const S=pick(r,SB),ls=r()<.5,x=ls?pick(r,[['music','음악을'],['the teacher','선생님 말씀을'],['the radio','라디오를'],['songs','노래를'],['the story','그 이야기를']]):pick(r,[['a strange sound','이상한 소리가'],['a loud noise','큰 소리가'],['thunder','천둥소리가'],['a dog barking','개 짖는 소리가'],['the bell','종소리가']]);
+   return ls?{en:SEN([S.en,'listened to',x[0]]),ko:D([S.top,x[1],'들었어']),tip:'일부러 들으면 listen to'}:{en:SEN([S.en,'heard',x[0]]),ko:/^(i|we)$/i.test(S.en)?D([S.top,x[1],'들렸어']):D([(S.oko||S.ko)+'에게',x[1],'들렸어']),tip:'저절로 들리면 hear(heard)'}},
  _wsay(r){const S=pick(r,SB),x=pick(r,[['said hello','안녕이라고 인사했어','say'],['said goodbye','잘 가라고 인사했어','say'],['said thank you','고맙다고 말했어','say'],['told me a story','나에게 이야기를 해 줬어','tell'],['told the truth','사실대로 말했어','tell'],['told a funny joke','웃긴 농담을 했어','tell'],['spoke English','영어로 말했어','speak'],['spoke Chinese','중국어로 말했어','speak'],['talked with Tom','톰과 이야기를 나눴어','talk'],['talked on the phone','전화로 이야기했어','talk']]);
    if(/^(i|we)$/i.test(S.en)&&/ me /.test(' '+x[0]+' '))return XF._wsay(r);return {en:SEN([S.en,x[0]]),ko:D([S.top,x[1]]),tip:{say:'말 그대로 옮기면 say',tell:'누구에게 이야기 · 사실 · 농담을 들려주면 tell',speak:'언어로 말하면 speak',talk:'서로 이야기 나누면 talk'}[x[2]]}},
  _wborrow(r){let S,O;do{S=pick(r,SB.slice(0,10));O=pick(r,[_P('Tom','톰',{ob:'Tom',oko:'톰'}),_P('Mina','미나',{ob:'Mina',oko:'미나'}),_P('the teacher','선생님',{ob:'the teacher',oko:'선생님'}),_P('me','나',{ob:'me',oko:'나'})])}while(S.en===O.en||(/^(i|we)$/i.test(S.en)&&O.en==='me'));
    const x=pick(r,[['a pen','펜을'],['a book','책을'],['an umbrella','우산을'],['an eraser','지우개를'],['some money','돈을 좀'],['a ruler','자를']]),b=r()<.5;
    return b?{en:SEN([S.en,'borrowed',x[0],'from',O.ob]),ko:D([S.top,O.oko+'에게서',x[1],'빌렸어']),tip:'내가 빌려 오면 borrow (from)'}:{en:SEN([S.en,'lent',O.ob,x[0]]),ko:D([S.top,O.oko+'에게',x[1],'빌려줬어']),tip:'남에게 빌려주면 lend(lent)'}},
  _wsick(r){const S=pick(r,SB),sk=r()<.45;if(sk){const t=pick(r,[['yesterday','어제'],['last week','지난주에'],['',''],['all day','하루 종일']]);return {en:SEN([S.en,S.was,'sick',t[0]]),ko:D([S.top,t[1],'아팠어']),tip:'몸이 안 좋으면 sick'}}
-   const x=pick(r,[['leg','다리를'],['arm','팔을'],['finger','손가락을'],['knee','무릎을'],['back','허리를'],['foot','발을']]);return {en:SEN([S.en,'hurt',S.po,x[0]]),ko:D([S.top,x[1],'다쳤어']),tip:'다치면 hurt'}},
+   const x=pick(r,[['leg','다리를'],['arm','팔을'],['finger','손가락을'],['knee','무릎을'],['back','허리를'],['foot','발을']]);const pl=S.be==='are'&&!/^you$/i.test(S.en);return {en:SEN([S.en,'hurt',S.po,pl?(x[0]==='foot'?'feet':x[0]+'s'):x[0]]),ko:D([S.top,x[1],'다쳤어']),tip:'다치면 hurt'}},
  _hadI(r){if(r()<.2){const x=pick(r,HADI);return {en:x[0],ko:x[1],cue:'Had로 시작'}}const S=pick(r,SB),x=pick(r,HADV);return {en:cap('had '+S.en+' '+PO(S,x[0]))+', '+S.pr+(/^not /.test(x[2])?' would not have '+PO(S,x[2].slice(4)):' would have '+PO(S,x[2]))+'.',ko:D([S.nom,x[1]+'더라면',x[3]+' 텐데']),cue:'Had로 시작'}}};
 const CTRY=[['Korea','한국'],['Canada','캐나다'],['Japan','일본'],['China','중국'],['Australia','호주'],['France','프랑스'],['Brazil','브라질'],['Mexico','멕시코'],['Egypt','이집트'],['Spain','스페인'],['Vietnam','베트남'],['India','인도'],['America','미국'],['Germany','독일'],['Italy','이탈리아']];
 const FAVT=[['color','색깔',[['blue','파란색'],['red','빨간색'],['green','초록색'],['yellow','노란색'],['purple','보라색'],['pink','분홍색']]],['food','음식',[['pizza','피자'],['chicken','치킨'],['curry','카레'],['spaghetti','스파게티'],['fried rice','볶음밥']]],
