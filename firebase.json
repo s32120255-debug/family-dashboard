@@ -12,6 +12,9 @@
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive, nosnippet" },
         { "key": "Cache-Control", "value": "no-cache" }
       ] }
+    ],
+    "rewrites": [
+      { "source": "/play/**", "function": { "functionId": "codePlay", "region": "asia-northeast3" } }
     ]
   }
 }
