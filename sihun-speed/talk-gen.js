@@ -1772,6 +1772,7 @@ const XF={
  _gerposs(r){const x=pick(r,GERP);return {en:x[0],ko:x[1],cue:'Do you mind my -ing'}},
  _seemto(r){const x=pick(r,SEEMTO);return {en:x[0],ko:x[1],cue:'seem(s) to have p.p.'}},
  _wereto(r){const x=pick(r,WERETO);return {en:x[0],ko:x[1],cue:'were to'}},
+ _contr(r,lap,seed){const fs=['b_pos','b_neg','z_bneg','z_vneg','z_heneg','v_neg','v_pneg','v_futneg','v_fut','v_prog','v_progneg','b_pneg','v_cant'];for(let g=0;g<20;g++){const f=fs[Math.floor(r()*fs.length)];const it=make([lap,f,(seed+g*7919)>>>0,f].join('.'));if(!it)continue;const en=contract(it.en);if(en!==it.en)return {en,ko:it.ko,w:it.w,cue:"줄임말 (I'm · isn't · don't · won't)"}}throw 0},
  _hadI(r){const x=pick(r,HADI);return {en:x[0],ko:x[1],cue:'Had로 시작'}}};
 const CTRY=[['Korea','한국'],['Canada','캐나다'],['Japan','일본'],['China','중국'],['Australia','호주'],['France','프랑스'],['Brazil','브라질'],['Mexico','멕시코'],['Egypt','이집트'],['Spain','스페인'],['Vietnam','베트남'],['India','인도'],['America','미국'],['Germany','독일'],['Italy','이탈리아']];
 const FAVT=[['color','색깔',[['blue','파란색'],['red','빨간색'],['green','초록색'],['yellow','노란색'],['purple','보라색'],['pink','분홍색']]],['food','음식',[['pizza','피자'],['chicken','치킨'],['curry','카레'],['spaghetti','스파게티'],['fried rice','볶음밥']]],
@@ -1822,7 +1823,7 @@ const SEEMTO=[['He seems to have been sick.','그는 아팠던 것 같아.'],['S
 const WERETO=[['If it were to snow tomorrow, we would build a snowman.','만약 내일 눈이 온다면 우리는 눈사람을 만들 텐데.'],['If I were to win the prize, I would buy a bike.','만약 내가 상을 탄다면 자전거를 살 텐데.'],['If you were to visit Jeju, you would love it.','만약 네가 제주에 간다면 정말 좋아할 텐데.'],['If it were to rain, the game would stop.','만약 비가 온다면 경기가 멈출 텐데.'],['If I were to meet a famous singer, I would ask for a picture.','만약 내가 유명한 가수를 만난다면 사진을 부탁할 텐데.']];
 const HADI=[['Had I known about the party, I would have come.','그 파티에 대해 알았더라면 나는 왔을 텐데.'],['Had I studied harder, I would have passed the test.','더 열심히 공부했더라면 나는 시험에 붙었을 텐데.'],['Had I left earlier, I would have caught the bus.','더 일찍 나갔더라면 나는 버스를 탔을 텐데.'],['Had I brought an umbrella, I would not have gotten wet.','우산을 가져왔더라면 나는 젖지 않았을 텐데.'],['Had I seen you, I would have said hello.','너를 봤더라면 나는 인사했을 텐데.']];
 // 몇 단계에 넣는지(단계 번호, 그 단계 끝에 새 묶음으로)
-const XADD={3:['_whatthis'],11:['_lookq','_hair','_sick'],12:['_dir'],14:['_look','_feel','_taste','_get'],15:['_whatdo','_fromq','_from','_favq','_fav'],17:['_notalw'],18:['_floor','_grade'],20:['_whatday','_timefor'],24:['_canI'],26:['_wantsome'],28:['_oneof'],
+const XADD={3:['_whatthis'],11:['_lookq','_hair','_sick'],12:['_dir'],14:['_look','_feel','_taste','_get'],15:['_whatdo','_fromq','_from','_favq','_fav'],17:['_notalw'],18:['_floor','_grade'],20:['_whatday','_timefor'],22:['_contr'],24:['_canI'],26:['_wantsome'],28:['_oneof'],
  32:['_idlike','_hadbetter','_might'],34:['_glad'],35:['_gerposs'],38:['_until','_assoon'],42:['_help','_have','_havepp'],44:['_findit'],45:['_twice'],46:['_pass2','_pass4'],47:['_nolonger'],50:['_relom'],53:['_eventhough','_sothat'],55:['_willhave'],57:['_seemto'],58:['_wereto'],59:['_hadI']};
 let _LAP=1,_SEED=0;
 return {XADD,_Skel:(r,lv)=>({r,lv}),_Form:(k,f)=>{const fn=XF[f];if(!fn)return null;const x=fn(k.r,_LAP,_SEED);return x?Object.assign({w:[]},x):null},_setLS:(l,sd)=>{_LAP=l;_SEED=sd}};
@@ -1922,6 +1923,15 @@ const CUE={C_io:'사람 먼저 (… me a book)',C_to:'물건 먼저 + to/for 사
   B_could:'Could로 시작',M_if:'if',M_that:'that 넣어서',a_said:'said that',Z_it:'It was … that …',P_q:'already 넣어서',h_q:'ever 넣어서',
   P_when:'When으로 시작',P_when2:'When으로 시작',k_when:'When으로 시작',k_whenhab:'When으로 시작',k_if:'If로 시작',k_ifneg:'If로 시작',S_if:'If로 시작',j_because:'because 뒤에',
   V_b:'Feeling으로 시작',B_would:'Would you like',_wantsome:'Do you want',g_howabout:'How about',g_like:'like + -ing',m_please:'Please로 시작',u_time:"o'clock 넣어서"};
+// 엄마 11/28 「줄이지 마, 초반엔 풀고 뒤에 가서 줄여」(22단계 뒤에 줄임말): 1~22단계 꼴은 풀어 쓰고, 22단계 끝 「줄임말」 작은 단계부터 줄여 써요. 채점은 둘 다 맞음(index.html words()가 같게 봐요).
+const CONTR_AT=22;
+const XPD=[[/\bI'm\b/g,'I am'],[/\b([Yy]ou|[Ww]e|[Tt]hey)'re\b/g,'$1 are'],[/\b([Hh]e|[Ss]he|[Ii]t|[Tt]hat|[Tt]here|[Ww]hat|[Ww]here|[Ww]ho)'s\b/g,'$1 is'],
+  [/\b([Ii]s|[Aa]re|[Ww]as|[Ww]ere|[Dd]oes|[Dd]id|[Hh]as|[Hh]ave|[Ss]hould|[Ww]ould|[Cc]ould)n't\b/g,'$1 not'],[/\b([Dd])on't\b/g,'$1o not'],[/\b([Ww])on't\b/g,'$1ill not'],[/\b([Cc])an't\b/g,'$1annot'],
+  [/\b(I|[Yy]ou|[Hh]e|[Ss]he|[Ii]t|[Ww]e|[Tt]hey)'ll\b/g,'$1 will'],[/\b(I|[Yy]ou|[Ww]e|[Tt]hey)'d like\b/g,'$1 would like'],[/\b(I|[Yy]ou|[Ww]e|[Tt]hey)'ve\b/g,'$1 have']];
+function expand(en){XPD.forEach(([a,b])=>en=en.replace(a,b));return en}
+const CTRX=[[/\b(is|are|was|were|does|did|has|have|should|would|could) not\b(?! only)/gi,(m,a)=>a+"n't"],[/\b([Dd])o not\b(?! only)/g,"$1on't"],[/\b([Ww])ill not\b/g,"$1on't"],[/\b([Cc])annot\b|\b([Cc])an not\b/g,(m,a,b)=>(a||b)+"an't"],
+  [/\bI am (?=[a-z])/g,"I'm "],[/\b([Yy]ou|[Ww]e|[Tt]hey) are (?=[a-z])(?!only)/g,"$1're "],[/\b([Hh]e|[Ss]he|[Ii]t) is (?=[a-z])(?!only)/g,"$1's "],[/\b(I|[Yy]ou|[Hh]e|[Ss]he|[Ww]e|[Tt]hey) will (?=[a-z])/g,"$1'll "]];
+function contract(en){CTRX.forEach(([a,b])=>en=en.replace(a,b));return en}
 function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=String(id).split('.');const L=Math.max(1,Math.min(4,+lap||1));const fam=FAM[f[0]];if(!fam)return null;
   const r=rng(+seed);let it;CURLV=LVTH[L];if(f[0]==='_')_setLS(L,+seed);try{const k=fam[0](r,LVTH[L],ctx||f);it=fam[1](k,f)}catch(e){return null}
   if(it&&!window.TALK_NOFAM&&isFam(it)){CACHE.set(id,null);return null}
@@ -1933,6 +1943,7 @@ function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=S
   if(it){it.alt=[];if(CUE[f]&&!it.cue)it.cue=CUE[f];
     // 수준마다 낱말 하나로(검수 11/28: 같은 수준에 scared·frightened가 섞임)
     const hi=CURLV>=2.5,UW=hi?[[/\bscared\b/g,'frightened'],[/\bsick\b/g,'ill'],[/\bsmart\b/g,'intelligent']]:[[/\bfrightened\b/g,'scared'],[/\bintelligent\b/g,'smart']];
+    {const st=F2S[f]||99;if(f!=='_contr'){if(st<=CONTR_AT)it.en=expand(it.en);else it.en=contract(it.en)}}
     UW.forEach(([a,b])=>{it.en=it.en.replace(a,b);it.w=(it.w||[]).map(c=>c&&typeof c[1]==='string'?[c[0],c[1].replace(a,b)]:c)});it.en=it.en.replace(/\b([Aa]) (intelligent|ill)\b/g,'$1n $2').replace(/\b([Aa])n (scared|smart|sick)\b/g,'$1 $2')}
   it=Object.assign({id:String(id),stage:F2S[f]||0,lap:L,f},it);it.alt=it.alt||[];it.w=(it.w||[]).filter((c,i,a)=>c&&c[0]&&c[1]&&a.findIndex(x=>x[0]===c[0])===i);
   if(CACHE.size>3000)CACHE.clear();CACHE.set(id,it);return it}
