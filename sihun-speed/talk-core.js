@@ -226,7 +226,7 @@ const ADJ=[
  AD('sleepy','졸리다',1,'a fe'),AD('busy','바쁘다',1,'fe'),AD('sick','아프다',1,'a fe',undefined,2),AD('cold','춥다',1,'a fe'),AD('hot','덥다',1,'a fe'),AD('thirsty','목이 마르다',1,'a fe'),
  AD('bored','심심하다',1,'fe'),AD('kind','친절하다',1,'tr'),AD('funny','웃기다',1,'tr'),AD('cute','귀엽다',1,'a tr'),AD('smart','똑똑하다',1,'a tr',undefined,2),AD('tall','키가 크다',1,'tr'),
  AD('strong','힘이 세다',1,'tr'),AD('fast','빠르다',1,'a tr'),AD('quiet','조용하다',1,'a'),
- AD('angry','화가 나다',1,'a fe'),AD('scared','무섭다',1,'a fe',undefined,2),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',9,'a tr'),
+ AD('angry','화가 나다',1,'a fe'),AD('scared','겁이 나다',1,'a fe',undefined,2),AD('excited','신나다',1,'a fe'),AD('short','키가 작다',1,'tr'),AD('friendly','다정하다',9,'a tr'),
  AD('shy','수줍음이 많다',1,'a tr'),AD('slow','느리다',1,'a tr'),AD('weak','힘이 약하다',1,'tr'),AD('young','어리다',1,'a tr'),
  AD('lonely','외롭다',2,'a fe'),AD('healthy','건강하다',2,'a'),AD('honest','정직하다',2,'tr'),AD('brave','용감하다',2,'a tr'),AD('lazy','게으르다',2,'a tr'),AD('famous','유명하다',2,'tr'),
  AD('curious','호기심이 많다',2,'a tr'),AD('upset','속상하다',2,'fe'),AD('calm','침착하다',2,'tr'),AD('polite','예의 바르다',2,'tr'),AD('popular','인기가 많다',2,'tr'),AD('nervous','긴장되다',2,'fe'),
@@ -236,11 +236,11 @@ const ADJ=[
  AD('patient','참을성이 있다',3,'tr','참을성이 없다'),AD('anxious','불안하다',3,'fe'),AD('modest','겸손하다',3,'tr'),AD('sensitive','예민하다',3,'tr'),AD('stubborn','고집이 세다',3,'tr'),
  AD('mature','성숙하다',3,'tr'),AD('independent','독립적',3,'tr c'),AD('ambitious','야망이 있다',3,'tr','야망이 없다'),AD('optimistic','낙천적',3,'tr c'),AD('exhausted','지쳐 있다',3,'fe'),
  AD('considerate','사려 깊다',3,'tr'),AD('talented','재능이 있다',3,'tr','재능이 없다'),AD('sincere','진실하다',3,'tr'),AD('cautious','신중하다',3,'tr'),AD('energetic','활기차다',3,'a tr'),
- AD('grateful','고맙다',3,'fe'),AD('frustrated','답답하다',3,'fe'),AD('relieved','안심이 되다',3,'fe'),
+ AD('grateful','고마워하다',3,'fe'),AD('frustrated','답답하다',3,'fe'),AD('relieved','안심이 되다',3,'fe'),
  // 고등(2.5): 아프다·똑똑하다·무섭다는 고등부터 ill·intelligent·frightened로(엄마 11/28 「초등중등고등 다 달라야지」)
- AD('ill','아프다',2.5,'a fe'),AD('intelligent','똑똑하다',2.5,'a tr'),AD('frightened','무섭다',2.5,'a fe'),
+ AD('ill','아프다',2.5,'a fe'),AD('intelligent','똑똑하다',2.5,'a tr'),AD('frightened','겁이 나다',2.5,'a fe'),
  AD('thoughtful','배려심이 많다',2.5,'tr'),AD('reliable','믿음직하다',2.5,'tr'),AD('creative','창의적',2.5,'tr c'),AD('determined','의지가 굳다',2.5,'tr'),
- AD('satisfied','만족스럽다',2.5,'fe'),AD('disappointed','실망하다',2.5,'fe'),AD('confused','헷갈리다',2.5,'fe'),AD('jealous','질투가 나다',2.5,'fe'),AD('ashamed','부끄럽다',2.5,'fe'),
+ AD('satisfied','만족하다',2.5,'fe'),AD('disappointed','실망해 있다',2.5,'fe'),AD('confused','헷갈리다',2.5,'fe'),AD('jealous','질투가 나다',2.5,'fe'),AD('ashamed','부끄럽다',2.5,'fe'),
  AD('punctual','시간을 잘 지키다',2.5,'tr'),AD('humorous','유머 감각이 있다',2.5,'tr','유머 감각이 없다'),
  // 수능(3)
  AD('affectionate','다정하다',3,'a tr'),AD('compassionate','동정심이 많다',3,'tr'),AD('persistent','끈기가 있다',3,'tr','끈기가 없다'),AD('arrogant','거만하다',3,'tr'),

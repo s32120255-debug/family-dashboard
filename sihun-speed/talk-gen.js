@@ -108,7 +108,7 @@ function vForm(k,f){let s=k.s;const Q=/q$|^v_(what|where|when|who|whatdoing)$/.t
   case 'v_hto':en=SEN([s.en,third?'has to':'have to',e,o]);ko=KSEN(KK(KO.A(w)+'야 해'));break;
   case 'v_dhto':en=SEN([s.en,third?"doesn't have to":"don't have to",e,o]);ko=KSEN(KK(KO.S(w)+'지 않아도 돼'));break;
   case 'v_htoq':en=SEN([third?'does':'do',s.en,'have to',e,o],1);ko=KSEN(KK(KO.A(w)+'야 해'),1);break;
-  case 'v_sh':en=SEN([s.en,'should',e,o]);ko=KSEN(KK(KO.NE(w)+' 게 좋아'));break;
+  case 'v_sh':en=SEN([s.en,'should',e,o]);ko=KSEN(KK(KO.NE(w)+' 게 좋겠어'));break;
   // 의문사
   case 'v_what':{const past=k.tp<.5;t=past?tPick(k,'past'):null;const wh=k.v.p==='이'?'뭐가':'뭘';
     en=SEN(['what',past?'did':third?'does':'do',s.en,e,t&&t[0]],1);ko=KSEN([s.top,t&&t[1],wh,past?KO.P(w):KO.A(w)],1);break}
@@ -186,7 +186,7 @@ function tSkel(r,lap){const s=pick(r,subjsFor(lap,['me','you','kid','adult','old
 function tForm(k,f){let s=k.s,en,ko,w=[];const third=s.s;
   switch(f){
   case 't_at':{let rt=k.rt;if(rt[3]&&!(s.t==='kid'||s.t==='me'||s.t==='you'||s.t==='pron'))rt=RT[0];const hr=rt[2][Math.floor(k.h*rt[2].length)],past=k.past<.4;const ve=rt[0].replace('{po}',s.po);
-    const v=past?EN.past(ve):third?EN.s3(ve):ve;en=SEN([s.en,v,'at',NUMW[hr],past&&'yesterday']);ko=KSEN([s.top,past&&'어제',hr+'시에',past?KO.P(rt[1]):KO.A(rt[1])]);w=[chip(rt[1].split(' ').pop(),rt[0].split(' ')[0])];break}
+    const v=past?EN.past(ve):third?EN.s3(ve):ve;en=SEN([s.en,v,'at',NUMW[hr],past&&'yesterday']);ko=KSEN([s.top,past&&'어제',hr+'시에',past?KO.P(rt[1]):KO.A(rt[1])]);w=[chip(rt[1],rt[0].split(' ')[0])];break}
   case 't_on':{const k2=k.v,pa=k.past<.4,v=k2.v.e,o=oEn(k2,s);if(!k2.v.h||(k2.o&&/h0/.test(k2.o.f))){return tForm(k,'t_at')}
     en=SEN([s.en,pa?EN.past(v):third?EN.s3(v):v,o,'on',pa?k.d[0]:k.d[0]+'s']);ko=KSEN([s.top,k.d[1]+(pa?'에':'마다'),oKo(k2),pa?KO.P(k2.v.k):KO.A(k2.v.k)]);w=vChips(Object.assign({},k2,{s}));w.push(chip(k.d[1],k.d[0]));break}
   case 't_in':{const a=k.se[2][Math.floor(k.a*k.se[2].length)];en=SEN([s.en,third?EN.s3(a[0]):a[0],'in',k.se[0]]);ko=KSEN([s.top,k.se[1]+'에',KO.A(a[1])]);w=[chip(k.se[1],k.se[0])];break}
@@ -302,7 +302,7 @@ function sSkel(r,lap){for(let g=0;g<300;g++){const G=pick(r,SGRP);const js=Objec
     if(G[0]==='in my family'){if(['tall','strong','old'].includes(j)&&S.t==='me')continue;if(j==='old'&&S.t!=='old')continue;if(j==='young'&&S.t!=='me')continue}
     if(G[0]!=='in my family'&&(j==='old'||j==='young'))continue;
     return {G,j,S,nn:r()<.5,fa:lvPick(r,SFACT.map(x=>({en:x[0],ko:x[1],lv:x[2],alt:x[3]})),lap)}}throw new Error('no sup')}
-function sForm(k,f){const a=SUPA[k.j];let en,ko,alt;const w=[chip(a[1].split(' ').pop(),k.j)];
+function sForm(k,f){const a=SUPA[k.j];let en,ko,alt;const w=[chip(a[1],k.j)];
   const sk=w=>/적$/.test(w)?COP.pos(most(w)):KO.A(most(w));
   // 「가장 ~한 학생/선수/사람」(같은 무리 이름)도 섞기
   const NN={'in my family':['person','사람'],'in our class':['student','학생'],'in our school':['student','학생'],'on the team':['player','선수']}[k.G[0]];
@@ -332,7 +332,7 @@ function iForm(k,f){const K=/^i_(promise|need)$/.test(f)&&k.kob?k.kob:k.k;let s=
   case 'i_promise':en=SEN([s.en,'promised to',e,o]);ko=KSEN([s.top,ok,KO.S(w)+'기로 약속했어']);break;
   case 'i_purpose':{const a=k.act,ae=a[0].replace('{po}',s.po||'their');const past=k.u<.7;
     en=SEN([s.en,past?'went':third?'goes':'go','to',k.P[0],'to',ae]);ko=KSEN([s.top,KO.RU(a[1]),k.P[1]+'에',past?'갔어':'가']);
-    return {en,ko,w:[chip(k.P[1],bare(k.P[0])),chip(a[1].split(' ').pop(),a[0].split(' ')[0])]}}}
+    return {en,ko,w:[chip(k.P[1],bare(k.P[0])),chip(a[1],a[0].split(' ')[0])]}}}
   return {en,ko,alt,w:ch}}
 
 // ───────── 동명사 (21단계) ─────────
@@ -395,11 +395,11 @@ const CAUSE=[['hungry','배가 고프다',[['ate some bread','빵을 먹었어']
   ['nervous','긴장되다',[['took a deep breath','심호흡을 했어',2]],2],['lonely','외롭다',[['called a friend','친구에게 전화했어',2]],2],['exhausted','지쳐 있다',[['rested all day','하루 종일 쉬었어',3]],3],
   ['sad','슬프다',[['cried','울었어'],['called a friend','친구에게 전화했어',2]]],['happy','기쁘다',[['sang a song','노래를 불렀어'],['danced','춤을 췄어']]],
   ['full','배가 부르다',[["didn't eat dessert",'디저트를 먹지 않았어'],['stopped eating','그만 먹었어',2]]],['busy','바쁘다',[["didn't watch TV",'TV를 보지 않았어'],['skipped lunch','점심을 걸렀어',3]]],
-  ['scared','무섭다',[['turned on the light','불을 켰어']]],['worried','걱정되다',[['called the teacher','선생님께 전화했어',2]],2]];
+  ['scared','겁이 나다',[['turned on the light','불을 켰어']]],['worried','걱정되다',[['called the teacher','선생님께 전화했어',2]],2]];
 const BUT=[['tired','피곤하다',[['played soccer','축구를 했어'],['did {po} homework','숙제를 했어'],['went to school','학교에 갔어']]],['sick','아프다',[['went to school','학교에 갔어'],['did {po} homework','숙제를 했어']]],
   ['hungry','배가 고프다',[["didn't eat anything",'아무것도 먹지 않았어']]],['cold','춥다',[['went swimming','수영하러 갔어']]],['sleepy','졸리다',[['finished {po} homework','숙제를 끝냈어']]],
   ['nervous','긴장되다',[['did a great job','아주 잘했어',2]],2],['exhausted','지쳐 있다',[['finished the marathon','마라톤을 끝까지 달렸어',3]],3],
-  ['busy','바쁘다',[['helped me','나를 도와줬어'],['cooked dinner','저녁을 요리했어']]],['scared','무섭다',[['watched the movie','그 영화를 봤어'],['touched the snake','뱀을 만졌어',2]]],
+  ['busy','바쁘다',[['helped me','나를 도와줬어'],['cooked dinner','저녁을 요리했어']]],['scared','겁이 나다',[['watched the movie','그 영화를 봤어'],['touched the snake','뱀을 만졌어',2]]],
   ['full','배가 부르다',[['ate some cake','케이크를 먹었어']]],['sad','슬프다',[['smiled','웃었어']]],['hot','덥다',[['played outside','밖에서 놀았어']]]];
 const AND=[['the park','공원',[['played soccer','축구를 했어'],['rode {po} bike','자전거를 탔어']]],['the library','도서관',[['read books','책을 읽었어'],['borrowed some books','책을 빌렸어',2]]],
   ['the store','가게',[['bought some milk','우유를 샀어'],['bought a present','선물을 샀어']]],['the beach','해변',[['swam in the sea','바다에서 수영했어'],['built a sandcastle','모래성을 쌓았어',2]]],
@@ -678,7 +678,7 @@ function wForm(k,f){const {n,o,s,u}=k;let en,ko,w=[];const top=josa(s[1],'은/�
 const ADV=[['always','항상'],['usually','보통'],['often','자주'],['sometimes','가끔'],['never','절대']];
 const FLATE={en:'late',ko:'늦다',f:'fe',i:-1};
 function fSkel(r,lap){for(let g=0;g<200;g++){const k=vSkel(r,lap,'v_pos',PEOPLE);if(!k.v.h||(k.o&&/h0/.test(k.o.f))||k.v.nt||k.v.st||k.v.n)continue;
-  const ad=lvPick(r,ADJ.filter(a=>/fe|tr/.test(a.f)&&!/\bc\b/.test(a.f)),lap);return {k:Object.assign({},k,{th:0}),adv:pick(r,ADV),adv2:pick(r,ADV),adj:r()<.25?FLATE:ad}}throw new Error('no f')}
+  const ad=lvPick(r,ADJ.filter(a=>/\bfe\b/.test(a.f)&&!/\bc\b/.test(a.f)),lap); /* 검수 11/28: 자주·절대 + 키·나이·귀여움(바뀌지 않는 성질)은 이상한 말 → 기분·상태만 */return {k:Object.assign({},k,{th:0}),adv:pick(r,ADV),adv2:pick(r,ADV),adj:r()<.25?FLATE:ad}}throw new Error('no f')}
 const insAfter=(ko,top,w)=>ko.indexOf(top+' ')===0?top+' '+w+' '+ko.slice(top.length+1):w+' '+ko;
 function fForm(k,f){let en,ko,w;
   if(f==='f_v'){const K=k.k,s=K.s,A=k.adv,neg=A[0]==='never';const P=vForm(K,'v_pos'),N=neg?vForm(K,'v_neg'):P;
@@ -770,7 +770,7 @@ const GV=[['give','gave','to',[['a book','책을 주다'],['a present','선물�
 const IOX=[NP('my friend','내 친구',12),NP('the children','아이들',13,1),NP('my grandma','할머니',11),NP('my mom','엄마',6),NP('the teacher','선생님',8)];
 function CSkel(r,lap){for(let g=0;g<100;g++){const S=pick(r,PS.concat(ADU)),O=pick(r,PS.concat(IOX));if(S.g===O.g||(S.g===1&&O.g===1))continue;const V=pick(r,GV);const ob=pick(r,V[3]);return {S,O,V,ob}}throw new Error('no C')}
 function CForm(k,f){const {S,O,V,ob}=k;const ko=D([S.top,O.oko+'에게',KO.P(ob[1])]);const en=f==='C_io'?SEN([S.en,V[1],O.ob,ob[0]]):SEN([S.en,V[1],ob[0],V[2],O.ob]);
-  return {en,ko,alt:[],w:[chip(ob[1].split(' ').pop(),V[0])]}}
+  return {en,ko,alt:[],w:[chip(ob[1].replace(/^.*?[을를] /,''),V[0])]}}
 // D make me happy · keep · find · call (5형식)
 const MKS=[['the movie','그 영화'],['the song','그 노래'],['the news','그 소식'],['the game','그 경기'],['the story','그 이야기'],['the letter','그 편지'],['his joke','그의 농담'],['the test','그 시험'],['the long walk','오래 걷기']];
 const MKA=[['happy','행복하다'],['sad','슬프다'],['angry','화가 나다'],['tired','피곤하다'],['excited','신나다'],['nervous','긴장되다'],['sleepy','졸리다'],['hungry','배고프다']];
@@ -810,7 +810,7 @@ function FForm(k,f){let en,ko,v;switch(f){
   return {en,ko,w:[chip(v[1],v[0])]}}
 // G too ~ to · enough to · how to · what to
 const TOO=[['tired','피곤하다','walk any more','더 걷다'],['full','배가 부르다','eat any more','더 먹다'],['sleepy','졸리다','study','공부하다'],['busy','바쁘다','play with you','너랑 놀다'],
- ['young','어리다','drive a car','운전하다'],['short','키가 작다','reach the shelf','선반에 손이 닿다'],['sick','아프다','go to school','학교에 가다'],['scared','무섭다','go in','들어가다'],
+ ['young','어리다','drive a car','운전하다'],['short','키가 작다','reach the shelf','선반에 손이 닿다'],['sick','아프다','go to school','학교에 가다'],['scared','겁이 나다','go in','들어가다'],
  ['weak','힘이 약하다','lift the box','상자를 들다'],['nervous','긴장되다','speak','말하다'],['hot','덥다','run outside','밖에서 뛰다','it'],['cold','춥다','swim','수영하다','it'],['late','늦다','go out','나가다','it']];
 const ENG=[['tall','키가 크다','reach the shelf','선반에 손이 닿다'],['strong','힘이 세다','carry the box','상자를 들다'],['fast','빠르다','win the race','경주에서 이기다'],['brave','용감하다','go alone','혼자 가다'],
  ['smart','똑똑하다','solve the puzzle','퍼즐을 풀다'],['big','크다','ride a bike','자전거를 타다'],['warm','따뜻하다','go outside','밖에 나가다','it']];
@@ -861,7 +861,7 @@ const JPP=[['a picture','그림','painted by my friend','내 친구가 그린'],
 function JSkel(r,lap){return {S:pick(r,PS),i:pick(r,JING),e:pick(r,JED),p:pick(r,JPOST),wh:pick(r,JWHO),is:pick(r,JIS),pp:pick(r,JPP),q:r()}}
 function JForm(k,f){let en,ko;switch(f){
   case 'J_ing':case 'J_ed':{const x=f==='J_ing'?k.i:k.e;const saw=k.q<.5;en=saw?SEN([k.S.en+' saw',x[3]||/milk|toast|paper/.test(x[1])?'':AN(x[0]),x[0],x[1]]):SEN(['look at the',x[0],x[1]]);
-    if(saw&&/milk|toast|paper/.test(x[1]))en=SEN([k.S.en+' saw the',x[0],x[1]]);ko=D(saw?[k.S.top,josa(x[2],'을/를'),'봤어']:[josa(x[2],'을/를'),'봐']);return {en,ko,w:[chip(x[2].split(' ').pop().replace(/들$/,''),x[1])]}}
+    if(saw&&/milk|toast|paper/.test(x[1]))en=SEN([k.S.en+' saw the',x[0],x[1]]);ko=D(saw?[k.S.top,josa(x[2],'을/를'),'봤어']:[josa(x[2],'을/를'),'봐']);return {en,ko,w:[chip(x[2].replace(/들$/,''),x[1])]}}
   case 'J_post':en=SEN([k.wh[0],k.p[0],'is',k.is[0]]);ko=D([k.p[1],josa(k.wh[1],'은/는'),COP.pos(k.is[1])]);return {en,ko,w:[]};
   case 'J_pp':en=SEN(['this is',k.pp[0],k.pp[2]]);ko=D(['이건',k.pp[3],COP.pos(k.pp[1])]);return {en,ko,w:[]}}}
 // K 관계사 which · whose · what
@@ -959,7 +959,7 @@ const QWA=[['sleep','자다'],['have dinner','저녁을 먹다'],['study','공�
 function QSkel(r,lap){for(let g=0;g<50;g++){const a=pick(r,QACT),d=pick(r,QDUR.filter(x=>a[2].includes(x[2])));if(d)return {S:pick(r,PS),a,d,wt:pick(r,QWT),wa:pick(r,QWA)}}throw new Error('no Q')}
 function QForm(k,f){const S=k.S,a=k.a,h=a[0].split(' ')[0],ing=EN.ing(h)+a[0].slice(h.length);let en,ko;switch(f){
   case 'Q_hv':en=SEN([S.en,S.s?'has been':'have been',ing,k.d[0]]);ko=D([S.top,k.d[1],KO.S(a[1])+'고 있어']);return {en,ko,w:[chip(a[1],a[0])]};
-  case 'Q_hvq':en=SEN(['how long',S.s?'has':'have',S.en,'been',ing],1);ko=Q([S.top,'얼마 동안',KO.S(a[1])+'고 있었어']);return {en,ko,w:[chip(a[1],a[0])]};
+  case 'Q_hvq':en=SEN(['how long',S.s?'has':'have',S.en,'been',ing],1);ko=Q([S.top,'얼마 동안',KO.S(a[1])+'고 있어']);return {en,ko,w:[chip(a[1],a[0])]};
   case 'Q_willbe':{const x=k.wa,hh=x[0].split(' ')[0];en=SEN([S.en,'will be',EN.ing(hh)+x[0].slice(hh.length),k.wt[0]]);ko=D([S.top,k.wt[1],KO.S(x[1])+'고 있을 거야']);return {en,ko,alt:[en.replace(/^(\w+) will/,(m,a)=>({I:"I'll",You:"You'll",He:"He'll",She:"She'll",We:"We'll",They:"They'll"}[a]||m))],w:[chip(x[1],x[0])]}}}}
 // R should have p.p. · must have p.p.
 const RSH=[['studied harder','더 열심히 공부하다'],['gone to bed earlier','더 일찍 자다'],['listened to the teacher','선생님 말씀을 듣다'],['brought an umbrella','우산을 가져오다'],['said sorry','미안하다고 말하다'],
@@ -1183,7 +1183,7 @@ const VEV=[['met {po} friend','친구를 만났어'],['saw a rainbow','무지개
  ['found an old photo','옛날 사진을 찾았어'],['dropped {po} phone','휴대폰을 떨어뜨렸어'],['thought of a good idea','좋은 생각을 떠올렸어'],['saw a big dog','큰 개를 봤어']];
 const VWHY=[['tired','피곤하다',[['went to bed early','일찍 잤어'],['took a nap','낮잠을 잤어'],['sat down on the bench','벤치에 앉았어']]],['hungry','배가 고프다',[['ate a sandwich','샌드위치를 먹었어'],['made some ramen','라면을 끓였어']]],
  ['sick','아프다',[['stayed home','집에 있었어'],['went to the doctor','병원에 갔어']]],['bored','심심하다',[['read a comic book','만화책을 읽었어'],['called a friend','친구에게 전화했어']]],
- ['cold','춥다',[['put on a coat','외투를 입었어'],['closed the window','창문을 닫았어']]],['scared','무섭다',[['turned on the light','불을 켰어'],['ran to the teacher','선생님에게 달려갔어']]],
+ ['cold','춥다',[['put on a coat','외투를 입었어'],['closed the window','창문을 닫았어']]],['scared','겁이 나다',[['turned on the light','불을 켰어'],['ran to the teacher','선생님에게 달려갔어']]],
  ['thirsty','목이 마르다',[['drank some water','물을 좀 마셨어']]],['sleepy','졸리다',[['washed {po} face','세수를 했어'],['went to bed','자러 갔어']]]];
 const VHAV=[['finished {po} homework','숙제를 끝내고',[['went out to play','놀러 나갔어'],['watched TV','TV를 봤어']]],['lost {po} key','열쇠를 잃어버려서',[["couldn't open the door",'문을 열 수 없었어'],['waited outside','밖에서 기다렸어']]],
  ['eaten lunch','점심을 먹고',[['went back to class','교실로 돌아갔어'],['played soccer','축구를 했어']]],['missed the bus','버스를 놓쳐서',[['walked to school','학교에 걸어갔어'],['was late for school','학교에 늦었어']]],
@@ -1297,7 +1297,7 @@ const YWR=[['take {po} camera','카메라를 가져가다'],['take {po} notebook
  ['take pictures','사진을 찍다'],['look for a good restaurant','맛집을 찾다'],['buy a postcard','엽서를 사다']];
 const YHP=[['tired','피곤하다',[['brush {po} teeth','이를 닦다'],['finish {po} homework','숙제를 끝내다'],['wash {po} hands','손을 씻다']]],['busy','바쁘다',[['eat breakfast','아침을 먹다'],['get enough sleep','잠을 충분히 자다']]],
  ['hungry','배가 고프다',[['wash {po} hands first','먼저 손을 씻다'],['wait for everyone','모두를 기다리다']]],['angry','화가 나다',[['speak kindly','친절하게 말하다'],['listen first','먼저 듣다']]],
- ['scared','무섭다',[['tell the truth','사실대로 말하다']]],['excited','신나다',[['walk in the hallway','복도에서는 걷다'],['listen to the teacher','선생님 말씀을 듣다']]],
+ ['scared','겁이 나다',[['tell the truth','사실대로 말하다']]],['excited','신나다',[['walk in the hallway','복도에서는 걷다'],['listen to the teacher','선생님 말씀을 듣다']]],
  ['sleepy','졸리다',[['finish {po} homework','숙제를 끝내다'],['brush {po} teeth','이를 닦다']]]];
 const YWO=[['finishes first','먼저 끝내는','g'],['answers first','먼저 대답하는','g'],['gets the most points','점수를 가장 많이 받는','g'],['finds the key','열쇠를 찾는','g'],['wins the race','경주에서 이기는','g'],
  ['comes last','마지막에 오는','b'],['breaks the rule','규칙을 어기는','b'],['loses the game','게임에서 지는','b'],['wants to come','오고 싶은','w'],['wants to help','돕고 싶은','w'],['needs help','도움이 필요한','n']];
@@ -1347,7 +1347,7 @@ const AQS=[['each student','학생마다',1],['every child','모든 아이가',1
  ['both of my friends','내 친구 둘 다',0],['most of the students','학생들 대부분이',0],['a lot of children','많은 아이들이',0],['all of us','우리 모두',0],['many people','많은 사람들이',0],['the boys in the park','공원에 있는 남자아이들이',0]];
 const AQV=[['has a phone','have a phone','휴대폰을 가지고 있어'],['likes this game','like this game','이 게임을 좋아해'],['wants to win','want to win','이기고 싶어 해'],['knows the answer','know the answer','답을 알아'],
  ['is excited','are excited','신이 났어'],['brings lunch','bring lunch','도시락을 가져와'],['lives near here','live near here','이 근처에 살아'],['plays soccer','play soccer','축구를 해'],['is ready','are ready','준비가 됐어'],['was late','were late','늦었어']];
-SAID.push(['ready','준비가 됐다'],['scared','무섭다'],['full','배가 부르다'],['cold','춥다'],['excited','신이 난다'],['fine','괜찮다']);
+SAID.push(['ready','준비가 됐다'],['scared','겁이 난다'],['full','배가 부르다'],['cold','춥다'],['excited','신이 난다'],['fine','괜찮다']);
 SAIDW.push(['win','이기다'],['call back','다시 전화하다'],['finish it soon','곧 끝내다'],['bring snacks','간식을 가져오다'],['clean the room','방을 청소하다']);
 const SAIDH=[['finished the homework','숙제를 끝내다'],['seen the movie','그 영화를 보다'],['lost the key','열쇠를 잃어버리다'],['eaten lunch','점심을 먹다'],['been to Jeju','제주에 가 보다'],['met Tom before','전에 톰을 만나 보다']];
 function a2Skel(r){const S=pick(r,HS);return {S,m:pick(r,RMA),g:pick(r,AGR),sa:pick(r,SAID),sw:pick(r,SAIDW),sh:pick(r,SAIDH),fg:pick(r,AFG),si:pick(r,ASTI),stt:pick(r,ASTT),qs:pick(r,AQS),qv:pick(r,AQV),q:r()}}
@@ -1404,7 +1404,7 @@ function m3Skel(r,lap){const k=mSkel(r,lap);const v=pick(r,VP.filter(x=>x.h&&!x.
 function m3Form(k,f){const nm=k.nm;const call=(x,ko)=>nm?{en:nm[0]+', '+x.charAt(0).toLowerCase()+x.slice(1),ko:nm[1]+', '+ko}:{en:x,ko};
   if(f==='m_lets2'){if(!k.o)return mForm(k,'m_lets');const ob=k.o,v=k.v;const K={s:SUBJ[4],v,o:ob,th:1,tp:1,tf:1,tw:0};const P=vForm(K,'v_pos');
     const x=call("Let's "+P.en.replace(/^We /,'').replace(/ (every day|on weekends|in the morning|after school|every morning)\.$/,'.'),KSEN([oKo(K),KO.S(v.k)+'자']));return {en:x.en,ko:x.ko,alt:[],w:P.w}}
-  if(f==='m_please'){const i=k.d;if(/^be |^try /.test(i.en))return m3Form(k,'m_do2');const x=call('Please '+i.en+'.',KO.A(i.ko)+' 줘.');const y=call(SEN([i.en]).replace(/\.$/,', please.'),'');return {en:x.en,ko:x.ko,alt:[y.en],w:[chip(i.ko,i.en)]}}
+  if(f==='m_please'){const i=k.d;if(/^be |^try /.test(i.en))return m3Form(k,'m_do2');const x=call('Please '+i.en+'.',/주다$/.test(i.ko)?KO.A(i.ko)+'.':KO.A(i.ko)+' 줘.');const y=call(SEN([i.en]).replace(/\.$/,', please.'),'');return {en:x.en,ko:x.ko,alt:[y.en],w:[chip(i.ko,i.en)]}}
   if(f==='m_do2'){const i=k.d;const x=call(SEN([i.en]),KSEN([i.en==='be honest'?'정직하게 행동해':KO.A(i.ko)]));return {en:x.en,ko:x.ko,alt:[],w:[chip(i.ko,i.en)]}}
   if(f==='m_dont2'){const i=k.n;const x=call(SEN(["don't",i.en]),KSEN([KO.S(i.ko)+'지 마']));return {en:x.en,ko:x.ko,alt:[x.en.replace("Don't","Do not").replace("don't","do not")],w:[chip(i.ko,i.en)]}}
   return mForm(k,f)}
@@ -1457,7 +1457,7 @@ function F3Skel(r,lap){for(let g=0;g<100;g++){const S=pick(r,HS),O=pick(r,HS.con
   return {S,O,S2,O2,sv:pick(r,SEEV.filter(x=>!(O.en==='the dog'&&!/^(run|swim|jump)$/.test(x[0])))),hv,lv:pick(r,LETV),mv:pick(r,MAKEV)}}throw new Error('no F')}
 // 43단계
 TOO.push(['tired','피곤하다','play outside','밖에서 놀다'],['tired','피곤하다','do the homework','숙제를 하다'],['full','배가 부르다','eat dessert','디저트를 먹다'],['sleepy','졸리다','watch the movie','영화를 보다'],
- ['busy','바쁘다','call Tom','톰에게 전화하다'],['short','키가 작다','ride the roller coaster','롤러코스터를 타다'],['sick','아프다','play soccer','축구를 하다'],['scared','무섭다','watch the movie','그 영화를 보다'],
+ ['busy','바쁘다','call Tom','톰에게 전화하다'],['short','키가 작다','ride the roller coaster','롤러코스터를 타다'],['sick','아프다','play soccer','축구를 하다'],['scared','겁이 나다','watch the movie','그 영화를 보다'],
  ['nervous','긴장되다','sing on stage','무대에서 노래하다'],['young','어리다','watch this movie','이 영화를 보다'],['weak','힘이 약하다','open the jar','병뚜껑을 열다'],['hungry','배가 고프다','study','공부하다'],['sleepy','졸리다','read the book','그 책을 읽다']);
 ENG.push(['tall','키가 크다','ride the roller coaster','롤러코스터를 타다'],['strong','힘이 세다','open the jar','병뚜껑을 열다'],['fast','빠르다','catch the bus','버스를 타다'],['brave','용감하다','touch the snake','뱀을 만지다'],
  ['smart','똑똑하다','answer the question','그 질문에 답하다'],['big','크다','go to school alone','혼자 학교에 가다']);
@@ -1596,7 +1596,7 @@ SEEV.push(...LVT(2.5,[['fix the computer','컴퓨터를 고치다'],['feed the b
 HEARV.push(...LVT(2.5,[['whisper','속삭이다'],['complain','불평하다'],['snore','코를 골다']]),...LVT(3,[['argue','말다툼하다'],['scream','비명을 지르다'],['apologize','사과하다']]));
 LETV.push(...LVT(2.5,[['borrow the book','그 책을 빌리다'],['join the club','동아리에 들어가다'],['stay longer','더 오래 있다']]),...LVT(3,[['attend the concert','콘서트에 참석하다'],['adopt a puppy','강아지를 입양하다'],['explore the cave','동굴을 탐험하다']]));
 MAKEV.push(...LVT(2.5,[['rewrite the essay','에세이를 다시 쓰다'],['apologize','사과하다']]),...LVT(3,[['revise the report','보고서를 수정하다'],['memorize the poem','시를 외우다'],['clean up the mess','어질러진 것을 치우다']]));
-TOO.push(...LVT(2.5,[['exhausted','지치다','continue','계속하다'],['anxious','불안하다','sleep','자다'],['nervous','긴장되다','speak','말하다']]),...LVT(3,[['frightened','무섭다','move','움직이다'],['embarrassed','창피하다','say anything','아무 말도 하다']]));
+TOO.push(...LVT(2.5,[['exhausted','지치다','continue','계속하다'],['anxious','불안하다','sleep','자다'],['nervous','긴장되다','speak','말하다']]),...LVT(3,[['frightened','겁이 나다','move','움직이다'],['embarrassed','창피하다','say anything','아무 말도 하다']]));
 ENG.push(...LVT(2.5,[['mature','성숙하다','understand the problem','그 문제를 이해하다'],['experienced','경험이 많다','lead the team','팀을 이끌다'],['skilled','실력이 좋다','join the team','팀에 들어가다']]),
  ...LVT(3,[['qualified','자격이 있다','teach the class','그 수업을 가르치다'],['wealthy','부유하다','buy the building','그 건물을 사다'],['persuasive','설득력이 있다','change their minds','그들의 마음을 바꾸다']]));
 HOWTO.push(...LVT(2.5,[['solve the puzzle','퍼즐을 풀다'],['fix a flat tire','펑크 난 타이어를 고치다'],['write an essay','에세이를 쓰다'],['take notes','필기를 하다']]),
@@ -1708,7 +1708,7 @@ const STAGES=[
  {t:'해야 해 · have to / should',ex:"You have to do your homework. / You should eat vegetables.",blk:[['v_hto','v_dhto'],['v_htoq'],['v_hto','v_sh']]},
  {t:'수량 · some / any / many / much / a few',ex:"I don't have any eggs. / There isn't much milk.",blk:[['q_some','q_any','q_anyq'],['q_many','q_manyq'],['q_much','q_few']]},
  {t:'비교급 · -er than / more ~ than',ex:'Elephants are bigger than horses.',blk:[['c_pos','c_q'],['c_neg']]},
- {t:'최상급 · the -est / the most',ex:'My dad is the tallest in my family.',blk:[['s_pos','s_who'],['s_pos'],['s_fact']]},
+ {t:'최상급 · the -est / the most',ex:'Tom is the tallest in my class.',blk:[['s_pos','s_who'],['s_pos'],['s_fact']]},
  {t:'감탄문 · What a ~! · How ~!',ex:'What a big dog! / How cute these puppies are!',blk:[['y_what','y_how'],['y_whatpl','y_howpl'],['y_what','y_whatpl'],['y_howthat','y_howthose'],['y_what','y_howthat']]},
  {t:'하고 있었어 · was + -ing',ex:'I was watching TV when you called.',blk:[['v_prog','v_pprog'],['v_pprogneg','v_pprogq']]},
  {t:"부가의문문 · ~, isn't he?",ex:"You are tired, aren't you? / He likes pizza, doesn't he?",blk:[['A_bpos','A_bneg'],['A_vpos','A_vneg'],['A_vpast','A_can'],['A_bneg','A_vpos']]},
@@ -1720,17 +1720,17 @@ const STAGES=[
  {t:'접속사 · so / because / but / and',ex:'I was hungry, so I ate some bread.',blk:[['j_so','j_because'],['j_but'],['j_and']]},
  {t:'if · when',ex:'If it rains, we will stay home.',blk:[['k_if','k_ifneg'],['k_ifq'],['k_when'],['k_whenhab']]},
  {t:"주다 · 보여 주다 (give me a book)",ex:"She gave me a book. / She gave a book to me.",blk:[['C_io','C_to'],['C_to','C_io']]},
- {t:"make me happy · call it Coco",ex:"The movie made me sad. / We call our dog Coco.",blk:[['D_make','D_keep'],['D_find'],['D_call','D_make']]},
- {t:"want him to · tell him to · ask him to",ex:"Mom told me to clean the room. / I want you to come early.",blk:[['E_want','E_tell'],['E_tell','E_ask'],['E_ask','E_want']]},
- {t:"지각·사역동사 · see him run · let me go",ex:"I saw him run. / Mom let me play games.",blk:[['F_see','F_hear'],['F_let','F_make'],['F_make','F_see']]},
+ {t:"make me happy · call it Coco",ex:"The movie made me sad. / We call the dog Coco.",blk:[['D_make','D_keep'],['D_find'],['D_call','D_make']]},
+ {t:"want him to · tell him to · ask him to",ex:"The teacher told me to clean the room. / I want you to come early.",blk:[['E_want','E_tell'],['E_tell','E_ask'],['E_ask','E_want']]},
+ {t:"지각·사역동사 · see him run · let me go",ex:"I saw him run. / The coach let me play games.",blk:[['F_see','F_hear'],['F_let','F_make'],['F_make','F_see']]},
  {t:"too ~ to · enough to · how to",ex:"I'm too tired to walk. / I know how to swim.",blk:[['G_too','G_enough'],['G_howto','G_what'],['G_too','G_howto'],['G_learn','G_howto'],['G_what','G_learn'],['G_toopast','G_too'],['G_wantlearn','G_learn'],['G_enoughp','G_enough']]},
  {t:"가주어 it · It is fun to ~",ex:"It is fun to swim in the sea. / Swimming in the sea is fun.",blk:[['H_it','H_ing'],['H_for','H_q'],['H_ing','H_it'],['H_was','H_neg'],['H_for','H_was'],['H_forq','H_for']]},
  {t:"as ~ as · the 비교급, the 비교급",ex:"Tom is as tall as Mina. / The more you read, the more you learn.",blk:[['I_as','I_notas'],['I_the'],['I_notas','I_as']]},
- {t:'수동태 · was made by',ex:'The cake was made by my mom.',blk:[['x_pos','x_q'],['x_neg'],['x_pos'],['x_fact']]},
+ {t:'수동태 · was made by',ex:'The cake was made by Mina.',blk:[['x_pos','x_q'],['x_neg'],['x_pos'],['x_fact']]},
  {t:'현재완료 · have been / have ever / for',ex:'Have you ever ridden a horse?',blk:[['h_pos','h_q'],['h_never'],['h_for']]},
  {t:"분사로 꾸미기 · a sleeping baby · a broken window",ex:"Look at the sleeping baby. / I saw a broken window.",blk:[['J_ing','J_ed'],['J_post','J_pp'],['J_ed','J_ing'],['J_know','J_saw2'],['J_saw2','J_post']]},
  {t:'관계사 · who / that',ex:'I have a friend who plays the piano.',blk:[['l_who'],['l_that'],['l_prog']]},
- {t:"관계사 · which / whose / what",ex:"I have a friend whose dad is a pilot. / This is what I want.",blk:[['K_which','K_whose'],['K_what'],['K_whose','K_what']]},
+ {t:"관계사 · which / whose / what",ex:"I have a friend whose name is Coco. / This is what I want.",blk:[['K_which','K_whose'],['K_what'],['K_whose','K_what']]},
  {t:"관계부사 · where / when / why / how",ex:"This is the park where we play soccer.",blk:[['L_where','L_when'],['L_why','L_how'],['L_where']]},
  {t:"간접의문문 · that 절 · if / whether",ex:"I know where he lives. / Where does he live?",blk:[['M_wh','M_q'],['M_that','M_if'],['M_q','M_wh']]},
  {t:"so that · although · both / either / neither",ex:"Although it was raining, we played soccer.",blk:[['N_sothat','N_although'],['N_both','N_neither'],['N_either','N_notonly'],['N_although2','N_bothadj'],['N_neitherlk','N_both'],['N_although2','N_sothat']]},
@@ -1753,11 +1753,31 @@ const F2S={};STAGES.forEach((st,i)=>st.blk.forEach(b=>b.forEach(f=>{if(F2S[f]==n
 // 문장 하나 만들기
 const CACHE=new Map();
 const LVTH=[0,1,2,2.5,3];
+const NAMES_RE=/\b(Tom|Mina|Jake|Yuna|Ben|Sora|Minho|Jisu)\b/g;
+function qaBad(it){const en=it.en,lo=en.toLowerCase(),ko=it.ko||'';
+  if(/\bdirty pictures?\b|\bpictures? (is|are|was|were) dirty\b|\bknife\b|\bknives\b|\bsteal|\bstole\b|\bstolen wallet/i.test(en))return true;
+  if(/\b(bench|benches|glass|glasses|ladder|ladders|desk|desks|chair|chairs|table|tables|pencil|pencils|mailbox)\b[^,.!?]*\bsoft\b|\bsoft (bench|benches|glass|glasses|ladder|ladders|desk|desks|chair|chairs|table|tables)\b/i.test(en))return true;
+  const nm=en.match(NAMES_RE);if(nm&&new Set(nm).size<nm.length)return true;
+  const np=/^the (more|less|better|faster|harder|earlier|longer|older)\b/.test(lo)?null:lo.match(/^(?:(?:who|what|where|when|why|how|is|are|was|were|do|does|did|has|have|will|can)\s+)?((?:my|the|your|our|his|her|their) [a-z]+(?: [a-z]+)?)\b/);if(np){const h=np[1];const rest=lo.slice(lo.indexOf(h)+h.length);if(new RegExp('\\b'+h.split(' ').slice(1).join(' ')+'\\b').test(rest)&&rest.includes(h.split(' ').slice(1).join(' '))&&new RegExp('\\b(my|the|your|our|his|her|their) '+h.split(' ').slice(1).join(' ')+'\\b').test(rest))return true}
+  if(/(노부인|노인|할머니|할아버지)[^.?!]*(학교|시험|숙제|수업)/.test(ko))return true;
+  return false}
+// 한국어가 같은 다른 꼴이 있는 것: 👉 힌트로 꼴을 정해 줘요(정답은 하나)
+const CUE={C_io:'사람 먼저 (… me a book)',C_to:'물건 먼저 + to/for 사람 (… a book to me)',
+  H_it:'It … to …',H_was:'It … to …',H_neg:'It … to …',H_for:'It … to …',H_q:'It … to …?',H_forq:'It … for … to …?',H_ing:'-ing로 시작',g_subj:'-ing로 시작',
+  N_notonly:'not only … but also',Z_not:'Not only로 시작',v_hto:'have to / has to',B_must:'must',j_but:'…, but …',N_although:'Although로 시작',N_although2:'Although로 시작',
+  J_post:'who 없이',l_prog:'who is …',l_who:'who',l_that:'that',K_which:'which',L_where:'where',X_prep:'전치사 + which',L_how:'This is how …',L_when:'when 넣어서',L_why:'the reason why',
+  B_could:'Could로 시작',M_if:'if',M_that:'that 넣어서',a_said:'said that',Z_it:'It was … that …',P_q:'already 넣어서',h_q:'ever 넣어서',
+  P_when:'When으로 시작',P_when2:'When으로 시작',k_when:'When으로 시작',k_whenhab:'When으로 시작',k_if:'If로 시작',k_ifneg:'If로 시작',S_if:'If로 시작',j_because:'because 뒤에',
+  V_b:'Feeling으로 시작',g_howabout:'How about',g_like:'like + -ing',m_please:'Please로 시작',u_time:"o'clock 넣어서"};
 function make(id){if(CACHE.has(id))return CACHE.get(id);const [lap,f,seed,ctx]=String(id).split('.');const L=Math.max(1,Math.min(4,+lap||1));const fam=FAM[f[0]];if(!fam)return null;
   const r=rng(+seed);let it;CURLV=LVTH[L];try{const k=fam[0](r,LVTH[L],ctx||f);it=fam[1](k,f)}catch(e){return null}
   if(it&&!window.TALK_NOFAM&&isFam(it)){CACHE.set(id,null);return null}
+  // 검수 11/28: 아이에게 이상한 문장은 빼요(음란 뜻 dirty picture, 칼·훔치기, 부드러운 의자·사다리, 같은 사람 두 번, 노인이 학교·시험·숙제)
+  if(it&&!window.TALK_NOFAM&&qaBad(it)){CACHE.set(id,null);return null}
   // 엄마 11/28 「그녀는 배우야 = actress」: 여자 주어 + 배우 → actress(actor도 정답으로 받아요)
   if(it&&/\bactor\b/.test(it.en)&&/\b(she|her|Mina|Yuna|Sora|girl|woman|lady)\b/i.test(it.en)){const a=it.en,rp=x=>x.replace(/\bactor\b/,'actress');it.en=rp(a);it.alt=(it.alt||[]).map(rp).concat([a]);it.w=(it.w||[]).map(c=>c&&c[1]==='actor'?[c[0],'actress']:c)}
+  // 엄마 11/28 「정답이 둘인 건 뭐야, 그냥 정확하게」: 정답은 하나만(줄임말 isn't·it's 는 채점이 알아서 같게 봐요). 한국어만으로 꼴이 안 정해지는 문장은 👉 꼴 힌트를 붙여요.
+  if(it){it.alt=[];if(CUE[f]&&!it.cue)it.cue=CUE[f]}
   it=Object.assign({id:String(id),stage:F2S[f]||0,lap:L,f},it);it.alt=it.alt||[];it.w=(it.w||[]).filter((c,i,a)=>c&&c[0]&&c[1]&&a.findIndex(x=>x[0]===c[0])===i);
   if(CACHE.size>3000)CACHE.clear();CACHE.set(id,it);return it}
 // 한 묶음: 같은 씨앗으로 묶음의 꼴들
