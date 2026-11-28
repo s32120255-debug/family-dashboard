@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#3b6cf6">
 <script>
 /* 늘 새 버전: 열 때와 다시 볼 때 version.json을 확인하고, 더 새 것이 있으면 다시 불러옴 */
-(function(){var V="35";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
+(function(){var V="36";function chk(){fetch("version.json?t="+Date.now(),{cache:"no-store"}).then(function(r){return r.json()}).then(function(j){if(j&&j.v&&String(j.v)!==V){try{if(sessionStorage.getItem("spv")===String(j.v))return;sessionStorage.setItem("spv",String(j.v))}catch(e){}location.replace(location.pathname+"?v="+j.v+location.hash)}}).catch(function(){})}
 if(!/mock/.test(location.hash))chk();document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible"&&!/mock/.test(location.hash))chk()});})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -78,7 +78,7 @@ details summary{cursor:pointer}
 .play{background:var(--chip);border-radius:10px;padding:4px 8px;font-size:14px;margin:2px}
 select{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card)}
 </style>
-<script src="drills.js?v=2"></script><script src="talk-core.js?v=8"></script><script src="talk-gen.js?v=10"></script>
+<script src="drills.js?v=2"></script><script src="talk-core.js?v=9"></script><script src="talk-gen.js?v=11"></script>
 <script type="module">
 /* Firebase 연결(시훈 공부방과 같은 가족 구글 로그인). #mock 이면 연결 없이 시험용 */
 const MOCK=/mock/.test(location.hash);
@@ -431,7 +431,7 @@ const kidU=()=>AV.kid?effU(AV.kid.st,AV.kid.plan):null;
 function flagBtn(id){return `<button class="light" style="margin:0;padding:4px 9px;font-size:14px" data-act="flag" data-id="${esc(id)}">🚫 빼기</button>`}
 function sentRows(ids,kinds){let h='<table class="adt">';ids.forEach((id,j)=>{const it=IT(id);if(!it)return;
     if(kinds&&j&&j%UNIT_N===0)h+=`<tr><td colspan="2" style="border-top:3px solid var(--en);padding:0"></td></tr>`;
-    h+=`<tr><td>${esc(it.en)}<div class="sub" style="font-size:14px">${esc(it.ko)}</div></td><td style="white-space:nowrap;width:1%">${flagBtn(id)}</td></tr>`});return h+'</table>'}
+    h+=`<tr><td>${esc(it.en)}<div class="sub" style="font-size:14px">${esc(it.ko)}${it.cue?' · 👉 '+esc(it.cue):''}</div></td><td style="white-space:nowrap;width:1%">${flagBtn(id)}</td></tr>`});return h+'</table>'}
 function lapTabs(){return `<div class="row" style="justify-content:flex-start;gap:6px">${[1,2,3,4].map(l=>`<button class="light${AV.lap===l?' on':''}" style="margin:0;padding:6px 10px${AV.lap===l?';outline:3px solid var(--en)':''}" data-act="alap" data-l="${l}">${LAPS[l]}</button>`).join('')}</div>`}
 function adminViewHTML(){if(!ADMIN)return logHTML();const K=AV.kid;let h=tabsHTML('log')+`<h1>🧩 엄마 화면</h1>`;
   if(!K)return h+`<p class="sub" style="text-align:center">시훈이 기록 찾는 중…</p>`;
@@ -496,6 +496,8 @@ function drillHTML(){const R=RUN,it=IT(R.ids[R.i]),ph=R.ph,fol=ph[0]==='f',k=R.k
   const sn=it.stage||0;
   h+=`<div class="base">${k==='a'||k==='r'||k==='v'?`<span class="tag re">🔁 ${k==='a'?'다시':k==='v'?'다지기':'한 번 더'}</span>`:k==='z'?`<span class="tag">👯 짝 연습</span>`:''}<small>${sn?sn+'단계 · '+esc(stName(sn)):''}</small></div>`;
   h+=`<div class="ko">${esc(it.ko)}</div>`;
+  // 엄마 11/28 「정확하게」: 한국어만으로 꼴이 안 정해지는 문장은 👉 꼴 힌트(정답은 하나)
+  if(it.cue)h+=`<div class="sub" style="text-align:center;font-size:17px;margin-top:-2px">👉 <b style="color:var(--en)">${esc(it.cue)}</b></div>`;
   {const bs=pastBases(it.en);if(bs.length)h+=`<div class="sub" style="text-align:center;font-size:17px;margin-top:-2px">동사원형: <b style="color:var(--ink)">${bs.map(esc).join(' · ')}</b></div>`}
   const pre=ph==='ready'||ph==='retry'||ph==='quiet';
   if(pre&&(it.w||[]).length)h+=`<div class="wchips">${it.w.map((c,j)=>`<button class="wchip" data-act="word" data-j="${j}">${esc(c[0])}${R.wopen[j]?`<b>${esc(c[1])}</b>`:''}</button>`).join('')}</div>`;
@@ -621,6 +623,8 @@ function reask(){}
 // 들린 말 ↔ 정답 맞춰 보기(낱말 단위 편집 거리): 맞은 낱말은 그대로, 바뀐 낱말은 빨간 밑줄, 빠진 자리는 빈칸, 더 말한 낱말은 줄 긋기
 // 엄마 11/27 「불규칙 동사 잘 모르니 과거형이 나오면 동사원형을 띄워 주자」: 과거형·과거분사 낱말이 있으면 원형만 작게(be 빼고, read처럼 모양이 같은 건 빼고)
 const PASTB={};if(TC){Object.keys(TC.IRV).forEach(b=>{if(b==='be')return;TC.IRV[b].forEach(x=>{if(x&&x!==b)PASTB[x]=b})});TC.VP.forEach(p=>{const b=String(p.e||'').split(' ')[0];if(!b||b==='be')return;[TC.EN.past(b),TC.EN.pp(b)].forEach(x=>{x=String(x).split(' ')[0];if(x&&x!==b&&!PASTB[x])PASTB[x]=b})})}
+// 검수 11/28: 목록에 빠졌던 과거형
+Object.assign(PASTB,{lent:'lend',showed:'show',shown:'show',rang:'ring',rung:'ring',lay:'lie',lain:'lie',misunderstood:'misunderstand',rose:'rise',risen:'rise'});
 ['has','does','is','are','am'].forEach(x=>delete PASTB[x]);if(PASTB.did==='do')delete PASTB.did;
 function pastBases(en){const out=[];String(en||'').toLowerCase().replace(/[^a-z' ]/g,' ').split(/\s+/).forEach(w=>{const b=PASTB[w];if(b&&!out.includes(b))out.push(b)});return out}
 const TRY_MAX=3;let R0TIP='';
